@@ -1,0 +1,974 @@
+// ZINDO — schema de base de données
+// Gestion de stock et de ventes pour commerces (Burkina Faso)
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ---------------------------------------------------------------------------
+// Commerce / compte
+// ---------------------------------------------------------------------------
+
+model Business {
+  id                 String   @id @default(cuid())
+  name               String
+  activity           String?
+  activityKey        String? // clé du catalogue (lib/activities.ts) — null tant que l'onboarding "Quelle est votre activité ?" n'a pas été fait
+  logoUrl            String?
+  phone              String?
+  email              String?
+  address            String?
+  city               String?
+  country            String   @default("Burkina Faso")
+  currency           String   @default("XOF")
+  ticketWidth        String   @default("80mm") // "58mm" | "80mm" | "A4"
+  ticketFooter       String   @default("Merci pour votre visite.")
+  qrCodeSize         Int      @default(0) // 0 = taille automatique selon le format du ticket ; sinon taille en pixels
+  defaultMinStock    Int      @default(5)
+  plan               String   @default("FREE") // FREE | PREMIUM
+  suspended          Boolean  @default(false) // désactivé par l'administrateur de la plateforme
+  nextProductSeq     Int      @default(1)
+  nextSaleSeq        Int      @default(1)
+  nextPurchaseSeq    Int      @default(1)
+  nextTransferSeq    Int      @default(1)
+  nextSessionSeq     Int      @default(1)
+  nextOnlineOrderSeq Int      @default(1)
+  nextInvoiceSeq     Int      @default(1)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  users               User[]
+  categories          Category[]
+  products            Product[]
+  suppliers           Supplier[]
+  customers           Customer[]
+  locations           Location[]
+  stockMovements      StockMovement[]
+  sales               Sale[]
+  purchases           Purchase[]
+  inventories         Inventory[]
+  stockTransfers      StockTransfer[]
+  expenses            Expense[]
+  notifications       Notification[]
+  auditLogs           AuditLog[]
+  paymentMethods      PaymentMethodConfig[]
+  rolePermissions     RolePermission[]
+  cashSessions        CashSession[]
+  supportTickets      SupportTicket[]
+  featureFlags        FeatureFlagBusiness[]
+  onlineStore         OnlineStore?
+  subscription        BusinessSubscription?
+  subscriptionInvoices SubscriptionInvoice[]
+}
+
+// ---------------------------------------------------------------------------
+// Boutiques / dépôts (multi-emplacements)
+// ---------------------------------------------------------------------------
+
+enum LocationType {
+  BOUTIQUE
+  DEPOT
+}
+
+model Location {
+  id         String       @id @default(cuid())
+  businessId String
+  business   Business     @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  name       String
+  type       LocationType @default(BOUTIQUE)
+  address    String?
+  city       String?
+  isDefault  Boolean      @default(false)
+  active     Boolean      @default(true)
+  createdAt  DateTime     @default(now())
+
+  stocks         ProductStock[]
+  stockMovements StockMovement[]
+  sales          Sale[]
+  purchases      Purchase[]
+  inventories    Inventory[]
+  transfersFrom  StockTransfer[] @relation("TransferFrom")
+  transfersTo    StockTransfer[] @relation("TransferTo")
+  expenses       Expense[]
+  cashSessions   CashSession[]
+  onlineStores   OnlineStore[]
+
+  @@unique([businessId, name])
+  @@index([businessId])
+}
+
+enum Role {
+  ADMIN
+  VENDEUR
+  GESTIONNAIRE_STOCK
+}
+
+model User {
+  id                 String   @id @default(cuid())
+  businessId         String
+  business           Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  firstName          String
+  lastName           String
+  phone              String
+  email              String?
+  passwordHash       String
+  role               Role     @default(VENDEUR)
+  active             Boolean  @default(true)
+  theme              String   @default("SYSTEM") // "LIGHT" | "DARK" | "SYSTEM" — préférence d'affichage propre au compte
+  autoPrintReceipt   Boolean  @default(false) // imprime automatiquement le ticket après chaque vente à la caisse
+  printerTicketWidth String? // "58mm" | "80mm" | "A4" — remplace le format par défaut du commerce pour ce poste de caisse
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  stockMovements      StockMovement[]
+  sales               Sale[]
+  purchases           Purchase[]
+  inventories         Inventory[]
+  stockTransfers      StockTransfer[]
+  expenses            Expense[]
+  auditLogs           AuditLog[]
+  customerPayments    CustomerPayment[]
+  supplierPayments    SupplierPayment[]
+  cashSessions        CashSession[]
+  permissionOverrides UserPermission[]
+  supportTickets      SupportTicket[]
+
+  @@unique([businessId, phone])
+  @@index([businessId])
+}
+
+model RolePermission {
+  id         String   @id @default(cuid())
+  businessId String
+  business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  role       Role
+  permission String
+  allowed    Boolean  @default(true)
+
+  @@unique([businessId, role, permission])
+  @@index([businessId])
+}
+
+// Dérogation par compte individuel, gérée depuis la console administrateur
+// (/admin) : permet de masquer ou d'autoriser un module précis pour un seul
+// utilisateur, indépendamment de son rôle. Priorité la plus haute de toutes
+// (UserPermission > RolePermission > GlobalRolePermission > défaut codé).
+model UserPermission {
+  id         String  @id @default(cuid())
+  userId     String
+  user       User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  permission String
+  allowed    Boolean @default(true)
+
+  @@unique([userId, permission])
+  @@index([userId])
+}
+
+// ---------------------------------------------------------------------------
+// Catalogue
+// ---------------------------------------------------------------------------
+
+model Category {
+  id          String   @id @default(cuid())
+  businessId  String
+  business    Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  name        String
+  description String?
+  createdAt   DateTime @default(now())
+
+  products Product[]
+
+  @@unique([businessId, name])
+  @@index([businessId])
+}
+
+model Supplier {
+  id         String   @id @default(cuid())
+  businessId String
+  business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  name       String
+  company    String?
+  phone      String?
+  email      String?
+  address    String?
+  notes      String?
+  createdAt  DateTime @default(now())
+
+  products         Product[]
+  purchases        Purchase[]
+  supplierPayments SupplierPayment[]
+
+  @@index([businessId])
+}
+
+model Product {
+  id            String    @id @default(cuid())
+  businessId    String
+  business      Business  @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  reference     String
+  name          String
+  categoryId    String?
+  category      Category? @relation(fields: [categoryId], references: [id])
+  brand         String?
+  description   String?
+  unit          String    @default("unité")
+  purchasePrice Float     @default(0)
+  salePrice     Float     @default(0)
+  minStock      Int       @default(5)
+  shelfLocation String?
+  supplierId    String?
+  supplier      Supplier? @relation(fields: [supplierId], references: [id])
+  photoUrl      String?
+  barcode       String?
+  customFields  String? // JSON { [fieldKey]: value } — champs additionnels définis par activité, voir ActivityConfig
+  active        Boolean   @default(true)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  stocks             ProductStock[]
+  stockMovements     StockMovement[]
+  saleItems          SaleItem[]
+  purchaseItems      PurchaseItem[]
+  inventoryItems     InventoryItem[]
+  stockTransferItems StockTransferItem[]
+  onlineOrderItems   OnlineOrderItem[]
+
+  @@unique([businessId, reference])
+  @@index([businessId])
+  @@index([businessId, barcode])
+  @@index([businessId, name])
+}
+
+// Stock d'un produit dans un emplacement (boutique ou dépôt) donné.
+model ProductStock {
+  id         String   @id @default(cuid())
+  productId  String
+  product    Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  locationId String
+  location   Location @relation(fields: [locationId], references: [id], onDelete: Cascade)
+  quantity   Int      @default(0)
+  updatedAt  DateTime @updatedAt
+
+  @@unique([productId, locationId])
+  @@index([locationId])
+}
+
+// ---------------------------------------------------------------------------
+// Mouvements de stock
+// ---------------------------------------------------------------------------
+
+enum MovementDirection {
+  IN
+  OUT
+}
+
+enum MovementReason {
+  ACHAT
+  RETOUR_CLIENT
+  CORRECTION
+  INVENTAIRE
+  VENTE
+  PRODUIT_ENDOMMAGE
+  PERTE
+  RETOUR_FOURNISSEUR
+  TRANSFERT
+  AUTRE
+}
+
+model StockMovement {
+  id         String            @id @default(cuid())
+  businessId String
+  business   Business          @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  locationId String
+  location   Location          @relation(fields: [locationId], references: [id])
+  productId  String
+  product    Product           @relation(fields: [productId], references: [id], onDelete: Cascade)
+  direction  MovementDirection
+  reason     MovementReason
+  quantity   Int
+  oldStock   Int
+  newStock   Int
+  note       String?
+  userId     String
+  user       User              @relation(fields: [userId], references: [id])
+  createdAt  DateTime          @default(now())
+
+  @@index([businessId, createdAt])
+  @@index([locationId])
+  @@index([productId])
+}
+
+// ---------------------------------------------------------------------------
+// Ventes / caisse
+// ---------------------------------------------------------------------------
+
+enum PaymentMethod {
+  ESPECES
+  MOBILE_MONEY
+  CARTE
+  CREDIT
+  AUTRE
+}
+
+enum SaleStatus {
+  PAYEE
+  PARTIELLE
+  CREDIT
+  ANNULEE
+}
+
+model Sale {
+  id            String        @id @default(cuid())
+  businessId    String
+  business      Business      @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  locationId    String
+  location      Location      @relation(fields: [locationId], references: [id])
+  number        String
+  customerId    String?
+  customer      Customer?     @relation(fields: [customerId], references: [id])
+  userId        String
+  user          User          @relation(fields: [userId], references: [id])
+  subtotal      Float
+  discount      Float         @default(0)
+  total         Float
+  amountPaid    Float         @default(0)
+  paymentMethod PaymentMethod @default(ESPECES)
+  status        SaleStatus    @default(PAYEE)
+  documentType  String        @default("TICKET") // "TICKET" (caisse POS) | "FACTURE" (facture A4 détaillée)
+  note          String?
+  createdAt     DateTime      @default(now())
+
+  items            SaleItem[]
+  customerPayments CustomerPayment[]
+
+  @@unique([businessId, number])
+  @@index([businessId, createdAt])
+  @@index([locationId])
+  @@index([customerId])
+}
+
+model SaleItem {
+  id        String  @id @default(cuid())
+  saleId    String
+  sale      Sale    @relation(fields: [saleId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product @relation(fields: [productId], references: [id])
+  quantity  Int
+  unitPrice Float
+  unitCost  Float   @default(0)
+  discount  Float   @default(0)
+  total     Float
+
+  @@index([saleId])
+  @@index([productId])
+}
+
+// ---------------------------------------------------------------------------
+// Sessions de caisse (ouverture / clôture)
+// ---------------------------------------------------------------------------
+
+enum CashSessionStatus {
+  OUVERTE
+  FERMEE
+}
+
+model CashSession {
+  id            String            @id @default(cuid())
+  businessId    String
+  business      Business          @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  locationId    String
+  location      Location          @relation(fields: [locationId], references: [id])
+  number        String
+  userId        String
+  user          User              @relation(fields: [userId], references: [id])
+  status        CashSessionStatus @default(OUVERTE)
+  openingAmount Float
+  openedAt      DateTime          @default(now())
+  closedAt      DateTime?
+  countedCash   Float?
+  note          String?
+
+  // Instantané des chiffres calculés à la clôture (figé pour rester exact même si
+  // des ventes ultérieures sont corrigées ou annulées après coup).
+  salesCount      Int?
+  totalRevenue    Float?
+  cashCollected   Float?
+  mobileCollected Float?
+  cardCollected   Float?
+  otherCollected  Float?
+  creditCollected Float?
+  grossMargin     Float?
+  expensesTotal   Float?
+  netMargin       Float?
+  marginRate      Float?
+  expectedCash    Float?
+  variance        Float?
+
+  @@unique([businessId, number])
+  @@index([businessId, locationId, status])
+}
+
+// ---------------------------------------------------------------------------
+// Clients / crédits
+// ---------------------------------------------------------------------------
+
+model Customer {
+  id          String   @id @default(cuid())
+  businessId  String
+  business    Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  name        String
+  phone       String?
+  email       String?
+  address     String?
+  creditLimit Float    @default(0)
+  createdAt   DateTime @default(now())
+
+  sales    Sale[]
+  payments CustomerPayment[]
+
+  @@index([businessId])
+}
+
+model CustomerPayment {
+  id         String        @id @default(cuid())
+  customerId String
+  customer   Customer      @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  saleId     String?
+  sale       Sale?         @relation(fields: [saleId], references: [id])
+  amount     Float
+  method     PaymentMethod @default(ESPECES)
+  note       String?
+  userId     String
+  user       User          @relation(fields: [userId], references: [id])
+  createdAt  DateTime      @default(now())
+
+  @@index([customerId])
+}
+
+// ---------------------------------------------------------------------------
+// Fournisseurs / achats
+// ---------------------------------------------------------------------------
+
+enum PurchaseStatus {
+  RECUE
+  PARTIELLE
+  COMMANDEE
+}
+
+model Purchase {
+  id         String         @id @default(cuid())
+  businessId String
+  business   Business       @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  locationId String
+  location   Location       @relation(fields: [locationId], references: [id])
+  number     String
+  supplierId String
+  supplier   Supplier       @relation(fields: [supplierId], references: [id])
+  userId     String
+  user       User           @relation(fields: [userId], references: [id])
+  total      Float
+  amountPaid Float          @default(0)
+  status     PurchaseStatus @default(RECUE)
+  note       String?
+  createdAt  DateTime       @default(now())
+
+  items            PurchaseItem[]
+  supplierPayments SupplierPayment[]
+
+  @@unique([businessId, number])
+  @@index([businessId, createdAt])
+  @@index([locationId])
+  @@index([supplierId])
+}
+
+model PurchaseItem {
+  id         String   @id @default(cuid())
+  purchaseId String
+  purchase   Purchase @relation(fields: [purchaseId], references: [id], onDelete: Cascade)
+  productId  String
+  product    Product  @relation(fields: [productId], references: [id])
+  quantity   Int
+  unitPrice  Float
+  total      Float
+
+  @@index([purchaseId])
+  @@index([productId])
+}
+
+model SupplierPayment {
+  id         String        @id @default(cuid())
+  supplierId String
+  supplier   Supplier      @relation(fields: [supplierId], references: [id], onDelete: Cascade)
+  purchaseId String?
+  purchase   Purchase?     @relation(fields: [purchaseId], references: [id])
+  amount     Float
+  method     PaymentMethod @default(ESPECES)
+  note       String?
+  userId     String
+  user       User          @relation(fields: [userId], references: [id])
+  createdAt  DateTime      @default(now())
+
+  @@index([supplierId])
+}
+
+// ---------------------------------------------------------------------------
+// Inventaire
+// ---------------------------------------------------------------------------
+
+enum InventoryStatus {
+  EN_COURS
+  VALIDE
+}
+
+model Inventory {
+  id          String          @id @default(cuid())
+  businessId  String
+  business    Business        @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  locationId  String
+  location    Location        @relation(fields: [locationId], references: [id])
+  reference   String
+  status      InventoryStatus @default(EN_COURS)
+  note        String?
+  userId      String
+  user        User            @relation(fields: [userId], references: [id])
+  createdAt   DateTime        @default(now())
+  validatedAt DateTime?
+
+  items InventoryItem[]
+
+  @@unique([businessId, reference])
+  @@index([businessId, createdAt])
+  @@index([locationId])
+}
+
+model InventoryItem {
+  id             String    @id @default(cuid())
+  inventoryId    String
+  inventory      Inventory @relation(fields: [inventoryId], references: [id], onDelete: Cascade)
+  productId      String
+  product        Product   @relation(fields: [productId], references: [id])
+  theoreticalQty Int
+  realQty        Int
+  difference     Int
+
+  @@index([inventoryId])
+  @@index([productId])
+}
+
+// ---------------------------------------------------------------------------
+// Transferts de marchandises entre boutiques / dépôts
+// ---------------------------------------------------------------------------
+
+model StockTransfer {
+  id             String   @id @default(cuid())
+  businessId     String
+  business       Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  number         String
+  fromLocationId String
+  fromLocation   Location @relation("TransferFrom", fields: [fromLocationId], references: [id])
+  toLocationId   String
+  toLocation     Location @relation("TransferTo", fields: [toLocationId], references: [id])
+  userId         String
+  user           User     @relation(fields: [userId], references: [id])
+  note           String?
+  createdAt      DateTime @default(now())
+
+  items StockTransferItem[]
+
+  @@unique([businessId, number])
+  @@index([businessId, createdAt])
+  @@index([fromLocationId])
+  @@index([toLocationId])
+}
+
+model StockTransferItem {
+  id         String        @id @default(cuid())
+  transferId String
+  transfer   StockTransfer @relation(fields: [transferId], references: [id], onDelete: Cascade)
+  productId  String
+  product    Product       @relation(fields: [productId], references: [id])
+  quantity   Int
+
+  @@index([transferId])
+  @@index([productId])
+}
+
+// ---------------------------------------------------------------------------
+// Dépenses, notifications, journal, paramètres
+// ---------------------------------------------------------------------------
+
+model Expense {
+  id         String   @id @default(cuid())
+  businessId String
+  business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  locationId String
+  location   Location @relation(fields: [locationId], references: [id])
+  label      String
+  amount     Float
+  note       String?
+  userId     String
+  user       User     @relation(fields: [userId], references: [id])
+  date       DateTime @default(now())
+
+  @@index([businessId, date])
+  @@index([locationId])
+}
+
+enum NotificationType {
+  STOCK_FAIBLE
+  RUPTURE_STOCK
+  INVENTAIRE_NECESSAIRE
+  CREDIT_ECHU
+  INFO
+}
+
+model Notification {
+  id         String           @id @default(cuid())
+  businessId String
+  business   Business         @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  type       NotificationType
+  title      String
+  message    String
+  read       Boolean          @default(false)
+  link       String?
+  createdAt  DateTime         @default(now())
+
+  @@index([businessId, read])
+}
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  businessId String
+  business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  userId     String
+  user       User     @relation(fields: [userId], references: [id])
+  action     String
+  entity     String
+  entityId   String?
+  details    String?
+  createdAt  DateTime @default(now())
+
+  @@index([businessId, createdAt])
+}
+
+model PaymentMethodConfig {
+  id         String        @id @default(cuid())
+  businessId String
+  business   Business      @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  method     PaymentMethod
+  label      String
+  enabled    Boolean       @default(true)
+
+  @@unique([businessId, method])
+  @@index([businessId])
+}
+
+// ---------------------------------------------------------------------------
+// Administration de la plateforme (au-dessus de tous les commerces)
+// ---------------------------------------------------------------------------
+
+enum SuperAdminRole {
+  FOUNDER // Créateur / Fondateur / Propriétaire — un seul compte, protégé, non assignable
+  ADMIN // Administrateur de plateforme créé par le fondateur, pouvoirs moindres
+}
+
+// Compte(s) propriétaire(s) de l'application ZINDO elle-même — distinct des
+// comptes User (qui appartiennent chacun à un seul Business). Espace de
+// connexion et de session totalement séparé de l'application commerçant.
+model SuperAdmin {
+  id           String         @id @default(cuid())
+  email        String         @unique
+  passwordHash String
+  name         String
+  role         SuperAdminRole @default(ADMIN)
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+}
+
+// Journal des actions effectuées depuis la console administrateur — distinct
+// de AuditLog (qui journalise les actions des comptes commerçants) puisque
+// l'acteur ici est un SuperAdmin, pas un User.
+model SuperAdminAuditLog {
+  id           String   @id @default(cuid())
+  superAdminId String
+  actorName    String
+  action       String
+  entity       String
+  entityId     String?
+  details      String?
+  createdAt    DateTime @default(now())
+
+  @@index([createdAt])
+}
+
+// Historique des tentatives de connexion à la console administrateur (réussies
+// et échouées) — alimente la page Sécurité. superAdminId/actorName restent
+// nuls pour une tentative échouée (e-mail inconnu ou mot de passe incorrect).
+model SuperAdminLoginEvent {
+  id           String   @id @default(cuid())
+  email        String
+  success      Boolean
+  superAdminId String?
+  actorName    String?
+  ipAddress    String?
+  userAgent    String?
+  createdAt    DateTime @default(now())
+
+  @@index([createdAt])
+}
+
+// Matrice de permissions par défaut définie par l'administrateur de la
+// plateforme, appliquée à tous les commerces qui n'ont pas leur propre
+// personnalisation (RolePermission). Priorité : RolePermission (par commerce)
+// > GlobalRolePermission (plateforme) > DEFAULT_ROLE_PERMISSIONS (code).
+model GlobalRolePermission {
+  id         String  @id @default(cuid())
+  role       Role
+  permission String
+  allowed    Boolean @default(true)
+
+  @@unique([role, permission])
+}
+
+enum SupportTicketStatus {
+  OUVERT
+  EN_COURS
+  RESOLU
+}
+
+// Demande d'assistance envoyée par un compte commerçant à l'administrateur de
+// la plateforme. Capture la page sur laquelle se trouvait l'utilisateur pour
+// que le support puisse ouvrir directement le même contexte depuis la
+// console /admin (fiche du commerce) sans avoir à se déplacer.
+model SupportTicket {
+  id          String              @id @default(cuid())
+  businessId  String
+  business    Business            @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  userId      String
+  user        User                @relation(fields: [userId], references: [id])
+  subject     String
+  message     String
+  pageUrl     String?
+  status      SupportTicketStatus @default(OUVERT)
+  response    String?
+  respondedAt DateTime?
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
+
+  @@index([businessId, createdAt])
+  @@index([status])
+}
+
+// ---------------------------------------------------------------------------
+// Déploiement progressif des nouvelles fonctionnalités
+// ---------------------------------------------------------------------------
+
+// Une fonctionnalité nouvellement développée est enregistrée ici désactivée
+// par défaut (enabledGlobally = false, aucun override) : elle n'apparaît chez
+// AUCUN commerçant tant que l'administrateur de la plateforme ne l'active pas
+// explicitement — globalement, ou commerce par commerce via FeatureFlagBusiness.
+model FeatureFlag {
+  id              String   @id @default(cuid())
+  key             String   @unique // identifiant stable utilisé dans le code, ex. "facture_a4"
+  label           String
+  description     String?
+  enabledGlobally Boolean  @default(false)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  overrides FeatureFlagBusiness[]
+}
+
+model FeatureFlagBusiness {
+  id            String      @id @default(cuid())
+  featureFlagId String
+  featureFlag   FeatureFlag @relation(fields: [featureFlagId], references: [id], onDelete: Cascade)
+  businessId    String
+  business      Business    @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  enabled       Boolean     @default(true)
+
+  @@unique([featureFlagId, businessId])
+  @@index([businessId])
+}
+
+// ---------------------------------------------------------------------------
+// Boutique en ligne (nouvelle fonctionnalité — déployée via FeatureFlag,
+// clé "boutique_en_ligne" — désactivée pour tous les commerces par défaut)
+// ---------------------------------------------------------------------------
+
+// Vitrine publique d'un commerce : un seul emplacement (boutique/dépôt) sert
+// les commandes en ligne pour garder un stock cohérent avec le reste de
+// l'application, qui est déjà organisé par emplacement.
+model OnlineStore {
+  id                String    @id @default(cuid())
+  businessId        String    @unique
+  business          Business  @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  slug              String    @unique
+  storeName         String
+  description       String?
+  published         Boolean   @default(false)
+  locationId        String?
+  location          Location? @relation(fields: [locationId], references: [id])
+  contactPhone      String?
+  deliveryEnabled   Boolean   @default(false)
+  deliveryFee       Float     @default(0)
+  freeDeliveryAbove Float? // null = pas de seuil de livraison gratuite
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  orders OnlineOrder[]
+}
+
+enum OnlineOrderStatus {
+  EN_ATTENTE
+  CONFIRMEE
+  LIVREE
+  ANNULEE
+}
+
+// Commande passée par un client depuis la vitrine publique — volontairement
+// indépendante du modèle Sale : elle n'engage ni le stock ni la caisse tant
+// que le commerçant ne l'a pas confirmée (pas de paiement en ligne intégré ;
+// le commerçant contacte le client, encaisse et enregistre la vente comme
+// d'habitude une fois la commande honorée).
+model OnlineOrder {
+  id              String            @id @default(cuid())
+  storeId         String
+  store           OnlineStore       @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  number          String
+  customerName    String
+  customerPhone   String
+  deliveryAddress String?
+  wantsDelivery   Boolean           @default(false)
+  note            String?
+  subtotal        Float
+  deliveryFee     Float             @default(0)
+  total           Float
+  status          OnlineOrderStatus @default(EN_ATTENTE)
+  merchantNote    String?
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+
+  items OnlineOrderItem[]
+
+  @@unique([storeId, number])
+  @@index([storeId, createdAt])
+}
+
+model OnlineOrderItem {
+  id        String      @id @default(cuid())
+  orderId   String
+  order     OnlineOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product     @relation(fields: [productId], references: [id])
+  quantity  Int
+  unitPrice Float
+  total     Float
+
+  @@index([orderId])
+  @@index([productId])
+}
+
+// ---------------------------------------------------------------------------
+// Configuration de l'interface par activité (édité par la console /admin) —
+// tant qu'aucune ligne n'existe pour une activité, celle-ci se comporte
+// exactement comme avant (aucun impact tant que le fondateur n'a rien configuré).
+// ---------------------------------------------------------------------------
+
+model ActivityConfig {
+  id                String   @id @default(cuid())
+  activityKey       String   @unique
+  terminology       String? // JSON { [termKey]: label override }
+  hiddenNavHrefs    String? // JSON string[] de hrefs de menu à masquer pour cette activité
+  defaultCategories String? // JSON string[] de catégories créées automatiquement au choix de l'activité
+  customFields      String? // JSON { key, label, type }[] — champs produit additionnels
+  updatedAt         DateTime @updatedAt
+}
+
+// ---------------------------------------------------------------------------
+// Abonnements & revenus — paliers de prix, abonnement par commerce, factures.
+// Un commerce SANS ligne BusinessSubscription n'est soumis à AUCUNE limite
+// (comportement identique à avant l'introduction de cette fonctionnalité) —
+// seuls les commerces explicitement rattachés à un palier sont contraints.
+// Les nouveaux commerces sont rattachés au palier "gratuit" dès l'inscription.
+// ---------------------------------------------------------------------------
+
+model SubscriptionPlan {
+  id           String   @id @default(cuid())
+  key          String   @unique // "gratuit" | "standard" | "premium" | "pro"
+  label        String
+  monthlyPrice Int // FCFA
+  annualPrice  Int // FCFA
+  maxProducts  Int? // null = illimité
+  maxUsers     Int?
+  maxLocations Int?
+  features     String // JSON string[] de clés de fonctionnalités (voir lib/subscription.ts)
+  order        Int      @default(0)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  subscriptions BusinessSubscription[]
+}
+
+enum BillingCycle {
+  MONTHLY
+  ANNUAL
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  PAST_DUE
+}
+
+model BusinessSubscription {
+  id               String             @id @default(cuid())
+  businessId       String             @unique
+  business         Business           @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  planId           String
+  plan             SubscriptionPlan   @relation(fields: [planId], references: [id])
+  billingCycle     BillingCycle       @default(MONTHLY)
+  status           SubscriptionStatus @default(ACTIVE)
+  currentPeriodEnd DateTime?
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+}
+
+enum InvoiceStatus {
+  EN_ATTENTE
+  PAYEE
+  ANNULEE
+}
+
+enum InvoicePaymentMethod {
+  MANUEL
+  CINETPAY
+}
+
+// Facture d'abonnement — MANUEL : le commerçant paie par Mobile Money vers le
+// contact ZINDO et soumet une référence, qu'un administrateur confirme
+// manuellement (paymentReference). CINETPAY : réservé à l'intégration future
+// via passerelle automatisée (voir lib/cinetpay.ts) une fois les clés API
+// fournies — non fonctionnel tant que CINETPAY_API_KEY n'est pas configuré.
+model SubscriptionInvoice {
+  id               String                @id @default(cuid())
+  businessId       String
+  business         Business              @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  number           String
+  planKey          String
+  planLabel        String
+  billingCycle     BillingCycle
+  amount           Int
+  status           InvoiceStatus         @default(EN_ATTENTE)
+  paymentMethod    InvoicePaymentMethod?
+  paymentReference String?
+  proofNote        String?
+  paidAt           DateTime?
+  createdAt        DateTime              @default(now())
+
+  @@unique([businessId, number])
+  @@index([businessId, createdAt])
+}

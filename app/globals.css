@@ -1,0 +1,120 @@
+@import "tailwindcss";
+
+/* Bascule le préfixe dark: sur une classe .dark posée sur <html> (pilotée par
+   la préférence de thème du compte : Blanc / Noir / Système) plutôt que sur
+   la seule media query prefers-color-scheme. */
+@custom-variant dark (&:where(.dark, .dark *));
+
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+
+  /* Identité visuelle ZINDO : orange brûlé (actions), bleu marine profond
+     (titres/panneaux), blanc cassé chaleureux (surfaces), vert (succès) —
+     alignée sur la palette du partenaire Faso Stock (fasostock.com). Utilisée
+     sur les écrans d'authentification, la page publique et la page Abonnement. */
+  --color-zindo-orange-50: #fdf1ec;
+  --color-zindo-orange-100: #fbddcf;
+  --color-zindo-orange-200: #f8c7ae;
+  --color-zindo-orange-300: #f3ab8c;
+  --color-zindo-orange-400: #ed8259;
+  --color-zindo-orange-500: #e85d2c;
+  --color-zindo-orange-600: #d14d1e;
+  --color-zindo-orange-700: #ad3f19;
+  --color-zindo-orange-800: #8a3214;
+  --color-zindo-navy-50: #edf0f5;
+  --color-zindo-navy-100: #dbe1ea;
+  --color-zindo-navy-200: #b8c2d6;
+  --color-zindo-navy-500: #33517d;
+  --color-zindo-navy-700: #16294a;
+  --color-zindo-navy-900: #0b1b33;
+  --color-zindo-navy-950: #071427;
+  --color-zindo-cream: #f8f7f5;
+  --color-zindo-green-600: #16a34a;
+
+  --animate-zindo-fade-in: zindo-fade-in 0.5s ease-out both;
+  --animate-zindo-fade-in-up: zindo-fade-in-up 0.55s ease-out both;
+}
+
+@keyframes zindo-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes zindo-fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-zindo-fade-in,
+  .animate-zindo-fade-in-up {
+    animation: none;
+  }
+}
+
+/* Thème Noir : redéfinit l'échelle neutre "zinc" (fonds discrets, textes,
+   bordures) utilisée dans tout le tableau de bord commerçant, pour que les
+   très nombreuses classes zinc (fonds, textes, bordures) déjà présentes dans
+   l'application s'inversent automatiquement — sans avoir à toucher chaque
+   page une par une. Les surfaces "cartes" (bg-white) sont basculées
+   séparément vers l'échelle slate dans les quelques composants concernés. */
+:root.dark {
+  --background: #101013;
+  --foreground: #f2f2f4;
+  --color-zinc-50: #1c1c1f;
+  --color-zinc-100: #26262a;
+  --color-zinc-200: #323236;
+  --color-zinc-300: #46464c;
+  --color-zinc-400: #6e6e76;
+  --color-zinc-500: #9a9aa2;
+  --color-zinc-600: #b7b7bf;
+  --color-zinc-700: #cfcfd6;
+  --color-zinc-800: #e2e2e7;
+  --color-zinc-900: #f2f2f4;
+  --color-zinc-950: #ffffff;
+}
+
+/* Sous-arbres qui gardent toujours leur propre identité visuelle fixe (pages
+   d'authentification, console administrateur) : on y annule le remappage
+   ci-dessus même si un ancêtre porte .dark, en réaffirmant les valeurs
+   d'origine de Tailwind pour l'échelle zinc. */
+.theme-locked {
+  --color-zinc-50: #fafafa;
+  --color-zinc-100: #f4f4f5;
+  --color-zinc-200: #e4e4e7;
+  --color-zinc-300: #d4d4d8;
+  --color-zinc-400: #a1a1aa;
+  --color-zinc-500: #71717a;
+  --color-zinc-600: #52525b;
+  --color-zinc-700: #3f3f46;
+  --color-zinc-800: #27272a;
+  --color-zinc-900: #18181b;
+  --color-zinc-950: #09090b;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+/* Le ticket de caisse (components/sales/Receipt.tsx) embarque son propre CSS
+   d'impression (taille de page, marges, masquage du reste de l'écran). */
