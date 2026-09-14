@@ -1,52 +1,52 @@
-import { prisma } from "@/lib/prisma";
-import type { Prisma } from "@prisma/client";
+import { supabase } from "@/lib/supabase";
 
-type Tx = Prisma.TransactionClient;
-
+// Incrémentation atomique côté base (fonction Postgres increment_business_seq,
+// voir supabase/schema.sql) — remplace le pattern Prisma "update increment
+// puis lire la valeur", pour éviter toute condition de course entre deux
+// ventes/produits créés au même instant.
 async function nextSeq(
-  tx: Tx,
   businessId: string,
-  field: "nextProductSeq" | "nextSaleSeq" | "nextPurchaseSeq" | "nextSessionSeq" | "nextOnlineOrderSeq" | "nextInvoiceSeq"
+  field: "next_product_seq" | "next_sale_seq" | "next_purchase_seq" | "next_session_seq" | "next_online_order_seq" | "next_invoice_seq"
 ) {
-  const business = await tx.business.update({
-    where: { id: businessId },
-    data: { [field]: { increment: 1 } },
-    select: { [field]: true },
+  const { data, error } = await supabase.rpc("increment_business_seq", {
+    p_business_id: businessId,
+    p_field: field,
   });
-  return (business as unknown as Record<string, number>)[field] - 1;
+  if (error) throw new Error(`Échec de génération du numéro (${field}) : ${error.message}`);
+  return data as number;
 }
 
 function pad(n: number) {
   return String(n).padStart(6, "0");
 }
 
-export async function generateProductReference(businessId: string, tx: Tx = prisma) {
-  const seq = await nextSeq(tx, businessId, "nextProductSeq");
+export async function generateProductReference(businessId: string) {
+  const seq = await nextSeq(businessId, "next_product_seq");
   return `ZND-${pad(seq)}`;
 }
 
-export async function generateSaleNumber(businessId: string, tx: Tx = prisma) {
-  const seq = await nextSeq(tx, businessId, "nextSaleSeq");
+export async function generateSaleNumber(businessId: string) {
+  const seq = await nextSeq(businessId, "next_sale_seq");
   return `ZND-V-${pad(seq)}`;
 }
 
-export async function generatePurchaseNumber(businessId: string, tx: Tx = prisma) {
-  const seq = await nextSeq(tx, businessId, "nextPurchaseSeq");
+export async function generatePurchaseNumber(businessId: string) {
+  const seq = await nextSeq(businessId, "next_purchase_seq");
   return `ZND-A-${pad(seq)}`;
 }
 
-export async function generateSessionNumber(businessId: string, tx: Tx = prisma) {
-  const seq = await nextSeq(tx, businessId, "nextSessionSeq");
+export async function generateSessionNumber(businessId: string) {
+  const seq = await nextSeq(businessId, "next_session_seq");
   return `ZND-C-${pad(seq)}`;
 }
 
-export async function generateOnlineOrderNumber(businessId: string, tx: Tx = prisma) {
-  const seq = await nextSeq(tx, businessId, "nextOnlineOrderSeq");
+export async function generateOnlineOrderNumber(businessId: string) {
+  const seq = await nextSeq(businessId, "next_online_order_seq");
   return `ZND-CMD-${pad(seq)}`;
 }
 
-export async function generateSubscriptionInvoiceNumber(businessId: string, tx: Tx = prisma) {
-  const seq = await nextSeq(tx, businessId, "nextInvoiceSeq");
+export async function generateSubscriptionInvoiceNumber(businessId: string) {
+  const seq = await nextSeq(businessId, "next_invoice_seq");
   return `ZND-FAC-${pad(seq)}`;
 }
 

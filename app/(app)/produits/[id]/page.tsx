@@ -3,7 +3,7 @@ import Link from "next/link";
 import { Pencil, ArrowLeft } from "lucide-react";
 import { requirePermission, hasPermission } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
-import { prisma } from "@/lib/prisma";
+import { supabase } from "@/lib/supabase";
 import { getActivityConfig } from "@/lib/activity-config";
 import { formatMoney, formatDateTime } from "@/lib/format";
 import { Card, CardBody, CardHeader } from "@/components/ui/Card";
@@ -25,6 +25,25 @@ const REASON_LABELS: Record<string, string> = {
   AUTRE: "Autre",
 };
 
+type ProductRow = {
+  id: string;
+  name: string;
+  reference: string;
+  photoUrl: string | null;
+  active: boolean;
+  brand: string | null;
+  unit: string;
+  purchasePrice: number;
+  salePrice: number;
+  minStock: number;
+  shelfLocation: string | null;
+  barcode: string | null;
+  description: string | null;
+  customFields: string | null;
+  category: { name: string } | null;
+  supplier: { name: string } | null;
+};
+
 export default async function ProductDetailPage({
   params,
 }: {
@@ -33,25 +52,49 @@ export default async function ProductDetailPage({
   const user = await requirePermission(PERMISSIONS.PRODUCTS_VIEW);
   const { id } = await params;
 
-  const product = await prisma.product.findFirst({
-    where: { id, businessId: user.businessId },
-    include: {
-      category: true,
-      supplier: true,
-      stocks: { include: { location: true }, orderBy: { location: { name: "asc" } } },
-    },
-  });
-  if (!product) notFound();
+  const { data: productRow } = await supabase
+    .from("products")
+    .select(
+      "id, name, reference, photoUrl:photo_url, active, brand, unit, purchasePrice:purchase_price, salePrice:sale_price, minStock:min_stock, shelfLocation:shelf_location, barcode, description, customFields:custom_fields, category:categories(name), supplier:suppliers(name)"
+    )
+    .eq("id", id)
+    .eq("business_id", user.businessId)
+    .maybeSingle();
+  if (!productRow) notFound();
+  const product = productRow as unknown as ProductRow;
 
-  const movements = await prisma.stockMovement.findMany({
-    where: { productId: id },
-    include: { user: true, location: true },
-    orderBy: { createdAt: "desc" },
-    take: 20,
-  });
+  const { data: stocksData } = await supabase
+    .from("product_stocks")
+    .select("id, quantity, location:locations(id, name)")
+    .eq("product_id", id);
+  const stocks = ((stocksData ?? []) as unknown as Array<{
+    id: string;
+    quantity: number;
+    location: { id: string; name: string };
+  }>).sort((a, b) => a.location.name.localeCompare(b.location.name));
+
+  const { data: movementsData } = await supabase
+    .from("stock_movements")
+    .select(
+      "id, createdAt:created_at, direction, reason, quantity, oldStock:old_stock, newStock:new_stock, location:locations(name), user:users(firstName:first_name, lastName:last_name)"
+    )
+    .eq("product_id", id)
+    .order("created_at", { ascending: false })
+    .limit(20);
+  const movements = (movementsData ?? []) as unknown as Array<{
+    id: string;
+    createdAt: string;
+    direction: string;
+    reason: string;
+    quantity: number;
+    oldStock: number;
+    newStock: number;
+    location: { name: string };
+    user: { firstName: string; lastName: string };
+  }>;
 
   const currency = user.business.currency;
-  const totalQuantity = product.stocks.reduce((s, st) => s + st.quantity, 0);
+  const totalQuantity = stocks.reduce((s, st) => s + st.quantity, 0);
 
   const [canManageStock, canTransfer, canSell, activityConfig] = await Promise.all([
     hasPermission(user.businessId, user.role, PERMISSIONS.STOCK_MANAGE, user.id),
@@ -172,7 +215,7 @@ export default async function ProductDetailPage({
           <h2 className="font-semibold text-zinc-900">Stock par boutique</h2>
         </CardHeader>
         <CardBody className="p-0">
-          {product.stocks.length === 0 ? (
+          {stocks.length === 0 ? (
             <p className="p-5 text-sm text-zinc-500">Aucun stock enregistré dans une boutique.</p>
           ) : (
             <table className="w-full text-sm">
@@ -184,7 +227,7 @@ export default async function ProductDetailPage({
                 </tr>
               </thead>
               <tbody className="divide-y divide-zinc-100">
-                {product.stocks.map((s) => (
+                {stocks.map((s) => (
                   <tr key={s.id}>
                     <td className="px-4 py-2 font-medium text-zinc-900">{s.location.name}</td>
                     <td className="px-4 py-2 text-right text-zinc-700">
@@ -229,7 +272,7 @@ export default async function ProductDetailPage({
               <tbody className="divide-y divide-zinc-100">
                 {movements.map((m) => (
                   <tr key={m.id}>
-                    <td className="px-4 py-2 text-zinc-600">{formatDateTime(m.createdAt)}</td>
+                    <td className="px-4 py-2 text-zinc-600">{formatDateTime(new Date(m.createdAt))}</td>
                     <td className="px-4 py-2 text-zinc-600">{m.location.name}</td>
                     <td className="px-4 py-2">
                       <Badge tone={m.direction === "IN" ? "emerald" : "red"}>

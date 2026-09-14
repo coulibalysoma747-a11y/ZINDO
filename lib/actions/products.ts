@@ -3,7 +3,7 @@
 import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { prisma } from "@/lib/prisma";
+import { supabase } from "@/lib/supabase";
 import { requirePermission } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
 import { logAction } from "@/lib/audit";
@@ -81,18 +81,23 @@ export async function createProductAction(
   }
 
   if (data.barcode) {
-    const existingBarcode = await prisma.product.findFirst({
-      where: { businessId: user.businessId, barcode: data.barcode },
-    });
+    const { data: existingBarcode } = await supabase
+      .from("products")
+      .select("id")
+      .eq("business_id", user.businessId)
+      .eq("barcode", data.barcode)
+      .maybeSingle();
     if (existingBarcode) return { error: "Ce code-barres est déjà utilisé par un autre produit" };
   }
 
-  const reference =
-    data.reference?.trim() || (await generateProductReference(user.businessId));
+  const reference = data.reference?.trim() || (await generateProductReference(user.businessId));
 
-  const existingRef = await prisma.product.findFirst({
-    where: { businessId: user.businessId, reference },
-  });
+  const { data: existingRef } = await supabase
+    .from("products")
+    .select("id")
+    .eq("business_id", user.businessId)
+    .eq("reference", reference)
+    .maybeSingle();
   if (existingRef) return { error: "Cette référence est déjà utilisée" };
 
   let photoUrl: string | undefined;
@@ -106,46 +111,56 @@ export async function createProductAction(
   const activityConfig = await getActivityConfig(user.business.activityKey);
   const customFields = parseCustomFields(formData, activityConfig.customFields);
 
-  const product = await prisma.product.create({
-    data: {
-      businessId: user.businessId,
+  const { data: product, error: createError } = await supabase
+    .from("products")
+    .insert({
+      business_id: user.businessId,
       reference,
       name: data.name,
-      categoryId: data.categoryId || null,
-      brand: data.brand,
-      description: data.description,
+      category_id: data.categoryId || null,
+      brand: data.brand ?? null,
+      description: data.description ?? null,
       unit: data.unit,
-      purchasePrice: data.purchasePrice,
-      salePrice: data.salePrice,
-      minStock: data.minStock,
-      shelfLocation: data.shelfLocation,
-      supplierId: data.supplierId || null,
+      purchase_price: data.purchasePrice,
+      sale_price: data.salePrice,
+      min_stock: data.minStock,
+      shelf_location: data.shelfLocation ?? null,
+      supplier_id: data.supplierId || null,
       barcode: data.barcode || null,
-      photoUrl,
-      customFields,
-    },
-  });
+      photo_url: photoUrl ?? null,
+      custom_fields: customFields,
+    })
+    .select("id")
+    .single();
+
+  if (createError || !product) {
+    console.error("[createProductAction] Échec de la création :", createError?.message);
+    return { error: "Impossible de créer le produit" };
+  }
 
   if (data.quantity > 0 && data.locationId) {
-    await prisma.$transaction([
-      prisma.productStock.create({
-        data: { productId: product.id, locationId: data.locationId, quantity: data.quantity },
-      }),
-      prisma.stockMovement.create({
-        data: {
-          businessId: user.businessId,
-          locationId: data.locationId,
-          productId: product.id,
-          direction: "IN",
-          reason: "CORRECTION",
-          quantity: data.quantity,
-          oldStock: 0,
-          newStock: data.quantity,
-          userId: user.id,
-          note: "Stock initial à la création du produit",
-        },
-      }),
-    ]);
+    const { error: stockError } = await supabase
+      .from("product_stocks")
+      .insert({ product_id: product.id, location_id: data.locationId, quantity: data.quantity });
+    if (stockError) {
+      console.error("[createProductAction] Échec de la création du stock initial :", stockError.message);
+    } else {
+      const { error: movementError } = await supabase.from("stock_movements").insert({
+        business_id: user.businessId,
+        location_id: data.locationId,
+        product_id: product.id,
+        direction: "IN",
+        reason: "CORRECTION",
+        quantity: data.quantity,
+        old_stock: 0,
+        new_stock: data.quantity,
+        user_id: user.id,
+        note: "Stock initial à la création du produit",
+      });
+      if (movementError) {
+        console.error("[createProductAction] Échec de l'écriture du mouvement de stock :", movementError.message);
+      }
+    }
   }
 
   await logAction({
@@ -153,7 +168,7 @@ export async function createProductAction(
     userId: user.id,
     action: "CREATE",
     entity: "Product",
-    entityId: product.id,
+    entityId: product.id as string,
   });
 
   revalidatePath("/produits");
@@ -170,15 +185,22 @@ export async function updateProductAction(
   if (!parsed.success) return { error: parsed.error.issues[0]?.message };
   const data = parsed.data;
 
-  const product = await prisma.product.findFirst({
-    where: { id, businessId: user.businessId },
-  });
+  const { data: product } = await supabase
+    .from("products")
+    .select("id, photoUrl:photo_url")
+    .eq("id", id)
+    .eq("business_id", user.businessId)
+    .maybeSingle();
   if (!product) return { error: "Produit introuvable" };
 
   if (data.barcode) {
-    const existingBarcode = await prisma.product.findFirst({
-      where: { businessId: user.businessId, barcode: data.barcode, NOT: { id } },
-    });
+    const { data: existingBarcode } = await supabase
+      .from("products")
+      .select("id")
+      .eq("business_id", user.businessId)
+      .eq("barcode", data.barcode)
+      .neq("id", id)
+      .maybeSingle();
     if (existingBarcode) return { error: "Ce code-barres est déjà utilisé par un autre produit" };
   }
 
@@ -189,33 +211,38 @@ export async function updateProductAction(
     const result = await saveProductPhoto(photoFile);
     if ("error" in result) return { error: result.error };
     photoUrl = result.url;
-    await deleteUploadedImage(product.photoUrl);
+    await deleteUploadedImage(product.photoUrl as string | null);
   } else if (removePhoto) {
     photoUrl = null;
-    await deleteUploadedImage(product.photoUrl);
+    await deleteUploadedImage(product.photoUrl as string | null);
   }
 
   const activityConfig = await getActivityConfig(user.business.activityKey);
   const customFields = parseCustomFields(formData, activityConfig.customFields);
 
-  await prisma.product.update({
-    where: { id },
-    data: {
+  const { error: updateError } = await supabase
+    .from("products")
+    .update({
       name: data.name,
-      categoryId: data.categoryId || null,
-      brand: data.brand,
-      description: data.description,
+      category_id: data.categoryId || null,
+      brand: data.brand ?? null,
+      description: data.description ?? null,
       unit: data.unit,
-      purchasePrice: data.purchasePrice,
-      salePrice: data.salePrice,
-      minStock: data.minStock,
-      shelfLocation: data.shelfLocation,
-      supplierId: data.supplierId || null,
+      purchase_price: data.purchasePrice,
+      sale_price: data.salePrice,
+      min_stock: data.minStock,
+      shelf_location: data.shelfLocation ?? null,
+      supplier_id: data.supplierId || null,
       barcode: data.barcode || null,
-      customFields,
-      ...(photoUrl !== undefined ? { photoUrl } : {}),
-    },
-  });
+      custom_fields: customFields,
+      ...(photoUrl !== undefined ? { photo_url: photoUrl } : {}),
+    })
+    .eq("id", id);
+
+  if (updateError) {
+    console.error("[updateProductAction] Échec de la mise à jour :", updateError.message);
+    return { error: "Impossible de mettre à jour le produit" };
+  }
 
   await logAction({
     businessId: user.businessId,
@@ -232,12 +259,20 @@ export async function updateProductAction(
 
 export async function toggleProductActiveAction(id: string, active: boolean) {
   const user = await requirePermission(PERMISSIONS.PRODUCTS_MANAGE);
-  const product = await prisma.product.findFirst({
-    where: { id, businessId: user.businessId },
-  });
+  const { data: product } = await supabase
+    .from("products")
+    .select("id")
+    .eq("id", id)
+    .eq("business_id", user.businessId)
+    .maybeSingle();
   if (!product) return { error: "Produit introuvable" };
 
-  await prisma.product.update({ where: { id }, data: { active } });
+  const { error } = await supabase.from("products").update({ active }).eq("id", id);
+  if (error) {
+    console.error("[toggleProductActiveAction] Échec de la mise à jour :", error.message);
+    return { error: "Impossible de mettre à jour le produit" };
+  }
+
   await logAction({
     businessId: user.businessId,
     userId: user.id,

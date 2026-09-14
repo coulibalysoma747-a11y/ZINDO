@@ -2,7 +2,7 @@
 
 import { z } from "zod";
 import { revalidatePath } from "next/cache";
-import { prisma } from "@/lib/prisma";
+import { supabase } from "@/lib/supabase";
 import { requirePermission } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
 import { logAction } from "@/lib/audit";
@@ -25,20 +25,30 @@ export async function createCategoryAction(
   });
   if (!parsed.success) return { error: parsed.error.issues[0]?.message };
 
-  const existing = await prisma.category.findFirst({
-    where: { businessId: user.businessId, name: parsed.data.name },
-  });
+  const { data: existing } = await supabase
+    .from("categories")
+    .select("id")
+    .eq("business_id", user.businessId)
+    .eq("name", parsed.data.name)
+    .maybeSingle();
   if (existing) return { error: "Cette catégorie existe déjà" };
 
-  const category = await prisma.category.create({
-    data: { businessId: user.businessId, ...parsed.data },
-  });
+  const { data: category, error } = await supabase
+    .from("categories")
+    .insert({ business_id: user.businessId, name: parsed.data.name, description: parsed.data.description ?? null })
+    .select("id")
+    .single();
+  if (error || !category) {
+    console.error("[createCategoryAction] Échec de la création :", error?.message);
+    return { error: "Impossible de créer la catégorie" };
+  }
+
   await logAction({
     businessId: user.businessId,
     userId: user.id,
     action: "CREATE",
     entity: "Category",
-    entityId: category.id,
+    entityId: category.id as string,
   });
 
   revalidatePath("/categories");
@@ -57,12 +67,23 @@ export async function updateCategoryAction(
   });
   if (!parsed.success) return { error: parsed.error.issues[0]?.message };
 
-  const category = await prisma.category.findFirst({
-    where: { id, businessId: user.businessId },
-  });
+  const { data: category } = await supabase
+    .from("categories")
+    .select("id")
+    .eq("id", id)
+    .eq("business_id", user.businessId)
+    .maybeSingle();
   if (!category) return { error: "Catégorie introuvable" };
 
-  await prisma.category.update({ where: { id }, data: parsed.data });
+  const { error } = await supabase
+    .from("categories")
+    .update({ name: parsed.data.name, description: parsed.data.description ?? null })
+    .eq("id", id);
+  if (error) {
+    console.error("[updateCategoryAction] Échec de la mise à jour :", error.message);
+    return { error: "Impossible de mettre à jour la catégorie" };
+  }
+
   await logAction({
     businessId: user.businessId,
     userId: user.id,
@@ -78,17 +99,28 @@ export async function updateCategoryAction(
 export async function deleteCategoryAction(id: string) {
   const user = await requirePermission(PERMISSIONS.CATEGORIES_MANAGE);
 
-  const category = await prisma.category.findFirst({
-    where: { id, businessId: user.businessId },
-  });
+  const { data: category } = await supabase
+    .from("categories")
+    .select("id")
+    .eq("id", id)
+    .eq("business_id", user.businessId)
+    .maybeSingle();
   if (!category) return { error: "Catégorie introuvable" };
 
-  const productCount = await prisma.product.count({ where: { categoryId: id } });
-  if (productCount > 0) {
+  const { count: productCount } = await supabase
+    .from("products")
+    .select("id", { count: "exact", head: true })
+    .eq("category_id", id);
+  if (productCount && productCount > 0) {
     return { error: `Impossible de supprimer : ${productCount} produit(s) utilisent cette catégorie` };
   }
 
-  await prisma.category.delete({ where: { id } });
+  const { error } = await supabase.from("categories").delete().eq("id", id);
+  if (error) {
+    console.error("[deleteCategoryAction] Échec de la suppression :", error.message);
+    return { error: "Impossible de supprimer la catégorie" };
+  }
+
   await logAction({
     businessId: user.businessId,
     userId: user.id,

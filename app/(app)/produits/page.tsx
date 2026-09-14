@@ -2,7 +2,7 @@ import Link from "next/link";
 import { Plus } from "lucide-react";
 import { requirePermission } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
-import { prisma } from "@/lib/prisma";
+import { supabase } from "@/lib/supabase";
 import { getCurrentLocation } from "@/lib/location";
 import { getActivityConfig, resolveTerm } from "@/lib/activity-config";
 import { formatMoney } from "@/lib/format";
@@ -13,7 +13,6 @@ import { ButtonLink } from "@/components/ui/Button";
 import { ProductSearchBar } from "./ProductSearchBar";
 import { ProductThumbnail } from "@/components/products/ProductThumbnail";
 import { ProductRowMenu } from "@/components/products/ProductRowMenu";
-import type { Prisma } from "@prisma/client";
 
 export default async function ProductsPage({
   searchParams,
@@ -28,38 +27,42 @@ export default async function ProductsPage({
   ]);
   const productsLabel = resolveTerm(activityConfig, "products");
 
-  const where: Prisma.ProductWhereInput = {
-    businessId: user.businessId,
-    active: true,
-  };
+  let query = supabase
+    .from("products")
+    .select(
+      "id, name, reference, brand, unit, salePrice:sale_price, minStock:min_stock, photoUrl:photo_url, categoryId:category_id, category:categories(name)"
+    )
+    .eq("business_id", user.businessId)
+    .eq("active", true)
+    .order("name", { ascending: true })
+    .limit(200);
 
   if (q) {
-    where.OR = [
-      { name: { contains: q, mode: "insensitive" } },
-      { reference: { contains: q, mode: "insensitive" } },
-      { barcode: { contains: q, mode: "insensitive" } },
-    ];
+    const escaped = q.trim().replace(/[%_\\]/g, (m) => `\\${m}`);
+    query = query.or(`name.ilike.%${escaped}%,reference.ilike.%${escaped}%,barcode.ilike.%${escaped}%`);
   }
-  if (categorie) where.categoryId = categorie;
+  if (categorie) query = query.eq("category_id", categorie);
 
-  const [products, categories] = await Promise.all([
-    prisma.product.findMany({
-      where,
-      include: {
-        category: true,
-        stocks: currentLocation ? { where: { locationId: currentLocation.id } } : false,
-      },
-      orderBy: { name: "asc" },
-      take: 200,
-    }),
-    prisma.category.findMany({ where: { businessId: user.businessId }, orderBy: { name: "asc" } }),
+  const [{ data: products }, { data: categories }, stocksRes] = await Promise.all([
+    query,
+    supabase.from("categories").select("id, name").eq("business_id", user.businessId).order("name", { ascending: true }),
+    currentLocation
+      ? supabase.from("product_stocks").select("productId:product_id, quantity").eq("location_id", currentLocation.id)
+      : Promise.resolve({ data: [] as { productId: string; quantity: number }[] }),
   ]);
 
-  const withStock = products.map((p) => ({ ...p, quantity: p.stocks[0]?.quantity ?? 0 }));
+  const stockByProduct = new Map(
+    ((stocksRes.data ?? []) as { productId: string; quantity: number }[]).map((s) => [s.productId, s.quantity])
+  );
+  const withStock = (products ?? []).map((p) => ({
+    ...p,
+    category: p.category as unknown as { name: string } | null,
+    quantity: stockByProduct.get(p.id as string) ?? 0,
+  }));
 
   const filtered =
     filtre === "stock-faible"
-      ? withStock.filter((p) => p.quantity > 0 && p.quantity <= p.minStock)
+      ? withStock.filter((p) => p.quantity > 0 && p.quantity <= (p.minStock as number))
       : filtre === "rupture"
         ? withStock.filter((p) => p.quantity <= 0)
         : withStock;
@@ -78,7 +81,7 @@ export default async function ProductsPage({
         </ButtonLink>
       </div>
 
-      <ProductSearchBar categories={categories} />
+      <ProductSearchBar categories={categories ?? []} />
 
       {filtered.length === 0 ? (
         <EmptyState
@@ -106,37 +109,37 @@ export default async function ProductsPage({
             </thead>
             <tbody className="divide-y divide-zinc-100">
               {filtered.map((p) => (
-                <tr key={p.id} className="hover:bg-zinc-50">
+                <tr key={p.id as string} className="hover:bg-zinc-50">
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-3">
-                      <ProductThumbnail photoUrl={p.photoUrl} name={p.name} size={40} />
+                      <ProductThumbnail photoUrl={p.photoUrl as string | null} name={p.name as string} size={40} />
                       <div className="min-w-0">
                         <Link href={`/produits/${p.id}`} className="font-medium text-zinc-900 hover:text-emerald-600">
-                          {p.name}
+                          {p.name as string}
                         </Link>
-                        {p.brand && <p className="text-xs text-zinc-400">{p.brand}</p>}
+                        {p.brand ? <p className="text-xs text-zinc-400">{p.brand as string}</p> : null}
                       </div>
                     </div>
                   </td>
-                  <td className="px-4 py-3 font-mono text-xs text-zinc-500">{p.reference}</td>
+                  <td className="px-4 py-3 font-mono text-xs text-zinc-500">{p.reference as string}</td>
                   <td className="px-4 py-3 text-zinc-600">{p.category?.name ?? "—"}</td>
                   <td className="px-4 py-3 text-right font-medium text-zinc-900">
-                    {formatMoney(p.salePrice, user.business.currency)}
+                    {formatMoney(p.salePrice as number, user.business.currency)}
                   </td>
                   <td className="px-4 py-3 text-right text-zinc-700">
-                    {p.quantity} {p.unit}
+                    {p.quantity} {p.unit as string}
                   </td>
                   <td className="px-4 py-3">
                     {p.quantity <= 0 ? (
                       <Badge tone="red">Rupture</Badge>
-                    ) : p.quantity <= p.minStock ? (
+                    ) : p.quantity <= (p.minStock as number) ? (
                       <Badge tone="amber">Stock faible</Badge>
                     ) : (
                       <Badge tone="emerald">En stock</Badge>
                     )}
                   </td>
                   <td className="px-4 py-3 text-right">
-                    <ProductRowMenu productId={p.id} />
+                    <ProductRowMenu productId={p.id as string} />
                   </td>
                 </tr>
               ))}
