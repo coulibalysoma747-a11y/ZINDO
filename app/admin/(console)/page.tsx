@@ -1,33 +1,48 @@
 import Link from "next/link";
 import { Store, Users, ShoppingCart, ShieldOff, LifeBuoy } from "lucide-react";
-import { prisma } from "@/lib/prisma";
+import { supabase } from "@/lib/supabase";
 import { formatDateTime } from "@/lib/format";
 import { Card, CardBody, CardHeader } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 
 export default async function AdminDashboardPage() {
-  const [businessCount, userCount, saleCount, suspendedCount, openTicketCount, recentBusinesses] =
-    await Promise.all([
-      prisma.business.count(),
-      prisma.user.count(),
-      prisma.sale.count(),
-      prisma.business.count({ where: { suspended: true } }),
-      prisma.supportTicket.count({ where: { status: { not: "RESOLU" } } }),
-      prisma.business.findMany({
-        orderBy: { createdAt: "desc" },
-        take: 8,
-        include: { _count: { select: { users: true } } },
-      }),
-    ]);
+  const [
+    { count: businessCount },
+    { count: userCount },
+    { count: saleCount },
+    { count: suspendedCount },
+    { count: openTicketCount },
+    { data: recentBusinessesRaw },
+  ] = await Promise.all([
+    supabase.from("businesses").select("*", { count: "exact", head: true }),
+    supabase.from("users").select("*", { count: "exact", head: true }),
+    supabase.from("sales").select("*", { count: "exact", head: true }),
+    supabase.from("businesses").select("*", { count: "exact", head: true }).eq("suspended", true),
+    supabase.from("support_tickets").select("*", { count: "exact", head: true }).neq("status", "RESOLU"),
+    supabase
+      .from("businesses")
+      .select("id, name, plan, suspended, createdAt:created_at, users(count)")
+      .order("created_at", { ascending: false })
+      .limit(8),
+  ]);
+
+  const recentBusinesses = (recentBusinessesRaw ?? []) as unknown as {
+    id: string;
+    name: string;
+    plan: string;
+    suspended: boolean;
+    createdAt: string;
+    users: { count: number }[];
+  }[];
 
   const stats = [
-    { label: "Commerçants", value: businessCount, icon: Store, tone: "text-zindo-orange-600 bg-zindo-orange-50" },
-    { label: "Utilisateurs", value: userCount, icon: Users, tone: "text-zindo-navy-700 bg-zindo-navy-50" },
-    { label: "Ventes enregistrées", value: saleCount, icon: ShoppingCart, tone: "text-emerald-600 bg-emerald-50" },
-    { label: "Commerces suspendus", value: suspendedCount, icon: ShieldOff, tone: "text-red-600 bg-red-50" },
+    { label: "Commerçants", value: businessCount ?? 0, icon: Store, tone: "text-zindo-orange-600 bg-zindo-orange-50" },
+    { label: "Utilisateurs", value: userCount ?? 0, icon: Users, tone: "text-zindo-navy-700 bg-zindo-navy-50" },
+    { label: "Ventes enregistrées", value: saleCount ?? 0, icon: ShoppingCart, tone: "text-emerald-600 bg-emerald-50" },
+    { label: "Commerces suspendus", value: suspendedCount ?? 0, icon: ShieldOff, tone: "text-red-600 bg-red-50" },
     {
       label: "Support à traiter",
-      value: openTicketCount,
+      value: openTicketCount ?? 0,
       icon: LifeBuoy,
       tone: "text-amber-600 bg-amber-50",
       href: "/admin/support",
@@ -90,7 +105,7 @@ export default async function AdminDashboardPage() {
                         {b.name}
                       </Link>
                     </td>
-                    <td className="px-4 py-2 text-zinc-600">{b._count.users}</td>
+                    <td className="px-4 py-2 text-zinc-600">{b.users?.[0]?.count ?? 0}</td>
                     <td className="px-4 py-2 text-zinc-600">{b.plan}</td>
                     <td className="px-4 py-2">
                       {b.suspended ? <Badge tone="red">Suspendu</Badge> : <Badge tone="emerald">Actif</Badge>}

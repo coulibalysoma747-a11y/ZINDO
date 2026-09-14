@@ -4,7 +4,7 @@ import { z } from "zod";
 import { redirect } from "next/navigation";
 import { headers } from "next/headers";
 import bcrypt from "bcryptjs";
-import { prisma } from "@/lib/prisma";
+import { supabase } from "@/lib/supabase";
 import { createAdminSession, destroyAdminSession } from "@/lib/adminSession";
 import { requireSuperAdmin } from "@/lib/superadmin-auth";
 
@@ -17,15 +17,13 @@ async function logLoginEvent(params: {
   const headerList = await headers();
   const ipAddress = headerList.get("x-forwarded-for")?.split(",")[0]?.trim() ?? null;
   const userAgent = headerList.get("user-agent");
-  await prisma.superAdminLoginEvent.create({
-    data: {
-      email: params.email,
-      success: params.success,
-      superAdminId: params.superAdminId,
-      actorName: params.actorName,
-      ipAddress,
-      userAgent,
-    },
+  await supabase.from("super_admin_login_events").insert({
+    email: params.email,
+    success: params.success,
+    super_admin_id: params.superAdminId ?? null,
+    actor_name: params.actorName ?? null,
+    ip_address: ipAddress,
+    user_agent: userAgent,
   });
 }
 
@@ -47,20 +45,24 @@ export async function superAdminLoginAction(
   if (!parsed.success) return { error: parsed.error.issues[0]?.message };
 
   const email = parsed.data.email.toLowerCase();
-  const admin = await prisma.superAdmin.findUnique({ where: { email } });
+  const { data: admin } = await supabase
+    .from("super_admins")
+    .select("id, email, passwordHash:password_hash, name, role")
+    .eq("email", email)
+    .maybeSingle();
   if (!admin) {
     await logLoginEvent({ email, success: false });
     return { error: "Identifiants incorrects" };
   }
 
-  const valid = await bcrypt.compare(parsed.data.password, admin.passwordHash);
+  const valid = await bcrypt.compare(parsed.data.password, admin.passwordHash as string);
   if (!valid) {
-    await logLoginEvent({ email, success: false, superAdminId: admin.id, actorName: admin.name });
+    await logLoginEvent({ email, success: false, superAdminId: admin.id as string, actorName: admin.name as string });
     return { error: "Identifiants incorrects" };
   }
 
-  await logLoginEvent({ email, success: true, superAdminId: admin.id, actorName: admin.name });
-  await createAdminSession({ adminId: admin.id });
+  await logLoginEvent({ email, success: true, superAdminId: admin.id as string, actorName: admin.name as string });
+  await createAdminSession({ adminId: admin.id as string });
   redirect("/admin");
 }
 
@@ -89,16 +91,16 @@ export async function updateSuperAdminProfileAction(
   });
   if (!parsed.success) return { error: parsed.error.issues[0]?.message };
 
-  const valid = await bcrypt.compare(parsed.data.currentPassword, admin.passwordHash);
+  const valid = await bcrypt.compare(parsed.data.currentPassword, admin.passwordHash as string);
   if (!valid) return { error: "Mot de passe actuel incorrect" };
 
   const email = parsed.data.email.toLowerCase();
   if (email !== admin.email) {
-    const existing = await prisma.superAdmin.findUnique({ where: { email } });
+    const { data: existing } = await supabase.from("super_admins").select("id").eq("email", email).maybeSingle();
     if (existing) return { error: "Cet e-mail est déjà utilisé" };
   }
 
-  const data: { name: string; email: string; passwordHash?: string } = {
+  const update: { name: string; email: string; password_hash?: string } = {
     name: parsed.data.name,
     email,
   };
@@ -106,10 +108,10 @@ export async function updateSuperAdminProfileAction(
     if (parsed.data.newPassword.length < 8) {
       return { error: "Le nouveau code d'accès doit contenir au moins 8 caractères" };
     }
-    data.passwordHash = await bcrypt.hash(parsed.data.newPassword, 10);
+    update.password_hash = await bcrypt.hash(parsed.data.newPassword, 10);
   }
 
-  await prisma.superAdmin.update({ where: { id: admin.id }, data });
+  await supabase.from("super_admins").update(update).eq("id", admin.id);
 
   return { success: "Profil mis à jour" };
 }

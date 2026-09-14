@@ -1,9 +1,9 @@
 import { defineConfig, env } from "prisma/config";
 
 try {
-  process.loadEnvFile(".env");
+  process.loadEnvFile(".env.local");
 } catch {
-  // .env absent — les variables sont déjà fournies par l'environnement
+  // .env.local absent — les variables sont déjà fournies par l'environnement
 }
 
 // Les commandes CLI (db push, migrate, studio) utilisent la connexion directe

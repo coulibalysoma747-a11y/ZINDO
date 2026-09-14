@@ -3,8 +3,9 @@
 import { z } from "zod";
 import bcrypt from "bcryptjs";
 import { redirect } from "next/navigation";
-import { prisma } from "@/lib/prisma";
+import { supabase } from "@/lib/supabase";
 import { createSession, destroySession } from "@/lib/session";
+import type { Role } from "@/lib/db-types";
 
 export type ActionState = { error?: string } | undefined;
 
@@ -26,25 +27,25 @@ export async function loginAction(
   }
   const { identifier, password } = parsed.data;
 
-  const user = await prisma.user.findFirst({
-    where: {
-      OR: [{ phone: identifier }, { email: identifier }],
-    },
-  });
+  const { data: user } = await supabase
+    .from("users")
+    .select("id, businessId:business_id, role, active, passwordHash:password_hash")
+    .or(`phone.eq.${identifier},email.eq.${identifier}`)
+    .maybeSingle();
 
   if (!user || !user.active) {
     return { error: "Identifiants incorrects" };
   }
 
-  const valid = await bcrypt.compare(password, user.passwordHash);
+  const valid = await bcrypt.compare(password, user.passwordHash as string);
   if (!valid) {
     return { error: "Identifiants incorrects" };
   }
 
   await createSession({
-    userId: user.id,
-    businessId: user.businessId,
-    role: user.role,
+    userId: user.id as string,
+    businessId: user.businessId as string,
+    role: user.role as string,
   });
 
   redirect("/dashboard");
@@ -80,69 +81,29 @@ export async function registerAction(
 
   const { firstName, lastName, phone, email, password, businessName, city } = parsed.data;
 
-  const existing = await prisma.user.findFirst({ where: { phone } });
+  const { data: existing } = await supabase.from("users").select("id").eq("phone", phone).maybeSingle();
   if (existing) {
     return { error: "Ce numéro de téléphone est déjà utilisé" };
   }
 
   const passwordHash = await bcrypt.hash(password, 10);
 
-  const { userId, businessId, role } = await prisma.$transaction(async (tx) => {
-    const business = await tx.business.create({
-      data: {
-        name: businessName,
-        city,
-      },
-    });
-
-    const user = await tx.user.create({
-      data: {
-        businessId: business.id,
-        firstName,
-        lastName,
-        phone,
-        email: email || undefined,
-        passwordHash,
-        role: "ADMIN",
-      },
-    });
-
-    await tx.paymentMethodConfig.createMany({
-      data: [
-        { businessId: business.id, method: "ESPECES", label: "Espèces" },
-        { businessId: business.id, method: "MOBILE_MONEY", label: "Mobile Money" },
-        { businessId: business.id, method: "CARTE", label: "Carte bancaire" },
-        { businessId: business.id, method: "CREDIT", label: "Crédit" },
-      ],
-    });
-
-    await tx.category.createMany({
-      data: [
-        { businessId: business.id, name: "Général" },
-      ],
-    });
-
-    await tx.location.create({
-      data: {
-        businessId: business.id,
-        name: "Boutique principale",
-        type: "BOUTIQUE",
-        city,
-        isDefault: true,
-      },
-    });
-
-    const freePlan = await tx.subscriptionPlan.findUnique({ where: { key: "gratuit" } });
-    if (freePlan) {
-      await tx.businessSubscription.create({
-        data: { businessId: business.id, planId: freePlan.id, billingCycle: "MONTHLY", status: "ACTIVE" },
-      });
-    }
-
-    return { userId: user.id, businessId: business.id, role: user.role };
+  const { data, error } = await supabase.rpc("register_business", {
+    p_business_name: businessName,
+    p_city: city ?? null,
+    p_first_name: firstName,
+    p_last_name: lastName,
+    p_phone: phone,
+    p_email: email ?? "",
+    p_password_hash: passwordHash,
   });
 
-  await createSession({ userId, businessId, role });
+  if (error || !data || data.length === 0) {
+    return { error: "Impossible de créer le compte. Réessayez." };
+  }
+
+  const row = data[0] as { user_id: string; business_id: string; role: string };
+  await createSession({ userId: row.user_id, businessId: row.business_id, role: row.role as Role });
   redirect("/dashboard");
 }
 

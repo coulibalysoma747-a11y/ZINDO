@@ -1,13 +1,21 @@
 import "server-only";
 import { redirect } from "next/navigation";
-import { prisma } from "@/lib/prisma";
+import { supabase } from "@/lib/supabase";
 import { getAdminSession } from "@/lib/adminSession";
+
+const SUPER_ADMIN_SELECT =
+  "id, email, passwordHash:password_hash, name, role, createdAt:created_at, updatedAt:updated_at";
 
 export async function getCurrentSuperAdmin() {
   const session = await getAdminSession();
   if (!session) return null;
 
-  const admin = await prisma.superAdmin.findUnique({ where: { id: session.adminId } });
+  const { data: admin } = await supabase
+    .from("super_admins")
+    .select(SUPER_ADMIN_SELECT)
+    .eq("id", session.adminId)
+    .maybeSingle();
+
   return admin;
 }
 

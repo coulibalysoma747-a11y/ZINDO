@@ -1,25 +1,81 @@
 import "server-only";
 import { redirect } from "next/navigation";
-import { prisma } from "@/lib/prisma";
+import { supabase } from "@/lib/supabase";
 import { getSession } from "@/lib/session";
 import {
   DEFAULT_ROLE_PERMISSIONS,
   type Permission,
 } from "@/lib/permissions";
-import type { Role } from "@prisma/client";
+import type { Role } from "@/lib/db-types";
+
+const USER_SELECT =
+  "id, businessId:business_id, firstName:first_name, lastName:last_name, phone, email, passwordHash:password_hash, role, active, theme, autoPrintReceipt:auto_print_receipt, printerTicketWidth:printer_ticket_width, createdAt:created_at, updatedAt:updated_at, " +
+  "business:businesses(id, name, activity, activityKey:activity_key, logoUrl:logo_url, phone, email, address, city, country, currency, ticketWidth:ticket_width, ticketFooter:ticket_footer, qrCodeSize:qr_code_size, defaultMinStock:default_min_stock, plan, suspended, nextProductSeq:next_product_seq, nextSaleSeq:next_sale_seq, nextPurchaseSeq:next_purchase_seq, nextTransferSeq:next_transfer_seq, nextSessionSeq:next_session_seq, nextOnlineOrderSeq:next_online_order_seq, nextInvoiceSeq:next_invoice_seq, createdAt:created_at, updatedAt:updated_at)";
 
 export async function getCurrentUser() {
   const session = await getSession();
   if (!session) return null;
 
-  const user = await prisma.user.findUnique({
-    where: { id: session.userId },
-    include: { business: true },
-  });
+  const { data } = await supabase
+    .from("users")
+    .select(USER_SELECT)
+    .eq("id", session.userId)
+    .maybeSingle();
 
+  const user = data as unknown as Awaited<ReturnType<typeof loadUserType>> | null;
   if (!user || !user.active) return null;
   return user;
 }
+
+// Type helper uniquement — ne s'exécute jamais.
+async function loadUserType() {
+  return null as unknown as {
+    id: string;
+    businessId: string;
+    firstName: string;
+    lastName: string;
+    phone: string;
+    email: string | null;
+    passwordHash: string;
+    role: Role;
+    active: boolean;
+    theme: string;
+    autoPrintReceipt: boolean;
+    printerTicketWidth: string | null;
+    createdAt: string;
+    updatedAt: string;
+    business: {
+      id: string;
+      name: string;
+      activity: string | null;
+      activityKey: string | null;
+      logoUrl: string | null;
+      phone: string | null;
+      email: string | null;
+      address: string | null;
+      city: string | null;
+      country: string;
+      currency: string;
+      ticketWidth: string;
+      ticketFooter: string;
+      qrCodeSize: number;
+      defaultMinStock: number;
+      plan: string;
+      suspended: boolean;
+      nextProductSeq: number;
+      nextSaleSeq: number;
+      nextPurchaseSeq: number;
+      nextTransferSeq: number;
+      nextSessionSeq: number;
+      nextOnlineOrderSeq: number;
+      nextInvoiceSeq: number;
+      createdAt: string;
+      updatedAt: string;
+    };
+  };
+}
+
+export type CurrentUser = NonNullable<Awaited<ReturnType<typeof getCurrentUser>>>;
 
 /**
  * Vérifie la connexion et la suspension, sans forcer le choix d'activité —
@@ -58,23 +114,33 @@ export async function hasPermission(
   userId?: string
 ) {
   if (userId) {
-    const userOverride = await prisma.userPermission.findUnique({
-      where: { userId_permission: { userId, permission } },
-    });
+    const { data: userOverride } = await supabase
+      .from("user_permissions")
+      .select("allowed")
+      .eq("user_id", userId)
+      .eq("permission", permission)
+      .maybeSingle();
     if (userOverride) return userOverride.allowed;
   }
 
-  const override = await prisma.rolePermission.findUnique({
-    where: { businessId_role_permission: { businessId, role, permission } },
-  });
+  const { data: override } = await supabase
+    .from("role_permissions")
+    .select("allowed")
+    .eq("business_id", businessId)
+    .eq("role", role)
+    .eq("permission", permission)
+    .maybeSingle();
   if (override) return override.allowed;
 
-  // Personnalisation par défaut définie par l'administrateur de la plateforme
-  // (console /admin), appliquée à tous les commerces qui n'ont pas leur propre
-  // override — sinon on retombe sur la matrice codée en dur.
-  const globalOverride = await prisma.globalRolePermission.findUnique({
-    where: { role_permission: { role, permission } },
-  });
+  // Personnalisation par défaut définie par l'administrateur de la
+  // plateforme (console /admin), appliquée à tous les commerces qui n'ont pas
+  // leur propre override — sinon on retombe sur la matrice codée en dur.
+  const { data: globalOverride } = await supabase
+    .from("global_role_permissions")
+    .select("allowed")
+    .eq("role", role)
+    .eq("permission", permission)
+    .maybeSingle();
   if (globalOverride) return globalOverride.allowed;
 
   return DEFAULT_ROLE_PERMISSIONS[role].includes(permission);
