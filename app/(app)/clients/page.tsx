@@ -1,13 +1,20 @@
 import Link from "next/link";
 import { requirePermission, hasPermission } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
-import { prisma } from "@/lib/prisma";
+import { supabase } from "@/lib/supabase";
 import { formatMoney } from "@/lib/format";
 import { getActivityConfig, resolveTerm } from "@/lib/activity-config";
 import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { EmptyState } from "@/components/ui/Empty";
 import { ClientManager } from "./ClientManager";
+
+type CustomerRow = {
+  id: string;
+  name: string;
+  phone: string | null;
+  sales: Array<{ total: number; amountPaid: number; status: string }>;
+};
 
 export default async function CustomersPage() {
   const user = await requirePermission(PERMISSIONS.CUSTOMERS_VIEW);
@@ -18,11 +25,12 @@ export default async function CustomersPage() {
   ]);
   const clientsLabel = resolveTerm(activityConfig, "clients");
 
-  const customers = await prisma.customer.findMany({
-    where: { businessId: user.businessId },
-    include: { sales: { select: { total: true, amountPaid: true, status: true } } },
-    orderBy: { name: "asc" },
-  });
+  const { data } = await supabase
+    .from("customers")
+    .select("id, name, phone, sales(total, amountPaid:amount_paid, status)")
+    .eq("business_id", user.businessId)
+    .order("name", { ascending: true });
+  const customers = (data ?? []) as unknown as CustomerRow[];
 
   const currency = user.business.currency;
 
@@ -31,7 +39,9 @@ export default async function CustomersPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-xl font-bold text-zinc-900">{clientsLabel}</h1>
-          <p className="text-sm text-zinc-500">{customers.length} {clientsLabel.toLowerCase()}</p>
+          <p className="text-sm text-zinc-500">
+            {customers.length} {clientsLabel.toLowerCase()}
+          </p>
         </div>
         {canManage && <ClientManager />}
       </div>

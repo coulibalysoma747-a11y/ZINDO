@@ -2,7 +2,7 @@
 
 import { z } from "zod";
 import { revalidatePath } from "next/cache";
-import { prisma } from "@/lib/prisma";
+import { supabase } from "@/lib/supabase";
 import { requirePermission } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
 import { logAction } from "@/lib/audit";
@@ -35,15 +35,29 @@ export async function createCustomerAction(
   const parsed = parse(formData);
   if (!parsed.success) return { error: parsed.error.issues[0]?.message };
 
-  const customer = await prisma.customer.create({
-    data: { businessId: user.businessId, ...parsed.data, email: parsed.data.email || undefined },
-  });
+  const { data: customer, error } = await supabase
+    .from("customers")
+    .insert({
+      business_id: user.businessId,
+      name: parsed.data.name,
+      phone: parsed.data.phone ?? null,
+      email: parsed.data.email || null,
+      address: parsed.data.address ?? null,
+      credit_limit: parsed.data.creditLimit,
+    })
+    .select("id")
+    .single();
+  if (error || !customer) {
+    console.error("[createCustomerAction] Échec de la création :", error?.message);
+    return { error: "Impossible de créer le client" };
+  }
+
   await logAction({
     businessId: user.businessId,
     userId: user.id,
     action: "CREATE",
     entity: "Customer",
-    entityId: customer.id,
+    entityId: customer.id as string,
   });
 
   revalidatePath("/clients");
@@ -59,13 +73,28 @@ export async function updateCustomerAction(
   const parsed = parse(formData);
   if (!parsed.success) return { error: parsed.error.issues[0]?.message };
 
-  const customer = await prisma.customer.findFirst({ where: { id, businessId: user.businessId } });
+  const { data: customer } = await supabase
+    .from("customers")
+    .select("id")
+    .eq("id", id)
+    .eq("business_id", user.businessId)
+    .maybeSingle();
   if (!customer) return { error: "Client introuvable" };
 
-  await prisma.customer.update({
-    where: { id },
-    data: { ...parsed.data, email: parsed.data.email || undefined },
-  });
+  const { error } = await supabase
+    .from("customers")
+    .update({
+      name: parsed.data.name,
+      phone: parsed.data.phone ?? null,
+      email: parsed.data.email || null,
+      address: parsed.data.address ?? null,
+      credit_limit: parsed.data.creditLimit,
+    })
+    .eq("id", id);
+  if (error) {
+    console.error("[updateCustomerAction] Échec de la mise à jour :", error.message);
+    return { error: "Impossible de mettre à jour le client" };
+  }
 
   revalidatePath("/clients");
   revalidatePath(`/clients/${id}`);
@@ -74,15 +103,28 @@ export async function updateCustomerAction(
 
 export async function deleteCustomerAction(id: string) {
   const user = await requirePermission(PERMISSIONS.CUSTOMERS_MANAGE);
-  const customer = await prisma.customer.findFirst({ where: { id, businessId: user.businessId } });
+  const { data: customer } = await supabase
+    .from("customers")
+    .select("id")
+    .eq("id", id)
+    .eq("business_id", user.businessId)
+    .maybeSingle();
   if (!customer) return { error: "Client introuvable" };
 
-  const saleCount = await prisma.sale.count({ where: { customerId: id } });
-  if (saleCount > 0) {
+  const { count: saleCount } = await supabase
+    .from("sales")
+    .select("id", { count: "exact", head: true })
+    .eq("customer_id", id);
+  if (saleCount && saleCount > 0) {
     return { error: "Impossible de supprimer : ce client a des ventes enregistrées" };
   }
 
-  await prisma.customer.delete({ where: { id } });
+  const { error } = await supabase.from("customers").delete().eq("id", id);
+  if (error) {
+    console.error("[deleteCustomerAction] Échec de la suppression :", error.message);
+    return { error: "Impossible de supprimer le client" };
+  }
+
   revalidatePath("/clients");
   return { success: "Client supprimé" };
 }
@@ -94,24 +136,27 @@ export async function recordCustomerPaymentAction(
   const user = await requirePermission(PERMISSIONS.CUSTOMERS_MANAGE);
   const customerId = String(formData.get("customerId"));
   const amount = Number(formData.get("amount"));
-  const method = String(formData.get("method") || "ESPECES") as
-    | "ESPECES"
-    | "MOBILE_MONEY"
-    | "CARTE"
-    | "CREDIT"
-    | "AUTRE";
-  const note = String(formData.get("note") || "") || undefined;
+  const method = String(formData.get("method") || "ESPECES");
+  const note = String(formData.get("note") || "") || null;
 
   if (!amount || amount <= 0) return { error: "Montant invalide" };
 
-  const customer = await prisma.customer.findFirst({
-    where: { id: customerId, businessId: user.businessId },
-  });
+  const { data: customer } = await supabase
+    .from("customers")
+    .select("id")
+    .eq("id", customerId)
+    .eq("business_id", user.businessId)
+    .maybeSingle();
   if (!customer) return { error: "Client introuvable" };
 
-  await prisma.customerPayment.create({
-    data: { customerId, amount, method, note, userId: user.id },
-  });
+  const { error } = await supabase
+    .from("customer_payments")
+    .insert({ customer_id: customerId, amount, method, note, user_id: user.id });
+  if (error) {
+    console.error("[recordCustomerPaymentAction] Échec de l'enregistrement :", error.message);
+    return { error: "Impossible d'enregistrer le paiement" };
+  }
+
   await logAction({
     businessId: user.businessId,
     userId: user.id,

@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { requirePermission } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
-import { prisma } from "@/lib/prisma";
+import { supabase } from "@/lib/supabase";
 import { getActivityConfig, resolveTerm } from "@/lib/activity-config";
 import { Card } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/Empty";
@@ -10,11 +10,8 @@ import { SupplierManager } from "./SupplierManager";
 export default async function SuppliersPage() {
   const user = await requirePermission(PERMISSIONS.SUPPLIERS_MANAGE);
 
-  const [suppliers, activityConfig] = await Promise.all([
-    prisma.supplier.findMany({
-      where: { businessId: user.businessId },
-      orderBy: { name: "asc" },
-    }),
+  const [{ data: suppliers }, activityConfig] = await Promise.all([
+    supabase.from("suppliers").select("id, name, company, phone, address").eq("business_id", user.businessId).order("name", { ascending: true }),
     getActivityConfig(user.business.activityKey),
   ]);
   const suppliersLabel = resolveTerm(activityConfig, "suppliers");
@@ -24,12 +21,14 @@ export default async function SuppliersPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-xl font-bold text-zinc-900">{suppliersLabel}</h1>
-          <p className="text-sm text-zinc-500">{suppliers.length} {suppliersLabel.toLowerCase()}</p>
+          <p className="text-sm text-zinc-500">
+            {(suppliers ?? []).length} {suppliersLabel.toLowerCase()}
+          </p>
         </div>
         <SupplierManager mode="create-only" />
       </div>
 
-      {suppliers.length === 0 ? (
+      {(suppliers ?? []).length === 0 ? (
         <EmptyState title="Aucun fournisseur" description="Ajoutez votre premier fournisseur." />
       ) : (
         <Card className="overflow-x-auto">
@@ -43,16 +42,16 @@ export default async function SuppliersPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-zinc-100">
-              {suppliers.map((s) => (
-                <tr key={s.id} className="hover:bg-zinc-50">
+              {(suppliers ?? []).map((s) => (
+                <tr key={s.id as string} className="hover:bg-zinc-50">
                   <td className="px-4 py-3">
                     <Link href={`/fournisseurs/${s.id}`} className="font-medium text-zinc-900 hover:text-emerald-600">
-                      {s.name}
+                      {s.name as string}
                     </Link>
                   </td>
-                  <td className="px-4 py-3 text-zinc-600">{s.company ?? "—"}</td>
-                  <td className="px-4 py-3 text-zinc-600">{s.phone ?? "—"}</td>
-                  <td className="px-4 py-3 text-zinc-600">{s.address ?? "—"}</td>
+                  <td className="px-4 py-3 text-zinc-600">{(s.company as string | null) ?? "—"}</td>
+                  <td className="px-4 py-3 text-zinc-600">{(s.phone as string | null) ?? "—"}</td>
+                  <td className="px-4 py-3 text-zinc-600">{(s.address as string | null) ?? "—"}</td>
                 </tr>
               ))}
             </tbody>

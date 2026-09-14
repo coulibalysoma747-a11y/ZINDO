@@ -3,12 +3,24 @@ import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { requirePermission } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
-import { prisma } from "@/lib/prisma";
+import { supabase } from "@/lib/supabase";
 import { formatMoney, formatDate } from "@/lib/format";
 import { Card, CardBody, CardHeader } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/Empty";
 import { Badge } from "@/components/ui/Badge";
 import { SupplierEditButton } from "./SupplierEditButton";
+
+type SupplierRow = {
+  id: string;
+  name: string;
+  company: string | null;
+  phone: string | null;
+  email: string | null;
+  address: string | null;
+  notes: string | null;
+};
+type PurchaseRow = { id: string; number: string; createdAt: string; status: string; total: number; amountPaid: number };
+type PaymentRow = { id: string; createdAt: string; method: string; amount: number };
 
 export default async function SupplierDetailPage({
   params,
@@ -18,14 +30,26 @@ export default async function SupplierDetailPage({
   const user = await requirePermission(PERMISSIONS.SUPPLIERS_MANAGE);
   const { id } = await params;
 
-  const supplier = await prisma.supplier.findFirst({ where: { id, businessId: user.businessId } });
-  if (!supplier) notFound();
+  const { data: supplierRow } = await supabase
+    .from("suppliers")
+    .select("id, name, company, phone, email, address, notes")
+    .eq("id", id)
+    .eq("business_id", user.businessId)
+    .maybeSingle();
+  if (!supplierRow) notFound();
+  const supplier = supplierRow as unknown as SupplierRow;
 
-  const [purchases, payments, products] = await Promise.all([
-    prisma.purchase.findMany({ where: { supplierId: id }, orderBy: { createdAt: "desc" } }),
-    prisma.supplierPayment.findMany({ where: { supplierId: id }, orderBy: { createdAt: "desc" } }),
-    prisma.product.findMany({ where: { supplierId: id }, select: { id: true, name: true } }),
+  const [{ data: purchasesData }, { data: paymentsData }, { data: products }] = await Promise.all([
+    supabase
+      .from("purchases")
+      .select("id, number, createdAt:created_at, status, total, amountPaid:amount_paid")
+      .eq("supplier_id", id)
+      .order("created_at", { ascending: false }),
+    supabase.from("supplier_payments").select("id, createdAt:created_at, method, amount").eq("supplier_id", id).order("created_at", { ascending: false }),
+    supabase.from("products").select("id, name").eq("supplier_id", id),
   ]);
+  const purchases = (purchasesData ?? []) as unknown as PurchaseRow[];
+  const payments = (paymentsData ?? []) as unknown as PaymentRow[];
 
   const currency = user.business.currency;
   const totalPurchased = purchases.reduce((s, p) => s + p.total, 0);
@@ -88,7 +112,7 @@ export default async function SupplierDetailPage({
           <div className="col-span-full">
             <p className="text-zinc-400">Produits fournis</p>
             <p className="font-medium text-zinc-900">
-              {products.length === 0 ? "—" : products.map((p) => p.name).join(", ")}
+              {(products ?? []).length === 0 ? "—" : (products ?? []).map((p) => p.name as string).join(", ")}
             </p>
           </div>
         </CardBody>
@@ -122,7 +146,7 @@ export default async function SupplierDetailPage({
                         {p.number}
                       </Link>
                     </td>
-                    <td className="px-4 py-2 text-zinc-600">{formatDate(p.createdAt)}</td>
+                    <td className="px-4 py-2 text-zinc-600">{formatDate(new Date(p.createdAt))}</td>
                     <td className="px-4 py-2">
                       <Badge tone={p.status === "RECUE" ? "emerald" : "amber"}>{p.status}</Badge>
                     </td>
@@ -144,7 +168,9 @@ export default async function SupplierDetailPage({
           <CardBody className="space-y-2">
             {payments.map((p) => (
               <div key={p.id} className="flex justify-between text-sm">
-                <span className="text-zinc-600">{formatDate(p.createdAt)} · {p.method}</span>
+                <span className="text-zinc-600">
+                  {formatDate(new Date(p.createdAt))} · {p.method}
+                </span>
                 <span className="font-medium text-zinc-900">{formatMoney(p.amount, currency)}</span>
               </div>
             ))}

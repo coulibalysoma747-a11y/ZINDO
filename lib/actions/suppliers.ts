@@ -2,7 +2,7 @@
 
 import { z } from "zod";
 import { revalidatePath } from "next/cache";
-import { prisma } from "@/lib/prisma";
+import { supabase } from "@/lib/supabase";
 import { requirePermission } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
 import { logAction } from "@/lib/audit";
@@ -37,15 +37,30 @@ export async function createSupplierAction(
   const parsed = parse(formData);
   if (!parsed.success) return { error: parsed.error.issues[0]?.message };
 
-  const supplier = await prisma.supplier.create({
-    data: { businessId: user.businessId, ...parsed.data, email: parsed.data.email || undefined },
-  });
+  const { data: supplier, error } = await supabase
+    .from("suppliers")
+    .insert({
+      business_id: user.businessId,
+      name: parsed.data.name,
+      company: parsed.data.company ?? null,
+      phone: parsed.data.phone ?? null,
+      email: parsed.data.email || null,
+      address: parsed.data.address ?? null,
+      notes: parsed.data.notes ?? null,
+    })
+    .select("id")
+    .single();
+  if (error || !supplier) {
+    console.error("[createSupplierAction] Échec de la création :", error?.message);
+    return { error: "Impossible de créer le fournisseur" };
+  }
+
   await logAction({
     businessId: user.businessId,
     userId: user.id,
     action: "CREATE",
     entity: "Supplier",
-    entityId: supplier.id,
+    entityId: supplier.id as string,
   });
 
   revalidatePath("/fournisseurs");
@@ -61,13 +76,30 @@ export async function updateSupplierAction(
   const parsed = parse(formData);
   if (!parsed.success) return { error: parsed.error.issues[0]?.message };
 
-  const supplier = await prisma.supplier.findFirst({ where: { id, businessId: user.businessId } });
+  const { data: supplier } = await supabase
+    .from("suppliers")
+    .select("id")
+    .eq("id", id)
+    .eq("business_id", user.businessId)
+    .maybeSingle();
   if (!supplier) return { error: "Fournisseur introuvable" };
 
-  await prisma.supplier.update({
-    where: { id },
-    data: { ...parsed.data, email: parsed.data.email || undefined },
-  });
+  const { error } = await supabase
+    .from("suppliers")
+    .update({
+      name: parsed.data.name,
+      company: parsed.data.company ?? null,
+      phone: parsed.data.phone ?? null,
+      email: parsed.data.email || null,
+      address: parsed.data.address ?? null,
+      notes: parsed.data.notes ?? null,
+    })
+    .eq("id", id);
+  if (error) {
+    console.error("[updateSupplierAction] Échec de la mise à jour :", error.message);
+    return { error: "Impossible de mettre à jour le fournisseur" };
+  }
+
   await logAction({
     businessId: user.businessId,
     userId: user.id,
@@ -83,16 +115,28 @@ export async function updateSupplierAction(
 
 export async function deleteSupplierAction(id: string) {
   const user = await requirePermission(PERMISSIONS.SUPPLIERS_MANAGE);
-  const supplier = await prisma.supplier.findFirst({ where: { id, businessId: user.businessId } });
+  const { data: supplier } = await supabase
+    .from("suppliers")
+    .select("id")
+    .eq("id", id)
+    .eq("business_id", user.businessId)
+    .maybeSingle();
   if (!supplier) return { error: "Fournisseur introuvable" };
 
-  const productCount = await prisma.product.count({ where: { supplierId: id } });
-  const purchaseCount = await prisma.purchase.count({ where: { supplierId: id } });
-  if (productCount > 0 || purchaseCount > 0) {
+  const [{ count: productCount }, { count: purchaseCount }] = await Promise.all([
+    supabase.from("products").select("id", { count: "exact", head: true }).eq("supplier_id", id),
+    supabase.from("purchases").select("id", { count: "exact", head: true }).eq("supplier_id", id),
+  ]);
+  if ((productCount ?? 0) > 0 || (purchaseCount ?? 0) > 0) {
     return { error: "Impossible de supprimer : ce fournisseur est lié à des produits ou achats" };
   }
 
-  await prisma.supplier.delete({ where: { id } });
+  const { error } = await supabase.from("suppliers").delete().eq("id", id);
+  if (error) {
+    console.error("[deleteSupplierAction] Échec de la suppression :", error.message);
+    return { error: "Impossible de supprimer le fournisseur" };
+  }
+
   revalidatePath("/fournisseurs");
   return { success: "Fournisseur supprimé" };
 }
