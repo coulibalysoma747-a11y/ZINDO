@@ -29,12 +29,12 @@ export function AdminSidebar({ adminName, role }: { adminName: string; role: Sup
     <aside className="sticky top-0 hidden h-screen w-64 shrink-0 flex-col justify-between border-r border-slate-800 bg-slate-950 text-slate-300 md:flex">
       <div className="min-h-0 flex-1 overflow-y-auto">
         <div className="flex items-center gap-3 border-b border-slate-800/80 p-5">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-zindo-orange-500 text-xl font-black text-white shadow-lg shadow-zindo-orange-500/20">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-zindo-green-500 text-xl font-black text-white shadow-lg shadow-zindo-green-500/20">
             Z
           </div>
           <div className="min-w-0">
             <h1 className="truncate text-lg font-extrabold tracking-wide text-white">ZINDO</h1>
-            <span className="inline-block max-w-full truncate rounded-full bg-zindo-orange-500/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-zindo-orange-400">
+            <span className="inline-block max-w-full truncate rounded-full bg-zindo-green-500/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-zindo-green-400">
               Console administrateur
             </span>
           </div>
@@ -50,11 +50,11 @@ export function AdminSidebar({ adminName, role }: { adminName: string; role: Sup
                 href={item.href}
                 className={`group flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm font-medium transition-all duration-200 ${
                   active
-                    ? "bg-zindo-orange-500 text-white shadow-md shadow-zindo-orange-500/25"
+                    ? "bg-zindo-green-500 text-white shadow-md shadow-zindo-green-500/25"
                     : "text-slate-400 hover:bg-slate-800/60 hover:text-slate-100"
                 }`}
               >
-                <Icon className={`h-4.5 w-4.5 ${active ? "text-white" : "text-slate-400 group-hover:text-zindo-orange-400"}`} />
+                <Icon className={`h-4.5 w-4.5 ${active ? "text-white" : "text-slate-400 group-hover:text-zindo-green-400"}`} />
                 <span>{item.label}</span>
               </Link>
             );

@@ -72,14 +72,14 @@ export function Facture({ data }: { data: FactureData }) {
         className="mx-auto w-full max-w-[210mm] rounded-2xl border border-zinc-200 bg-white p-10 text-zinc-800 shadow-sm"
       >
         {/* En-tête */}
-        <div className="flex items-start justify-between gap-6 border-b-2 border-zindo-navy-900 pb-6">
+        <div className="flex items-start justify-between gap-6 border-b-2 border-zindo-ink-900 pb-6">
           <div className="flex items-start gap-4">
             {data.logoUrl && (
               // eslint-disable-next-line @next/next/no-img-element
               <img src={data.logoUrl} alt={data.businessName} className="h-14 w-14 object-contain" />
             )}
             <div>
-              <p className="text-lg font-extrabold uppercase tracking-wide text-zindo-navy-900">
+              <p className="text-lg font-extrabold uppercase tracking-wide text-zindo-ink-900">
                 {data.businessName}
               </p>
               {data.locationName && <p className="text-sm text-zinc-500">{data.locationName}</p>}
@@ -92,7 +92,7 @@ export function Facture({ data }: { data: FactureData }) {
             </div>
           </div>
           <div className="text-right">
-            <p className="text-2xl font-extrabold tracking-wide text-zindo-orange-600">FACTURE</p>
+            <p className="text-2xl font-extrabold tracking-wide text-zindo-green-600">FACTURE</p>
             <p className="mt-1 text-sm text-zinc-500">
               N° <span className="font-semibold text-zinc-900">{data.invoiceNumber}</span>
             </p>
@@ -130,7 +130,7 @@ export function Facture({ data }: { data: FactureData }) {
         {/* Tableau des articles */}
         <table className="mt-8 w-full border-collapse text-sm">
           <thead>
-            <tr className="border-b-2 border-zindo-navy-900 text-left text-xs uppercase tracking-wide text-zinc-500">
+            <tr className="border-b-2 border-zindo-ink-900 text-left text-xs uppercase tracking-wide text-zinc-500">
               <th className="py-2 pr-2">Référence</th>
               <th className="py-2 pr-2">Désignation</th>
               <th className="py-2 pr-2 text-right">Qté</th>
@@ -168,7 +168,7 @@ export function Facture({ data }: { data: FactureData }) {
                 <span>-{money(data.discount)}</span>
               </div>
             )}
-            <div className="flex justify-between border-t-2 border-zindo-navy-900 pt-1.5 text-base font-extrabold text-zindo-navy-900">
+            <div className="flex justify-between border-t-2 border-zindo-ink-900 pt-1.5 text-base font-extrabold text-zindo-ink-900">
               <span>TOTAL</span>
               <span>{money(data.total)}</span>
             </div>

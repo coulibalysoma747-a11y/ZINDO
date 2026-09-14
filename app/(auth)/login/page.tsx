@@ -23,8 +23,8 @@ export default async function LoginPage({
     <div className="space-y-5 sm:space-y-6">
       <AuthCard>
         <div className="mb-6 text-center sm:text-left">
-          <h2 className="text-xl font-bold text-zindo-navy-900 sm:text-2xl">
-            Bienvenue sur <span className="text-zindo-orange-600">ZINDO</span>
+          <h2 className="text-xl font-bold text-zindo-ink-900 sm:text-2xl">
+            Bienvenue sur <span className="text-zindo-green-600">ZINDO</span>
           </h2>
           <p className="mt-1 text-sm text-zinc-500">Connectez-vous à votre compte</p>
         </div>
@@ -33,15 +33,15 @@ export default async function LoginPage({
 
       <p className="text-center text-sm text-zinc-500">
         Vous n&apos;avez pas encore de compte ?{" "}
-        <Link href="/inscription" className="font-semibold text-zindo-orange-600 hover:text-zindo-orange-700 hover:underline">
+        <Link href="/inscription" className="font-semibold text-zindo-green-600 hover:text-zindo-green-700 hover:underline">
           Créer un compte
         </Link>
       </p>
 
       <div className="flex items-center justify-center gap-2 px-4 py-2 text-center">
-        <ShieldCheck className="h-4 w-4 shrink-0 text-zindo-green-600" />
+        <ShieldCheck className="h-4 w-4 shrink-0 text-zindo-success-600" />
         <p className="text-xs text-zinc-500">
-          <span className="font-medium text-zindo-navy-700">Vos données sont protégées</span> — sécurisé et
+          <span className="font-medium text-zindo-ink-700">Vos données sont protégées</span> — sécurisé et
           confidentiel
         </p>
       </div>

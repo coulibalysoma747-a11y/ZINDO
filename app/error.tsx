@@ -32,7 +32,7 @@ export default function GlobalErrorBoundary({
             <div className="flex h-12 w-12 items-center justify-center rounded-full bg-red-50 text-red-600">
               <AlertTriangle className="h-6 w-6" />
             </div>
-            <h2 className="text-lg font-bold text-zindo-navy-900">Une erreur est survenue</h2>
+            <h2 className="text-lg font-bold text-zindo-ink-900">Une erreur est survenue</h2>
             <p className="text-sm text-zinc-500">
               La page n&apos;a pas pu s&apos;afficher. Ce n&apos;est pas forcément lié à votre connexion —
               réessayez, et si le problème persiste, contactez le support.

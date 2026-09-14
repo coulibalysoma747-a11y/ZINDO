@@ -46,7 +46,7 @@ export default async function AdminUsersPage() {
                     {u.email ? ` — ${u.email}` : ""}
                   </td>
                   <td className="px-4 py-3">
-                    <Link href={`/admin/commercants/${u.businessId}`} className="text-zindo-orange-600 hover:underline">
+                    <Link href={`/admin/commercants/${u.businessId}`} className="text-zindo-green-600 hover:underline">
                       {u.business.name}
                     </Link>
                   </td>

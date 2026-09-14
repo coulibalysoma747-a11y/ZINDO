@@ -16,28 +16,32 @@
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 
-  /* Identité visuelle ZINDO : orange brûlé (actions), bleu marine profond
-     (titres/panneaux), blanc cassé chaleureux (surfaces), vert (succès) —
-     alignée sur la palette du partenaire Faso Stock (fasostock.com). Utilisée
-     sur les écrans d'authentification, la page publique et la page Abonnement. */
-  --color-zindo-orange-50: #fdf1ec;
-  --color-zindo-orange-100: #fbddcf;
-  --color-zindo-orange-200: #f8c7ae;
-  --color-zindo-orange-300: #f3ab8c;
-  --color-zindo-orange-400: #ed8259;
-  --color-zindo-orange-500: #e85d2c;
-  --color-zindo-orange-600: #d14d1e;
-  --color-zindo-orange-700: #ad3f19;
-  --color-zindo-orange-800: #8a3214;
-  --color-zindo-navy-50: #edf0f5;
-  --color-zindo-navy-100: #dbe1ea;
-  --color-zindo-navy-200: #b8c2d6;
-  --color-zindo-navy-500: #33517d;
-  --color-zindo-navy-700: #16294a;
-  --color-zindo-navy-900: #0b1b33;
-  --color-zindo-navy-950: #071427;
+  /* Identité visuelle ZINDO : vert (actions, couleur dominante du logo), encre
+     neutre quasi noire (titres/panneaux — plus de bleu marine, le logo n'en
+     contient pas), blanc cassé chaleureux (surfaces), vert succès. Le vert
+     "zindo-green-500" est échantillonné directement sur public/brand/
+     zindo-emblem.png ; le rouge et l'or du logo restent portés par les
+     classes Tailwind standard (red-*, amber-*/yellow-*) déjà utilisées pour
+     les états danger/attention. Utilisée sur les écrans d'authentification,
+     la page publique et la page Abonnement. */
+  --color-zindo-green-50: #eefbf2;
+  --color-zindo-green-100: #d3f3dc;
+  --color-zindo-green-200: #a3e3b8;
+  --color-zindo-green-300: #6ecb8d;
+  --color-zindo-green-400: #3ba85f;
+  --color-zindo-green-500: #176d30;
+  --color-zindo-green-600: #135b28;
+  --color-zindo-green-700: #0f4a21;
+  --color-zindo-green-800: #0b3a1a;
+  --color-zindo-ink-50: #f4f4f5;
+  --color-zindo-ink-100: #e4e4e7;
+  --color-zindo-ink-200: #d4d4d8;
+  --color-zindo-ink-500: #52525b;
+  --color-zindo-ink-700: #27272a;
+  --color-zindo-ink-900: #18181b;
+  --color-zindo-ink-950: #09090b;
   --color-zindo-cream: #f8f7f5;
-  --color-zindo-green-600: #16a34a;
+  --color-zindo-success-600: #16a34a;
 
   --animate-zindo-fade-in: zindo-fade-in 0.5s ease-out both;
   --animate-zindo-fade-in-up: zindo-fade-in-up 0.55s ease-out both;

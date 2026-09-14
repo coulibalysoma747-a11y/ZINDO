@@ -147,7 +147,7 @@ export default async function AdminBusinessDetailPage({
                     <div className="flex items-center justify-end gap-2">
                       <Link
                         href={`/admin/commercants/${business.id}/utilisateurs/${u.id}`}
-                        className="rounded-lg border border-zindo-orange-200 px-2.5 py-1.5 text-xs font-medium text-zindo-orange-600 hover:bg-zindo-orange-50"
+                        className="rounded-lg border border-zindo-green-200 px-2.5 py-1.5 text-xs font-medium text-zindo-green-600 hover:bg-zindo-green-50"
                       >
                         Modules
                       </Link>

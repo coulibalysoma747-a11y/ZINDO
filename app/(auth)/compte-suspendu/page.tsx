@@ -16,7 +16,7 @@ export default async function AccountSuspendedPage() {
         <div className="flex h-12 w-12 items-center justify-center rounded-full bg-red-50 text-red-600">
           <ShieldAlert className="h-6 w-6" />
         </div>
-        <h2 className="text-lg font-bold text-zindo-navy-900">Accès suspendu</h2>
+        <h2 className="text-lg font-bold text-zindo-ink-900">Accès suspendu</h2>
         <p className="text-sm text-zinc-500">
           L&apos;accès de <span className="font-semibold text-zinc-700">{user.business.name}</span> à ZINDO a
           été temporairement suspendu par l&apos;administrateur de la plateforme. Contactez-le pour plus

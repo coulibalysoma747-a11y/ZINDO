@@ -59,7 +59,7 @@ export function OnlineStoreForm({
             name="deliveryEnabled"
             defaultChecked={store?.deliveryEnabled ?? false}
             onChange={(e) => setDeliveryEnabled(e.target.checked)}
-            className="h-4 w-4 rounded accent-zindo-orange-500"
+            className="h-4 w-4 rounded accent-zindo-green-500"
           />
           Proposer la livraison
         </label>
@@ -96,7 +96,7 @@ export function OnlineStoreForm({
           type="checkbox"
           name="published"
           defaultChecked={store?.published ?? false}
-          className="mt-0.5 h-4 w-4 rounded accent-zindo-orange-500"
+          className="mt-0.5 h-4 w-4 rounded accent-zindo-green-500"
         />
         <span>
           <span className="block text-sm font-medium text-zinc-900">Publier la boutique</span>

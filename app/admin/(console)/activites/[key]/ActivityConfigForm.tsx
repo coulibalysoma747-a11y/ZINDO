@@ -127,7 +127,7 @@ export function ActivityConfigForm({
                 value={item.href}
                 checked={hiddenHrefs.includes(item.href)}
                 onChange={() => toggleHref(item.href)}
-                className="h-4 w-4 rounded accent-zindo-orange-500"
+                className="h-4 w-4 rounded accent-zindo-green-500"
               />
               {item.label}
             </label>

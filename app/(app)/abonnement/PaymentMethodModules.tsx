@@ -9,7 +9,7 @@ const PAYMENT_NUMBER_RAW = "22604059929";
 const METHODS = [
   { key: "orange", label: "Orange Money", className: "bg-[#FF7900] text-white" },
   { key: "moov", label: "Moov Money", className: "bg-[#004990] text-white" },
-  { key: "wave", label: "Wave", className: "bg-[#1DC1EE] text-zindo-navy-900" },
+  { key: "wave", label: "Wave", className: "bg-[#1DC1EE] text-zindo-ink-900" },
 ];
 
 export function PaymentMethodModules() {

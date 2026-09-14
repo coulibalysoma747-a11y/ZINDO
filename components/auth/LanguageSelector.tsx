@@ -27,7 +27,7 @@ export function LanguageSelector() {
         onClick={() => setOpen((v) => !v)}
         aria-haspopup="listbox"
         aria-expanded={open}
-        className="flex items-center gap-1.5 rounded-full border border-zindo-navy-200 bg-white/90 px-3 py-1.5 text-sm font-medium text-zindo-navy-700 shadow-sm backdrop-blur transition hover:border-zindo-orange-500 hover:text-zindo-orange-600 active:scale-95"
+        className="flex items-center gap-1.5 rounded-full border border-zindo-ink-200 bg-white/90 px-3 py-1.5 text-sm font-medium text-zindo-ink-700 shadow-sm backdrop-blur transition hover:border-zindo-green-500 hover:text-zindo-green-600 active:scale-95"
       >
         <Globe className="h-4 w-4" />
         {current.label}
@@ -45,11 +45,11 @@ export function LanguageSelector() {
               role="option"
               aria-selected={l.code === current.code}
               onClick={() => setOpen(false)}
-              className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-zindo-navy-700 hover:bg-zindo-orange-50"
+              className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-zindo-ink-700 hover:bg-zindo-green-50"
             >
               <span aria-hidden>{l.flag}</span>
               {l.label}
-              {l.code === current.code && <Check className="ml-auto h-3.5 w-3.5 text-zindo-orange-600" />}
+              {l.code === current.code && <Check className="ml-auto h-3.5 w-3.5 text-zindo-green-600" />}
             </button>
           ))}
           <p className="border-t border-zinc-100 px-3 pt-2 text-xs text-zinc-400">

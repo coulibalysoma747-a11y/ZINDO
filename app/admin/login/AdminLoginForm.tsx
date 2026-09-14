@@ -23,7 +23,7 @@ export function AdminLoginForm() {
             autoFocus
             autoComplete="username"
             placeholder="vous@example.com"
-            className="h-11 w-full rounded-lg border border-slate-700 bg-slate-950 pl-9 pr-3 text-sm text-white outline-none placeholder:text-slate-600 focus:border-zindo-orange-500 focus:ring-2 focus:ring-zindo-orange-500/20"
+            className="h-11 w-full rounded-lg border border-slate-700 bg-slate-950 pl-9 pr-3 text-sm text-white outline-none placeholder:text-slate-600 focus:border-zindo-green-500 focus:ring-2 focus:ring-zindo-green-500/20"
           />
         </div>
       </div>
@@ -41,7 +41,7 @@ export function AdminLoginForm() {
             required
             autoComplete="current-password"
             placeholder="••••••••"
-            className="h-11 w-full rounded-lg border border-slate-700 bg-slate-950 pl-9 pr-3 text-sm text-white outline-none placeholder:text-slate-600 focus:border-zindo-orange-500 focus:ring-2 focus:ring-zindo-orange-500/20"
+            className="h-11 w-full rounded-lg border border-slate-700 bg-slate-950 pl-9 pr-3 text-sm text-white outline-none placeholder:text-slate-600 focus:border-zindo-green-500 focus:ring-2 focus:ring-zindo-green-500/20"
           />
         </div>
       </div>
@@ -53,7 +53,7 @@ export function AdminLoginForm() {
       <button
         type="submit"
         disabled={pending}
-        className="h-11 w-full rounded-lg bg-zindo-orange-500 text-sm font-semibold text-white transition-colors hover:bg-zindo-orange-600 disabled:bg-zindo-orange-800 disabled:text-zindo-orange-300"
+        className="h-11 w-full rounded-lg bg-zindo-green-500 text-sm font-semibold text-white transition-colors hover:bg-zindo-green-600 disabled:bg-zindo-green-800 disabled:text-zindo-green-300"
       >
         {pending ? "Connexion..." : "Se connecter"}
       </button>

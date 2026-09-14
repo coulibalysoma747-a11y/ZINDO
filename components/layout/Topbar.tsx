@@ -49,7 +49,7 @@ export function Topbar({
           onClick={() => setMenuOpen((v) => !v)}
           className="flex items-center gap-2 rounded-lg px-2 py-1.5 hover:bg-zinc-50"
         >
-          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-zindo-orange-100 text-sm font-semibold text-zindo-orange-700">
+          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-zindo-green-100 text-sm font-semibold text-zindo-green-700">
             {userName.slice(0, 1).toUpperCase()}
           </div>
           <div className="hidden text-left sm:block">

@@ -42,7 +42,7 @@ export function AdminMobileNav({ adminName, role }: { adminName: string; role: S
               key={item.href}
               href={item.href}
               className={`shrink-0 rounded-lg px-3 py-1.5 text-xs font-medium ${
-                active ? "bg-zindo-orange-500 text-white" : "bg-slate-900 text-slate-400"
+                active ? "bg-zindo-green-500 text-white" : "bg-slate-900 text-slate-400"
               }`}
             >
               {item.label}

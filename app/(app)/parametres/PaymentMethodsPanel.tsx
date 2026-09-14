@@ -31,7 +31,7 @@ export function PaymentMethodsPanel({
                 router.refresh();
               })
             }
-            className="h-5 w-5 rounded accent-zindo-orange-500"
+            className="h-5 w-5 rounded accent-zindo-green-500"
           />
         </label>
       ))}

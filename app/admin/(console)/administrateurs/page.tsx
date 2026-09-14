@@ -42,7 +42,7 @@ export default async function AdminAccountsPage() {
                     {a.role === "FOUNDER" ? (
                       <Crown className="h-4 w-4 text-amber-500" />
                     ) : (
-                      <ShieldCheck className="h-4 w-4 text-zindo-orange-400" />
+                      <ShieldCheck className="h-4 w-4 text-zindo-green-400" />
                     )}
                     {a.name}
                   </div>

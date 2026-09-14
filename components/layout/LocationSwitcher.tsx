@@ -35,7 +35,7 @@ export function LocationSwitcher({
 
   return (
     <div className="flex items-center gap-2 rounded-lg border border-zinc-200 bg-white px-2 py-1 dark:border-slate-700 dark:bg-slate-900">
-      <Store className="h-4 w-4 shrink-0 text-zindo-orange-600" />
+      <Store className="h-4 w-4 shrink-0 text-zindo-green-600" />
       <select
         value={currentLocationId}
         disabled={pending}

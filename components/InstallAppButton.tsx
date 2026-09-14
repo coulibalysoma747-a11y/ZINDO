@@ -54,7 +54,7 @@ export function InstallAppButton({ className }: { className?: string }) {
         onClick={handleClick}
         className={
           className ??
-          "flex items-center gap-2 rounded-lg bg-zindo-orange-500 px-4 py-2 text-sm font-semibold text-white hover:bg-zindo-orange-600"
+          "flex items-center gap-2 rounded-lg bg-zindo-green-500 px-4 py-2 text-sm font-semibold text-white hover:bg-zindo-green-600"
         }
       >
         <Download className="h-4 w-4" />

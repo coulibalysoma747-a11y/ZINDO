@@ -125,9 +125,9 @@ export default async function SubscriptionPage() {
         </Card>
       )}
 
-      <Card className="border-zindo-navy-900/10 bg-zindo-navy-900 dark:border-slate-700">
+      <Card className="border-zindo-ink-900/10 bg-zindo-ink-900 dark:border-slate-700">
         <CardBody className="flex flex-wrap items-start gap-3 sm:items-center">
-          <Sparkles className="h-5 w-5 shrink-0 text-zindo-orange-400" />
+          <Sparkles className="h-5 w-5 shrink-0 text-zindo-green-400" />
           <div>
             <p className="text-sm font-medium text-white">Pourquoi ZINDO ?</p>
             <p className="mt-0.5 text-xs text-slate-300">

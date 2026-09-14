@@ -36,8 +36,8 @@ export default async function AdminDashboardPage() {
   }[];
 
   const stats = [
-    { label: "Commerçants", value: businessCount ?? 0, icon: Store, tone: "text-zindo-orange-600 bg-zindo-orange-50" },
-    { label: "Utilisateurs", value: userCount ?? 0, icon: Users, tone: "text-zindo-navy-700 bg-zindo-navy-50" },
+    { label: "Commerçants", value: businessCount ?? 0, icon: Store, tone: "text-zindo-green-600 bg-zindo-green-50" },
+    { label: "Utilisateurs", value: userCount ?? 0, icon: Users, tone: "text-zindo-ink-700 bg-zindo-ink-50" },
     { label: "Ventes enregistrées", value: saleCount ?? 0, icon: ShoppingCart, tone: "text-emerald-600 bg-emerald-50" },
     { label: "Commerces suspendus", value: suspendedCount ?? 0, icon: ShieldOff, tone: "text-red-600 bg-red-50" },
     {
@@ -71,7 +71,7 @@ export default async function AdminDashboardPage() {
           );
           return s.href ? (
             <Link key={s.label} href={s.href}>
-              <Card className="transition hover:border-zindo-orange-300 hover:shadow-md">{content}</Card>
+              <Card className="transition hover:border-zindo-green-300 hover:shadow-md">{content}</Card>
             </Link>
           ) : (
             <Card key={s.label}>{content}</Card>
@@ -101,7 +101,7 @@ export default async function AdminDashboardPage() {
                 {recentBusinesses.map((b) => (
                   <tr key={b.id} className="hover:bg-zinc-50">
                     <td className="px-4 py-2">
-                      <Link href={`/admin/commercants/${b.id}`} className="font-medium text-zindo-orange-600 hover:underline">
+                      <Link href={`/admin/commercants/${b.id}`} className="font-medium text-zindo-green-600 hover:underline">
                         {b.name}
                       </Link>
                     </td>

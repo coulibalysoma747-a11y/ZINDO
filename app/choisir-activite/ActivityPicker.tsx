@@ -74,7 +74,7 @@ export function ActivityPicker({
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Rechercher votre activité..."
-          className="h-11 w-full rounded-xl border border-zinc-200 bg-white pl-10 pr-4 text-sm text-zinc-900 shadow-sm outline-none placeholder:text-zinc-400 focus:border-zindo-orange-400 focus:ring-2 focus:ring-zindo-orange-100"
+          className="h-11 w-full rounded-xl border border-zinc-200 bg-white pl-10 pr-4 text-sm text-zinc-900 shadow-sm outline-none placeholder:text-zinc-400 focus:border-zindo-green-400 focus:ring-2 focus:ring-zindo-green-100"
         />
       </div>
 
@@ -83,7 +83,7 @@ export function ActivityPicker({
           type="button"
           onClick={() => setCategory("all")}
           className={`rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
-            category === "all" ? "bg-zindo-navy-900 text-white" : "bg-white text-zinc-600 hover:bg-zinc-100"
+            category === "all" ? "bg-zindo-ink-900 text-white" : "bg-white text-zinc-600 hover:bg-zinc-100"
           }`}
         >
           Toutes
@@ -94,7 +94,7 @@ export function ActivityPicker({
             type="button"
             onClick={() => setCategory(c.key)}
             className={`rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
-              category === c.key ? "bg-zindo-navy-900 text-white" : "bg-white text-zinc-600 hover:bg-zinc-100"
+              category === c.key ? "bg-zindo-ink-900 text-white" : "bg-white text-zinc-600 hover:bg-zinc-100"
             }`}
           >
             {c.label}
@@ -115,17 +115,17 @@ export function ActivityPicker({
                 onClick={() => setSelectedKey(a.key)}
                 className={`relative flex flex-col items-start gap-1 rounded-2xl border p-4 text-left transition-all ${
                   active
-                    ? "border-zindo-orange-400 bg-white shadow-md ring-2 ring-zindo-orange-200"
-                    : "border-zinc-200 bg-white/70 hover:border-zindo-orange-200 hover:bg-white"
+                    ? "border-zindo-green-400 bg-white shadow-md ring-2 ring-zindo-green-200"
+                    : "border-zinc-200 bg-white/70 hover:border-zindo-green-200 hover:bg-white"
                 }`}
               >
                 {active && (
-                  <span className="absolute right-3 top-3 flex h-5 w-5 items-center justify-center rounded-full bg-zindo-orange-500 text-white">
+                  <span className="absolute right-3 top-3 flex h-5 w-5 items-center justify-center rounded-full bg-zindo-green-500 text-white">
                     <Check className="h-3.5 w-3.5" />
                   </span>
                 )}
                 <span className="text-2xl">{a.emoji}</span>
-                <span className="font-semibold text-zindo-navy-900">{a.label}</span>
+                <span className="font-semibold text-zindo-ink-900">{a.label}</span>
                 <span className="text-xs text-zinc-500">{a.description}</span>
               </button>
             );

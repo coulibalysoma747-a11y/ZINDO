@@ -87,11 +87,11 @@ export function PlanEditForm({
                       type="checkbox"
                       checked={features.includes(f.key)}
                       onChange={() => toggleFeature(f.key)}
-                      className="h-4 w-4 rounded accent-zindo-orange-500"
+                      className="h-4 w-4 rounded accent-zindo-green-500"
                     />
                     {f.label}
                     {f.enforced && (
-                      <span className="rounded-full bg-zindo-orange-50 px-1.5 py-0.5 text-[10px] font-medium text-zindo-orange-700">
+                      <span className="rounded-full bg-zindo-green-50 px-1.5 py-0.5 text-[10px] font-medium text-zindo-green-700">
                         appliquée
                       </span>
                     )}

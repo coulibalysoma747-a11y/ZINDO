@@ -55,7 +55,7 @@ export function FeatureFlagCard({
                   router.refresh();
                 })
               }
-              className="h-4 w-4 rounded accent-zindo-orange-500"
+              className="h-4 w-4 rounded accent-zindo-green-500"
             />
             Activer pour tous les commerçants
           </label>
@@ -98,7 +98,7 @@ export function FeatureFlagCard({
                     router.refresh();
                   })
                 }
-                className="h-4 w-4 rounded accent-zindo-orange-500 disabled:opacity-40"
+                className="h-4 w-4 rounded accent-zindo-green-500 disabled:opacity-40"
               />
             </label>
           ))}

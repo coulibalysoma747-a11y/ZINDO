@@ -43,7 +43,7 @@ export function PosSettingsButton({
             checked={autoPrintReceipt}
             disabled={pending}
             onChange={toggle}
-            className="mt-0.5 h-4 w-4 rounded accent-zindo-orange-500"
+            className="mt-0.5 h-4 w-4 rounded accent-zindo-green-500"
           />
           <span>
             <span className="block text-sm font-medium text-zinc-900">

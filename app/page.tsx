@@ -101,27 +101,27 @@ export default async function RootPage() {
   return (
     <div className="theme-locked relative overflow-x-hidden bg-zindo-cream">
       <div aria-hidden className="pointer-events-none fixed inset-0 overflow-hidden">
-        <div className="absolute -right-24 -top-24 h-96 w-96 rounded-full bg-zindo-orange-100/70 blur-3xl" />
-        <div className="absolute -bottom-32 -left-24 h-96 w-96 rounded-full bg-zindo-navy-50 blur-3xl" />
+        <div className="absolute -right-24 -top-24 h-96 w-96 rounded-full bg-zindo-green-100/70 blur-3xl" />
+        <div className="absolute -bottom-32 -left-24 h-96 w-96 rounded-full bg-zindo-ink-50 blur-3xl" />
       </div>
 
       {/* Barre supérieure */}
       <header className="relative z-10 mx-auto flex w-full max-w-6xl items-center justify-between px-5 py-6 sm:px-8">
         <div className="flex items-center gap-3">
           <ZindoLogo size={40} />
-          <span className="text-lg font-extrabold tracking-tight text-zindo-navy-900">ZINDO</span>
+          <span className="text-lg font-extrabold tracking-tight text-zindo-ink-900">ZINDO</span>
         </div>
         <div className="flex items-center gap-2 sm:gap-3">
-          <InstallAppButton className="hidden items-center gap-1.5 rounded-xl border border-zinc-200 px-3 py-2 text-sm font-semibold text-zindo-navy-700 hover:border-zinc-300 sm:flex" />
+          <InstallAppButton className="hidden items-center gap-1.5 rounded-xl border border-zinc-200 px-3 py-2 text-sm font-semibold text-zindo-ink-700 hover:border-zinc-300 sm:flex" />
           <Link
             href="/login"
-            className="rounded-xl px-3 py-2 text-sm font-semibold text-zindo-navy-700 hover:text-zindo-orange-600 sm:px-4"
+            className="rounded-xl px-3 py-2 text-sm font-semibold text-zindo-ink-700 hover:text-zindo-green-600 sm:px-4"
           >
             Se connecter
           </Link>
           <Link
             href="/inscription"
-            className="rounded-xl bg-zindo-orange-500 px-3 py-2 text-sm font-bold text-white shadow-md shadow-zindo-orange-500/25 transition hover:bg-zindo-orange-600 sm:px-5"
+            className="rounded-xl bg-zindo-green-500 px-3 py-2 text-sm font-bold text-white shadow-md shadow-zindo-green-500/25 transition hover:bg-zindo-green-600 sm:px-5"
           >
             Créer un compte
           </Link>
@@ -131,12 +131,12 @@ export default async function RootPage() {
       {/* Hero */}
       <main className="relative z-10 mx-auto w-full max-w-6xl px-5 pb-24 pt-8 sm:px-8">
         <section className="mx-auto max-w-3xl text-center">
-          <p className="inline-block rounded-full bg-zindo-orange-100 px-3 py-1 text-xs font-bold uppercase tracking-wider text-zindo-orange-700">
+          <p className="inline-block rounded-full bg-zindo-green-100 px-3 py-1 text-xs font-bold uppercase tracking-wider text-zindo-green-700">
             Gestion de stock et de ventes
           </p>
-          <h1 className="mt-4 text-3xl font-extrabold leading-tight tracking-tight text-zindo-navy-900 sm:text-5xl">
+          <h1 className="mt-4 text-3xl font-extrabold leading-tight tracking-tight text-zindo-ink-900 sm:text-5xl">
             Remplacez vos cahiers et vos fichiers Excel par{" "}
-            <span className="text-zindo-orange-600">ZINDO</span>
+            <span className="text-zindo-green-600">ZINDO</span>
           </h1>
           <p className="mx-auto mt-4 max-w-xl text-base text-zinc-600 sm:text-lg">
             Suivez votre stock en temps réel, encaissez vos ventes et connaissez enfin vos bénéfices —
@@ -145,13 +145,13 @@ export default async function RootPage() {
           <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
             <Link
               href="/inscription"
-              className="flex w-full items-center justify-center gap-2 rounded-2xl bg-zindo-orange-500 px-6 py-3.5 text-base font-bold text-white shadow-lg shadow-zindo-orange-500/30 transition hover:-translate-y-0.5 hover:bg-zindo-orange-600 sm:w-auto"
+              className="flex w-full items-center justify-center gap-2 rounded-2xl bg-zindo-green-500 px-6 py-3.5 text-base font-bold text-white shadow-lg shadow-zindo-green-500/30 transition hover:-translate-y-0.5 hover:bg-zindo-green-600 sm:w-auto"
             >
               Commencer gratuitement <ArrowRight className="h-4 w-4" />
             </Link>
             <Link
               href="/login"
-              className="w-full rounded-2xl border border-zinc-200 bg-white px-6 py-3.5 text-center text-base font-semibold text-zindo-navy-700 transition hover:border-zinc-300 sm:w-auto"
+              className="w-full rounded-2xl border border-zinc-200 bg-white px-6 py-3.5 text-center text-base font-semibold text-zindo-ink-700 transition hover:border-zinc-300 sm:w-auto"
             >
               J&apos;ai déjà un compte
             </Link>
@@ -161,7 +161,7 @@ export default async function RootPage() {
         {/* Ce que ZINDO change */}
         <section className="mt-24">
           <div className="mx-auto max-w-2xl text-center">
-            <h2 className="text-2xl font-extrabold tracking-tight text-zindo-navy-900 sm:text-3xl">
+            <h2 className="text-2xl font-extrabold tracking-tight text-zindo-ink-900 sm:text-3xl">
               Ce que ZINDO change pour votre commerce
             </h2>
             <p className="mt-2 text-zinc-500">
@@ -174,10 +174,10 @@ export default async function RootPage() {
                 key={item.title}
                 className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm transition hover:shadow-md"
               >
-                <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-zindo-orange-50 text-zindo-orange-600">
+                <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-zindo-green-50 text-zindo-green-600">
                   <item.icon className="h-5 w-5" />
                 </div>
-                <h3 className="mt-4 font-bold text-zindo-navy-900">{item.title}</h3>
+                <h3 className="mt-4 font-bold text-zindo-ink-900">{item.title}</h3>
                 <p className="mt-1.5 text-sm leading-relaxed text-zinc-500">{item.text}</p>
               </div>
             ))}
@@ -185,22 +185,22 @@ export default async function RootPage() {
         </section>
 
         {/* Pourquoi travailler avec ZINDO */}
-        <section className="mt-24 rounded-3xl bg-zindo-navy-900 px-6 py-14 sm:px-12">
+        <section className="mt-24 rounded-3xl bg-zindo-ink-900 px-6 py-14 sm:px-12">
           <div className="mx-auto max-w-2xl text-center">
             <h2 className="text-2xl font-extrabold tracking-tight text-white sm:text-3xl">
               Pourquoi travailler avec ZINDO
             </h2>
-            <p className="mt-2 text-zindo-navy-200">Ce qui nous distingue d&apos;un simple tableur.</p>
+            <p className="mt-2 text-zindo-ink-200">Ce qui nous distingue d&apos;un simple tableur.</p>
           </div>
           <div className="mt-10 grid grid-cols-1 gap-6 sm:grid-cols-2">
             {REASONS.map((item) => (
               <div key={item.title} className="flex gap-4">
-                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white/10 text-zindo-orange-400">
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white/10 text-zindo-green-400">
                   <item.icon className="h-5 w-5" />
                 </div>
                 <div>
                   <h3 className="font-bold text-white">{item.title}</h3>
-                  <p className="mt-1 text-sm leading-relaxed text-zindo-navy-200">{item.text}</p>
+                  <p className="mt-1 text-sm leading-relaxed text-zindo-ink-200">{item.text}</p>
                 </div>
               </div>
             ))}
@@ -210,7 +210,7 @@ export default async function RootPage() {
         {/* Comment ça marche */}
         <section className="mt-24">
           <div className="mx-auto max-w-2xl text-center">
-            <h2 className="text-2xl font-extrabold tracking-tight text-zindo-navy-900 sm:text-3xl">
+            <h2 className="text-2xl font-extrabold tracking-tight text-zindo-ink-900 sm:text-3xl">
               Comment ça marche
             </h2>
           </div>
@@ -218,12 +218,12 @@ export default async function RootPage() {
             {STEPS.map((step, i) => (
               <div key={step.title} className="text-center">
                 <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-white shadow-md">
-                  <step.icon className="h-6 w-6 text-zindo-orange-600" />
+                  <step.icon className="h-6 w-6 text-zindo-green-600" />
                 </div>
-                <p className="mt-4 text-xs font-bold uppercase tracking-wider text-zindo-orange-600">
+                <p className="mt-4 text-xs font-bold uppercase tracking-wider text-zindo-green-600">
                   Étape {i + 1}
                 </p>
-                <h3 className="mt-1 font-bold text-zindo-navy-900">{step.title}</h3>
+                <h3 className="mt-1 font-bold text-zindo-ink-900">{step.title}</h3>
                 <p className="mt-1.5 text-sm leading-relaxed text-zinc-500">{step.text}</p>
               </div>
             ))}
@@ -231,8 +231,8 @@ export default async function RootPage() {
         </section>
 
         {/* CTA final */}
-        <section className="mt-24 rounded-3xl border border-zindo-orange-100 bg-white px-6 py-14 text-center shadow-sm sm:px-12">
-          <h2 className="text-2xl font-extrabold tracking-tight text-zindo-navy-900 sm:text-3xl">
+        <section className="mt-24 rounded-3xl border border-zindo-green-100 bg-white px-6 py-14 text-center shadow-sm sm:px-12">
+          <h2 className="text-2xl font-extrabold tracking-tight text-zindo-ink-900 sm:text-3xl">
             Prêt à changer la façon dont vous gérez votre commerce ?
           </h2>
           <p className="mx-auto mt-2 max-w-md text-zinc-500">
@@ -240,7 +240,7 @@ export default async function RootPage() {
           </p>
           <Link
             href="/inscription"
-            className="mt-6 inline-flex items-center gap-2 rounded-2xl bg-zindo-orange-500 px-7 py-3.5 text-base font-bold text-white shadow-lg shadow-zindo-orange-500/30 transition hover:-translate-y-0.5 hover:bg-zindo-orange-600"
+            className="mt-6 inline-flex items-center gap-2 rounded-2xl bg-zindo-green-500 px-7 py-3.5 text-base font-bold text-white shadow-lg shadow-zindo-green-500/30 transition hover:-translate-y-0.5 hover:bg-zindo-green-600"
           >
             Créer mon compte ZINDO <ArrowRight className="h-4 w-4" />
           </Link>
@@ -255,7 +255,7 @@ export default async function RootPage() {
             href="https://wa.me/22604059929"
             target="_blank"
             rel="noopener noreferrer"
-            className="font-medium text-zinc-500 hover:text-zindo-orange-600"
+            className="font-medium text-zinc-500 hover:text-zindo-green-600"
           >
             +226 04 05 99 29
           </a>

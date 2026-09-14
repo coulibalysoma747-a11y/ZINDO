@@ -38,7 +38,7 @@ export default async function AdminBusinessesPage() {
               {businesses.map((b) => (
                 <tr key={b.id} className="hover:bg-zinc-50">
                   <td className="px-4 py-3">
-                    <Link href={`/admin/commercants/${b.id}`} className="font-medium text-zindo-orange-600 hover:underline">
+                    <Link href={`/admin/commercants/${b.id}`} className="font-medium text-zindo-green-600 hover:underline">
                       {b.name}
                     </Link>
                   </td>

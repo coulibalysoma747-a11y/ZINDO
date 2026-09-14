@@ -15,7 +15,7 @@ export function Input(props: InputHTMLAttributes<HTMLInputElement>) {
     <input
       {...props}
       className={cn(
-        "h-10 w-full rounded-lg border border-zinc-300 bg-white px-3 text-sm text-zinc-900 outline-none placeholder:text-zinc-400 focus:border-zindo-orange-500 focus:ring-2 focus:ring-zindo-orange-100 dark:border-slate-700 dark:bg-slate-900 dark:focus:ring-zindo-orange-700/40",
+        "h-10 w-full rounded-lg border border-zinc-300 bg-white px-3 text-sm text-zinc-900 outline-none placeholder:text-zinc-400 focus:border-zindo-green-500 focus:ring-2 focus:ring-zindo-green-100 dark:border-slate-700 dark:bg-slate-900 dark:focus:ring-zindo-green-700/40",
         props.className
       )}
     />
@@ -27,7 +27,7 @@ export function Textarea(props: TextareaHTMLAttributes<HTMLTextAreaElement>) {
     <textarea
       {...props}
       className={cn(
-        "w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 outline-none placeholder:text-zinc-400 focus:border-zindo-orange-500 focus:ring-2 focus:ring-zindo-orange-100 dark:border-slate-700 dark:bg-slate-900 dark:focus:ring-zindo-orange-700/40",
+        "w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 outline-none placeholder:text-zinc-400 focus:border-zindo-green-500 focus:ring-2 focus:ring-zindo-green-100 dark:border-slate-700 dark:bg-slate-900 dark:focus:ring-zindo-green-700/40",
         props.className
       )}
     />
@@ -39,7 +39,7 @@ export function Select(props: SelectHTMLAttributes<HTMLSelectElement>) {
     <select
       {...props}
       className={cn(
-        "h-10 w-full rounded-lg border border-zinc-300 bg-white px-3 text-sm text-zinc-900 outline-none focus:border-zindo-orange-500 focus:ring-2 focus:ring-zindo-orange-100 dark:border-slate-700 dark:bg-slate-900 dark:focus:ring-zindo-orange-700/40",
+        "h-10 w-full rounded-lg border border-zinc-300 bg-white px-3 text-sm text-zinc-900 outline-none focus:border-zindo-green-500 focus:ring-2 focus:ring-zindo-green-100 dark:border-slate-700 dark:bg-slate-900 dark:focus:ring-zindo-green-700/40",
         props.className
       )}
     />
