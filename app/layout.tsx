@@ -40,7 +40,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
       suppressHydrationWarning
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased${theme === "DARK" ? " dark" : ""}`}
     >
-      <head>
+      <head><meta name="google-site-verification" content="hLIb2IvzFGtm2VC6hR9cK5choC2_bbHh2Ew2qfNdvTQ" />
         <ThemeInitScript theme={theme} />
       </head>
       <body className="min-h-full flex flex-col">{children}</body>
