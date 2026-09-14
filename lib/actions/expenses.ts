@@ -2,7 +2,7 @@
 
 import { z } from "zod";
 import { revalidatePath } from "next/cache";
-import { prisma } from "@/lib/prisma";
+import { supabase } from "@/lib/supabase";
 import { requirePermission } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
 import { getCurrentLocation } from "@/lib/location";
@@ -31,23 +31,29 @@ export async function createExpenseAction(
   const currentLocation = await getCurrentLocation(user.businessId);
   if (!currentLocation) return { error: "Configurez d'abord une boutique" };
 
-  const expense = await prisma.expense.create({
-    data: {
-      businessId: user.businessId,
-      locationId: currentLocation.id,
+  const { data: expense, error } = await supabase
+    .from("expenses")
+    .insert({
+      business_id: user.businessId,
+      location_id: currentLocation.id,
       label: parsed.data.label,
       amount: parsed.data.amount,
-      note: parsed.data.note,
-      userId: user.id,
-    },
-  });
+      note: parsed.data.note ?? null,
+      user_id: user.id,
+    })
+    .select("id")
+    .single();
+  if (error || !expense) {
+    console.error("[createExpenseAction] Échec de la création :", error?.message);
+    return { error: "Impossible d'enregistrer la dépense" };
+  }
 
   await logAction({
     businessId: user.businessId,
     userId: user.id,
     action: "CREATE",
     entity: "Expense",
-    entityId: expense.id,
+    entityId: expense.id as string,
     details: `${parsed.data.label} — ${parsed.data.amount}`,
   });
 
@@ -59,10 +65,20 @@ export async function createExpenseAction(
 export async function deleteExpenseAction(id: string) {
   const user = await requirePermission(PERMISSIONS.EXPENSES_MANAGE);
 
-  const expense = await prisma.expense.findFirst({ where: { id, businessId: user.businessId } });
+  const { data: expense } = await supabase
+    .from("expenses")
+    .select("id")
+    .eq("id", id)
+    .eq("business_id", user.businessId)
+    .maybeSingle();
   if (!expense) return { error: "Dépense introuvable" };
 
-  await prisma.expense.delete({ where: { id } });
+  const { error } = await supabase.from("expenses").delete().eq("id", id);
+  if (error) {
+    console.error("[deleteExpenseAction] Échec de la suppression :", error.message);
+    return { error: "Impossible de supprimer la dépense" };
+  }
+
   await logAction({
     businessId: user.businessId,
     userId: user.id,

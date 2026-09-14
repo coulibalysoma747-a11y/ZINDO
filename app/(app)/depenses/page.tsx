@@ -1,6 +1,6 @@
 import { requirePermission } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
-import { prisma } from "@/lib/prisma";
+import { supabase } from "@/lib/supabase";
 import { getCurrentLocation } from "@/lib/location";
 import { formatMoney, formatDateTime, startOfToday, startOfYesterday, startOfWeek, startOfMonth } from "@/lib/format";
 import { Card, CardBody } from "@/components/ui/Card";
@@ -9,7 +9,15 @@ import { ButtonLink } from "@/components/ui/Button";
 import { HistoryFilters } from "@/components/history/HistoryFilters";
 import { ExpenseManager } from "./ExpenseManager";
 import { DeleteExpenseButton } from "./DeleteExpenseButton";
-import type { Prisma } from "@prisma/client";
+
+type ExpenseRow = {
+  id: string;
+  date: string;
+  label: string;
+  note: string | null;
+  amount: number;
+  user: { firstName: string; lastName: string };
+};
 
 export default async function ExpensesPage({
   searchParams,
@@ -30,18 +38,22 @@ export default async function ExpensesPage({
     );
   }
 
-  const where: Prisma.ExpenseWhereInput = { businessId: user.businessId, locationId: currentLocation.id };
-  if (periode === "aujourdhui") where.date = { gte: startOfToday() };
-  else if (periode === "hier") where.date = { gte: startOfYesterday(), lt: startOfToday() };
-  else if (periode === "semaine") where.date = { gte: startOfWeek() };
-  else if (periode === "mois") where.date = { gte: startOfMonth() };
+  let query = supabase
+    .from("expenses")
+    .select("id, date, label, note, amount, user:users(firstName:first_name, lastName:last_name)")
+    .eq("business_id", user.businessId)
+    .eq("location_id", currentLocation.id)
+    .order("date", { ascending: false })
+    .limit(200);
 
-  const expenses = await prisma.expense.findMany({
-    where,
-    include: { user: true },
-    orderBy: { date: "desc" },
-    take: 200,
-  });
+  if (periode === "aujourdhui") query = query.gte("date", startOfToday().toISOString());
+  else if (periode === "hier")
+    query = query.gte("date", startOfYesterday().toISOString()).lt("date", startOfToday().toISOString());
+  else if (periode === "semaine") query = query.gte("date", startOfWeek().toISOString());
+  else if (periode === "mois") query = query.gte("date", startOfMonth().toISOString());
+
+  const { data } = await query;
+  const expenses = (data ?? []) as unknown as ExpenseRow[];
 
   const currency = user.business.currency;
   const total = expenses.reduce((s, e) => s + e.amount, 0);
@@ -82,7 +94,7 @@ export default async function ExpensesPage({
             <tbody className="divide-y divide-zinc-100">
               {expenses.map((e) => (
                 <tr key={e.id} className="hover:bg-zinc-50">
-                  <td className="px-4 py-3 text-zinc-600">{formatDateTime(e.date)}</td>
+                  <td className="px-4 py-3 text-zinc-600">{formatDateTime(new Date(e.date))}</td>
                   <td className="px-4 py-3">
                     <p className="font-medium text-zinc-900">{e.label}</p>
                     {e.note && <p className="text-xs text-zinc-400">{e.note}</p>}
@@ -90,9 +102,7 @@ export default async function ExpensesPage({
                   <td className="px-4 py-3 text-zinc-600">
                     {e.user.firstName} {e.user.lastName}
                   </td>
-                  <td className="px-4 py-3 text-right font-medium text-red-600">
-                    {formatMoney(e.amount, currency)}
-                  </td>
+                  <td className="px-4 py-3 text-right font-medium text-red-600">{formatMoney(e.amount, currency)}</td>
                   <td className="px-4 py-3 text-right">
                     <DeleteExpenseButton id={e.id} label={e.label} />
                   </td>

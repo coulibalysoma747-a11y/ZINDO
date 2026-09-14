@@ -1,24 +1,30 @@
 import Link from "next/link";
 import { requirePermission } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
-import { prisma } from "@/lib/prisma";
+import { supabase } from "@/lib/supabase";
 import { formatMoney, formatDate } from "@/lib/format";
 import { Card, CardBody } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { EmptyState } from "@/components/ui/Empty";
 
+type SaleRow = {
+  createdAt: string;
+  total: number;
+  amountPaid: number;
+  customer: { id: string; name: string; phone: string | null } | null;
+};
+
 export default async function CreditsPage() {
   const user = await requirePermission(PERMISSIONS.CUSTOMERS_VIEW);
   const currency = user.business.currency;
 
-  const sales = await prisma.sale.findMany({
-    where: {
-      businessId: user.businessId,
-      status: { in: ["CREDIT", "PARTIELLE"] },
-    },
-    include: { customer: true },
-    orderBy: { createdAt: "asc" },
-  });
+  const { data } = await supabase
+    .from("sales")
+    .select("createdAt:created_at, total, amountPaid:amount_paid, customer:customers(id, name, phone)")
+    .eq("business_id", user.businessId)
+    .in("status", ["CREDIT", "PARTIELLE"])
+    .order("created_at", { ascending: true });
+  const sales = (data ?? []) as unknown as SaleRow[];
 
   const byCustomer = new Map<
     string,
@@ -29,16 +35,17 @@ export default async function CreditsPage() {
     if (!sale.customer) continue;
     const remaining = sale.total - sale.amountPaid;
     if (remaining <= 0) continue;
+    const createdAt = new Date(sale.createdAt);
     const existing = byCustomer.get(sale.customer.id);
     if (existing) {
       existing.total += remaining;
-      if (sale.createdAt < existing.oldest) existing.oldest = sale.createdAt;
+      if (createdAt < existing.oldest) existing.oldest = createdAt;
     } else {
       byCustomer.set(sale.customer.id, {
         name: sale.customer.name,
         phone: sale.customer.phone,
         total: remaining,
-        oldest: sale.createdAt,
+        oldest: createdAt,
         customerId: sale.customer.id,
       });
     }
