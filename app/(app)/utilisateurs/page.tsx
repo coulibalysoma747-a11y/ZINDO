@@ -1,6 +1,6 @@
 import { requirePermission } from "@/lib/auth";
 import { PERMISSIONS, ROLE_LABELS } from "@/lib/permissions";
-import { prisma } from "@/lib/prisma";
+import { supabase } from "@/lib/supabase";
 import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { UserManager } from "./UserManager";
@@ -9,17 +9,28 @@ import { UserRowActions } from "./UserRowActions";
 export default async function UsersPage() {
   const admin = await requirePermission(PERMISSIONS.USERS_MANAGE);
 
-  const users = await prisma.user.findMany({
-    where: { businessId: admin.businessId },
-    orderBy: { createdAt: "asc" },
-  });
+  const { data } = await supabase
+    .from("users")
+    .select("id, firstName:first_name, lastName:last_name, phone, role, active")
+    .eq("business_id", admin.businessId)
+    .order("created_at", { ascending: true });
+  const users = (data ?? []) as unknown as Array<{
+    id: string;
+    firstName: string;
+    lastName: string;
+    phone: string;
+    role: keyof typeof ROLE_LABELS;
+    active: boolean;
+  }>;
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-xl font-bold text-zinc-900">Utilisateurs</h1>
-          <p className="text-sm text-zinc-500">{users.length} compte(s) sur {admin.business.name}</p>
+          <p className="text-sm text-zinc-500">
+            {users.length} compte(s) sur {admin.business.name}
+          </p>
         </div>
         <UserManager />
       </div>
@@ -66,13 +77,7 @@ function UserRow({
         <Badge tone={user.active ? "emerald" : "zinc"}>{user.active ? "Actif" : "Désactivé"}</Badge>
       </td>
       <td className="px-4 py-3 text-right">
-        {!isSelf && (
-          <UserRowActions
-            userId={user.id}
-            userName={`${user.firstName} ${user.lastName}`}
-            active={user.active}
-          />
-        )}
+        {!isSelf && <UserRowActions userId={user.id} userName={`${user.firstName} ${user.lastName}`} active={user.active} />}
       </td>
     </tr>
   );

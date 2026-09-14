@@ -2,7 +2,7 @@
 
 import { z } from "zod";
 import { revalidatePath } from "next/cache";
-import { prisma } from "@/lib/prisma";
+import { supabase } from "@/lib/supabase";
 import { requirePermission } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
 import { logAction } from "@/lib/audit";
@@ -41,21 +41,36 @@ export async function createLocationAction(
     };
   }
 
-  const existing = await prisma.location.findFirst({
-    where: { businessId: user.businessId, name: parsed.data.name },
-  });
+  const { data: existing } = await supabase
+    .from("locations")
+    .select("id")
+    .eq("business_id", user.businessId)
+    .eq("name", parsed.data.name)
+    .maybeSingle();
   if (existing) return { error: "Une boutique porte déjà ce nom" };
 
-  const location = await prisma.location.create({
-    data: { businessId: user.businessId, ...parsed.data },
-  });
+  const { data: location, error } = await supabase
+    .from("locations")
+    .insert({
+      business_id: user.businessId,
+      name: parsed.data.name,
+      type: parsed.data.type,
+      address: parsed.data.address ?? null,
+      city: parsed.data.city ?? null,
+    })
+    .select("id")
+    .single();
+  if (error || !location) {
+    console.error("[createLocationAction] Échec de la création :", error?.message);
+    return { error: "Impossible de créer la boutique" };
+  }
 
   await logAction({
     businessId: user.businessId,
     userId: user.id,
     action: "CREATE",
     entity: "Location",
-    entityId: location.id,
+    entityId: location.id as string,
   });
 
   revalidatePath("/boutiques");
@@ -71,10 +86,27 @@ export async function updateLocationAction(
   const parsed = parse(formData);
   if (!parsed.success) return { error: parsed.error.issues[0]?.message };
 
-  const location = await prisma.location.findFirst({ where: { id, businessId: user.businessId } });
+  const { data: location } = await supabase
+    .from("locations")
+    .select("id")
+    .eq("id", id)
+    .eq("business_id", user.businessId)
+    .maybeSingle();
   if (!location) return { error: "Boutique introuvable" };
 
-  await prisma.location.update({ where: { id }, data: parsed.data });
+  const { error } = await supabase
+    .from("locations")
+    .update({
+      name: parsed.data.name,
+      type: parsed.data.type,
+      address: parsed.data.address ?? null,
+      city: parsed.data.city ?? null,
+    })
+    .eq("id", id);
+  if (error) {
+    console.error("[updateLocationAction] Échec de la mise à jour :", error.message);
+    return { error: "Impossible de mettre à jour la boutique" };
+  }
 
   revalidatePath("/boutiques");
   return { success: "Boutique mise à jour" };
@@ -82,13 +114,28 @@ export async function updateLocationAction(
 
 export async function setDefaultLocationAction(id: string) {
   const user = await requirePermission(PERMISSIONS.LOCATIONS_MANAGE);
-  const location = await prisma.location.findFirst({ where: { id, businessId: user.businessId } });
+  const { data: location } = await supabase
+    .from("locations")
+    .select("id")
+    .eq("id", id)
+    .eq("business_id", user.businessId)
+    .maybeSingle();
   if (!location) return { error: "Boutique introuvable" };
 
-  await prisma.$transaction([
-    prisma.location.updateMany({ where: { businessId: user.businessId }, data: { isDefault: false } }),
-    prisma.location.update({ where: { id }, data: { isDefault: true } }),
-  ]);
+  const { error: clearError } = await supabase
+    .from("locations")
+    .update({ is_default: false })
+    .eq("business_id", user.businessId);
+  if (clearError) {
+    console.error("[setDefaultLocationAction] Échec de la réinitialisation :", clearError.message);
+    return { error: "Impossible de mettre à jour la boutique par défaut" };
+  }
+
+  const { error } = await supabase.from("locations").update({ is_default: true }).eq("id", id);
+  if (error) {
+    console.error("[setDefaultLocationAction] Échec de la mise à jour :", error.message);
+    return { error: "Impossible de mettre à jour la boutique par défaut" };
+  }
 
   revalidatePath("/boutiques");
   return { success: "Boutique par défaut mise à jour" };
@@ -96,18 +143,32 @@ export async function setDefaultLocationAction(id: string) {
 
 export async function toggleLocationActiveAction(id: string, active: boolean) {
   const user = await requirePermission(PERMISSIONS.LOCATIONS_MANAGE);
-  const location = await prisma.location.findFirst({ where: { id, businessId: user.businessId } });
+  const { data: location } = await supabase
+    .from("locations")
+    .select("id, isDefault:is_default")
+    .eq("id", id)
+    .eq("business_id", user.businessId)
+    .maybeSingle();
   if (!location) return { error: "Boutique introuvable" };
   if (location.isDefault && !active) {
     return { error: "Impossible de désactiver la boutique par défaut" };
   }
 
-  const activeCount = await prisma.location.count({ where: { businessId: user.businessId, active: true } });
-  if (!active && activeCount <= 1) {
+  const { count: activeCount } = await supabase
+    .from("locations")
+    .select("id", { count: "exact", head: true })
+    .eq("business_id", user.businessId)
+    .eq("active", true);
+  if (!active && (activeCount ?? 0) <= 1) {
     return { error: "Le commerce doit conserver au moins une boutique active" };
   }
 
-  await prisma.location.update({ where: { id }, data: { active } });
+  const { error } = await supabase.from("locations").update({ active }).eq("id", id);
+  if (error) {
+    console.error("[toggleLocationActiveAction] Échec de la mise à jour :", error.message);
+    return { error: "Impossible de mettre à jour la boutique" };
+  }
+
   revalidatePath("/boutiques");
   return { success: active ? "Boutique réactivée" : "Boutique désactivée" };
 }

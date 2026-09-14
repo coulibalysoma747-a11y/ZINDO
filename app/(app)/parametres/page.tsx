@@ -2,13 +2,13 @@ import Link from "next/link";
 import { Pencil } from "lucide-react";
 import { requirePermission } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
-import { prisma } from "@/lib/prisma";
+import { supabase } from "@/lib/supabase";
 import { findActivity } from "@/lib/activities";
 import { Card, CardBody, CardHeader } from "@/components/ui/Card";
 import { BusinessSettingsForm } from "./BusinessSettingsForm";
 import { PaymentMethodsPanel } from "./PaymentMethodsPanel";
 import { PermissionsPanel } from "./PermissionsPanel";
-import type { PaymentMethod } from "@prisma/client";
+import type { PaymentMethod, Role } from "@/lib/db-types";
 
 const ALL_METHODS: { method: PaymentMethod; defaultLabel: string }[] = [
   { method: "ESPECES", defaultLabel: "Espèces" },
@@ -21,16 +21,16 @@ const ALL_METHODS: { method: PaymentMethod; defaultLabel: string }[] = [
 export default async function SettingsPage() {
   const user = await requirePermission(PERMISSIONS.SETTINGS_MANAGE);
 
-  const [configs, overrides] = await Promise.all([
-    prisma.paymentMethodConfig.findMany({ where: { businessId: user.businessId } }),
-    prisma.rolePermission.findMany({ where: { businessId: user.businessId } }),
+  const [{ data: configs }, { data: overrides }] = await Promise.all([
+    supabase.from("payment_method_configs").select("method, label, enabled").eq("business_id", user.businessId),
+    supabase.from("role_permissions").select("role, permission, allowed").eq("business_id", user.businessId),
   ]);
 
-  const configMap = new Map(configs.map((c) => [c.method, c]));
+  const configMap = new Map((configs ?? []).map((c) => [c.method as string, c]));
   const paymentMethods = ALL_METHODS.map(({ method, defaultLabel }) => ({
     method,
-    label: configMap.get(method)?.label ?? defaultLabel,
-    enabled: configMap.get(method)?.enabled ?? (method !== "AUTRE"),
+    label: (configMap.get(method)?.label as string | undefined) ?? defaultLabel,
+    enabled: (configMap.get(method)?.enabled as boolean | undefined) ?? method !== "AUTRE",
   }));
 
   const activity = findActivity(user.business.activityKey);
@@ -90,7 +90,9 @@ export default async function SettingsPage() {
           <h2 className="font-semibold text-zinc-900">Rôles et permissions</h2>
         </CardHeader>
         <CardBody>
-          <PermissionsPanel overrides={overrides} />
+          <PermissionsPanel
+            overrides={(overrides ?? []) as unknown as { role: Role; permission: string; allowed: boolean }[]}
+          />
         </CardBody>
       </Card>
     </div>

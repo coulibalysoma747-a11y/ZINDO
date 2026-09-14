@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { prisma } from "@/lib/prisma";
+import { supabase } from "@/lib/supabase";
 import { requireUser } from "@/lib/auth";
 
 export type ActionState = { error?: string; success?: string } | undefined;
@@ -13,7 +13,12 @@ export async function setThemeAction(theme: ThemePreference) {
   const user = await requireUser();
   if (!THEMES.includes(theme)) return { error: "Thème invalide" };
 
-  await prisma.user.update({ where: { id: user.id }, data: { theme } });
+  const { error } = await supabase.from("users").update({ theme }).eq("id", user.id);
+  if (error) {
+    console.error("[setThemeAction] Échec de la mise à jour :", error.message);
+    return { error: "Impossible de mettre à jour le thème" };
+  }
+
   revalidatePath("/", "layout");
   return { success: "Thème mis à jour" };
 }
@@ -29,13 +34,17 @@ export async function setPosSettingsAction(input: {
     return { error: "Format de ticket invalide" };
   }
 
-  await prisma.user.update({
-    where: { id: user.id },
-    data: {
-      autoPrintReceipt: input.autoPrintReceipt,
-      printerTicketWidth: input.printerTicketWidth,
-    },
-  });
+  const { error } = await supabase
+    .from("users")
+    .update({
+      auto_print_receipt: input.autoPrintReceipt,
+      printer_ticket_width: input.printerTicketWidth,
+    })
+    .eq("id", user.id);
+  if (error) {
+    console.error("[setPosSettingsAction] Échec de la mise à jour :", error.message);
+    return { error: "Impossible de mettre à jour les paramètres" };
+  }
 
   revalidatePath("/ventes");
   return { success: "Paramètres de caisse mis à jour" };

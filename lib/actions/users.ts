@@ -3,7 +3,7 @@
 import { z } from "zod";
 import bcrypt from "bcryptjs";
 import { revalidatePath } from "next/cache";
-import { prisma } from "@/lib/prisma";
+import { supabase } from "@/lib/supabase";
 import { requirePermission } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
 import { logAction } from "@/lib/audit";
@@ -42,30 +42,39 @@ export async function createUserAction(
     };
   }
 
-  const existing = await prisma.user.findFirst({
-    where: { businessId: admin.businessId, phone: parsed.data.phone },
-  });
+  const { data: existing } = await supabase
+    .from("users")
+    .select("id")
+    .eq("business_id", admin.businessId)
+    .eq("phone", parsed.data.phone)
+    .maybeSingle();
   if (existing) return { error: "Ce numéro de téléphone est déjà utilisé" };
 
   const passwordHash = await bcrypt.hash(parsed.data.password, 10);
-  const user = await prisma.user.create({
-    data: {
-      businessId: admin.businessId,
-      firstName: parsed.data.firstName,
-      lastName: parsed.data.lastName,
+  const { data: user, error } = await supabase
+    .from("users")
+    .insert({
+      business_id: admin.businessId,
+      first_name: parsed.data.firstName,
+      last_name: parsed.data.lastName,
       phone: parsed.data.phone,
-      email: parsed.data.email || undefined,
-      passwordHash,
+      email: parsed.data.email || null,
+      password_hash: passwordHash,
       role: parsed.data.role,
-    },
-  });
+    })
+    .select("id")
+    .single();
+  if (error || !user) {
+    console.error("[createUserAction] Échec de la création :", error?.message);
+    return { error: "Impossible de créer l'utilisateur" };
+  }
 
   await logAction({
     businessId: admin.businessId,
     userId: admin.id,
     action: "CREATE",
     entity: "User",
-    entityId: user.id,
+    entityId: user.id as string,
   });
 
   revalidatePath("/utilisateurs");
@@ -76,10 +85,20 @@ export async function toggleUserActiveAction(id: string, active: boolean) {
   const admin = await requirePermission(PERMISSIONS.USERS_MANAGE);
   if (id === admin.id) return { error: "Vous ne pouvez pas désactiver votre propre compte" };
 
-  const user = await prisma.user.findFirst({ where: { id, businessId: admin.businessId } });
+  const { data: user } = await supabase
+    .from("users")
+    .select("id")
+    .eq("id", id)
+    .eq("business_id", admin.businessId)
+    .maybeSingle();
   if (!user) return { error: "Utilisateur introuvable" };
 
-  await prisma.user.update({ where: { id }, data: { active } });
+  const { error } = await supabase.from("users").update({ active }).eq("id", id);
+  if (error) {
+    console.error("[toggleUserActiveAction] Échec de la mise à jour :", error.message);
+    return { error: "Impossible de mettre à jour l'utilisateur" };
+  }
+
   await logAction({
     businessId: admin.businessId,
     userId: admin.id,
@@ -94,10 +113,20 @@ export async function toggleUserActiveAction(id: string, active: boolean) {
 
 export async function updateUserRoleAction(id: string, role: "ADMIN" | "VENDEUR" | "GESTIONNAIRE_STOCK") {
   const admin = await requirePermission(PERMISSIONS.USERS_MANAGE);
-  const user = await prisma.user.findFirst({ where: { id, businessId: admin.businessId } });
+  const { data: user } = await supabase
+    .from("users")
+    .select("id")
+    .eq("id", id)
+    .eq("business_id", admin.businessId)
+    .maybeSingle();
   if (!user) return { error: "Utilisateur introuvable" };
 
-  await prisma.user.update({ where: { id }, data: { role } });
+  const { error } = await supabase.from("users").update({ role }).eq("id", id);
+  if (error) {
+    console.error("[updateUserRoleAction] Échec de la mise à jour :", error.message);
+    return { error: "Impossible de mettre à jour le rôle" };
+  }
+
   revalidatePath("/utilisateurs");
   return { success: "Rôle mis à jour" };
 }
@@ -113,11 +142,20 @@ export async function resetUserPasswordAction(id: string, newPassword: string) {
     return { error: "Le mot de passe doit contenir au moins 6 caractères" };
   }
 
-  const user = await prisma.user.findFirst({ where: { id, businessId: admin.businessId } });
+  const { data: user } = await supabase
+    .from("users")
+    .select("id")
+    .eq("id", id)
+    .eq("business_id", admin.businessId)
+    .maybeSingle();
   if (!user) return { error: "Utilisateur introuvable" };
 
   const passwordHash = await bcrypt.hash(newPassword, 10);
-  await prisma.user.update({ where: { id }, data: { passwordHash } });
+  const { error } = await supabase.from("users").update({ password_hash: passwordHash }).eq("id", id);
+  if (error) {
+    console.error("[resetUserPasswordAction] Échec de la réinitialisation :", error.message);
+    return { error: "Impossible de réinitialiser le mot de passe" };
+  }
 
   await logAction({
     businessId: admin.businessId,

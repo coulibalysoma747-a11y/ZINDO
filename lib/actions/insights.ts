@@ -1,5 +1,5 @@
 import "server-only";
-import { prisma } from "@/lib/prisma";
+import { supabase } from "@/lib/supabase";
 import { startOfMonth } from "@/lib/format";
 
 export type Insight = {
@@ -27,25 +27,34 @@ function daysAgo(n: number) {
 async function getStockRuptureInsights(businessId: string, locationId: string): Promise<Insight[]> {
   const windowStart = daysAgo(VELOCITY_WINDOW_DAYS);
 
-  const [stocks, salesVolume] = await Promise.all([
-    prisma.productStock.findMany({
-      where: { locationId, quantity: { gt: 0 }, product: { businessId, active: true } },
-      include: { product: { select: { id: true, name: true } } },
-    }),
-    prisma.stockMovement.groupBy({
-      by: ["productId"],
-      where: {
-        businessId,
-        locationId,
-        direction: "OUT",
-        reason: "VENTE",
-        createdAt: { gte: windowStart },
-      },
-      _sum: { quantity: true },
-    }),
+  const [{ data: stocksData }, { data: movementsData }] = await Promise.all([
+    supabase
+      .from("product_stocks")
+      .select("productId:product_id, quantity, product:products!inner(id, name, businessId:business_id, active)")
+      .eq("location_id", locationId)
+      .gt("quantity", 0)
+      .eq("products.business_id", businessId)
+      .eq("products.active", true),
+    supabase
+      .from("stock_movements")
+      .select("productId:product_id, quantity")
+      .eq("business_id", businessId)
+      .eq("location_id", locationId)
+      .eq("direction", "OUT")
+      .eq("reason", "VENTE")
+      .gte("created_at", windowStart.toISOString()),
   ]);
 
-  const soldMap = new Map(salesVolume.map((s) => [s.productId, s._sum.quantity ?? 0]));
+  const stocks = (stocksData ?? []) as unknown as Array<{
+    productId: string;
+    quantity: number;
+    product: { id: string; name: string };
+  }>;
+
+  const soldMap = new Map<string, number>();
+  for (const m of (movementsData ?? []) as Array<{ productId: string; quantity: number }>) {
+    soldMap.set(m.productId, (soldMap.get(m.productId) ?? 0) + m.quantity);
+  }
 
   const candidates = stocks
     .map((s) => {
@@ -72,37 +81,40 @@ async function getSalesTrendInsights(businessId: string, locationId: string): Pr
   const currentStart = startOfMonth();
   const previousStart = new Date(currentStart.getFullYear(), currentStart.getMonth() - 1, 1);
 
-  const [currentItems, previousItems] = await Promise.all([
-    prisma.saleItem.findMany({
-      where: {
-        sale: { businessId, locationId, status: { not: "ANNULEE" }, createdAt: { gte: currentStart } },
-      },
-      select: { total: true, product: { select: { category: { select: { name: true } } } } },
-    }),
-    prisma.saleItem.findMany({
-      where: {
-        sale: {
-          businessId,
-          locationId,
-          status: { not: "ANNULEE" },
-          createdAt: { gte: previousStart, lt: currentStart },
-        },
-      },
-      select: { total: true, product: { select: { category: { select: { name: true } } } } },
-    }),
+  const selectItems =
+    "total, sale:sales!inner(businessId:business_id, locationId:location_id, status, createdAt:created_at), product:products(category:categories(name))";
+
+  const [{ data: currentData }, { data: previousData }] = await Promise.all([
+    supabase
+      .from("sale_items")
+      .select(selectItems)
+      .eq("sales.business_id", businessId)
+      .eq("sales.location_id", locationId)
+      .neq("sales.status", "ANNULEE")
+      .gte("sales.created_at", currentStart.toISOString()),
+    supabase
+      .from("sale_items")
+      .select(selectItems)
+      .eq("sales.business_id", businessId)
+      .eq("sales.location_id", locationId)
+      .neq("sales.status", "ANNULEE")
+      .gte("sales.created_at", previousStart.toISOString())
+      .lt("sales.created_at", currentStart.toISOString()),
   ]);
 
-  function sumByCategory(items: typeof currentItems) {
+  type ItemRow = { total: number; product: { category: { name: string } | null } | null };
+
+  function sumByCategory(items: ItemRow[]) {
     const map = new Map<string, number>();
     for (const item of items) {
-      const name = item.product.category?.name ?? "Sans catégorie";
+      const name = item.product?.category?.name ?? "Sans catégorie";
       map.set(name, (map.get(name) ?? 0) + item.total);
     }
     return map;
   }
 
-  const current = sumByCategory(currentItems);
-  const previous = sumByCategory(previousItems);
+  const current = sumByCategory((currentData ?? []) as unknown as ItemRow[]);
+  const previous = sumByCategory((previousData ?? []) as unknown as ItemRow[]);
 
   const trends: { category: string; percent: number; current: number }[] = [];
   for (const [category, currentTotal] of current) {
@@ -133,20 +145,25 @@ async function getSalesTrendInsights(businessId: string, locationId: string): Pr
 async function getMarginInsights(businessId: string, locationId: string): Promise<Insight[]> {
   const currentStart = startOfMonth();
 
-  const items = await prisma.saleItem.findMany({
-    where: {
-      sale: { businessId, locationId, status: { not: "ANNULEE" }, createdAt: { gte: currentStart } },
-    },
-    select: {
-      quantity: true,
-      product: { select: { id: true, name: true, salePrice: true, purchasePrice: true } },
-    },
-  });
+  const { data } = await supabase
+    .from("sale_items")
+    .select(
+      "quantity, sale:sales!inner(businessId:business_id, locationId:location_id, status, createdAt:created_at), product:products(id, name, salePrice:sale_price, purchasePrice:purchase_price)"
+    )
+    .eq("sales.business_id", businessId)
+    .eq("sales.location_id", locationId)
+    .neq("sales.status", "ANNULEE")
+    .gte("sales.created_at", currentStart.toISOString());
 
+  const items = (data ?? []) as unknown as Array<{
+    quantity: number;
+    product: { id: string; name: string; salePrice: number; purchasePrice: number } | null;
+  }>;
   if (items.length === 0) return [];
 
   const byProduct = new Map<string, { name: string; qty: number; salePrice: number; purchasePrice: number }>();
   for (const item of items) {
+    if (!item.product) continue;
     const existing = byProduct.get(item.product.id);
     if (existing) existing.qty += item.quantity;
     else
@@ -159,6 +176,7 @@ async function getMarginInsights(businessId: string, locationId: string): Promis
   }
 
   const rows = Array.from(byProduct.values());
+  if (rows.length === 0) return [];
   const avgQty = rows.reduce((s, r) => s + r.qty, 0) / rows.length;
 
   const lowMargin = rows

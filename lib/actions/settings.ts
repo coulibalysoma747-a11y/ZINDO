@@ -3,12 +3,12 @@
 import { z } from "zod";
 import bcrypt from "bcryptjs";
 import { revalidatePath } from "next/cache";
-import { prisma } from "@/lib/prisma";
+import { supabase } from "@/lib/supabase";
 import { requirePermission, requireUser } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
 import { logAction } from "@/lib/audit";
 import { saveBusinessLogo, deleteUploadedImage } from "@/lib/photo-upload";
-import type { PaymentMethod, Role } from "@prisma/client";
+import type { PaymentMethod, Role } from "@/lib/db-types";
 
 export type ActionState = { error?: string; success?: string } | undefined;
 
@@ -57,14 +57,26 @@ export async function updateBusinessSettingsAction(
     await deleteUploadedImage(user.business.logoUrl);
   }
 
-  await prisma.business.update({
-    where: { id: user.businessId },
-    data: {
-      ...parsed.data,
-      email: parsed.data.email || undefined,
-      ...(logoUrl !== undefined ? { logoUrl } : {}),
-    },
-  });
+  const { error } = await supabase
+    .from("businesses")
+    .update({
+      name: parsed.data.name,
+      phone: parsed.data.phone ?? null,
+      email: parsed.data.email || null,
+      address: parsed.data.address ?? null,
+      city: parsed.data.city ?? null,
+      currency: parsed.data.currency,
+      ticket_width: parsed.data.ticketWidth,
+      ticket_footer: parsed.data.ticketFooter ?? null,
+      qr_code_size: parsed.data.qrCodeSize,
+      default_min_stock: parsed.data.defaultMinStock,
+      ...(logoUrl !== undefined ? { logo_url: logoUrl } : {}),
+    })
+    .eq("id", user.businessId);
+  if (error) {
+    console.error("[updateBusinessSettingsAction] Échec de la mise à jour :", error.message);
+    return { error: "Impossible d'enregistrer les paramètres" };
+  }
 
   await logAction({
     businessId: user.businessId,
@@ -81,11 +93,16 @@ export async function updateBusinessSettingsAction(
 export async function togglePaymentMethodAction(method: PaymentMethod, enabled: boolean) {
   const user = await requirePermission(PERMISSIONS.SETTINGS_MANAGE);
 
-  await prisma.paymentMethodConfig.upsert({
-    where: { businessId_method: { businessId: user.businessId, method } },
-    update: { enabled },
-    create: { businessId: user.businessId, method, label: method, enabled },
-  });
+  const { error } = await supabase
+    .from("payment_method_configs")
+    .upsert(
+      { business_id: user.businessId, method, label: method, enabled },
+      { onConflict: "business_id,method", ignoreDuplicates: false }
+    );
+  if (error) {
+    console.error("[togglePaymentMethodAction] Échec de la mise à jour :", error.message);
+    return { error: "Impossible de mettre à jour le moyen de paiement" };
+  }
 
   revalidatePath("/parametres");
   return { success: "Moyen de paiement mis à jour" };
@@ -94,11 +111,16 @@ export async function togglePaymentMethodAction(method: PaymentMethod, enabled: 
 export async function togglePermissionAction(role: Role, permission: string, allowed: boolean) {
   const user = await requirePermission(PERMISSIONS.SETTINGS_MANAGE);
 
-  await prisma.rolePermission.upsert({
-    where: { businessId_role_permission: { businessId: user.businessId, role, permission } },
-    update: { allowed },
-    create: { businessId: user.businessId, role, permission, allowed },
-  });
+  const { error } = await supabase
+    .from("role_permissions")
+    .upsert(
+      { business_id: user.businessId, role, permission, allowed },
+      { onConflict: "business_id,role,permission", ignoreDuplicates: false }
+    );
+  if (error) {
+    console.error("[togglePermissionAction] Échec de la mise à jour :", error.message);
+    return { error: "Impossible de mettre à jour la permission" };
+  }
 
   revalidatePath("/parametres");
   return { success: "Permission mise à jour" };
@@ -106,7 +128,15 @@ export async function togglePermissionAction(role: Role, permission: string, all
 
 export async function resetRolePermissionsAction(role: Role) {
   const user = await requirePermission(PERMISSIONS.SETTINGS_MANAGE);
-  await prisma.rolePermission.deleteMany({ where: { businessId: user.businessId, role } });
+  const { error } = await supabase
+    .from("role_permissions")
+    .delete()
+    .eq("business_id", user.businessId)
+    .eq("role", role);
+  if (error) {
+    console.error("[resetRolePermissionsAction] Échec de la réinitialisation :", error.message);
+    return { error: "Impossible de réinitialiser les permissions" };
+  }
   revalidatePath("/parametres");
   return { success: "Permissions réinitialisées" };
 }
@@ -129,20 +159,27 @@ export async function updateProfileAction(
   });
   if (!parsed.success) return { error: parsed.error.issues[0]?.message };
 
-  await prisma.user.update({
-    where: { id: user.id },
-    data: { ...parsed.data, email: parsed.data.email || undefined },
-  });
+  const { error } = await supabase
+    .from("users")
+    .update({
+      first_name: parsed.data.firstName,
+      last_name: parsed.data.lastName,
+      email: parsed.data.email || null,
+    })
+    .eq("id", user.id);
+  if (error) {
+    console.error("[updateProfileAction] Échec de la mise à jour :", error.message);
+    return { error: "Impossible de mettre à jour le profil" };
+  }
 
   revalidatePath("/profil");
   return { success: "Profil mis à jour" };
 }
 
-const passwordSchema = z
-  .object({
-    currentPassword: z.string().min(1, "Mot de passe actuel requis"),
-    newPassword: z.string().min(6, "6 caractères minimum"),
-  });
+const passwordSchema = z.object({
+  currentPassword: z.string().min(1, "Mot de passe actuel requis"),
+  newPassword: z.string().min(6, "6 caractères minimum"),
+});
 
 export async function changePasswordAction(
   _prevState: ActionState,
@@ -159,7 +196,11 @@ export async function changePasswordAction(
   if (!valid) return { error: "Mot de passe actuel incorrect" };
 
   const passwordHash = await bcrypt.hash(parsed.data.newPassword, 10);
-  await prisma.user.update({ where: { id: user.id }, data: { passwordHash } });
+  const { error } = await supabase.from("users").update({ password_hash: passwordHash }).eq("id", user.id);
+  if (error) {
+    console.error("[changePasswordAction] Échec de la mise à jour :", error.message);
+    return { error: "Impossible de modifier le mot de passe" };
+  }
 
   return { success: "Mot de passe modifié" };
 }
