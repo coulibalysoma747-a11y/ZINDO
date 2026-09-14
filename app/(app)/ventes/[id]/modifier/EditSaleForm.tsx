@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/Button";
 import { Field, Input, Select } from "@/components/ui/Input";
 import { formatMoney } from "@/lib/format";
 import { updateSaleAction } from "@/lib/actions/sales";
-import type { PaymentMethod } from "@prisma/client";
+import type { PaymentMethod } from "@/lib/db-types";
 
 type CartLine = {
   product: PosProduct;

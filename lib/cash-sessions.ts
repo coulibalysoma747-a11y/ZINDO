@@ -1,5 +1,5 @@
 import "server-only";
-import { prisma } from "@/lib/prisma";
+import { supabase } from "@/lib/supabase";
 
 export type SessionStats = {
   salesCount: number;
@@ -31,24 +31,30 @@ export async function computeSessionStats(session: {
 }): Promise<SessionStats> {
   const endDate = session.closedAt ?? new Date();
 
-  const [sales, expenses] = await Promise.all([
-    prisma.sale.findMany({
-      where: {
-        businessId: session.businessId,
-        locationId: session.locationId,
-        createdAt: { gte: session.openedAt, lte: endDate },
-        status: { not: "ANNULEE" },
-      },
-      include: { items: true },
-    }),
-    prisma.expense.findMany({
-      where: {
-        businessId: session.businessId,
-        locationId: session.locationId,
-        date: { gte: session.openedAt, lte: endDate },
-      },
-    }),
+  const [{ data: sales }, { data: expenses }] = await Promise.all([
+    supabase
+      .from("sales")
+      .select("total, amountPaid:amount_paid, paymentMethod:payment_method, items:sale_items(unitCost:unit_cost, quantity)")
+      .eq("business_id", session.businessId)
+      .eq("location_id", session.locationId)
+      .neq("status", "ANNULEE")
+      .gte("created_at", session.openedAt.toISOString())
+      .lte("created_at", endDate.toISOString()),
+    supabase
+      .from("expenses")
+      .select("amount")
+      .eq("business_id", session.businessId)
+      .eq("location_id", session.locationId)
+      .gte("date", session.openedAt.toISOString())
+      .lte("date", endDate.toISOString()),
   ]);
+
+  const salesRows = (sales ?? []) as unknown as Array<{
+    total: number;
+    amountPaid: number;
+    paymentMethod: string;
+    items: Array<{ unitCost: number; quantity: number }>;
+  }>;
 
   let totalRevenue = 0;
   let totalCost = 0;
@@ -58,7 +64,7 @@ export async function computeSessionStats(session: {
   let otherCollected = 0;
   let creditCollected = 0;
 
-  for (const sale of sales) {
+  for (const sale of salesRows) {
     totalRevenue += sale.total;
     for (const item of sale.items) totalCost += item.unitCost * item.quantity;
     switch (sale.paymentMethod) {
@@ -80,7 +86,7 @@ export async function computeSessionStats(session: {
     }
   }
 
-  const expensesTotal = expenses.reduce((sum, e) => sum + e.amount, 0);
+  const expensesTotal = (expenses ?? []).reduce((sum, e) => sum + (e.amount as number), 0);
   const grossMargin = totalRevenue - totalCost;
   const netMargin = grossMargin - expensesTotal;
   const marginRate = totalRevenue > 0 ? (netMargin / totalRevenue) * 100 : 0;
@@ -89,7 +95,7 @@ export async function computeSessionStats(session: {
   const expectedCash = session.openingAmount + cashCollected - expensesTotal;
 
   return {
-    salesCount: sales.length,
+    salesCount: salesRows.length,
     totalRevenue,
     cashCollected,
     mobileCollected,

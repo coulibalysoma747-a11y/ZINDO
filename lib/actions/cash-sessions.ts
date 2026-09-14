@@ -2,7 +2,7 @@
 
 import { z } from "zod";
 import { revalidatePath } from "next/cache";
-import { prisma } from "@/lib/prisma";
+import { supabase } from "@/lib/supabase";
 import { requirePermission } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
 import { getCurrentLocation } from "@/lib/location";
@@ -27,28 +27,38 @@ export async function openSessionAction(
   const currentLocation = await getCurrentLocation(user.businessId);
   if (!currentLocation) return { error: "Configurez d'abord une boutique" };
 
-  const existing = await prisma.cashSession.findFirst({
-    where: { businessId: user.businessId, locationId: currentLocation.id, status: "OUVERTE" },
-  });
+  const { data: existing } = await supabase
+    .from("cash_sessions")
+    .select("id")
+    .eq("business_id", user.businessId)
+    .eq("location_id", currentLocation.id)
+    .eq("status", "OUVERTE")
+    .maybeSingle();
   if (existing) return { error: "Une session de caisse est déjà ouverte pour cette boutique" };
 
   const number = await generateSessionNumber(user.businessId);
-  const session = await prisma.cashSession.create({
-    data: {
-      businessId: user.businessId,
-      locationId: currentLocation.id,
+  const { data: session, error } = await supabase
+    .from("cash_sessions")
+    .insert({
+      business_id: user.businessId,
+      location_id: currentLocation.id,
       number,
-      userId: user.id,
-      openingAmount: parsed.data.openingAmount,
-    },
-  });
+      user_id: user.id,
+      opening_amount: parsed.data.openingAmount,
+    })
+    .select("id")
+    .single();
+  if (error || !session) {
+    console.error("[openSessionAction] Échec de l'ouverture :", error?.message);
+    return { error: "Impossible d'ouvrir la session de caisse" };
+  }
 
   await logAction({
     businessId: user.businessId,
     userId: user.id,
     action: "OPEN",
     entity: "CashSession",
-    entityId: session.id,
+    entityId: session.id as string,
     details: `Ouverture caisse ${parsed.data.openingAmount}`,
   });
 
@@ -67,9 +77,12 @@ export type CloseSessionResult = { success: true; sessionId: string } | { succes
 export async function closeSessionAction(input: CloseSessionInput): Promise<CloseSessionResult> {
   const user = await requirePermission(PERMISSIONS.CASH_SESSIONS_MANAGE);
 
-  const session = await prisma.cashSession.findFirst({
-    where: { id: input.sessionId, businessId: user.businessId },
-  });
+  const { data: session } = await supabase
+    .from("cash_sessions")
+    .select("id, businessId:business_id, locationId:location_id, openingAmount:opening_amount, openedAt:opened_at, status")
+    .eq("id", input.sessionId)
+    .eq("business_id", user.businessId)
+    .maybeSingle();
   if (!session) return { success: false, error: "Session introuvable" };
   if (session.status === "FERMEE") return { success: false, error: "Cette session est déjà clôturée" };
   if (!Number.isFinite(input.countedCash) || input.countedCash < 0) {
@@ -78,48 +91,52 @@ export async function closeSessionAction(input: CloseSessionInput): Promise<Clos
 
   const closedAt = new Date();
   const stats = await computeSessionStats({
-    businessId: session.businessId,
-    locationId: session.locationId,
-    openingAmount: session.openingAmount,
-    openedAt: session.openedAt,
+    businessId: session.businessId as string,
+    locationId: session.locationId as string,
+    openingAmount: session.openingAmount as number,
+    openedAt: new Date(session.openedAt as string),
     closedAt,
   });
   const variance = input.countedCash - stats.expectedCash;
 
-  await prisma.cashSession.update({
-    where: { id: session.id },
-    data: {
+  const { error } = await supabase
+    .from("cash_sessions")
+    .update({
       status: "FERMEE",
-      closedAt,
-      countedCash: input.countedCash,
+      closed_at: closedAt.toISOString(),
+      counted_cash: input.countedCash,
       note: input.note || null,
-      salesCount: stats.salesCount,
-      totalRevenue: stats.totalRevenue,
-      cashCollected: stats.cashCollected,
-      mobileCollected: stats.mobileCollected,
-      cardCollected: stats.cardCollected,
-      otherCollected: stats.otherCollected,
-      creditCollected: stats.creditCollected,
-      grossMargin: stats.grossMargin,
-      expensesTotal: stats.expensesTotal,
-      netMargin: stats.netMargin,
-      marginRate: stats.marginRate,
-      expectedCash: stats.expectedCash,
+      sales_count: stats.salesCount,
+      total_revenue: stats.totalRevenue,
+      cash_collected: stats.cashCollected,
+      mobile_collected: stats.mobileCollected,
+      card_collected: stats.cardCollected,
+      other_collected: stats.otherCollected,
+      credit_collected: stats.creditCollected,
+      gross_margin: stats.grossMargin,
+      expenses_total: stats.expensesTotal,
+      net_margin: stats.netMargin,
+      margin_rate: stats.marginRate,
+      expected_cash: stats.expectedCash,
       variance,
-    },
-  });
+    })
+    .eq("id", session.id);
+  if (error) {
+    console.error("[closeSessionAction] Échec de la clôture :", error.message);
+    return { success: false, error: "Impossible de clôturer la session" };
+  }
 
   await logAction({
     businessId: user.businessId,
     userId: user.id,
     action: "CLOSE",
     entity: "CashSession",
-    entityId: session.id,
+    entityId: session.id as string,
     details: `Compté ${input.countedCash}, écart ${variance}`,
   });
 
   revalidatePath("/ventes");
   revalidatePath(`/ventes/session/${session.id}`);
   revalidatePath("/ventes/sessions");
-  return { success: true, sessionId: session.id };
+  return { success: true, sessionId: session.id as string };
 }

@@ -1,10 +1,39 @@
 import { notFound } from "next/navigation";
 import { requirePermission } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
-import { prisma } from "@/lib/prisma";
+import { supabase } from "@/lib/supabase";
 import { getEnabledPaymentMethods } from "@/lib/actions/sales";
 import { getPosProductsAction } from "@/lib/actions/product-search";
+import type { PaymentMethod } from "@/lib/db-types";
 import { EditSaleForm } from "./EditSaleForm";
+
+type SaleRow = {
+  id: string;
+  number: string;
+  status: string;
+  locationId: string;
+  customerId: string | null;
+  discount: number;
+  paymentMethod: string;
+  amountPaid: number;
+  location: { name: string };
+  items: Array<{
+    productId: string;
+    quantity: number;
+    unitPrice: number;
+    discount: number;
+    product: {
+      id: string;
+      name: string;
+      reference: string;
+      barcode: string | null;
+      photoUrl: string | null;
+      salePrice: number;
+      purchasePrice: number;
+      unit: string;
+    };
+  }>;
+};
 
 export default async function EditSalePage({
   params,
@@ -14,27 +43,31 @@ export default async function EditSalePage({
   const user = await requirePermission(PERMISSIONS.SALES_CREATE);
   const { id } = await params;
 
-  const sale = await prisma.sale.findFirst({
-    where: { id, businessId: user.businessId },
-    include: { items: { include: { product: true } }, location: true },
-  });
-  if (!sale) notFound();
+  const { data } = await supabase
+    .from("sales")
+    .select(
+      "id, number, status, locationId:location_id, customerId:customer_id, discount, paymentMethod:payment_method, amountPaid:amount_paid, location:locations(name), " +
+        "items:sale_items(productId:product_id, quantity, unitPrice:unit_price, discount, product:products(id, name, reference, barcode, photoUrl:photo_url, salePrice:sale_price, purchasePrice:purchase_price, unit))"
+    )
+    .eq("id", id)
+    .eq("business_id", user.businessId)
+    .maybeSingle();
+  if (!data) notFound();
+  const sale = data as unknown as SaleRow;
   if (sale.status === "ANNULEE") notFound();
 
-  const [customers, paymentMethods, posProducts, stocks] = await Promise.all([
-    prisma.customer.findMany({
-      where: { businessId: user.businessId },
-      orderBy: { name: "asc" },
-      select: { id: true, name: true, phone: true },
-    }),
+  const [{ data: customers }, paymentMethods, posProducts, { data: stocks }] = await Promise.all([
+    supabase.from("customers").select("id, name, phone").eq("business_id", user.businessId).order("name", { ascending: true }),
     getEnabledPaymentMethods(),
     getPosProductsAction(sale.locationId),
-    prisma.productStock.findMany({
-      where: { productId: { in: sale.items.map((i) => i.productId) }, locationId: sale.locationId },
-    }),
+    supabase
+      .from("product_stocks")
+      .select("productId:product_id, quantity")
+      .in("product_id", sale.items.map((i) => i.productId))
+      .eq("location_id", sale.locationId),
   ]);
 
-  const stockMap = new Map(stocks.map((s) => [s.productId, s.quantity]));
+  const stockMap = new Map(((stocks ?? []) as Array<{ productId: string; quantity: number }>).map((s) => [s.productId, s.quantity]));
   const itemProductIds = new Set(sale.items.map((i) => i.productId));
 
   const initialItems = sale.items.map((item) => ({
@@ -61,13 +94,13 @@ export default async function EditSalePage({
       saleNumber={sale.number}
       locationName={sale.location.name}
       currency={user.business.currency}
-      customers={customers}
+      customers={customers ?? []}
       paymentMethods={paymentMethods}
       posProducts={posProducts.filter((p) => !itemProductIds.has(p.id))}
       initialItems={initialItems}
       initialCustomerId={sale.customerId ?? ""}
       initialDiscount={sale.discount}
-      initialPaymentMethod={sale.paymentMethod}
+      initialPaymentMethod={sale.paymentMethod as PaymentMethod}
       initialAmountPaid={sale.amountPaid}
     />
   );

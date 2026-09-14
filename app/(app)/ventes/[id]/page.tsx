@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { requirePermission, hasPermission } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
-import { prisma } from "@/lib/prisma";
+import { supabase } from "@/lib/supabase";
 import { getVerificationUrl } from "@/lib/verification";
 import { generateQrDataUrl } from "@/lib/qrcode";
 import type { ReceiptData, ReceiptWidth } from "@/components/sales/Receipt";
@@ -17,6 +17,29 @@ const PAYMENT_LABELS: Record<string, string> = {
   AUTRE: "Autre",
 };
 
+type SaleRow = {
+  id: string;
+  number: string;
+  createdAt: string;
+  subtotal: number;
+  discount: number;
+  total: number;
+  amountPaid: number;
+  paymentMethod: string;
+  status: string;
+  documentType: string;
+  items: Array<{
+    quantity: number;
+    unitPrice: number;
+    discount: number;
+    total: number;
+    product: { reference: string; name: string; unit: string };
+  }>;
+  customer: { name: string; phone: string | null; address: string | null } | null;
+  user: { firstName: string; lastName: string };
+  location: { name: string; address: string | null };
+};
+
 export default async function SaleReceiptPage({
   params,
 }: {
@@ -25,11 +48,18 @@ export default async function SaleReceiptPage({
   const user = await requirePermission(PERMISSIONS.SALES_VIEW);
   const { id } = await params;
 
-  const sale = await prisma.sale.findFirst({
-    where: { id, businessId: user.businessId },
-    include: { items: { include: { product: true } }, customer: true, user: true, location: true },
-  });
-  if (!sale) notFound();
+  const { data: saleRow } = await supabase
+    .from("sales")
+    .select(
+      "id, number, createdAt:created_at, subtotal, discount, total, amountPaid:amount_paid, paymentMethod:payment_method, status, documentType:document_type, " +
+        "items:sale_items(quantity, unitPrice:unit_price, discount, total, product:products(reference, name, unit)), " +
+        "customer:customers(name, phone, address), user:users(firstName:first_name, lastName:last_name), location:locations(name, address)"
+    )
+    .eq("id", id)
+    .eq("business_id", user.businessId)
+    .maybeSingle();
+  if (!saleRow) notFound();
+  const sale = saleRow as unknown as SaleRow;
 
   const business = user.business;
   const remaining = Math.max(0, sale.total - sale.amountPaid);
@@ -52,7 +82,7 @@ export default async function SaleReceiptPage({
       locationName: sale.location.name,
       locationAddress: sale.location.address,
       invoiceNumber: sale.number,
-      date: sale.createdAt,
+      date: new Date(sale.createdAt),
       cashierName,
       customerName: sale.customer?.name,
       customerPhone: sale.customer?.phone,
@@ -78,9 +108,7 @@ export default async function SaleReceiptPage({
       qrCodeDataUrl,
     };
 
-    return (
-      <FactureView data={factureData} saleId={sale.id} isCancelled={isCancelled} canEdit={canEdit} />
-    );
+    return <FactureView data={factureData} saleId={sale.id} isCancelled={isCancelled} canEdit={canEdit} />;
   }
 
   const receiptData: ReceiptData = {
@@ -91,7 +119,7 @@ export default async function SaleReceiptPage({
     locationName: sale.location.name,
     locationAddress: sale.location.address,
     ticketNumber: sale.number,
-    date: sale.createdAt,
+    date: new Date(sale.createdAt),
     cashierName,
     customerName: sale.customer?.name,
     items: sale.items.map((item) => ({

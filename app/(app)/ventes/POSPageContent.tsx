@@ -1,6 +1,6 @@
 import { requirePermission, hasPermission } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
-import { prisma } from "@/lib/prisma";
+import { supabase } from "@/lib/supabase";
 import { getCurrentLocation } from "@/lib/location";
 import { getEnabledPaymentMethods } from "@/lib/actions/sales";
 import { EmptyState } from "@/components/ui/Empty";
@@ -28,21 +28,26 @@ export async function POSPageContent({ mode }: { mode: "pos" | "facture" }) {
     );
   }
 
-  const activeSession = await prisma.cashSession.findFirst({
-    where: { businessId: user.businessId, locationId: currentLocation.id, status: "OUVERTE" },
-    include: { user: true },
-  });
+  const { data: activeSession } = await supabase
+    .from("cash_sessions")
+    .select("id, number, openedAt:opened_at, user:users(firstName:first_name, lastName:last_name)")
+    .eq("business_id", user.businessId)
+    .eq("location_id", currentLocation.id)
+    .eq("status", "OUVERTE")
+    .maybeSingle();
 
   if (!activeSession) {
     return <OpenSessionForm locationName={currentLocation.name} />;
   }
+  const session = activeSession as unknown as {
+    id: string;
+    number: string;
+    openedAt: string;
+    user: { firstName: string; lastName: string };
+  };
 
-  const [customers, paymentMethods, canEditProducts] = await Promise.all([
-    prisma.customer.findMany({
-      where: { businessId: user.businessId },
-      orderBy: { name: "asc" },
-      select: { id: true, name: true, phone: true },
-    }),
+  const [{ data: customers }, paymentMethods, canEditProducts] = await Promise.all([
+    supabase.from("customers").select("id, name, phone").eq("business_id", user.businessId).order("name", { ascending: true }),
     getEnabledPaymentMethods(),
     hasPermission(user.businessId, user.role, PERMISSIONS.PRODUCTS_MANAGE, user.id),
   ]);
@@ -50,7 +55,7 @@ export async function POSPageContent({ mode }: { mode: "pos" | "facture" }) {
   return (
     <POS
       mode={mode}
-      customers={customers}
+      customers={customers ?? []}
       paymentMethods={paymentMethods}
       currency={user.business.currency}
       locationId={currentLocation.id}
@@ -59,10 +64,10 @@ export async function POSPageContent({ mode }: { mode: "pos" | "facture" }) {
       autoPrintReceipt={user.autoPrintReceipt}
       printerTicketWidth={user.printerTicketWidth}
       session={{
-        id: activeSession.id,
-        number: activeSession.number,
-        openedAt: activeSession.openedAt.toISOString(),
-        cashierName: `${activeSession.user.firstName} ${activeSession.user.lastName}`,
+        id: session.id,
+        number: session.number,
+        openedAt: new Date(session.openedAt).toISOString(),
+        cashierName: `${session.user.firstName} ${session.user.lastName}`,
       }}
     />
   );

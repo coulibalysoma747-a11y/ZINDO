@@ -2,21 +2,36 @@ import Link from "next/link";
 import { Eye, Lock } from "lucide-react";
 import { requirePermission } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
-import { prisma } from "@/lib/prisma";
+import { supabase } from "@/lib/supabase";
 import { formatMoney, formatDateTime } from "@/lib/format";
 import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { EmptyState } from "@/components/ui/Empty";
 
+type SessionRow = {
+  id: string;
+  number: string;
+  openedAt: string;
+  closedAt: string | null;
+  status: string;
+  totalRevenue: number | null;
+  variance: number | null;
+  location: { name: string };
+  user: { firstName: string; lastName: string };
+};
+
 export default async function CashSessionsPage() {
   const user = await requirePermission(PERMISSIONS.CASH_SESSIONS_MANAGE);
 
-  const sessions = await prisma.cashSession.findMany({
-    where: { businessId: user.businessId },
-    include: { location: true, user: true },
-    orderBy: { openedAt: "desc" },
-    take: 200,
-  });
+  const { data } = await supabase
+    .from("cash_sessions")
+    .select(
+      "id, number, openedAt:opened_at, closedAt:closed_at, status, totalRevenue:total_revenue, variance, location:locations(name), user:users(firstName:first_name, lastName:last_name)"
+    )
+    .eq("business_id", user.businessId)
+    .order("opened_at", { ascending: false })
+    .limit(200);
+  const sessions = (data ?? []) as unknown as SessionRow[];
 
   const currency = user.business.currency;
 
@@ -53,8 +68,8 @@ export default async function CashSessionsPage() {
                   <td className="px-4 py-3 text-zinc-600">
                     {s.user.firstName} {s.user.lastName}
                   </td>
-                  <td className="px-4 py-3 text-zinc-600">{formatDateTime(s.openedAt)}</td>
-                  <td className="px-4 py-3 text-zinc-600">{s.closedAt ? formatDateTime(s.closedAt) : "—"}</td>
+                  <td className="px-4 py-3 text-zinc-600">{formatDateTime(new Date(s.openedAt))}</td>
+                  <td className="px-4 py-3 text-zinc-600">{s.closedAt ? formatDateTime(new Date(s.closedAt)) : "—"}</td>
                   <td className="px-4 py-3">
                     <Badge tone={s.status === "OUVERTE" ? "amber" : "zinc"}>
                       {s.status === "OUVERTE" ? "Ouverte" : "Fermée"}
@@ -67,11 +82,7 @@ export default async function CashSessionsPage() {
                     {s.variance != null ? (
                       <span
                         className={
-                          s.variance === 0
-                            ? "text-zinc-500"
-                            : s.variance > 0
-                              ? "text-emerald-600"
-                              : "text-red-600"
+                          s.variance === 0 ? "text-zinc-500" : s.variance > 0 ? "text-emerald-600" : "text-red-600"
                         }
                       >
                         {s.variance > 0 ? "+" : ""}

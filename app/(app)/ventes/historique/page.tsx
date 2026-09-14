@@ -2,13 +2,12 @@ import Link from "next/link";
 import { Printer } from "lucide-react";
 import { requirePermission } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
-import { prisma } from "@/lib/prisma";
+import { supabase } from "@/lib/supabase";
 import { formatMoney, formatDateTime, startOfToday, startOfYesterday, startOfWeek, startOfMonth } from "@/lib/format";
 import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { EmptyState } from "@/components/ui/Empty";
 import { HistoryFilters } from "@/components/history/HistoryFilters";
-import type { Prisma } from "@prisma/client";
 
 const STATUS_TONE = {
   PAYEE: "emerald",
@@ -16,6 +15,17 @@ const STATUS_TONE = {
   CREDIT: "red",
   ANNULEE: "zinc",
 } as const;
+
+type SaleRow = {
+  id: string;
+  number: string;
+  createdAt: string;
+  status: keyof typeof STATUS_TONE;
+  total: number;
+  location: { name: string };
+  customer: { name: string } | null;
+  user: { firstName: string; lastName: string };
+};
 
 export default async function SalesHistoryPage({
   searchParams,
@@ -25,18 +35,23 @@ export default async function SalesHistoryPage({
   const user = await requirePermission(PERMISSIONS.SALES_VIEW);
   const { periode } = await searchParams;
 
-  const where: Prisma.SaleWhereInput = { businessId: user.businessId };
-  if (periode === "aujourdhui") where.createdAt = { gte: startOfToday() };
-  else if (periode === "hier") where.createdAt = { gte: startOfYesterday(), lt: startOfToday() };
-  else if (periode === "semaine") where.createdAt = { gte: startOfWeek() };
-  else if (periode === "mois") where.createdAt = { gte: startOfMonth() };
+  let query = supabase
+    .from("sales")
+    .select(
+      "id, number, createdAt:created_at, status, total, location:locations(name), customer:customers(name), user:users(firstName:first_name, lastName:last_name)"
+    )
+    .eq("business_id", user.businessId)
+    .order("created_at", { ascending: false })
+    .limit(200);
 
-  const sales = await prisma.sale.findMany({
-    where,
-    include: { customer: true, user: true, location: true, _count: { select: { items: true } } },
-    orderBy: { createdAt: "desc" },
-    take: 200,
-  });
+  if (periode === "aujourdhui") query = query.gte("created_at", startOfToday().toISOString());
+  else if (periode === "hier")
+    query = query.gte("created_at", startOfYesterday().toISOString()).lt("created_at", startOfToday().toISOString());
+  else if (periode === "semaine") query = query.gte("created_at", startOfWeek().toISOString());
+  else if (periode === "mois") query = query.gte("created_at", startOfMonth().toISOString());
+
+  const { data } = await query;
+  const sales = (data ?? []) as unknown as SaleRow[];
 
   const currency = user.business.currency;
   const total = sales.filter((s) => s.status !== "ANNULEE").reduce((s, sale) => s + sale.total, 0);
@@ -78,16 +93,16 @@ export default async function SalesHistoryPage({
                       {s.number}
                     </Link>
                   </td>
-                  <td className="px-4 py-3 text-zinc-600">{formatDateTime(s.createdAt)}</td>
+                  <td className="px-4 py-3 text-zinc-600">{formatDateTime(new Date(s.createdAt))}</td>
                   <td className="px-4 py-3 text-zinc-600">{s.location.name}</td>
                   <td className="px-4 py-3 text-zinc-600">{s.customer?.name ?? "Client de passage"}</td>
-                  <td className="px-4 py-3 text-zinc-600">{s.user.firstName} {s.user.lastName}</td>
+                  <td className="px-4 py-3 text-zinc-600">
+                    {s.user.firstName} {s.user.lastName}
+                  </td>
                   <td className="px-4 py-3">
                     <Badge tone={STATUS_TONE[s.status]}>{s.status}</Badge>
                   </td>
-                  <td className="px-4 py-3 text-right font-medium text-zinc-900">
-                    {formatMoney(s.total, currency)}
-                  </td>
+                  <td className="px-4 py-3 text-right font-medium text-zinc-900">{formatMoney(s.total, currency)}</td>
                   <td className="px-4 py-3 text-right">
                     <Link
                       href={`/ventes/${s.id}?print=1`}
