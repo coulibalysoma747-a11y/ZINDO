@@ -26,12 +26,25 @@ export async function loginAction(
     return { error: parsed.error.issues[0]?.message ?? "Champs invalides" };
   }
   const { identifier, password } = parsed.data;
+  const trimmedIdentifier = identifier.trim();
+  // L'email est comparé sans tenir compte de la casse (ex. clavier mobile qui
+  // met une majuscule automatique au premier caractère) — le téléphone reste
+  // en comparaison exacte. `%`/`_` sont échappés pour ne pas être interprétés
+  // comme des jokers ILIKE.
+  const emailPattern = trimmedIdentifier.replace(/[%_\\]/g, (m) => `\\${m}`);
 
-  const { data: user } = await supabase
+  const { data: user, error } = await supabase
     .from("users")
     .select("id, businessId:business_id, role, active, passwordHash:password_hash")
-    .or(`phone.eq.${identifier},email.eq.${identifier}`)
+    .or(`phone.eq.${trimmedIdentifier},email.ilike.${emailPattern}`)
     .maybeSingle();
+
+  if (error) {
+    // Erreur backend (config Supabase, réseau...) distincte d'un simple
+    // mauvais identifiant — journalisée côté serveur pour le diagnostic,
+    // sans détail exposé au client.
+    console.error("[loginAction] Échec de la requête Supabase :", error.message);
+  }
 
   if (!user || !user.active) {
     return { error: "Identifiants incorrects" };

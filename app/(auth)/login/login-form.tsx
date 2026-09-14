@@ -25,6 +25,9 @@ export function LoginForm({ googleError }: { googleError?: string }) {
               type="text"
               inputMode="email"
               autoComplete="username"
+              autoCapitalize="none"
+              autoCorrect="off"
+              spellCheck={false}
               placeholder="Numéro de téléphone ou e-mail"
               required
               aria-invalid={state?.error ? true : undefined}
