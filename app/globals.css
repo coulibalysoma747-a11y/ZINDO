@@ -21,8 +21,8 @@
      contient pas), blanc cassé chaleureux (surfaces), vert succès. Le vert
      "zindo-green-500" est échantillonné directement sur public/brand/
      zindo-emblem.png ; le rouge et l'or du logo restent portés par les
-     classes Tailwind standard (red-*, amber-*/yellow-*) déjà utilisées pour
-     les états danger/attention. Utilisée sur les écrans d'authentification,
+     classes Tailwind standard (red-*, amber-* / yellow-*) déjà utilisées
+     pour les états danger/attention. Utilisée sur les écrans d'authentification,
      la page publique et la page Abonnement. */
   --color-zindo-green-50: #eefbf2;
   --color-zindo-green-100: #d3f3dc;

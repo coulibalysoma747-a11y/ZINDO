@@ -41,6 +41,7 @@ const pngBuffers = await Promise.all(
   faviconSizes.map((size) =>
     sharp(EMBLEM)
       .resize(size, size, { fit: "contain", background: { r: 255, g: 255, b: 255, alpha: 1 } })
+      .ensureAlpha() // requis : Next.js refuse un PNG non-RGBA dans un .ico au build
       .png()
       .toBuffer()
   )
