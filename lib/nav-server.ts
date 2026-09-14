@@ -4,7 +4,7 @@ import { hasPermission } from "@/lib/auth";
 import { isFeatureEnabled } from "@/lib/feature-flags";
 import { getActivityConfig, resolveTerm, TERM_NAV_HREF, type TermKey } from "@/lib/activity-config";
 import { getBusinessLimits } from "@/lib/subscription";
-import type { Role } from "@prisma/client";
+import type { Role } from "@/lib/db-types";
 
 const HREF_TO_TERM: Record<string, TermKey> = Object.fromEntries(
   Object.entries(TERM_NAV_HREF).map(([term, href]) => [href, term as TermKey])

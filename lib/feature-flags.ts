@@ -1,5 +1,5 @@
 import "server-only";
-import { prisma } from "@/lib/prisma";
+import { supabase } from "@/lib/supabase";
 
 /**
  * Contrôle du déploiement progressif des nouvelles fonctionnalités : une
@@ -14,13 +14,21 @@ import { prisma } from "@/lib/prisma";
  * (globalement ou pour un commerce précis) depuis /admin/fonctionnalites.
  */
 export async function isFeatureEnabled(key: string, businessId: string): Promise<boolean> {
-  const flag = await prisma.featureFlag.findUnique({
-    where: { key },
-    include: { overrides: { where: { businessId } } },
-  });
+  const { data: flag } = await supabase
+    .from("feature_flags")
+    .select("id, enabledGlobally:enabled_globally")
+    .eq("key", key)
+    .maybeSingle();
   if (!flag) return true;
   if (flag.enabledGlobally) return true;
-  return flag.overrides[0]?.enabled ?? false;
+
+  const { data: override } = await supabase
+    .from("feature_flag_businesses")
+    .select("enabled")
+    .eq("feature_flag_id", flag.id)
+    .eq("business_id", businessId)
+    .maybeSingle();
+  return override?.enabled ?? false;
 }
 
 /**
@@ -30,9 +38,8 @@ export async function isFeatureEnabled(key: string, businessId: string): Promise
  * chose que l'administrateur a délibérément laissé désactivé).
  */
 export async function registerFeatureFlag(key: string, label: string, description?: string) {
-  await prisma.featureFlag.upsert({
-    where: { key },
-    update: {},
-    create: { key, label, description },
-  });
+  const { data: existing } = await supabase.from("feature_flags").select("id").eq("key", key).maybeSingle();
+  if (existing) return;
+  const { error } = await supabase.from("feature_flags").insert({ key, label, description: description ?? null });
+  if (error) console.error("[registerFeatureFlag] Échec de la création :", error.message);
 }

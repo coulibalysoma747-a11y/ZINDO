@@ -1,15 +1,26 @@
 import "server-only";
 import { cookies } from "next/headers";
-import { prisma } from "@/lib/prisma";
+import { supabase } from "@/lib/supabase";
 import { LOCATION_COOKIE } from "@/lib/constants";
 
 export { LOCATION_COOKIE };
 
 export async function getLocations(businessId: string) {
-  return prisma.location.findMany({
-    where: { businessId, active: true },
-    orderBy: [{ isDefault: "desc" }, { name: "asc" }],
-  });
+  const { data, error } = await supabase
+    .from("locations")
+    .select(
+      "id, businessId:business_id, name, type, address, city, isDefault:is_default, active, createdAt:created_at"
+    )
+    .eq("business_id", businessId)
+    .eq("active", true)
+    .order("is_default", { ascending: false })
+    .order("name", { ascending: true });
+
+  if (error) {
+    console.error("[getLocations] Échec de la requête Supabase :", error.message);
+    return [];
+  }
+  return data ?? [];
 }
 
 /**

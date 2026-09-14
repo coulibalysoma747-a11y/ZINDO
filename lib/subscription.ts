@@ -1,5 +1,5 @@
 import "server-only";
-import { prisma } from "@/lib/prisma";
+import { supabase } from "@/lib/supabase";
 import { FEATURE_CATALOG } from "@/lib/subscription-features";
 
 export { FEATURE_CATALOG } from "@/lib/subscription-features";
@@ -35,19 +35,25 @@ function safeParseFeatures(json: string): string[] {
 }
 
 export async function getBusinessLimits(businessId: string): Promise<BusinessLimits> {
-  const subscription = await prisma.businessSubscription.findUnique({
-    where: { businessId },
-    include: { plan: true },
-  });
-  if (!subscription) return UNRESTRICTED;
+  const { data: subscription } = await supabase
+    .from("business_subscriptions")
+    .select(
+      "plan:subscription_plans(key, label, maxProducts:max_products, maxUsers:max_users, maxLocations:max_locations, features)"
+    )
+    .eq("business_id", businessId)
+    .maybeSingle();
+  const plan = subscription?.plan as unknown as
+    | { key: string; label: string; maxProducts: number | null; maxUsers: number | null; maxLocations: number | null; features: string }
+    | null;
+  if (!plan) return UNRESTRICTED;
 
   return {
-    planKey: subscription.plan.key,
-    planLabel: subscription.plan.label,
-    maxProducts: subscription.plan.maxProducts,
-    maxUsers: subscription.plan.maxUsers,
-    maxLocations: subscription.plan.maxLocations,
-    features: safeParseFeatures(subscription.plan.features),
+    planKey: plan.key,
+    planLabel: plan.label,
+    maxProducts: plan.maxProducts,
+    maxUsers: plan.maxUsers,
+    maxLocations: plan.maxLocations,
+    features: safeParseFeatures(plan.features),
   };
 }
 
@@ -65,12 +71,13 @@ export async function checkLimit(
 
   if (max === null) return { ok: true, limit: null, current: 0 };
 
-  const current =
-    kind === "products"
-      ? await prisma.product.count({ where: { businessId, active: true } })
-      : kind === "users"
-        ? await prisma.user.count({ where: { businessId, active: true } })
-        : await prisma.location.count({ where: { businessId, active: true } });
+  const table = kind === "products" ? "products" : kind === "users" ? "users" : "locations";
+  const { count } = await supabase
+    .from(table)
+    .select("id", { count: "exact", head: true })
+    .eq("business_id", businessId)
+    .eq("active", true);
+  const current = count ?? 0;
 
   return { ok: current < max, limit: max, current };
 }

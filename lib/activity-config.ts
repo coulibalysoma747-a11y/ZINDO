@@ -1,5 +1,5 @@
 import "server-only";
-import { prisma } from "@/lib/prisma";
+import { supabase } from "@/lib/supabase";
 import type { ActivityConfigData, CustomFieldDef } from "@/lib/activity-terms";
 
 export type { TermKey, CustomFieldType, CustomFieldDef, ActivityConfigData } from "@/lib/activity-terms";
@@ -34,12 +34,18 @@ function safeParseObject(json: string | null): Record<string, string> {
 
 export async function getActivityConfig(activityKey: string | null | undefined): Promise<ActivityConfigData> {
   if (!activityKey) return EMPTY_CONFIG;
-  const row = await prisma.activityConfig.findUnique({ where: { activityKey } });
+  const { data: row } = await supabase
+    .from("activity_configs")
+    .select(
+      "terminology, hiddenNavHrefs:hidden_nav_hrefs, defaultCategories:default_categories, customFields:custom_fields"
+    )
+    .eq("activity_key", activityKey)
+    .maybeSingle();
   if (!row) return EMPTY_CONFIG;
   return {
-    terminology: safeParseObject(row.terminology),
-    hiddenNavHrefs: safeParseArray<string>(row.hiddenNavHrefs),
-    defaultCategories: safeParseArray<string>(row.defaultCategories),
-    customFields: safeParseArray<CustomFieldDef>(row.customFields),
+    terminology: safeParseObject(row.terminology as string | null),
+    hiddenNavHrefs: safeParseArray<string>(row.hiddenNavHrefs as string | null),
+    defaultCategories: safeParseArray<string>(row.defaultCategories as string | null),
+    customFields: safeParseArray<CustomFieldDef>(row.customFields as string | null),
   };
 }
