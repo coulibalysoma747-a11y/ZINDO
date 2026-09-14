@@ -13,14 +13,35 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+const TITLE = "ZINDO — Gestion de stock et de ventes";
+const DESCRIPTION = "Gérez votre stock, vos ventes et vos bénéfices en temps réel, sans papier ni tableur.";
+
 export const metadata: Metadata = {
-  title: "ZINDO — Gestion de stock et de ventes",
-  description: "Gérez votre stock, vos ventes et vos bénéfices en temps réel, sans papier ni tableur.",
+  // Requis par Next.js pour résoudre les URLs d'images relatives (openGraph,
+  // twitter) en URLs absolues dans le HTML généré — sans ça, les aperçus de
+  // lien (WhatsApp, Facebook...) reçoivent une URL invalide.
+  metadataBase: new URL("https://zindo.vercel.app"),
+  title: TITLE,
+  description: DESCRIPTION,
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
     title: "ZINDO",
+  },
+  openGraph: {
+    title: TITLE,
+    description: DESCRIPTION,
+    siteName: "ZINDO",
+    locale: "fr_FR",
+    type: "website",
+    images: [{ url: "/brand/og-image.png", width: 1200, height: 630, alt: "ZINDO" }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: TITLE,
+    description: DESCRIPTION,
+    images: ["/brand/og-image.png"],
   },
 };
 
