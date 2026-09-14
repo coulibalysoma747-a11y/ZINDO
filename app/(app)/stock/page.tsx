@@ -2,14 +2,13 @@ import Link from "next/link";
 import { ArrowDownCircle, ArrowUpCircle } from "lucide-react";
 import { requirePermission } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
-import { prisma } from "@/lib/prisma";
+import { supabase } from "@/lib/supabase";
 import { formatDateTime, startOfToday, startOfYesterday, startOfWeek, startOfMonth } from "@/lib/format";
 import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { EmptyState } from "@/components/ui/Empty";
 import { ButtonLink } from "@/components/ui/Button";
 import { HistoryFilters } from "@/components/history/HistoryFilters";
-import type { Prisma } from "@prisma/client";
 
 const REASON_LABELS: Record<string, string> = {
   ACHAT: "Achat",
@@ -32,18 +31,35 @@ export default async function StockPage({
   const user = await requirePermission(PERMISSIONS.STOCK_VIEW);
   const { periode } = await searchParams;
 
-  const where: Prisma.StockMovementWhereInput = { businessId: user.businessId };
-  if (periode === "aujourdhui") where.createdAt = { gte: startOfToday() };
-  else if (periode === "hier") where.createdAt = { gte: startOfYesterday(), lt: startOfToday() };
-  else if (periode === "semaine") where.createdAt = { gte: startOfWeek() };
-  else if (periode === "mois") where.createdAt = { gte: startOfMonth() };
+  let query = supabase
+    .from("stock_movements")
+    .select(
+      "id, createdAt:created_at, direction, reason, quantity, oldStock:old_stock, newStock:new_stock, productId:product_id, product:products(name), location:locations(name), user:users(firstName:first_name, lastName:last_name)"
+    )
+    .eq("business_id", user.businessId)
+    .order("created_at", { ascending: false })
+    .limit(200);
 
-  const movements = await prisma.stockMovement.findMany({
-    where,
-    include: { product: true, user: true, location: true },
-    orderBy: { createdAt: "desc" },
-    take: 200,
-  });
+  if (periode === "aujourdhui") query = query.gte("created_at", startOfToday().toISOString());
+  else if (periode === "hier")
+    query = query.gte("created_at", startOfYesterday().toISOString()).lt("created_at", startOfToday().toISOString());
+  else if (periode === "semaine") query = query.gte("created_at", startOfWeek().toISOString());
+  else if (periode === "mois") query = query.gte("created_at", startOfMonth().toISOString());
+
+  const { data } = await query;
+  const movements = (data ?? []) as unknown as Array<{
+    id: string;
+    createdAt: string;
+    direction: string;
+    reason: string;
+    quantity: number;
+    oldStock: number;
+    newStock: number;
+    productId: string;
+    product: { name: string };
+    location: { name: string };
+    user: { firstName: string; lastName: string };
+  }>;
 
   return (
     <div className="space-y-6">
@@ -83,7 +99,7 @@ export default async function StockPage({
             <tbody className="divide-y divide-zinc-100">
               {movements.map((m) => (
                 <tr key={m.id} className="hover:bg-zinc-50">
-                  <td className="px-4 py-3 text-zinc-600">{formatDateTime(m.createdAt)}</td>
+                  <td className="px-4 py-3 text-zinc-600">{formatDateTime(new Date(m.createdAt))}</td>
                   <td className="px-4 py-3 text-zinc-600">{m.location.name}</td>
                   <td className="px-4 py-3">
                     <Link href={`/produits/${m.productId}`} className="font-medium text-zinc-900 hover:text-emerald-600">

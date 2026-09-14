@@ -1,6 +1,6 @@
 import { requirePermission } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
-import { prisma } from "@/lib/prisma";
+import { supabase } from "@/lib/supabase";
 import { getLocations, getCurrentLocation } from "@/lib/location";
 import { StockMovementForm } from "@/components/stock/StockMovementForm";
 
@@ -17,15 +17,24 @@ export default async function StockInPage({
     getCurrentLocation(user.businessId),
   ]);
 
-  const rawProduct = produit
-    ? await prisma.product.findFirst({ where: { id: produit, businessId: user.businessId } })
-    : null;
-  const initialStock = rawProduct
-    ? await prisma.productStock.findUnique({
-        where: { productId_locationId: { productId: rawProduct.id, locationId: currentLocation?.id ?? "" } },
-      })
-    : null;
-  const initialProduct = rawProduct ? { ...rawProduct, quantity: initialStock?.quantity ?? 0 } : null;
+  let initialProduct = null;
+  if (produit) {
+    const { data: rawProduct } = await supabase
+      .from("products")
+      .select("id, name, reference, unit, salePrice:sale_price, purchasePrice:purchase_price")
+      .eq("id", produit)
+      .eq("business_id", user.businessId)
+      .maybeSingle();
+    if (rawProduct) {
+      const { data: stockRow } = await supabase
+        .from("product_stocks")
+        .select("quantity")
+        .eq("product_id", rawProduct.id as string)
+        .eq("location_id", currentLocation?.id ?? "")
+        .maybeSingle();
+      initialProduct = { ...rawProduct, quantity: (stockRow?.quantity as number | undefined) ?? 0 };
+    }
+  }
 
   return (
     <div className="space-y-6">

@@ -1,36 +1,32 @@
 import "server-only";
-import type { Prisma } from "@prisma/client";
+import { supabase } from "@/lib/supabase";
 
-type Tx = Prisma.TransactionClient;
-
-export async function getStockQuantity(tx: Tx, productId: string, locationId: string) {
-  const row = await tx.productStock.findUnique({
-    where: { productId_locationId: { productId, locationId } },
-  });
-  return row?.quantity ?? 0;
+export async function getStockQuantity(productId: string, locationId: string) {
+  const { data } = await supabase
+    .from("product_stocks")
+    .select("quantity")
+    .eq("product_id", productId)
+    .eq("location_id", locationId)
+    .maybeSingle();
+  return (data?.quantity as number | undefined) ?? 0;
 }
 
 /**
  * Applique un delta (positif ou négatif) au stock d'un produit dans une boutique,
- * en créant la ligne ProductStock si elle n'existe pas encore. Retourne l'ancien
- * et le nouveau stock pour l'enregistrement du mouvement associé.
+ * en créant la ligne product_stocks si elle n'existe pas encore. Retourne l'ancien
+ * et le nouveau stock pour l'enregistrement du mouvement associé. Atomique côté
+ * base (fonction Postgres adjust_stock, voir supabase/schema.sql).
  */
-export async function adjustStock(
-  tx: Tx,
-  params: { productId: string; locationId: string; delta: number }
-) {
+export async function adjustStock(params: { productId: string; locationId: string; delta: number }) {
   const { productId, locationId, delta } = params;
-  const existing = await tx.productStock.findUnique({
-    where: { productId_locationId: { productId, locationId } },
+  const { data, error } = await supabase.rpc("adjust_stock", {
+    p_product_id: productId,
+    p_location_id: locationId,
+    p_delta: delta,
   });
-  const oldStock = existing?.quantity ?? 0;
-  const newStock = oldStock + delta;
-
-  if (existing) {
-    await tx.productStock.update({ where: { id: existing.id }, data: { quantity: newStock } });
-  } else {
-    await tx.productStock.create({ data: { productId, locationId, quantity: newStock } });
+  if (error || !data || data.length === 0) {
+    throw new Error(`Échec de l'ajustement du stock : ${error?.message ?? "réponse vide"}`);
   }
-
-  return { oldStock, newStock };
+  const row = data[0] as { old_stock: number; new_stock: number };
+  return { oldStock: row.old_stock, newStock: row.new_stock };
 }

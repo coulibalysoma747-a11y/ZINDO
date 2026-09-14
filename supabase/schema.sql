@@ -662,6 +662,26 @@ end;
 $$ language plpgsql;
 
 -- ---------------------------------------------------------------------------
+-- Fonction utilitaire : ajustement atomique du stock d'un produit dans une
+-- boutique (crée la ligne product_stocks si elle n'existe pas). Remplace le
+-- pattern Prisma "findUnique puis update/create dans une transaction" — un
+-- UPSERT Postgres est atomique par nature (verrouillage de ligne géré par la
+-- base), donc pas de condition de course entre deux mouvements de stock
+-- concurrents sur le même produit/boutique.
+-- ---------------------------------------------------------------------------
+create or replace function adjust_stock(p_product_id text, p_location_id text, p_delta int)
+returns table(old_stock int, new_stock int) as $$
+begin
+  return query
+  insert into product_stocks as ps (product_id, location_id, quantity)
+  values (p_product_id, p_location_id, p_delta)
+  on conflict (product_id, location_id)
+  do update set quantity = ps.quantity + p_delta, updated_at = now()
+  returning ps.quantity - p_delta, ps.quantity;
+end;
+$$ language plpgsql;
+
+-- ---------------------------------------------------------------------------
 -- Fonction : inscription d'un nouveau commerce (transaction atomique). Crée
 -- le commerce, le compte administrateur, les moyens de paiement par défaut,
 -- une catégorie "Général", la boutique principale et l'abonnement gratuit.

@@ -1,13 +1,13 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { prisma } from "@/lib/prisma";
+import { supabase } from "@/lib/supabase";
 import { requirePermission, requireUser } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
 import { logAction } from "@/lib/audit";
 import { generateSaleNumber } from "@/lib/reference";
 import { adjustStock } from "@/lib/stock";
-import type { PaymentMethod } from "@prisma/client";
+import type { PaymentMethod } from "@/lib/db-types";
 
 export type CartItemInput = {
   productId: string;
@@ -29,6 +29,39 @@ export type CreateSaleInput = {
 
 export type CreateSaleResult = { success: true; saleId: string } | { success: false; error: string };
 
+/**
+ * Enregistre les mouvements de stock (sortie) pour chaque article vendu.
+ * Non bloquant en cas d'échec partiel de l'écriture du journal de mouvement
+ * (l'ajustement du stock lui-même, via adjustStock, est déjà fait avant) —
+ * limite connue de la migration hors transaction Prisma, voir le commit.
+ */
+async function recordStockMovements(
+  items: { productId: string; quantity: number }[],
+  params: { businessId: string; locationId: string; userId: string; direction: "IN" | "OUT"; reason: string; note: string }
+) {
+  for (const item of items) {
+    if (item.quantity === 0) continue;
+    const { oldStock, newStock } = await adjustStock({
+      productId: item.productId,
+      locationId: params.locationId,
+      delta: params.direction === "IN" ? item.quantity : -item.quantity,
+    });
+    const { error } = await supabase.from("stock_movements").insert({
+      business_id: params.businessId,
+      location_id: params.locationId,
+      product_id: item.productId,
+      direction: params.direction,
+      reason: params.reason,
+      quantity: item.quantity,
+      old_stock: oldStock,
+      new_stock: newStock,
+      user_id: params.userId,
+      note: params.note,
+    });
+    if (error) console.error("[sales] Échec de l'écriture du mouvement de stock :", error.message);
+  }
+}
+
 export async function createSaleAction(input: CreateSaleInput): Promise<CreateSaleResult> {
   const user = await requirePermission(PERMISSIONS.SALES_CREATE);
 
@@ -37,25 +70,34 @@ export async function createSaleAction(input: CreateSaleInput): Promise<CreateSa
     return { success: false, error: "Le panier est vide" };
   }
 
-  const location = await prisma.location.findFirst({
-    where: { id: input.locationId, businessId: user.businessId },
-  });
+  const { data: location } = await supabase
+    .from("locations")
+    .select("id, name")
+    .eq("id", input.locationId)
+    .eq("business_id", user.businessId)
+    .maybeSingle();
   if (!location) return { success: false, error: "Boutique introuvable" };
 
-  const activeSession = await prisma.cashSession.findFirst({
-    where: { businessId: user.businessId, locationId: input.locationId, status: "OUVERTE" },
-  });
+  const { data: activeSession } = await supabase
+    .from("cash_sessions")
+    .select("id")
+    .eq("business_id", user.businessId)
+    .eq("location_id", input.locationId)
+    .eq("status", "OUVERTE")
+    .maybeSingle();
   if (!activeSession) {
     return { success: false, error: "Ouvrez une session de caisse avant d'encaisser une vente" };
   }
 
   const productIds = input.items.map((i) => i.productId);
-  const [products, stocks] = await Promise.all([
-    prisma.product.findMany({ where: { id: { in: productIds }, businessId: user.businessId } }),
-    prisma.productStock.findMany({ where: { productId: { in: productIds }, locationId: input.locationId } }),
+  const [{ data: products }, { data: stocks }] = await Promise.all([
+    supabase.from("products").select("id, name, purchasePrice:purchase_price").in("id", productIds).eq("business_id", user.businessId),
+    supabase.from("product_stocks").select("productId:product_id, quantity").in("product_id", productIds).eq("location_id", input.locationId),
   ]);
-  const productMap = new Map(products.map((p) => [p.id, p]));
-  const stockMap = new Map(stocks.map((s) => [s.productId, s.quantity]));
+  const productMap = new Map(
+    ((products ?? []) as unknown as Array<{ id: string; name: string; purchasePrice: number }>).map((p) => [p.id, p])
+  );
+  const stockMap = new Map(((stocks ?? []) as Array<{ productId: string; quantity: number }>).map((s) => [s.productId, s.quantity]));
 
   for (const item of input.items) {
     const product = productMap.get(item.productId);
@@ -70,10 +112,7 @@ export async function createSaleAction(input: CreateSaleInput): Promise<CreateSa
     }
   }
 
-  const subtotal = input.items.reduce(
-    (sum, i) => sum + i.unitPrice * i.quantity - i.discount,
-    0
-  );
+  const subtotal = input.items.reduce((sum, i) => sum + i.unitPrice * i.quantity - i.discount, 0);
   const total = Math.max(0, subtotal - input.discount);
   const amountPaid = Math.max(0, input.amountPaid);
 
@@ -82,64 +121,58 @@ export async function createSaleAction(input: CreateSaleInput): Promise<CreateSa
   }
 
   const status = amountPaid >= total ? "PAYEE" : amountPaid > 0 ? "PARTIELLE" : "CREDIT";
-
   const number = await generateSaleNumber(user.businessId);
 
-  const saleId = await prisma.$transaction(async (tx) => {
-    const sale = await tx.sale.create({
-      data: {
-        businessId: user.businessId,
-        locationId: input.locationId,
-        number,
-        customerId: input.customerId || null,
-        userId: user.id,
-        subtotal,
-        discount: input.discount,
-        total,
-        amountPaid,
-        paymentMethod: input.paymentMethod,
-        status,
-        documentType: input.documentType ?? "TICKET",
-        note: input.note,
-        items: {
-          create: input.items.map((i) => {
-            const product = productMap.get(i.productId)!;
-            return {
-              productId: i.productId,
-              quantity: i.quantity,
-              unitPrice: i.unitPrice,
-              unitCost: product.purchasePrice,
-              discount: i.discount,
-              total: i.unitPrice * i.quantity - i.discount,
-            };
-          }),
-        },
-      },
-    });
+  const { data: sale, error: saleError } = await supabase
+    .from("sales")
+    .insert({
+      business_id: user.businessId,
+      location_id: input.locationId,
+      number,
+      customer_id: input.customerId || null,
+      user_id: user.id,
+      subtotal,
+      discount: input.discount,
+      total,
+      amount_paid: amountPaid,
+      payment_method: input.paymentMethod,
+      status,
+      document_type: input.documentType ?? "TICKET",
+      note: input.note ?? null,
+    })
+    .select("id")
+    .single();
+  if (saleError || !sale) {
+    console.error("[createSaleAction] Échec de la création de la vente :", saleError?.message);
+    return { success: false, error: "Impossible d'enregistrer la vente" };
+  }
 
-    for (const item of input.items) {
-      const { oldStock, newStock } = await adjustStock(tx, {
-        productId: item.productId,
-        locationId: input.locationId,
-        delta: -item.quantity,
-      });
-      await tx.stockMovement.create({
-        data: {
-          businessId: user.businessId,
-          locationId: input.locationId,
-          productId: item.productId,
-          direction: "OUT",
-          reason: "VENTE",
-          quantity: item.quantity,
-          oldStock,
-          newStock,
-          userId: user.id,
-          note: `Vente ${number}`,
-        },
-      });
-    }
+  const { error: itemsError } = await supabase.from("sale_items").insert(
+    input.items.map((i) => {
+      const product = productMap.get(i.productId)!;
+      return {
+        sale_id: sale.id,
+        product_id: i.productId,
+        quantity: i.quantity,
+        unit_price: i.unitPrice,
+        unit_cost: product.purchasePrice,
+        discount: i.discount,
+        total: i.unitPrice * i.quantity - i.discount,
+      };
+    })
+  );
+  if (itemsError) {
+    console.error("[createSaleAction] Échec de l'enregistrement des articles :", itemsError.message);
+    return { success: false, error: "Impossible d'enregistrer les articles de la vente" };
+  }
 
-    return sale.id;
+  await recordStockMovements(input.items, {
+    businessId: user.businessId,
+    locationId: input.locationId,
+    userId: user.id,
+    direction: "OUT",
+    reason: "VENTE",
+    note: `Vente ${number}`,
   });
 
   await logAction({
@@ -147,7 +180,7 @@ export async function createSaleAction(input: CreateSaleInput): Promise<CreateSa
     userId: user.id,
     action: "CREATE",
     entity: "Sale",
-    entityId: saleId,
+    entityId: sale.id as string,
     details: `Total ${total}`,
   });
 
@@ -157,7 +190,7 @@ export async function createSaleAction(input: CreateSaleInput): Promise<CreateSa
   revalidatePath("/dashboard");
   if (input.customerId) revalidatePath(`/clients/${input.customerId}`);
 
-  return { success: true, saleId };
+  return { success: true, saleId: sale.id as string };
 }
 
 export type UpdateSaleInput = {
@@ -173,10 +206,12 @@ export type UpdateSaleInput = {
 export async function updateSaleAction(input: UpdateSaleInput): Promise<CreateSaleResult> {
   const user = await requirePermission(PERMISSIONS.SALES_CREATE);
 
-  const sale = await prisma.sale.findFirst({
-    where: { id: input.saleId, businessId: user.businessId },
-    include: { items: true },
-  });
+  const { data: sale } = await supabase
+    .from("sales")
+    .select("id, number, locationId:location_id, customerId:customer_id, status")
+    .eq("id", input.saleId)
+    .eq("business_id", user.businessId)
+    .maybeSingle();
   if (!sale) return { success: false, error: "Vente introuvable" };
   if (sale.status === "ANNULEE") {
     return { success: false, error: "Impossible de modifier une vente annulée" };
@@ -185,15 +220,21 @@ export async function updateSaleAction(input: UpdateSaleInput): Promise<CreateSa
     return { success: false, error: "Le panier est vide" };
   }
 
-  const oldQtyMap = new Map(sale.items.map((i) => [i.productId, i.quantity]));
+  const { data: existingItems } = await supabase
+    .from("sale_items")
+    .select("productId:product_id, quantity")
+    .eq("sale_id", sale.id);
+  const oldQtyMap = new Map(((existingItems ?? []) as Array<{ productId: string; quantity: number }>).map((i) => [i.productId, i.quantity]));
   const productIds = Array.from(new Set([...oldQtyMap.keys(), ...input.items.map((i) => i.productId)]));
 
-  const [products, stocks] = await Promise.all([
-    prisma.product.findMany({ where: { id: { in: productIds }, businessId: user.businessId } }),
-    prisma.productStock.findMany({ where: { productId: { in: productIds }, locationId: sale.locationId } }),
+  const [{ data: products }, { data: stocks }] = await Promise.all([
+    supabase.from("products").select("id, name, purchasePrice:purchase_price").in("id", productIds).eq("business_id", user.businessId),
+    supabase.from("product_stocks").select("productId:product_id, quantity").in("product_id", productIds).eq("location_id", sale.locationId as string),
   ]);
-  const productMap = new Map(products.map((p) => [p.id, p]));
-  const currentStockMap = new Map(stocks.map((s) => [s.productId, s.quantity]));
+  const productMap = new Map(
+    ((products ?? []) as unknown as Array<{ id: string; name: string; purchasePrice: number }>).map((p) => [p.id, p])
+  );
+  const currentStockMap = new Map(((stocks ?? []) as Array<{ productId: string; quantity: number }>).map((s) => [s.productId, s.quantity]));
 
   for (const item of input.items) {
     const product = productMap.get(item.productId);
@@ -202,10 +243,7 @@ export async function updateSaleAction(input: UpdateSaleInput): Promise<CreateSa
     // Le stock déjà réservé par l'ancienne version de cette vente reste disponible pour la nouvelle.
     const available = (currentStockMap.get(item.productId) ?? 0) + (oldQtyMap.get(item.productId) ?? 0);
     if (available < item.quantity) {
-      return {
-        success: false,
-        error: `Stock insuffisant pour "${product.name}" (disponible : ${available})`,
-      };
+      return { success: false, error: `Stock insuffisant pour "${product.name}" (disponible : ${available})` };
     }
   }
 
@@ -219,69 +257,67 @@ export async function updateSaleAction(input: UpdateSaleInput): Promise<CreateSa
 
   const status = amountPaid >= total ? "PAYEE" : amountPaid > 0 ? "PARTIELLE" : "CREDIT";
 
-  await prisma.$transaction(async (tx) => {
-    const newQtyMap = new Map(input.items.map((i) => [i.productId, i.quantity]));
-    for (const productId of productIds) {
-      const oldQty = oldQtyMap.get(productId) ?? 0;
-      const newQty = newQtyMap.get(productId) ?? 0;
-      const delta = oldQty - newQty;
-      if (delta === 0) continue;
-      const { oldStock, newStock } = await adjustStock(tx, {
-        productId,
-        locationId: sale.locationId,
-        delta,
-      });
-      await tx.stockMovement.create({
-        data: {
-          businessId: user.businessId,
-          locationId: sale.locationId,
-          productId,
-          direction: delta > 0 ? "IN" : "OUT",
-          reason: "CORRECTION",
-          quantity: Math.abs(delta),
-          oldStock,
-          newStock,
-          userId: user.id,
-          note: `Modification vente ${sale.number}`,
-        },
-      });
-    }
-
-    await tx.saleItem.deleteMany({ where: { saleId: sale.id } });
-    await tx.sale.update({
-      where: { id: sale.id },
-      data: {
-        customerId: input.customerId || null,
-        subtotal,
-        discount: input.discount,
-        total,
-        amountPaid,
-        paymentMethod: input.paymentMethod,
-        status,
-        note: input.note,
-        items: {
-          create: input.items.map((i) => {
-            const product = productMap.get(i.productId)!;
-            return {
-              productId: i.productId,
-              quantity: i.quantity,
-              unitPrice: i.unitPrice,
-              unitCost: product.purchasePrice,
-              discount: i.discount,
-              total: i.unitPrice * i.quantity - i.discount,
-            };
-          }),
-        },
-      },
+  const newQtyMap = new Map(input.items.map((i) => [i.productId, i.quantity]));
+  for (const productId of productIds) {
+    const oldQty = oldQtyMap.get(productId) ?? 0;
+    const newQty = newQtyMap.get(productId) ?? 0;
+    const delta = oldQty - newQty;
+    if (delta === 0) continue;
+    const { oldStock, newStock } = await adjustStock({ productId, locationId: sale.locationId as string, delta });
+    const { error } = await supabase.from("stock_movements").insert({
+      business_id: user.businessId,
+      location_id: sale.locationId,
+      product_id: productId,
+      direction: delta > 0 ? "IN" : "OUT",
+      reason: "CORRECTION",
+      quantity: Math.abs(delta),
+      old_stock: oldStock,
+      new_stock: newStock,
+      user_id: user.id,
+      note: `Modification vente ${sale.number}`,
     });
-  });
+    if (error) console.error("[updateSaleAction] Échec de l'écriture du mouvement de stock :", error.message);
+  }
+
+  await supabase.from("sale_items").delete().eq("sale_id", sale.id);
+  const { error: updateError } = await supabase
+    .from("sales")
+    .update({
+      customer_id: input.customerId || null,
+      subtotal,
+      discount: input.discount,
+      total,
+      amount_paid: amountPaid,
+      payment_method: input.paymentMethod,
+      status,
+      note: input.note ?? null,
+    })
+    .eq("id", sale.id);
+  const { error: itemsError } = await supabase.from("sale_items").insert(
+    input.items.map((i) => {
+      const product = productMap.get(i.productId)!;
+      return {
+        sale_id: sale.id,
+        product_id: i.productId,
+        quantity: i.quantity,
+        unit_price: i.unitPrice,
+        unit_cost: product.purchasePrice,
+        discount: i.discount,
+        total: i.unitPrice * i.quantity - i.discount,
+      };
+    })
+  );
+  if (updateError || itemsError) {
+    console.error("[updateSaleAction] Échec de la mise à jour :", updateError?.message, itemsError?.message);
+    return { success: false, error: "Impossible de mettre à jour la vente" };
+  }
 
   await logAction({
     businessId: user.businessId,
     userId: user.id,
     action: "UPDATE",
     entity: "Sale",
-    entityId: sale.id,
+    entityId: sale.id as string,
     details: `Total ${total}`,
   });
 
@@ -292,50 +328,44 @@ export async function updateSaleAction(input: UpdateSaleInput): Promise<CreateSa
   if (sale.customerId) revalidatePath(`/clients/${sale.customerId}`);
   if (input.customerId && input.customerId !== sale.customerId) revalidatePath(`/clients/${input.customerId}`);
 
-  return { success: true, saleId: sale.id };
+  return { success: true, saleId: sale.id as string };
 }
 
 export async function cancelSaleAction(saleId: string) {
   const user = await requirePermission(PERMISSIONS.SALES_VIEW);
 
-  const sale = await prisma.sale.findFirst({
-    where: { id: saleId, businessId: user.businessId },
-    include: { items: true },
-  });
+  const { data: sale } = await supabase
+    .from("sales")
+    .select("id, number, locationId:location_id, status")
+    .eq("id", saleId)
+    .eq("business_id", user.businessId)
+    .maybeSingle();
   if (!sale) return { error: "Vente introuvable" };
   if (sale.status === "ANNULEE") return { error: "Cette vente est déjà annulée" };
 
-  await prisma.$transaction(async (tx) => {
-    for (const item of sale.items) {
-      const { oldStock, newStock } = await adjustStock(tx, {
-        productId: item.productId,
-        locationId: sale.locationId,
-        delta: item.quantity,
-      });
-      await tx.stockMovement.create({
-        data: {
-          businessId: user.businessId,
-          locationId: sale.locationId,
-          productId: item.productId,
-          direction: "IN",
-          reason: "RETOUR_CLIENT",
-          quantity: item.quantity,
-          oldStock,
-          newStock,
-          userId: user.id,
-          note: `Annulation vente ${sale.number}`,
-        },
-      });
-    }
-    await tx.sale.update({ where: { id: sale.id }, data: { status: "ANNULEE" } });
+  const { data: items } = await supabase.from("sale_items").select("productId:product_id, quantity").eq("sale_id", sale.id);
+
+  await recordStockMovements((items ?? []) as Array<{ productId: string; quantity: number }>, {
+    businessId: user.businessId,
+    locationId: sale.locationId as string,
+    userId: user.id,
+    direction: "IN",
+    reason: "RETOUR_CLIENT",
+    note: `Annulation vente ${sale.number}`,
   });
+
+  const { error } = await supabase.from("sales").update({ status: "ANNULEE" }).eq("id", sale.id);
+  if (error) {
+    console.error("[cancelSaleAction] Échec de l'annulation :", error.message);
+    return { error: "Impossible d'annuler la vente" };
+  }
 
   await logAction({
     businessId: user.businessId,
     userId: user.id,
     action: "CANCEL",
     entity: "Sale",
-    entityId: sale.id,
+    entityId: sale.id as string,
   });
 
   revalidatePath("/ventes/historique");
@@ -346,15 +376,17 @@ export async function cancelSaleAction(saleId: string) {
 
 export async function getEnabledPaymentMethods() {
   const user = await requireUser();
-  const methods = await prisma.paymentMethodConfig.findMany({
-    where: { businessId: user.businessId, enabled: true },
-  });
+  const { data: methods } = await supabase
+    .from("payment_method_configs")
+    .select("method, label")
+    .eq("business_id", user.businessId)
+    .eq("enabled", true);
 
   const canonicalOrder: PaymentMethod[] = ["ESPECES", "MOBILE_MONEY", "CARTE", "CREDIT", "AUTRE"];
   const byCanonicalOrder = (a: { method: PaymentMethod }, b: { method: PaymentMethod }) =>
     canonicalOrder.indexOf(a.method) - canonicalOrder.indexOf(b.method);
 
-  if (methods.length === 0) {
+  if (!methods || methods.length === 0) {
     return [
       { method: "ESPECES" as PaymentMethod, label: "Espèces" },
       { method: "MOBILE_MONEY" as PaymentMethod, label: "Mobile Money" },
@@ -362,5 +394,5 @@ export async function getEnabledPaymentMethods() {
       { method: "CREDIT" as PaymentMethod, label: "Crédit" },
     ].sort(byCanonicalOrder);
   }
-  return methods.sort(byCanonicalOrder);
+  return (methods as unknown as Array<{ method: PaymentMethod; label: string }>).sort(byCanonicalOrder);
 }

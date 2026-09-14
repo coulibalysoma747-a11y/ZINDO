@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { prisma } from "@/lib/prisma";
+import { supabase } from "@/lib/supabase";
 import { requirePermission } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
 import { logAction } from "@/lib/audit";
@@ -26,103 +26,125 @@ export async function createInventoryAction(input: CreateInventoryInput): Promis
     return { success: false, error: "Sélectionnez au moins un produit à compter" };
   }
 
-  const location = await prisma.location.findFirst({
-    where: { id: input.locationId, businessId: user.businessId },
-  });
+  const { data: location } = await supabase
+    .from("locations")
+    .select("id")
+    .eq("id", input.locationId)
+    .eq("business_id", user.businessId)
+    .maybeSingle();
   if (!location) return { success: false, error: "Boutique introuvable" };
 
   const productIds = input.items.map((i) => i.productId);
-  const [products, stocks] = await Promise.all([
-    prisma.product.findMany({ where: { id: { in: productIds }, businessId: user.businessId } }),
-    prisma.productStock.findMany({ where: { productId: { in: productIds }, locationId: input.locationId } }),
+  const [{ data: products }, { data: stocks }] = await Promise.all([
+    supabase.from("products").select("id").in("id", productIds).eq("business_id", user.businessId),
+    supabase.from("product_stocks").select("productId:product_id, quantity").in("product_id", productIds).eq("location_id", input.locationId),
   ]);
-  const productIdSet = new Set(products.map((p) => p.id));
-  const stockMap = new Map(stocks.map((s) => [s.productId, s.quantity]));
+  const productIdSet = new Set((products ?? []).map((p) => p.id as string));
+  const stockMap = new Map(((stocks ?? []) as Array<{ productId: string; quantity: number }>).map((s) => [s.productId, s.quantity]));
 
-  const inventory = await prisma.inventory.create({
-    data: {
-      businessId: user.businessId,
-      locationId: input.locationId,
+  const { data: inventory, error: inventoryError } = await supabase
+    .from("inventories")
+    .insert({
+      business_id: user.businessId,
+      location_id: input.locationId,
       reference: generateInventoryReference(),
       status: "EN_COURS",
-      note: input.note,
-      userId: user.id,
-      items: {
-        create: input.items
-          .filter((i) => productIdSet.has(i.productId))
-          .map((i) => {
-            const theoreticalQty = stockMap.get(i.productId) ?? 0;
-            return {
-              productId: i.productId,
-              theoreticalQty,
-              realQty: i.realQty,
-              difference: i.realQty - theoreticalQty,
-            };
-          }),
-      },
-    },
-  });
+      note: input.note ?? null,
+      user_id: user.id,
+    })
+    .select("id")
+    .single();
+  if (inventoryError || !inventory) {
+    console.error("[createInventoryAction] Échec de la création :", inventoryError?.message);
+    return { success: false, error: "Impossible de créer l'inventaire" };
+  }
+
+  const itemsToCreate = input.items
+    .filter((i) => productIdSet.has(i.productId))
+    .map((i) => {
+      const theoreticalQty = stockMap.get(i.productId) ?? 0;
+      return {
+        inventory_id: inventory.id,
+        product_id: i.productId,
+        theoretical_qty: theoreticalQty,
+        real_qty: i.realQty,
+        difference: i.realQty - theoreticalQty,
+      };
+    });
+  const { error: itemsError } = await supabase.from("inventory_items").insert(itemsToCreate);
+  if (itemsError) {
+    console.error("[createInventoryAction] Échec de l'enregistrement des articles :", itemsError.message);
+    return { success: false, error: "Impossible d'enregistrer les articles de l'inventaire" };
+  }
 
   await logAction({
     businessId: user.businessId,
     userId: user.id,
     action: "CREATE",
     entity: "Inventory",
-    entityId: inventory.id,
+    entityId: inventory.id as string,
   });
 
   revalidatePath("/inventaire");
-  return { success: true, inventoryId: inventory.id };
+  return { success: true, inventoryId: inventory.id as string };
 }
 
 export async function validateInventoryAction(inventoryId: string) {
   const user = await requirePermission(PERMISSIONS.INVENTORY_MANAGE);
 
-  const inventory = await prisma.inventory.findFirst({
-    where: { id: inventoryId, businessId: user.businessId },
-    include: { items: true },
-  });
+  const { data: inventory } = await supabase
+    .from("inventories")
+    .select("id, locationId:location_id, reference, status")
+    .eq("id", inventoryId)
+    .eq("business_id", user.businessId)
+    .maybeSingle();
   if (!inventory) return { error: "Inventaire introuvable" };
   if (inventory.status === "VALIDE") return { error: "Cet inventaire est déjà validé" };
 
-  await prisma.$transaction(async (tx) => {
-    for (const item of inventory.items) {
-      if (item.difference === 0) continue;
+  const { data: items } = await supabase
+    .from("inventory_items")
+    .select("productId:product_id, difference")
+    .eq("inventory_id", inventory.id);
 
-      const { oldStock, newStock } = await adjustStock(tx, {
-        productId: item.productId,
-        locationId: inventory.locationId,
-        delta: item.difference,
-      });
+  for (const item of (items ?? []) as Array<{ productId: string; difference: number }>) {
+    if (item.difference === 0) continue;
 
-      await tx.stockMovement.create({
-        data: {
-          businessId: user.businessId,
-          locationId: inventory.locationId,
-          productId: item.productId,
-          direction: item.difference > 0 ? "IN" : "OUT",
-          reason: "INVENTAIRE",
-          quantity: Math.abs(item.difference),
-          oldStock,
-          newStock,
-          userId: user.id,
-          note: `Correction inventaire ${inventory.reference}`,
-        },
-      });
-    }
-
-    await tx.inventory.update({
-      where: { id: inventory.id },
-      data: { status: "VALIDE", validatedAt: new Date() },
+    const { oldStock, newStock } = await adjustStock({
+      productId: item.productId,
+      locationId: inventory.locationId as string,
+      delta: item.difference,
     });
-  });
+
+    const { error: movementError } = await supabase.from("stock_movements").insert({
+      business_id: user.businessId,
+      location_id: inventory.locationId,
+      product_id: item.productId,
+      direction: item.difference > 0 ? "IN" : "OUT",
+      reason: "INVENTAIRE",
+      quantity: Math.abs(item.difference),
+      old_stock: oldStock,
+      new_stock: newStock,
+      user_id: user.id,
+      note: `Correction inventaire ${inventory.reference}`,
+    });
+    if (movementError) console.error("[validateInventoryAction] Échec de l'écriture du mouvement :", movementError.message);
+  }
+
+  const { error: updateError } = await supabase
+    .from("inventories")
+    .update({ status: "VALIDE", validated_at: new Date().toISOString() })
+    .eq("id", inventory.id);
+  if (updateError) {
+    console.error("[validateInventoryAction] Échec de la validation :", updateError.message);
+    return { error: "Impossible de valider l'inventaire" };
+  }
 
   await logAction({
     businessId: user.businessId,
     userId: user.id,
     action: "VALIDATE",
     entity: "Inventory",
-    entityId: inventory.id,
+    entityId: inventory.id as string,
   });
 
   revalidatePath("/inventaire");

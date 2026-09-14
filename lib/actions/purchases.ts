@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { prisma } from "@/lib/prisma";
+import { supabase } from "@/lib/supabase";
 import { requirePermission } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
 import { logAction } from "@/lib/audit";
@@ -37,20 +37,18 @@ export async function createPurchaseAction(input: CreatePurchaseInput): Promise<
     if (item.unitPrice < 0) return { success: false, error: "Prix invalide" };
   }
 
-  const [supplier, location] = await Promise.all([
-    prisma.supplier.findFirst({ where: { id: input.supplierId, businessId: user.businessId } }),
-    prisma.location.findFirst({ where: { id: input.locationId, businessId: user.businessId } }),
+  const [{ data: supplier }, { data: location }] = await Promise.all([
+    supabase.from("suppliers").select("id").eq("id", input.supplierId).eq("business_id", user.businessId).maybeSingle(),
+    supabase.from("locations").select("id").eq("id", input.locationId).eq("business_id", user.businessId).maybeSingle(),
   ]);
   if (!supplier) return { success: false, error: "Fournisseur introuvable" };
   if (!location) return { success: false, error: "Boutique introuvable" };
 
   const productIds = input.items.map((i) => i.productId);
-  const products = await prisma.product.findMany({
-    where: { id: { in: productIds }, businessId: user.businessId },
-  });
-  const productMap = new Map(products.map((p) => [p.id, p]));
+  const { data: products } = await supabase.from("products").select("id").in("id", productIds).eq("business_id", user.businessId);
+  const productIdSet = new Set((products ?? []).map((p) => p.id as string));
   for (const item of input.items) {
-    if (!productMap.has(item.productId)) return { success: false, error: "Un produit est introuvable" };
+    if (!productIdSet.has(item.productId)) return { success: false, error: "Un produit est introuvable" };
   }
 
   const total = input.items.reduce((s, i) => s + i.quantity * i.unitPrice, 0);
@@ -58,78 +56,85 @@ export async function createPurchaseAction(input: CreatePurchaseInput): Promise<
   const status = amountPaid >= total ? "RECUE" : amountPaid > 0 ? "PARTIELLE" : "COMMANDEE";
   const number = await generatePurchaseNumber(user.businessId);
 
-  const purchaseId = await prisma.$transaction(async (tx) => {
-    const purchase = await tx.purchase.create({
-      data: {
-        businessId: user.businessId,
-        locationId: input.locationId,
-        number,
-        supplierId: input.supplierId,
-        userId: user.id,
-        total,
-        amountPaid,
-        status,
-        note: input.note,
-        items: {
-          create: input.items.map((i) => ({
-            productId: i.productId,
-            quantity: i.quantity,
-            unitPrice: i.unitPrice,
-            total: i.quantity * i.unitPrice,
-          })),
-        },
-      },
+  const { data: purchase, error: purchaseError } = await supabase
+    .from("purchases")
+    .insert({
+      business_id: user.businessId,
+      location_id: input.locationId,
+      number,
+      supplier_id: input.supplierId,
+      user_id: user.id,
+      total,
+      amount_paid: amountPaid,
+      status,
+      note: input.note ?? null,
+    })
+    .select("id")
+    .single();
+  if (purchaseError || !purchase) {
+    console.error("[createPurchaseAction] Échec de la création :", purchaseError?.message);
+    return { success: false, error: "Impossible d'enregistrer l'achat" };
+  }
+
+  const { error: itemsError } = await supabase.from("purchase_items").insert(
+    input.items.map((i) => ({
+      purchase_id: purchase.id,
+      product_id: i.productId,
+      quantity: i.quantity,
+      unit_price: i.unitPrice,
+      total: i.quantity * i.unitPrice,
+    }))
+  );
+  if (itemsError) {
+    console.error("[createPurchaseAction] Échec de l'enregistrement des articles :", itemsError.message);
+    return { success: false, error: "Impossible d'enregistrer les articles de l'achat" };
+  }
+
+  for (const item of input.items) {
+    const { error: priceError } = await supabase
+      .from("products")
+      .update({ purchase_price: item.unitPrice })
+      .eq("id", item.productId);
+    if (priceError) console.error("[createPurchaseAction] Échec de la mise à jour du prix d'achat :", priceError.message);
+
+    const { oldStock, newStock } = await adjustStock({
+      productId: item.productId,
+      locationId: input.locationId,
+      delta: item.quantity,
     });
 
-    for (const item of input.items) {
-      await tx.product.update({
-        where: { id: item.productId },
-        data: { purchasePrice: item.unitPrice },
-      });
+    const { error: movementError } = await supabase.from("stock_movements").insert({
+      business_id: user.businessId,
+      location_id: input.locationId,
+      product_id: item.productId,
+      direction: "IN",
+      reason: "ACHAT",
+      quantity: item.quantity,
+      old_stock: oldStock,
+      new_stock: newStock,
+      user_id: user.id,
+      note: `Achat ${number}`,
+    });
+    if (movementError) console.error("[createPurchaseAction] Échec de l'écriture du mouvement de stock :", movementError.message);
+  }
 
-      const { oldStock, newStock } = await adjustStock(tx, {
-        productId: item.productId,
-        locationId: input.locationId,
-        delta: item.quantity,
-      });
-
-      await tx.stockMovement.create({
-        data: {
-          businessId: user.businessId,
-          locationId: input.locationId,
-          productId: item.productId,
-          direction: "IN",
-          reason: "ACHAT",
-          quantity: item.quantity,
-          oldStock,
-          newStock,
-          userId: user.id,
-          note: `Achat ${number}`,
-        },
-      });
-    }
-
-    if (amountPaid > 0) {
-      await tx.supplierPayment.create({
-        data: {
-          supplierId: input.supplierId,
-          purchaseId: purchase.id,
-          amount: amountPaid,
-          method: "ESPECES",
-          userId: user.id,
-        },
-      });
-    }
-
-    return purchase.id;
-  });
+  if (amountPaid > 0) {
+    const { error: paymentError } = await supabase.from("supplier_payments").insert({
+      supplier_id: input.supplierId,
+      purchase_id: purchase.id,
+      amount: amountPaid,
+      method: "ESPECES",
+      user_id: user.id,
+    });
+    if (paymentError) console.error("[createPurchaseAction] Échec de l'enregistrement du paiement :", paymentError.message);
+  }
 
   await logAction({
     businessId: user.businessId,
     userId: user.id,
     action: "CREATE",
     entity: "Purchase",
-    entityId: purchaseId,
+    entityId: purchase.id as string,
     details: `Total ${total}`,
   });
 
@@ -138,5 +143,5 @@ export async function createPurchaseAction(input: CreatePurchaseInput): Promise<
   revalidatePath(`/fournisseurs/${input.supplierId}`);
   revalidatePath("/dashboard");
 
-  return { success: true, purchaseId };
+  return { success: true, purchaseId: purchase.id as string };
 }
