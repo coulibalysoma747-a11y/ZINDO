@@ -1,6 +1,6 @@
 import { MessageCircle } from "lucide-react";
 import { requireUser } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
+import { supabase } from "@/lib/supabase";
 import { formatDateTime } from "@/lib/format";
 import { Card, CardBody, CardHeader } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
@@ -22,15 +22,30 @@ const STATUS_TONE = {
   RESOLU: "emerald",
 } as const;
 
+type TicketRow = {
+  id: string;
+  subject: string;
+  message: string;
+  pageUrl: string | null;
+  status: keyof typeof STATUS_LABELS;
+  response: string | null;
+  respondedAt: string | null;
+  createdAt: string;
+  user: { firstName: string; lastName: string };
+};
+
 export default async function SupportPage() {
   const user = await requireUser();
 
-  const tickets = await prisma.supportTicket.findMany({
-    where: { businessId: user.businessId },
-    include: { user: true },
-    orderBy: { createdAt: "desc" },
-    take: 100,
-  });
+  const { data } = await supabase
+    .from("support_tickets")
+    .select(
+      "id, subject, message, pageUrl:page_url, status, response, respondedAt:responded_at, createdAt:created_at, user:users(firstName:first_name, lastName:last_name)"
+    )
+    .eq("business_id", user.businessId)
+    .order("created_at", { ascending: false })
+    .limit(100);
+  const tickets = (data ?? []) as unknown as TicketRow[];
 
   return (
     <div className="max-w-2xl space-y-6">
@@ -86,7 +101,7 @@ export default async function SupportPage() {
                     <div>
                       <p className="font-medium text-zinc-900">{t.subject}</p>
                       <p className="text-xs text-zinc-400">
-                        {t.user.firstName} {t.user.lastName} — {formatDateTime(t.createdAt)}
+                        {t.user.firstName} {t.user.lastName} — {formatDateTime(new Date(t.createdAt))}
                         {t.pageUrl ? ` — ${t.pageUrl}` : ""}
                       </p>
                     </div>
@@ -96,7 +111,7 @@ export default async function SupportPage() {
                   {t.response && (
                     <div className="rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-800">
                       <p className="text-xs font-semibold uppercase tracking-wide text-emerald-600">
-                        Réponse du support{t.respondedAt ? ` · ${formatDateTime(t.respondedAt)}` : ""}
+                        Réponse du support{t.respondedAt ? ` · ${formatDateTime(new Date(t.respondedAt))}` : ""}
                       </p>
                       <p className="mt-1">{t.response}</p>
                     </div>

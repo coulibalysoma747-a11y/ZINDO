@@ -3,7 +3,7 @@
 import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
-import { prisma } from "@/lib/prisma";
+import { supabase } from "@/lib/supabase";
 import { requirePermission } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
 import { logAction } from "@/lib/audit";
@@ -29,40 +29,59 @@ export async function requestPlanChangeAction(
   const parsed = requestSchema.safeParse({ planKey, billingCycle });
   if (!parsed.success) return { success: false, error: "Choix de palier invalide" };
 
-  const plan = await prisma.subscriptionPlan.findUnique({ where: { key: parsed.data.planKey } });
+  const { data: plan } = await supabase
+    .from("subscription_plans")
+    .select("id, key, label, monthlyPrice:monthly_price, annualPrice:annual_price")
+    .eq("key", parsed.data.planKey)
+    .maybeSingle();
   if (!plan) return { success: false, error: "Palier introuvable" };
 
-  const amount = billingCycle === "ANNUAL" ? plan.annualPrice : plan.monthlyPrice;
+  const amount = (billingCycle === "ANNUAL" ? plan.annualPrice : plan.monthlyPrice) as number;
 
   if (amount === 0) {
     // Palier gratuit : pas de facture, on rattache directement le commerce.
-    await prisma.businessSubscription.upsert({
-      where: { businessId: user.businessId },
-      update: { planId: plan.id, billingCycle, status: "ACTIVE", currentPeriodEnd: null },
-      create: { businessId: user.businessId, planId: plan.id, billingCycle, status: "ACTIVE" },
-    });
+    const { error } = await supabase.from("business_subscriptions").upsert(
+      {
+        business_id: user.businessId,
+        plan_id: plan.id,
+        billing_cycle: billingCycle,
+        status: "ACTIVE",
+        current_period_end: null,
+      },
+      { onConflict: "business_id", ignoreDuplicates: false }
+    );
+    if (error) {
+      console.error("[requestPlanChangeAction] Échec du rattachement au palier gratuit :", error.message);
+      return { success: false, error: "Impossible de changer de palier" };
+    }
     revalidatePath("/abonnement");
     return { success: true, invoiceId: "" };
   }
 
   const number = await generateSubscriptionInvoiceNumber(user.businessId);
-  const invoice = await prisma.subscriptionInvoice.create({
-    data: {
-      businessId: user.businessId,
+  const { data: invoice, error: invoiceError } = await supabase
+    .from("subscription_invoices")
+    .insert({
+      business_id: user.businessId,
       number,
-      planKey: plan.key,
-      planLabel: plan.label,
-      billingCycle,
+      plan_key: plan.key,
+      plan_label: plan.label,
+      billing_cycle: billingCycle,
       amount,
-    },
-  });
+    })
+    .select("id")
+    .single();
+  if (invoiceError || !invoice) {
+    console.error("[requestPlanChangeAction] Échec de la création de la facture :", invoiceError?.message);
+    return { success: false, error: "Impossible de créer la facture" };
+  }
 
   await logAction({
     businessId: user.businessId,
     userId: user.id,
     action: "CREATE",
     entity: "SubscriptionInvoice",
-    entityId: invoice.id,
+    entityId: invoice.id as string,
     details: `${plan.label} (${billingCycle})`,
   });
 
@@ -72,7 +91,7 @@ export async function requestPlanChangeAction(
     const host = headerList.get("host") ?? "localhost:3000";
     const protocol = host.startsWith("localhost") || host.startsWith("127.0.0.1") ? "http" : "https";
     const result = await initiateCinetPayPayment({
-      invoiceId: invoice.id,
+      invoiceId: invoice.id as string,
       amount,
       description: `Abonnement ${plan.label} (${billingCycle === "ANNUAL" ? "annuel" : "mensuel"})`,
       customerName: `${user.firstName} ${user.lastName}`,
@@ -84,7 +103,7 @@ export async function requestPlanChangeAction(
   }
 
   revalidatePath("/abonnement");
-  return { success: true, invoiceId: invoice.id, paymentUrl };
+  return { success: true, invoiceId: invoice.id as string, paymentUrl };
 }
 
 const proofSchema = z.object({
@@ -105,23 +124,30 @@ export async function submitPaymentProofAction(
   });
   if (!parsed.success) return { error: parsed.error.issues[0]?.message };
 
-  const invoice = await prisma.subscriptionInvoice.findFirst({
-    where: { id: parsed.data.invoiceId, businessId: user.businessId },
-  });
+  const { data: invoice } = await supabase
+    .from("subscription_invoices")
+    .select("id, status")
+    .eq("id", parsed.data.invoiceId)
+    .eq("business_id", user.businessId)
+    .maybeSingle();
   if (!invoice) return { error: "Facture introuvable" };
   if (invoice.status !== "EN_ATTENTE") return { error: "Cette facture a déjà été traitée" };
 
-  await prisma.subscriptionInvoice.update({
-    where: { id: invoice.id },
-    data: { paymentMethod: "MANUEL", paymentReference: parsed.data.reference, proofNote: parsed.data.note },
-  });
+  const { error } = await supabase
+    .from("subscription_invoices")
+    .update({ payment_method: "MANUEL", payment_reference: parsed.data.reference, proof_note: parsed.data.note ?? null })
+    .eq("id", invoice.id);
+  if (error) {
+    console.error("[submitPaymentProofAction] Échec de la mise à jour :", error.message);
+    return { error: "Impossible d'enregistrer la référence de paiement" };
+  }
 
   await logAction({
     businessId: user.businessId,
     userId: user.id,
     action: "UPDATE",
     entity: "SubscriptionInvoice",
-    entityId: invoice.id,
+    entityId: invoice.id as string,
     details: "Référence de paiement soumise",
   });
 

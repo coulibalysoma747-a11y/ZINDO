@@ -1,7 +1,7 @@
 import { Crown, Sparkles } from "lucide-react";
 import { requirePermission } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
-import { prisma } from "@/lib/prisma";
+import { supabase } from "@/lib/supabase";
 import { formatMoney, formatDateTime } from "@/lib/format";
 import { Card, CardBody, CardHeader } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
@@ -12,6 +12,33 @@ import { PaymentMethodModules } from "./PaymentMethodModules";
 const CYCLE_LABELS = { MONTHLY: "Mensuel", ANNUAL: "Annuel" } as const;
 const INVOICE_STATUS_TONE = { EN_ATTENTE: "amber", PAYEE: "emerald", ANNULEE: "zinc" } as const;
 const INVOICE_STATUS_LABELS = { EN_ATTENTE: "En attente", PAYEE: "Payée", ANNULEE: "Annulée" } as const;
+
+type PlanRow = {
+  id: string;
+  key: string;
+  label: string;
+  monthlyPrice: number;
+  annualPrice: number;
+  maxProducts: number | null;
+  maxUsers: number | null;
+  maxLocations: number | null;
+  features: string;
+};
+type SubscriptionRow = {
+  billingCycle: "MONTHLY" | "ANNUAL";
+  currentPeriodEnd: string | null;
+  plan: PlanRow;
+};
+type InvoiceRow = {
+  id: string;
+  number: string;
+  planLabel: string;
+  billingCycle: "MONTHLY" | "ANNUAL";
+  amount: number;
+  status: keyof typeof INVOICE_STATUS_LABELS;
+  paymentReference: string | null;
+  createdAt: string;
+};
 
 function UsageBar({ label, current, max }: { label: string; current: number; max: number | null }) {
   const pct = max ? Math.min(100, Math.round((current / max) * 100)) : 0;
@@ -39,23 +66,50 @@ function UsageBar({ label, current, max }: { label: string; current: number; max
 export default async function SubscriptionPage() {
   const user = await requirePermission(PERMISSIONS.SETTINGS_MANAGE);
 
-  const [subscription, plans, productCount, userCount, locationCount, pendingInvoice, invoiceHistory] =
-    await Promise.all([
-      prisma.businessSubscription.findUnique({ where: { businessId: user.businessId }, include: { plan: true } }),
-      prisma.subscriptionPlan.findMany({ orderBy: { order: "asc" } }),
-      prisma.product.count({ where: { businessId: user.businessId, active: true } }),
-      prisma.user.count({ where: { businessId: user.businessId, active: true } }),
-      prisma.location.count({ where: { businessId: user.businessId, active: true } }),
-      prisma.subscriptionInvoice.findFirst({
-        where: { businessId: user.businessId, status: "EN_ATTENTE" },
-        orderBy: { createdAt: "desc" },
-      }),
-      prisma.subscriptionInvoice.findMany({
-        where: { businessId: user.businessId, status: { not: "EN_ATTENTE" } },
-        orderBy: { createdAt: "desc" },
-        take: 20,
-      }),
-    ]);
+  const [
+    { data: subscriptionData },
+    { data: plansData },
+    { count: productCount },
+    { count: userCount },
+    { count: locationCount },
+    { data: pendingInvoiceData },
+    { data: invoiceHistoryData },
+  ] = await Promise.all([
+    supabase
+      .from("business_subscriptions")
+      .select(
+        "billingCycle:billing_cycle, currentPeriodEnd:current_period_end, " +
+          "plan:subscription_plans(id, key, label, monthlyPrice:monthly_price, annualPrice:annual_price, maxProducts:max_products, maxUsers:max_users, maxLocations:max_locations, features)"
+      )
+      .eq("business_id", user.businessId)
+      .maybeSingle(),
+    supabase
+      .from("subscription_plans")
+      .select("id, key, label, monthlyPrice:monthly_price, annualPrice:annual_price, maxProducts:max_products, maxUsers:max_users, maxLocations:max_locations, features")
+      .order("order", { ascending: true }),
+    supabase.from("products").select("id", { count: "exact", head: true }).eq("business_id", user.businessId).eq("active", true),
+    supabase.from("users").select("id", { count: "exact", head: true }).eq("business_id", user.businessId).eq("active", true),
+    supabase.from("locations").select("id", { count: "exact", head: true }).eq("business_id", user.businessId).eq("active", true),
+    supabase
+      .from("subscription_invoices")
+      .select("id, number, planLabel:plan_label, billingCycle:billing_cycle, amount, status, paymentReference:payment_reference, createdAt:created_at")
+      .eq("business_id", user.businessId)
+      .eq("status", "EN_ATTENTE")
+      .order("created_at", { ascending: false })
+      .limit(1),
+    supabase
+      .from("subscription_invoices")
+      .select("id, number, planLabel:plan_label, billingCycle:billing_cycle, amount, status, paymentReference:payment_reference, createdAt:created_at")
+      .eq("business_id", user.businessId)
+      .neq("status", "EN_ATTENTE")
+      .order("created_at", { ascending: false })
+      .limit(20),
+  ]);
+
+  const subscription = subscriptionData as unknown as SubscriptionRow | null;
+  const plans = (plansData ?? []) as unknown as PlanRow[];
+  const pendingInvoice = ((pendingInvoiceData ?? []) as unknown as InvoiceRow[])[0] ?? null;
+  const invoiceHistory = (invoiceHistoryData ?? []) as unknown as InvoiceRow[];
 
   const currency = user.business.currency;
 
@@ -83,13 +137,13 @@ export default async function SubscriptionPage() {
             <p className="text-xs text-zinc-500">
               Cycle : {CYCLE_LABELS[subscription.billingCycle]}
               {subscription.currentPeriodEnd &&
-                ` — renouvellement le ${formatDateTime(subscription.currentPeriodEnd)}`}
+                ` — renouvellement le ${formatDateTime(new Date(subscription.currentPeriodEnd))}`}
             </p>
           )}
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-            <UsageBar label="Produits" current={productCount} max={subscription?.plan.maxProducts ?? null} />
-            <UsageBar label="Utilisateurs" current={userCount} max={subscription?.plan.maxUsers ?? null} />
-            <UsageBar label="Boutiques" current={locationCount} max={subscription?.plan.maxLocations ?? null} />
+            <UsageBar label="Produits" current={productCount ?? 0} max={subscription?.plan.maxProducts ?? null} />
+            <UsageBar label="Utilisateurs" current={userCount ?? 0} max={subscription?.plan.maxUsers ?? null} />
+            <UsageBar label="Boutiques" current={locationCount ?? 0} max={subscription?.plan.maxLocations ?? null} />
           </div>
         </CardBody>
       </Card>
@@ -191,7 +245,7 @@ export default async function SubscriptionPage() {
                     <td className="px-4 py-2">
                       <Badge tone={INVOICE_STATUS_TONE[inv.status]}>{INVOICE_STATUS_LABELS[inv.status]}</Badge>
                     </td>
-                    <td className="px-4 py-2 text-zinc-500">{formatDateTime(inv.createdAt)}</td>
+                    <td className="px-4 py-2 text-zinc-500">{formatDateTime(new Date(inv.createdAt))}</td>
                   </tr>
                 ))}
               </tbody>

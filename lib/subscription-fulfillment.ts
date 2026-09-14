@@ -1,6 +1,6 @@
 import "server-only";
-import { prisma } from "@/lib/prisma";
-import type { InvoicePaymentMethod } from "@prisma/client";
+import { supabase } from "@/lib/supabase";
+import type { InvoicePaymentMethod } from "@/lib/db-types";
 
 function addPeriod(billingCycle: "MONTHLY" | "ANNUAL", from: Date) {
   const next = new Date(from);
@@ -15,44 +15,53 @@ export async function activateInvoicePayment(params: {
   method: InvoicePaymentMethod;
   reference?: string;
 }) {
-  const invoice = await prisma.subscriptionInvoice.findUnique({ where: { id: params.invoiceId } });
+  const { data: invoice } = await supabase
+    .from("subscription_invoices")
+    .select("id, businessId:business_id, planKey:plan_key, billingCycle:billing_cycle, status, paymentReference:payment_reference")
+    .eq("id", params.invoiceId)
+    .maybeSingle();
   if (!invoice) return { error: "Facture introuvable" };
   if (invoice.status === "PAYEE") return { success: true, alreadyProcessed: true };
   if (invoice.status === "ANNULEE") return { error: "Cette facture a été annulée" };
 
-  const plan = await prisma.subscriptionPlan.findUnique({ where: { key: invoice.planKey } });
+  const { data: plan } = await supabase
+    .from("subscription_plans")
+    .select("id")
+    .eq("key", invoice.planKey as string)
+    .maybeSingle();
   if (!plan) return { error: "Palier introuvable" };
 
   const now = new Date();
-  const periodEnd = addPeriod(invoice.billingCycle, now);
+  const periodEnd = addPeriod(invoice.billingCycle as "MONTHLY" | "ANNUAL", now);
 
-  await prisma.$transaction([
-    prisma.subscriptionInvoice.update({
-      where: { id: invoice.id },
-      data: {
-        status: "PAYEE",
-        paidAt: now,
-        paymentMethod: params.method,
-        paymentReference: params.reference ?? invoice.paymentReference,
-      },
-    }),
-    prisma.businessSubscription.upsert({
-      where: { businessId: invoice.businessId },
-      update: {
-        planId: plan.id,
-        billingCycle: invoice.billingCycle,
-        status: "ACTIVE",
-        currentPeriodEnd: periodEnd,
-      },
-      create: {
-        businessId: invoice.businessId,
-        planId: plan.id,
-        billingCycle: invoice.billingCycle,
-        status: "ACTIVE",
-        currentPeriodEnd: periodEnd,
-      },
-    }),
-  ]);
+  const { error: invoiceError } = await supabase
+    .from("subscription_invoices")
+    .update({
+      status: "PAYEE",
+      paid_at: now.toISOString(),
+      payment_method: params.method,
+      payment_reference: params.reference ?? (invoice.paymentReference as string | null),
+    })
+    .eq("id", invoice.id);
+  if (invoiceError) {
+    console.error("[activateInvoicePayment] Échec de la mise à jour de la facture :", invoiceError.message);
+    return { error: "Impossible de confirmer le paiement" };
+  }
+
+  const { error: subError } = await supabase.from("business_subscriptions").upsert(
+    {
+      business_id: invoice.businessId,
+      plan_id: plan.id,
+      billing_cycle: invoice.billingCycle,
+      status: "ACTIVE",
+      current_period_end: periodEnd.toISOString(),
+    },
+    { onConflict: "business_id", ignoreDuplicates: false }
+  );
+  if (subError) {
+    console.error("[activateInvoicePayment] Échec de la mise à jour de l'abonnement :", subError.message);
+    return { error: "Facture confirmée mais l'abonnement n'a pas pu être mis à jour — contactez le support" };
+  }
 
   return { success: true, alreadyProcessed: false };
 }

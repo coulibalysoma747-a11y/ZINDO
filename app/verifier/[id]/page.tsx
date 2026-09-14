@@ -1,5 +1,5 @@
 import { XCircle, CheckCircle2, Ban } from "lucide-react";
-import { prisma } from "@/lib/prisma";
+import { supabase } from "@/lib/supabase";
 import { formatMoney, formatDateTime } from "@/lib/format";
 import { ZindoLogo } from "@/components/auth/ZindoLogo";
 
@@ -11,6 +11,18 @@ const PAYMENT_LABELS: Record<string, string> = {
   AUTRE: "Autre",
 };
 
+type SaleRow = {
+  id: string;
+  number: string;
+  createdAt: string;
+  status: string;
+  total: number;
+  paymentMethod: string;
+  business: { name: string; currency: string };
+  location: { name: string };
+  items: Array<{ id: string }>;
+};
+
 export default async function VerifyTicketPage({
   params,
 }: {
@@ -18,14 +30,14 @@ export default async function VerifyTicketPage({
 }) {
   const { id } = await params;
 
-  const sale = await prisma.sale.findUnique({
-    where: { id },
-    include: {
-      items: { include: { product: true } },
-      business: { select: { name: true, currency: true } },
-      location: { select: { name: true } },
-    },
-  });
+  const { data } = await supabase
+    .from("sales")
+    .select(
+      "id, number, createdAt:created_at, status, total, paymentMethod:payment_method, business:businesses(name, currency), location:locations(name), items:sale_items(id)"
+    )
+    .eq("id", id)
+    .maybeSingle();
+  const sale = data as unknown as SaleRow | null;
 
   return (
     <div className="flex min-h-screen flex-col items-center bg-zindo-cream px-5 py-10 sm:px-6">
@@ -81,7 +93,7 @@ export default async function VerifyTicketPage({
               </div>
               <div className="flex justify-between">
                 <dt className="text-zinc-500">Date</dt>
-                <dd className="font-medium text-zindo-ink-900">{formatDateTime(sale.createdAt)}</dd>
+                <dd className="font-medium text-zindo-ink-900">{formatDateTime(new Date(sale.createdAt))}</dd>
               </div>
               <div className="flex justify-between">
                 <dt className="text-zinc-500">Articles</dt>
