@@ -6,6 +6,7 @@ import { LogOut, Menu, User as UserIcon } from "lucide-react";
 import { logoutAction } from "@/lib/actions/auth";
 import { MobileNav } from "./MobileNav";
 import { LocationSwitcher } from "./LocationSwitcher";
+import { InstallAppButton } from "@/components/InstallAppButton";
 import type { NavItem } from "@/lib/nav";
 
 type LocationOption = { id: string; name: string; type: "BOUTIQUE" | "DEPOT" };
@@ -41,7 +42,9 @@ export function Topbar({
       <div className="hidden md:block">
         <LocationSwitcher locations={locations} currentLocationId={currentLocationId} />
       </div>
-      <div className="relative">
+      <div className="flex items-center gap-2">
+        <InstallAppButton className="hidden items-center gap-1.5 rounded-lg border border-zinc-200 px-3 py-1.5 text-xs font-semibold text-zinc-600 hover:border-zinc-300 dark:border-slate-700 dark:text-slate-300 sm:flex" />
+        <div className="relative">
         <button
           onClick={() => setMenuOpen((v) => !v)}
           className="flex items-center gap-2 rounded-lg px-2 py-1.5 hover:bg-zinc-50"
@@ -72,6 +75,7 @@ export function Topbar({
             </button>
           </div>
         )}
+        </div>
       </div>
       <MobileNav
         open={mobileNavOpen}

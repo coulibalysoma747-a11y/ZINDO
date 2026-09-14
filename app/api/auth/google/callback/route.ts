@@ -1,5 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { supabase } from "@/lib/supabase";
 import { createSession } from "@/lib/session";
 import { exchangeGoogleCode, fetchGoogleUserInfo } from "@/lib/google-auth";
 
@@ -27,22 +27,33 @@ export async function GET(request: NextRequest) {
       return redirectWithClearedState(request, "/login?error=google-email-non-verifie");
     }
 
-    const user = await prisma.user.findFirst({
-      where: { email: profile.email },
-      include: { business: true },
-    });
+    const { data: user, error } = await supabase
+      .from("users")
+      .select(
+        "id, businessId:business_id, role, active, business:businesses(suspended)"
+      )
+      .eq("email", profile.email)
+      .maybeSingle();
 
+    if (error) {
+      console.error("[googleCallback] Échec de la requête Supabase :", error.message);
+      return redirectWithClearedState(request, "/login?error=google-echec");
+    }
     if (!user) {
       return redirectWithClearedState(request, "/login?error=google-aucun-compte");
     }
     if (!user.active) {
       return redirectWithClearedState(request, "/login?error=google-compte-desactive");
     }
-    if (user.business.suspended) {
+    if ((user.business as unknown as { suspended: boolean } | null)?.suspended) {
       return redirectWithClearedState(request, "/compte-suspendu");
     }
 
-    await createSession({ userId: user.id, businessId: user.businessId, role: user.role });
+    await createSession({
+      userId: user.id as string,
+      businessId: user.businessId as string,
+      role: user.role as string,
+    });
     return redirectWithClearedState(request, "/dashboard");
   } catch {
     return redirectWithClearedState(request, "/login?error=google-echec");

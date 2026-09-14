@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { getCurrentUser } from "@/lib/auth";
 import { ZindoLogo } from "@/components/auth/ZindoLogo";
+import { InstallAppButton } from "@/components/InstallAppButton";
 
 const CHANGES = [
   {
@@ -111,6 +112,7 @@ export default async function RootPage() {
           <span className="text-lg font-extrabold tracking-tight text-zindo-navy-900">ZINDO</span>
         </div>
         <div className="flex items-center gap-2 sm:gap-3">
+          <InstallAppButton className="hidden items-center gap-1.5 rounded-xl border border-zinc-200 px-3 py-2 text-sm font-semibold text-zindo-navy-700 hover:border-zinc-300 sm:flex" />
           <Link
             href="/login"
             className="rounded-xl px-3 py-2 text-sm font-semibold text-zindo-navy-700 hover:text-zindo-orange-600 sm:px-4"
