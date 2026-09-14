@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ShieldCheck } from "lucide-react";
+import { ShieldCheck, CheckCircle2 } from "lucide-react";
 import { AuthCard } from "@/components/auth/AuthCard";
 import { LoginForm } from "./login-form";
 
@@ -14,9 +14,9 @@ const GOOGLE_ERROR_MESSAGES: Record<string, string> = {
 export default async function LoginPage({
   searchParams,
 }: {
-  searchParams: Promise<{ error?: string }>;
+  searchParams: Promise<{ error?: string; reinitialisation?: string }>;
 }) {
-  const { error } = await searchParams;
+  const { error, reinitialisation } = await searchParams;
   const googleError = error ? GOOGLE_ERROR_MESSAGES[error] : undefined;
 
   return (
@@ -28,6 +28,11 @@ export default async function LoginPage({
           </h2>
           <p className="mt-1 text-sm text-zinc-500">Connectez-vous à votre compte</p>
         </div>
+        {reinitialisation === "ok" && (
+          <p className="animate-zindo-fade-in mb-4 flex items-center gap-2 rounded-xl bg-zindo-green-50 px-3.5 py-2.5 text-sm text-zindo-green-700">
+            <CheckCircle2 className="h-4 w-4 shrink-0" /> Mot de passe réinitialisé, connectez-vous.
+          </p>
+        )}
         <LoginForm googleError={googleError} />
       </AuthCard>
 

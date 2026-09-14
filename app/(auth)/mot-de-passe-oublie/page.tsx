@@ -1,22 +1,29 @@
 import Link from "next/link";
-import { ArrowLeft, LifeBuoy } from "lucide-react";
+import { ArrowLeft, KeyRound } from "lucide-react";
 import { AuthCard } from "@/components/auth/AuthCard";
+import { ForgotPasswordForm } from "./forgot-password-form";
 
 export default function ForgotPasswordPage() {
   return (
     <div className="space-y-5 sm:space-y-6">
       <AuthCard>
-        <div className="flex flex-col items-center text-center">
+        <div className="mb-6 flex flex-col items-center text-center">
           <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-zindo-green-50">
-            <LifeBuoy className="h-6 w-6 text-zindo-green-600" />
+            <KeyRound className="h-6 w-6 text-zindo-green-600" />
           </div>
           <h2 className="mt-4 text-xl font-bold text-zindo-ink-900 sm:text-2xl">Mot de passe oublié</h2>
           <p className="mt-2 text-sm leading-relaxed text-zinc-500">
-            La réinitialisation en libre-service arrive bientôt. En attendant, demandez à
-            l&apos;administrateur de votre commerce de vous créer un nouveau mot de passe depuis{" "}
-            <span className="font-medium text-zindo-ink-700">Utilisateurs</span>.
+            Indiquez l&apos;e-mail associé à votre compte, nous vous envoyons un lien pour choisir un nouveau
+            mot de passe.
           </p>
         </div>
+
+        <ForgotPasswordForm />
+
+        <p className="mt-5 text-center text-xs text-zinc-400">
+          Pas d&apos;e-mail sur votre compte ? Demandez à l&apos;administrateur de votre commerce de vous créer
+          un nouveau mot de passe depuis <span className="font-medium text-zindo-ink-600">Utilisateurs</span>.
+        </p>
       </AuthCard>
 
       <Link

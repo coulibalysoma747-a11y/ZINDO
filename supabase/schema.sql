@@ -111,6 +111,20 @@ create table user_permissions (
 );
 create index on user_permissions (user_id);
 
+-- Jetons de réinitialisation de mot de passe (lib/actions/password-reset.ts) :
+-- seul le hash SHA-256 du jeton est stocké, jamais le jeton en clair (qui
+-- n'existe que dans le lien envoyé par e-mail) — une fuite de cette table ne
+-- permet donc pas de rejouer un lien de réinitialisation valide.
+create table password_reset_tokens (
+  id text primary key default gen_random_uuid()::text,
+  user_id text not null references users(id) on delete cascade,
+  token_hash text not null unique,
+  expires_at timestamptz not null,
+  used_at timestamptz,
+  created_at timestamptz not null default now()
+);
+create index on password_reset_tokens (user_id);
+
 -- ---------------------------------------------------------------------------
 -- Catalogue
 -- ---------------------------------------------------------------------------
