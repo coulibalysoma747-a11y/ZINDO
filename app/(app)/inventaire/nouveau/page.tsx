@@ -1,18 +1,27 @@
 import { requirePermission } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
-import { prisma } from "@/lib/prisma";
+import { supabase } from "@/lib/supabase";
 import { getLocations, getCurrentLocation } from "@/lib/location";
 import { InventoryForm } from "./InventoryForm";
+
+type ProductRow = {
+  id: string;
+  name: string;
+  reference: string;
+  unit: string;
+  stocks: { locationId: string; quantity: number }[];
+};
 
 export default async function NewInventoryPage() {
   const user = await requirePermission(PERMISSIONS.INVENTORY_MANAGE);
 
-  const [products, locations, currentLocation] = await Promise.all([
-    prisma.product.findMany({
-      where: { businessId: user.businessId, active: true },
-      orderBy: { name: "asc" },
-      select: { id: true, name: true, reference: true, unit: true, stocks: { select: { locationId: true, quantity: true } } },
-    }),
+  const [{ data: products }, locations, currentLocation] = await Promise.all([
+    supabase
+      .from("products")
+      .select("id, name, reference, unit, stocks:product_stocks(locationId:location_id, quantity)")
+      .eq("business_id", user.businessId)
+      .eq("active", true)
+      .order("name", { ascending: true }),
     getLocations(user.businessId),
     getCurrentLocation(user.businessId),
   ]);
@@ -26,7 +35,11 @@ export default async function NewInventoryPage() {
           écarts seront calculés automatiquement.
         </p>
       </div>
-      <InventoryForm products={products} locations={locations} defaultLocationId={currentLocation?.id} />
+      <InventoryForm
+        products={(products ?? []) as unknown as ProductRow[]}
+        locations={locations}
+        defaultLocationId={currentLocation?.id}
+      />
     </div>
   );
 }

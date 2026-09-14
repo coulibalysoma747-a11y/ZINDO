@@ -2,22 +2,36 @@ import Link from "next/link";
 import { Plus } from "lucide-react";
 import { requirePermission } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
-import { prisma } from "@/lib/prisma";
+import { supabase } from "@/lib/supabase";
 import { formatMoney, formatDateTime } from "@/lib/format";
 import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { EmptyState } from "@/components/ui/Empty";
 import { ButtonLink } from "@/components/ui/Button";
 
+type PurchaseRow = {
+  id: string;
+  number: string;
+  createdAt: string;
+  status: string;
+  total: number;
+  amountPaid: number;
+  location: { name: string };
+  supplier: { name: string };
+};
+
 export default async function PurchasesPage() {
   const user = await requirePermission(PERMISSIONS.PURCHASES_MANAGE);
 
-  const purchases = await prisma.purchase.findMany({
-    where: { businessId: user.businessId },
-    include: { supplier: true, location: true, _count: { select: { items: true } } },
-    orderBy: { createdAt: "desc" },
-    take: 200,
-  });
+  const { data } = await supabase
+    .from("purchases")
+    .select(
+      "id, number, createdAt:created_at, status, total, amountPaid:amount_paid, location:locations(name), supplier:suppliers(name)"
+    )
+    .eq("business_id", user.businessId)
+    .order("created_at", { ascending: false })
+    .limit(200);
+  const purchases = (data ?? []) as unknown as PurchaseRow[];
 
   const currency = user.business.currency;
 
@@ -65,7 +79,7 @@ export default async function PurchasesPage() {
                       {p.number}
                     </Link>
                   </td>
-                  <td className="px-4 py-3 text-zinc-600">{formatDateTime(p.createdAt)}</td>
+                  <td className="px-4 py-3 text-zinc-600">{formatDateTime(new Date(p.createdAt))}</td>
                   <td className="px-4 py-3 text-zinc-600">{p.location.name}</td>
                   <td className="px-4 py-3 text-zinc-600">{p.supplier.name}</td>
                   <td className="px-4 py-3">
@@ -73,9 +87,7 @@ export default async function PurchasesPage() {
                       {p.status}
                     </Badge>
                   </td>
-                  <td className="px-4 py-3 text-right font-medium text-zinc-900">
-                    {formatMoney(p.total, currency)}
-                  </td>
+                  <td className="px-4 py-3 text-right font-medium text-zinc-900">{formatMoney(p.total, currency)}</td>
                   <td className="px-4 py-3 text-right text-zinc-600">{formatMoney(p.amountPaid, currency)}</td>
                 </tr>
               ))}

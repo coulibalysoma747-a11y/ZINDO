@@ -3,11 +3,21 @@ import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { requirePermission } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
-import { prisma } from "@/lib/prisma";
+import { supabase } from "@/lib/supabase";
 import { formatDateTime } from "@/lib/format";
 import { Card, CardBody, CardHeader } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { ValidateInventoryButton } from "./ValidateInventoryButton";
+
+type InventoryRow = {
+  id: string;
+  reference: string;
+  createdAt: string;
+  status: string;
+  location: { name: string };
+  user: { firstName: string; lastName: string };
+  items: Array<{ id: string; theoreticalQty: number; realQty: number; difference: number; product: { name: string } }>;
+};
 
 export default async function InventoryDetailPage({
   params,
@@ -17,11 +27,17 @@ export default async function InventoryDetailPage({
   const user = await requirePermission(PERMISSIONS.INVENTORY_MANAGE);
   const { id } = await params;
 
-  const inventory = await prisma.inventory.findFirst({
-    where: { id, businessId: user.businessId },
-    include: { items: { include: { product: true } }, user: true, location: true },
-  });
-  if (!inventory) notFound();
+  const { data } = await supabase
+    .from("inventories")
+    .select(
+      "id, reference, createdAt:created_at, status, location:locations(name), user:users(firstName:first_name, lastName:last_name), " +
+        "items:inventory_items(id, theoreticalQty:theoretical_qty, realQty:real_qty, difference, product:products(name))"
+    )
+    .eq("id", id)
+    .eq("business_id", user.businessId)
+    .maybeSingle();
+  if (!data) notFound();
+  const inventory = data as unknown as InventoryRow;
 
   const discrepancies = inventory.items.filter((i) => i.difference !== 0);
 
@@ -37,7 +53,7 @@ export default async function InventoryDetailPage({
             <Badge tone={inventory.status === "VALIDE" ? "emerald" : "amber"}>{inventory.status}</Badge>
           </div>
           <p className="text-sm text-zinc-500">
-            {inventory.location.name} · {formatDateTime(inventory.createdAt)} · par {inventory.user.firstName}{" "}
+            {inventory.location.name} · {formatDateTime(new Date(inventory.createdAt))} · par {inventory.user.firstName}{" "}
             {inventory.user.lastName}
           </p>
         </div>
@@ -68,11 +84,7 @@ export default async function InventoryDetailPage({
                   <td className="px-4 py-2 text-right text-zinc-700">{item.realQty}</td>
                   <td
                     className={`px-4 py-2 text-right font-medium ${
-                      item.difference === 0
-                        ? "text-zinc-400"
-                        : item.difference > 0
-                          ? "text-emerald-600"
-                          : "text-red-600"
+                      item.difference === 0 ? "text-zinc-400" : item.difference > 0 ? "text-emerald-600" : "text-red-600"
                     }`}
                   >
                     {item.difference > 0 ? `+${item.difference}` : item.difference}

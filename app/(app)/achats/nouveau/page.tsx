@@ -1,17 +1,14 @@
 import { requirePermission } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
-import { prisma } from "@/lib/prisma";
+import { supabase } from "@/lib/supabase";
 import { getLocations, getCurrentLocation } from "@/lib/location";
 import { PurchaseForm } from "./PurchaseForm";
 
 export default async function NewPurchasePage() {
   const user = await requirePermission(PERMISSIONS.PURCHASES_MANAGE);
 
-  const [suppliers, locations, currentLocation] = await Promise.all([
-    prisma.supplier.findMany({
-      where: { businessId: user.businessId },
-      orderBy: { name: "asc" },
-    }),
+  const [{ data: suppliers }, locations, currentLocation] = await Promise.all([
+    supabase.from("suppliers").select("id, name").eq("business_id", user.businessId).order("name", { ascending: true }),
     getLocations(user.businessId),
     getCurrentLocation(user.businessId),
   ]);
@@ -26,7 +23,7 @@ export default async function NewPurchasePage() {
         </p>
       </div>
       <PurchaseForm
-        suppliers={suppliers}
+        suppliers={suppliers ?? []}
         locations={locations}
         defaultLocationId={currentLocation?.id}
         currency={user.business.currency}

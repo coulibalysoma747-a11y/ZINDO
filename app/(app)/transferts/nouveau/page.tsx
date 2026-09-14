@@ -1,6 +1,6 @@
 import { requirePermission } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
-import { prisma } from "@/lib/prisma";
+import { supabase } from "@/lib/supabase";
 import { getLocations, getCurrentLocation } from "@/lib/location";
 import { EmptyState } from "@/components/ui/Empty";
 import { TransferForm } from "./TransferForm";
@@ -13,13 +13,14 @@ export default async function NewTransferPage({
   const user = await requirePermission(PERMISSIONS.TRANSFERS_MANAGE);
   const { produit } = await searchParams;
 
-  const [locations, currentLocation, initialProduct] = await Promise.all([
+  const [locations, currentLocation, initialProductRes] = await Promise.all([
     getLocations(user.businessId),
     getCurrentLocation(user.businessId),
     produit
-      ? prisma.product.findFirst({ where: { id: produit, businessId: user.businessId } })
-      : Promise.resolve(null),
+      ? supabase.from("products").select("id, reference").eq("id", produit).eq("business_id", user.businessId).maybeSingle()
+      : Promise.resolve({ data: null }),
   ]);
+  const initialProduct = initialProductRes.data as { id: string; reference: string } | null;
 
   if (locations.length < 2) {
     return (

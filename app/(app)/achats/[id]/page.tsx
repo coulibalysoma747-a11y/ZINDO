@@ -3,10 +3,22 @@ import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { requirePermission } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
-import { prisma } from "@/lib/prisma";
+import { supabase } from "@/lib/supabase";
 import { formatMoney, formatDateTime } from "@/lib/format";
 import { Card, CardBody, CardHeader } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
+
+type PurchaseRow = {
+  id: string;
+  number: string;
+  createdAt: string;
+  status: string;
+  total: number;
+  amountPaid: number;
+  location: { name: string };
+  supplier: { id: string; name: string };
+  items: Array<{ id: string; quantity: number; unitPrice: number; total: number; product: { name: string } }>;
+};
 
 export default async function PurchaseDetailPage({
   params,
@@ -16,11 +28,17 @@ export default async function PurchaseDetailPage({
   const user = await requirePermission(PERMISSIONS.PURCHASES_MANAGE);
   const { id } = await params;
 
-  const purchase = await prisma.purchase.findFirst({
-    where: { id, businessId: user.businessId },
-    include: { items: { include: { product: true } }, supplier: true, user: true, location: true },
-  });
-  if (!purchase) notFound();
+  const { data } = await supabase
+    .from("purchases")
+    .select(
+      "id, number, createdAt:created_at, status, total, amountPaid:amount_paid, location:locations(name), supplier:suppliers(id, name), " +
+        "items:purchase_items(id, quantity, unitPrice:unit_price, total, product:products(name))"
+    )
+    .eq("id", id)
+    .eq("business_id", user.businessId)
+    .maybeSingle();
+  if (!data) notFound();
+  const purchase = data as unknown as PurchaseRow;
 
   const currency = user.business.currency;
 
@@ -37,7 +55,7 @@ export default async function PurchaseDetailPage({
           </Badge>
         </div>
         <p className="text-sm text-zinc-500">
-          {purchase.location.name} · {formatDateTime(purchase.createdAt)} · Fournisseur :{" "}
+          {purchase.location.name} · {formatDateTime(new Date(purchase.createdAt))} · Fournisseur :{" "}
           <Link href={`/fournisseurs/${purchase.supplier.id}`} className="text-emerald-600 hover:underline">
             {purchase.supplier.name}
           </Link>
@@ -64,9 +82,7 @@ export default async function PurchaseDetailPage({
                   <td className="px-4 py-2 font-medium text-zinc-900">{item.product.name}</td>
                   <td className="px-4 py-2 text-right text-zinc-700">{item.quantity}</td>
                   <td className="px-4 py-2 text-right text-zinc-700">{formatMoney(item.unitPrice, currency)}</td>
-                  <td className="px-4 py-2 text-right font-medium text-zinc-900">
-                    {formatMoney(item.total, currency)}
-                  </td>
+                  <td className="px-4 py-2 text-right font-medium text-zinc-900">{formatMoney(item.total, currency)}</td>
                 </tr>
               ))}
             </tbody>

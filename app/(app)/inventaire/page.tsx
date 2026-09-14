@@ -2,21 +2,31 @@ import Link from "next/link";
 import { Plus } from "lucide-react";
 import { requirePermission } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
-import { prisma } from "@/lib/prisma";
+import { supabase } from "@/lib/supabase";
 import { formatDateTime } from "@/lib/format";
 import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { EmptyState } from "@/components/ui/Empty";
 import { ButtonLink } from "@/components/ui/Button";
 
+type InventoryRow = {
+  id: string;
+  reference: string;
+  createdAt: string;
+  status: string;
+  location: { name: string };
+  items: Array<{ id: string }>;
+};
+
 export default async function InventoryListPage() {
   const user = await requirePermission(PERMISSIONS.INVENTORY_MANAGE);
 
-  const inventories = await prisma.inventory.findMany({
-    where: { businessId: user.businessId },
-    include: { user: true, location: true, _count: { select: { items: true } } },
-    orderBy: { createdAt: "desc" },
-  });
+  const { data } = await supabase
+    .from("inventories")
+    .select("id, reference, createdAt:created_at, status, location:locations(name), items:inventory_items(id)")
+    .eq("business_id", user.businessId)
+    .order("created_at", { ascending: false });
+  const inventories = (data ?? []) as unknown as InventoryRow[];
 
   return (
     <div className="space-y-6">
@@ -53,8 +63,8 @@ export default async function InventoryListPage() {
                     </Link>
                   </td>
                   <td className="px-4 py-3 text-zinc-600">{inv.location.name}</td>
-                  <td className="px-4 py-3 text-zinc-600">{formatDateTime(inv.createdAt)}</td>
-                  <td className="px-4 py-3 text-zinc-600">{inv._count.items}</td>
+                  <td className="px-4 py-3 text-zinc-600">{formatDateTime(new Date(inv.createdAt))}</td>
+                  <td className="px-4 py-3 text-zinc-600">{inv.items.length}</td>
                   <td className="px-4 py-3">
                     <Badge tone={inv.status === "VALIDE" ? "emerald" : "amber"}>{inv.status}</Badge>
                   </td>
