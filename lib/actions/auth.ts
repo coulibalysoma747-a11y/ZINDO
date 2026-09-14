@@ -5,6 +5,7 @@ import bcrypt from "bcryptjs";
 import { redirect } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { createSession, destroySession } from "@/lib/session";
+import { createAdminSession } from "@/lib/adminSession";
 import type { Role } from "@/lib/db-types";
 
 export type ActionState = { error?: string } | undefined;
@@ -46,22 +47,36 @@ export async function loginAction(
     console.error("[loginAction] Échec de la requête Supabase :", error.message);
   }
 
-  if (!user || !user.active) {
-    return { error: "Identifiants incorrects" };
+  if (user && user.active) {
+    const valid = await bcrypt.compare(password, user.passwordHash as string);
+    if (valid) {
+      await createSession({
+        userId: user.id as string,
+        businessId: user.businessId as string,
+        role: user.role as string,
+      });
+      redirect("/dashboard");
+    }
   }
 
-  const valid = await bcrypt.compare(password, user.passwordHash as string);
-  if (!valid) {
-    return { error: "Identifiants incorrects" };
+  // Aucun compte commerçant correspondant (ou mot de passe invalide) : on
+  // tente le compte propriétaire de la plateforme, pour que le créateur
+  // puisse se connecter depuis ce même formulaire sans passer par /admin/login.
+  const { data: admin } = await supabase
+    .from("super_admins")
+    .select("id, passwordHash:password_hash")
+    .ilike("email", emailPattern)
+    .maybeSingle();
+
+  if (admin) {
+    const validAdmin = await bcrypt.compare(password, admin.passwordHash as string);
+    if (validAdmin) {
+      await createAdminSession({ adminId: admin.id as string });
+      redirect("/admin");
+    }
   }
 
-  await createSession({
-    userId: user.id as string,
-    businessId: user.businessId as string,
-    role: user.role as string,
-  });
-
-  redirect("/dashboard");
+  return { error: "Identifiants incorrects" };
 }
 
 const registerSchema = z.object({
