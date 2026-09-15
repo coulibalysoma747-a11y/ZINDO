@@ -1,0 +1,60 @@
+import type { NavItem } from "@/lib/nav";
+import {
+  LayoutDashboard,
+  Bot,
+  ShoppingCart,
+  History,
+  Package,
+  Tags,
+  Boxes,
+  ArrowLeftRight,
+  ShoppingBag,
+  Users,
+  CreditCard,
+  Truck,
+  ClipboardList,
+  Globe,
+  BarChart3,
+  Store,
+  UserCog,
+  Settings,
+  Receipt,
+  Wallet,
+  FileText,
+  LifeBuoy,
+  ShoppingBasket,
+  Crown,
+} from "lucide-react";
+
+// Module simple (sans "use client") pour que cette table icône-par-module
+// puisse être importée aussi bien par des composants client (SidebarLink)
+// que par des composants serveur (ModulesGuide sur la page Aide) : un
+// composant/objet exporté depuis un module "use client" devient une
+// référence client opaque, illisible (indexation cassée à l'exécution) une
+// fois importé côté serveur — d'où ce fichier neutre séparé.
+export const NAV_ICONS: Record<NavItem["icon"], React.ComponentType<{ className?: string }>> = {
+  dashboard: LayoutDashboard,
+  assistant: Bot,
+  sales: ShoppingCart,
+  invoices: FileText,
+  products: Package,
+  categories: Tags,
+  stock: Boxes,
+  transfers: ArrowLeftRight,
+  purchases: ShoppingBag,
+  expenses: Receipt,
+  customers: Users,
+  credits: CreditCard,
+  suppliers: Truck,
+  inventory: ClipboardList,
+  history: History,
+  "cash-sessions": Wallet,
+  "history-global": Globe,
+  reports: BarChart3,
+  locations: Store,
+  users: UserCog,
+  settings: Settings,
+  support: LifeBuoy,
+  "online-store": ShoppingBasket,
+  subscription: Crown,
+};

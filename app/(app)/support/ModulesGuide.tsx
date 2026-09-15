@@ -1,5 +1,5 @@
 import { NAV_ITEMS } from "@/lib/nav";
-import { NAV_ICONS } from "@/components/layout/SidebarLink";
+import { NAV_ICONS } from "@/components/layout/nav-icons";
 import { Badge } from "@/components/ui/Badge";
 
 // Une phrase par module, dans l'ordre du menu (lib/nav.ts) — sert de guide de

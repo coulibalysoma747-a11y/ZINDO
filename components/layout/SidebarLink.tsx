@@ -4,59 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/cn";
 import type { NavItem } from "@/lib/nav";
-import {
-  LayoutDashboard,
-  Bot,
-  ShoppingCart,
-  History,
-  Package,
-  Tags,
-  Boxes,
-  ArrowLeftRight,
-  ShoppingBag,
-  Users,
-  CreditCard,
-  Truck,
-  ClipboardList,
-  Globe,
-  BarChart3,
-  Store,
-  UserCog,
-  Settings,
-  Receipt,
-  Wallet,
-  FileText,
-  LifeBuoy,
-  ShoppingBasket,
-  Crown,
-} from "lucide-react";
-
-export const NAV_ICONS: Record<NavItem["icon"], React.ComponentType<{ className?: string }>> = {
-  dashboard: LayoutDashboard,
-  assistant: Bot,
-  sales: ShoppingCart,
-  invoices: FileText,
-  products: Package,
-  categories: Tags,
-  stock: Boxes,
-  transfers: ArrowLeftRight,
-  purchases: ShoppingBag,
-  expenses: Receipt,
-  customers: Users,
-  credits: CreditCard,
-  suppliers: Truck,
-  inventory: ClipboardList,
-  history: History,
-  "cash-sessions": Wallet,
-  "history-global": Globe,
-  reports: BarChart3,
-  locations: Store,
-  users: UserCog,
-  settings: Settings,
-  support: LifeBuoy,
-  "online-store": ShoppingBasket,
-  subscription: Crown,
-};
+import { NAV_ICONS } from "./nav-icons";
 
 export function SidebarLink({ item }: { item: NavItem }) {
   const pathname = usePathname();
