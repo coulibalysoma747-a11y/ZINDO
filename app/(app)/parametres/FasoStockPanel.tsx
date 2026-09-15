@@ -220,10 +220,10 @@ export function FasoStockPanel({
                 <span className="text-red-600">échouée ({syncInfo.error})</span>
               )}
               <br />
-              La synchronisation automatique tourne aussi en tâche de fond toutes les 2 heures.
+              La synchronisation automatique tourne aussi en tâche de fond une fois par jour (vers 3h).
             </>
           ) : (
-            "Jamais synchronisé — la synchronisation automatique tourne en tâche de fond toutes les 2 heures une fois l'association enregistrée."
+            "Jamais synchronisé — la synchronisation automatique tourne en tâche de fond une fois par jour (vers 3h) une fois l'association enregistrée."
           )}
         </div>
         <Button onClick={handleSync} disabled={syncing}>
