@@ -65,6 +65,12 @@ create table businesses (
   faso_stock_last_sync_at timestamptz,
   faso_stock_last_sync_status text,
   faso_stock_last_sync_error text,
+  -- Personnalisation de la facture A4 (components/sales/Facture.tsx), au-delà
+  -- des champs déjà génériques (nom, logo, adresse...) — voir /parametres.
+  invoice_tagline text,
+  mobile_money_info text,
+  invoice_signer_name text,
+  invoice_return_policy text,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );

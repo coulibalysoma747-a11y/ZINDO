@@ -43,6 +43,16 @@ export type FactureData = {
   partyLabel?: string;
   /** Devis uniquement : affichée sous le numéro. */
   validUntil?: Date | string | null;
+  /** Slogan du commerce, affiché sous le nom (/parametres). */
+  tagline?: string | null;
+  /** Ex : "*144*3*XXXXXXX#" (/parametres). */
+  mobileMoneyInfo?: string | null;
+  /** Nom affiché sous la ligne de signature (/parametres). */
+  signerName?: string | null;
+  /** Petite mention affichée en bas, sous le message de remerciement (/parametres). */
+  returnPolicy?: string | null;
+  /** Ex : "Facture intégralement réglée" — dérivé du statut de la vente. */
+  statusLabel?: string | null;
 };
 
 /**
@@ -90,8 +100,9 @@ export function Facture({ data }: { data: FactureData }) {
             <img src={data.logoUrl} alt={data.businessName} className="mx-auto mb-3 h-14 w-14 object-contain" />
           )}
           <p className="text-3xl font-bold uppercase tracking-wide text-zindo-ink-900">{data.businessName}</p>
+          {data.tagline && <p className="mt-1.5 text-sm font-semibold text-zinc-700">{data.tagline}</p>}
           {data.businessActivity && (
-            <p className="mt-1.5 text-xs uppercase tracking-[0.15em] text-zinc-500">{data.businessActivity}</p>
+            <p className="mt-1 text-xs font-semibold uppercase tracking-[0.1em] text-zinc-600">{data.businessActivity}</p>
           )}
           {(data.locationAddress ?? data.businessAddress) && (
             <p className="mt-1.5 text-sm leading-relaxed text-zinc-600">{data.locationAddress ?? data.businessAddress}</p>
@@ -100,6 +111,9 @@ export function Facture({ data }: { data: FactureData }) {
             <p className="text-sm leading-relaxed text-zinc-600">
               {[data.businessPhone ? `Tél : ${data.businessPhone}` : null, data.businessEmail].filter(Boolean).join("  ·  ")}
             </p>
+          )}
+          {data.mobileMoneyInfo && (
+            <p className="text-sm leading-relaxed text-zinc-600">Mobile money {data.mobileMoneyInfo}</p>
           )}
         </div>
 
@@ -193,27 +207,32 @@ export function Facture({ data }: { data: FactureData }) {
           </span>
         </p>
 
-        {/* Paiement / reste à payer */}
-        {!!data.paymentMethodLabel &&
-          ((data.amountPaid ?? 0) > 0 || (!!data.remaining && data.remaining > 0) || (!!data.change && data.change > 0)) && (
-          <div className="mt-4 flex justify-end border-t border-zinc-200 pt-3">
-            <div className="w-64 space-y-1.5 text-sm text-zinc-600">
-              <div className="flex justify-between">
-                <span>Payé</span>
-                <span>{money(data.amountPaid ?? 0)}</span>
-              </div>
-              {!!data.change && data.change > 0 && (
-                <div className="flex justify-between font-medium text-emerald-600">
-                  <span>Monnaie rendue</span>
-                  <span>{money(data.change)}</span>
+        {/* Règlement */}
+        {!!data.paymentMethodLabel && (
+          <div className="mt-6 flex justify-end">
+            <div className="w-72">
+              <p className="mb-1.5 text-xs font-bold uppercase tracking-wide text-zinc-500">Règlement</p>
+              <div className="overflow-hidden rounded-lg border border-zinc-300 text-sm">
+                <div className="flex justify-between px-3 py-2 text-zinc-600">
+                  <span>{data.paymentMethodLabel}</span>
+                  <span className="text-zinc-900">{money(data.amountPaid ?? 0)}</span>
                 </div>
-              )}
-              {!!data.remaining && data.remaining > 0 && (
-                <div className="flex justify-between font-medium text-red-600">
+                {!!data.change && data.change > 0 && (
+                  <div className="flex justify-between border-t border-zinc-200 px-3 py-2 text-emerald-600">
+                    <span>Monnaie rendue</span>
+                    <span>{money(data.change)}</span>
+                  </div>
+                )}
+                <div className="flex justify-between border-t border-zinc-200 bg-zinc-50 px-3 py-2 font-semibold text-zinc-900">
+                  <span>Total encaissé</span>
+                  <span>{money(data.amountPaid ?? 0)}</span>
+                </div>
+                <div className="flex justify-between border-t border-zinc-200 bg-zinc-50 px-3 py-2 font-semibold text-zinc-900">
                   <span>Reste à payer</span>
-                  <span>{money(data.remaining)}</span>
+                  <span>{money(data.remaining ?? 0)}</span>
                 </div>
-              )}
+              </div>
+              {data.statusLabel && <p className="mt-1.5 text-right text-xs italic text-zinc-500">Statut : {data.statusLabel}</p>}
             </div>
           </div>
         )}
@@ -236,8 +255,15 @@ export function Facture({ data }: { data: FactureData }) {
           <div className="text-center">
             <p className="mb-12 text-xs font-semibold uppercase tracking-[0.15em] text-zinc-500">Le Responsable</p>
             <div className="w-52 border-t border-zinc-300" />
+            {data.signerName && <p className="mt-1.5 text-sm text-zinc-700">{data.signerName}</p>}
           </div>
         </div>
+
+        {data.returnPolicy && (
+          <p className="mt-8 border-t border-zinc-100 pt-3 text-center text-[10px] leading-relaxed text-zinc-400">
+            {data.returnPolicy}
+          </p>
+        )}
       </div>
     </>
   );

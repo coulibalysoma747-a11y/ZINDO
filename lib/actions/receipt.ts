@@ -16,6 +16,13 @@ const PAYMENT_LABELS: Record<string, string> = {
   AUTRE: "Autre",
 };
 
+const STATUS_LABELS: Record<string, string> = {
+  PAYEE: "Facture intégralement réglée",
+  PARTIELLE: "Facture partiellement réglée",
+  CREDIT: "Facture à crédit (non réglée)",
+  ANNULEE: "Facture annulée",
+};
+
 type SaleRow = {
   id: string;
   number: string;
@@ -122,6 +129,11 @@ export async function getSaleDocumentAction(saleId: string): Promise<SaleDocumen
       footerMessage: business.ticketFooter,
       currency: business.currency,
       qrCodeDataUrl,
+      tagline: business.invoiceTagline,
+      mobileMoneyInfo: business.mobileMoneyInfo,
+      signerName: business.invoiceSignerName,
+      returnPolicy: business.invoiceReturnPolicy,
+      statusLabel: STATUS_LABELS[sale.status] ?? null,
     };
     return { success: true, saleId: sale.id, documentType: "FACTURE", data: factureData, isCancelled, canEdit };
   }

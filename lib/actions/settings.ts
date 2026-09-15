@@ -23,6 +23,10 @@ const businessSchema = z.object({
   ticketFooter: z.string().optional(),
   qrCodeSize: z.coerce.number().int().min(0),
   defaultMinStock: z.coerce.number().int().min(0),
+  invoiceTagline: z.string().optional(),
+  mobileMoneyInfo: z.string().optional(),
+  invoiceSignerName: z.string().optional(),
+  invoiceReturnPolicy: z.string().optional(),
 });
 
 export async function updateBusinessSettingsAction(
@@ -41,6 +45,10 @@ export async function updateBusinessSettingsAction(
     ticketFooter: formData.get("ticketFooter") || undefined,
     qrCodeSize: formData.get("qrCodeSize") || 0,
     defaultMinStock: formData.get("defaultMinStock"),
+    invoiceTagline: formData.get("invoiceTagline") || undefined,
+    mobileMoneyInfo: formData.get("mobileMoneyInfo") || undefined,
+    invoiceSignerName: formData.get("invoiceSignerName") || undefined,
+    invoiceReturnPolicy: formData.get("invoiceReturnPolicy") || undefined,
   });
   if (!parsed.success) return { error: parsed.error.issues[0]?.message };
 
@@ -70,6 +78,10 @@ export async function updateBusinessSettingsAction(
       ticket_footer: parsed.data.ticketFooter ?? null,
       qr_code_size: parsed.data.qrCodeSize,
       default_min_stock: parsed.data.defaultMinStock,
+      invoice_tagline: parsed.data.invoiceTagline ?? null,
+      mobile_money_info: parsed.data.mobileMoneyInfo ?? null,
+      invoice_signer_name: parsed.data.invoiceSignerName ?? null,
+      invoice_return_policy: parsed.data.invoiceReturnPolicy ?? null,
       ...(logoUrl !== undefined ? { logo_url: logoUrl } : {}),
     })
     .eq("id", user.businessId);

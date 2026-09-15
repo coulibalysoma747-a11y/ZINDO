@@ -10,7 +10,7 @@ import type { Role } from "@/lib/db-types";
 
 const USER_SELECT =
   "id, businessId:business_id, firstName:first_name, lastName:last_name, phone, email, passwordHash:password_hash, role, active, theme, autoPrintReceipt:auto_print_receipt, printerTicketWidth:printer_ticket_width, createdAt:created_at, updatedAt:updated_at, " +
-  "business:businesses(id, name, activity, activityKey:activity_key, logoUrl:logo_url, phone, email, address, city, country, currency, ticketWidth:ticket_width, ticketFooter:ticket_footer, qrCodeSize:qr_code_size, defaultMinStock:default_min_stock, plan, suspended, nextProductSeq:next_product_seq, nextSaleSeq:next_sale_seq, nextPurchaseSeq:next_purchase_seq, nextTransferSeq:next_transfer_seq, nextSessionSeq:next_session_seq, nextOnlineOrderSeq:next_online_order_seq, nextInvoiceSeq:next_invoice_seq, createdAt:created_at, updatedAt:updated_at)";
+  "business:businesses(id, name, activity, activityKey:activity_key, logoUrl:logo_url, phone, email, address, city, country, currency, ticketWidth:ticket_width, ticketFooter:ticket_footer, qrCodeSize:qr_code_size, defaultMinStock:default_min_stock, plan, suspended, nextProductSeq:next_product_seq, nextSaleSeq:next_sale_seq, nextPurchaseSeq:next_purchase_seq, nextTransferSeq:next_transfer_seq, nextSessionSeq:next_session_seq, nextOnlineOrderSeq:next_online_order_seq, nextInvoiceSeq:next_invoice_seq, invoiceTagline:invoice_tagline, mobileMoneyInfo:mobile_money_info, invoiceSignerName:invoice_signer_name, invoiceReturnPolicy:invoice_return_policy, createdAt:created_at, updatedAt:updated_at)";
 
 export async function getCurrentUser() {
   const session = await getSession();
@@ -69,6 +69,10 @@ async function loadUserType() {
       nextSessionSeq: number;
       nextOnlineOrderSeq: number;
       nextInvoiceSeq: number;
+      invoiceTagline: string | null;
+      mobileMoneyInfo: string | null;
+      invoiceSignerName: string | null;
+      invoiceReturnPolicy: string | null;
       createdAt: string;
       updatedAt: string;
     };

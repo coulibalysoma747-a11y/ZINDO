@@ -233,6 +233,9 @@ export async function getQuoteDocumentAction(quoteId: string): Promise<QuoteDocu
     documentTitle: "Devis",
     partyLabel: "Devis pour",
     validUntil: quote.validUntil,
+    tagline: business.invoiceTagline,
+    mobileMoneyInfo: business.mobileMoneyInfo,
+    signerName: business.invoiceSignerName,
   };
 
   return {

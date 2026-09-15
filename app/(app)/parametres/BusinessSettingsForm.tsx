@@ -18,6 +18,10 @@ type Business = {
   qrCodeSize: number;
   defaultMinStock: number;
   logoUrl: string | null;
+  invoiceTagline: string | null;
+  mobileMoneyInfo: string | null;
+  invoiceSignerName: string | null;
+  invoiceReturnPolicy: string | null;
 };
 
 const QR_SIZE_OPTIONS = [
@@ -99,6 +103,34 @@ export function BusinessSettingsForm({ business }: { business: Business }) {
       <Field label="Message de pied de ticket" htmlFor="ticketFooter">
         <Textarea id="ticketFooter" name="ticketFooter" rows={2} defaultValue={business.ticketFooter} />
       </Field>
+
+      <div className="border-t border-zinc-100 pt-4">
+        <p className="mb-3 text-sm font-semibold text-zinc-900">Facture A4</p>
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <Field label="Slogan (facultatif)" htmlFor="invoiceTagline" hint="Affiché sous le nom du commerce">
+            <Input id="invoiceTagline" name="invoiceTagline" defaultValue={business.invoiceTagline ?? ""} />
+          </Field>
+          <Field label="Info Mobile Money (facultatif)" htmlFor="mobileMoneyInfo" hint="Ex : *144*3*XXXXXXX#">
+            <Input id="mobileMoneyInfo" name="mobileMoneyInfo" defaultValue={business.mobileMoneyInfo ?? ""} />
+          </Field>
+          <Field label="Nom du responsable (facultatif)" htmlFor="invoiceSignerName" hint="Affiché sous la signature">
+            <Input id="invoiceSignerName" name="invoiceSignerName" defaultValue={business.invoiceSignerName ?? ""} />
+          </Field>
+        </div>
+        <Field
+          label="Politique de retour (facultatif)"
+          htmlFor="invoiceReturnPolicy"
+          hint="Petite mention affichée en bas de la facture"
+        >
+          <Textarea
+            id="invoiceReturnPolicy"
+            name="invoiceReturnPolicy"
+            rows={2}
+            defaultValue={business.invoiceReturnPolicy ?? ""}
+          />
+        </Field>
+      </div>
+
       {state?.error && <p className="text-sm text-red-600">{state.error}</p>}
       {state?.success && <p className="text-sm text-emerald-600">{state.success}</p>}
       <Button type="submit" disabled={pending}>
