@@ -89,9 +89,11 @@ export async function getSaleDocumentAction(saleId: string): Promise<SaleDocumen
   if (sale.documentType === "FACTURE") {
     const factureData: FactureData = {
       businessName: business.name,
+      businessActivity: business.activity,
       businessPhone: business.phone,
       businessAddress: business.address,
       businessEmail: business.email,
+      businessCity: business.city,
       logoUrl: business.logoUrl,
       locationName: sale.location.name,
       locationAddress: sale.location.address,
