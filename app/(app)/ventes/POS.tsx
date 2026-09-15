@@ -192,7 +192,14 @@ export function POS({
   }
 
   return (
-    <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+    // print:hidden est essentiel, pas juste cosmétique : sans lui, toute cette
+    // grille de produits/panier/formulaires reste invisible mais garde sa
+    // hauteur dans le document imprimé (visibility: hidden ne libère pas
+    // l'espace, contrairement à display: none) — assez pour pousser le
+    // document sur 2 pages et faire imprimer le ticket une fois par page
+    // (voir le CSS d'impression de Receipt/Facture, qui le positionne en
+    // absolute en haut de la page).
+    <div className="grid grid-cols-1 gap-6 lg:grid-cols-3 print:hidden">
       <div className="space-y-4 lg:col-span-2">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="flex items-start gap-2">
