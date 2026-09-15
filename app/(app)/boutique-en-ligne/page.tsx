@@ -3,7 +3,7 @@ import Link from "next/link";
 import { ShoppingBasket } from "lucide-react";
 import { requirePermission } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
-import { prisma } from "@/lib/prisma";
+import { supabase } from "@/lib/supabase";
 import { getLocations } from "@/lib/location";
 import { isFeatureEnabled } from "@/lib/feature-flags";
 import { Card, CardBody, CardHeader } from "@/components/ui/Card";
@@ -24,12 +24,35 @@ export default async function OnlineStorePage() {
     );
   }
 
-  const [store, locations, pendingOrders] = await Promise.all([
-    prisma.onlineStore.findUnique({ where: { businessId: user.businessId } }),
+  const { data: storeData } = await supabase
+    .from("online_stores")
+    .select(
+      "id, slug, storeName:store_name, description, contactPhone:contact_phone, locationId:location_id, deliveryEnabled:delivery_enabled, deliveryFee:delivery_fee, freeDeliveryAbove:free_delivery_above, published"
+    )
+    .eq("business_id", user.businessId)
+    .maybeSingle();
+  const store = storeData as unknown as {
+    id: string;
+    slug: string;
+    storeName: string;
+    description: string | null;
+    contactPhone: string | null;
+    locationId: string | null;
+    deliveryEnabled: boolean;
+    deliveryFee: number;
+    freeDeliveryAbove: number | null;
+    published: boolean;
+  } | null;
+
+  const [locations, { count: pendingOrders }] = await Promise.all([
     getLocations(user.businessId),
-    prisma.onlineOrder.count({
-      where: { store: { businessId: user.businessId }, status: "EN_ATTENTE" },
-    }),
+    store
+      ? supabase
+          .from("online_orders")
+          .select("id", { count: "exact", head: true })
+          .eq("store_id", store.id)
+          .eq("status", "EN_ATTENTE")
+      : Promise.resolve({ count: 0 }),
   ]);
 
   const headerList = await headers();
@@ -50,7 +73,7 @@ export default async function OnlineStorePage() {
           </p>
         </div>
         <ButtonLink href="/boutique-en-ligne/commandes" variant="outline">
-          Commandes {pendingOrders > 0 && `(${pendingOrders} en attente)`}
+          Commandes {(pendingOrders ?? 0) > 0 && `(${pendingOrders} en attente)`}
         </ButtonLink>
       </div>
 
@@ -74,10 +97,7 @@ export default async function OnlineStorePage() {
           <h2 className="font-semibold text-zinc-900">Configuration</h2>
         </CardHeader>
         <CardBody>
-          <OnlineStoreForm
-            store={store}
-            locations={locations.map((l) => ({ id: l.id, name: l.name }))}
-          />
+          <OnlineStoreForm store={store} locations={locations.map((l) => ({ id: l.id, name: l.name }))} />
         </CardBody>
       </Card>
     </div>

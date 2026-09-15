@@ -2,7 +2,7 @@ import Link from "next/link";
 import { ArrowLeft, Truck } from "lucide-react";
 import { requirePermission } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
-import { prisma } from "@/lib/prisma";
+import { supabase } from "@/lib/supabase";
 import { formatMoney, formatDateTime } from "@/lib/format";
 import { Card, CardBody } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
@@ -23,24 +23,49 @@ const STATUS_LABELS = {
   ANNULEE: "Annulée",
 } as const;
 
+type OrderRow = {
+  id: string;
+  number: string;
+  customerName: string;
+  customerPhone: string;
+  createdAt: string;
+  wantsDelivery: boolean;
+  deliveryAddress: string | null;
+  note: string | null;
+  status: keyof typeof STATUS_LABELS;
+  subtotal: number;
+  deliveryFee: number;
+  total: number;
+  items: Array<{ id: string; quantity: number; unitPrice: number; total: number; product: { name: string } }>;
+};
+
 export default async function OnlineOrdersPage() {
   const user = await requirePermission(PERMISSIONS.SALES_VIEW);
 
-  const store = await prisma.onlineStore.findUnique({ where: { businessId: user.businessId } });
-  const orders = store
-    ? await prisma.onlineOrder.findMany({
-        where: { storeId: store.id },
-        include: { items: { include: { product: true } } },
-        orderBy: { createdAt: "desc" },
-        take: 200,
-      })
-    : [];
+  const { data: store } = await supabase
+    .from("online_stores")
+    .select("id")
+    .eq("business_id", user.businessId)
+    .maybeSingle();
+
+  const { data } = store
+    ? await supabase
+        .from("online_orders")
+        .select(
+          "id, number, customerName:customer_name, customerPhone:customer_phone, createdAt:created_at, wantsDelivery:wants_delivery, deliveryAddress:delivery_address, note, status, subtotal, deliveryFee:delivery_fee, total, " +
+            "items:online_order_items(id, quantity, unitPrice:unit_price, total, product:products(name))"
+        )
+        .eq("store_id", store.id)
+        .order("created_at", { ascending: false })
+        .limit(200)
+    : { data: [] as unknown[] };
+  const orders = (data ?? []) as unknown as OrderRow[];
 
   const currency = user.business.currency;
   const sorted = [...orders].sort((a, b) => {
     if (a.status === "EN_ATTENTE" && b.status !== "EN_ATTENTE") return -1;
     if (a.status !== "EN_ATTENTE" && b.status === "EN_ATTENTE") return 1;
-    return b.createdAt.getTime() - a.createdAt.getTime();
+    return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
   });
 
   return (
@@ -70,7 +95,7 @@ export default async function OnlineOrdersPage() {
                       {order.number} — {order.customerName}
                     </p>
                     <p className="text-xs text-zinc-400">
-                      {order.customerPhone} — {formatDateTime(order.createdAt)}
+                      {order.customerPhone} — {formatDateTime(new Date(order.createdAt))}
                     </p>
                     {order.wantsDelivery && (
                       <p className="mt-0.5 flex items-center gap-1 text-xs text-zinc-500">

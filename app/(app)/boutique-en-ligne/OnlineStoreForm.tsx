@@ -4,7 +4,18 @@ import { useActionState, useState } from "react";
 import { Field, Input, Textarea, Select } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { saveOnlineStoreAction, type ActionState } from "@/lib/actions/online-store";
-import type { OnlineStore } from "@prisma/client";
+
+type OnlineStore = {
+  storeName: string;
+  slug: string;
+  description: string | null;
+  contactPhone: string | null;
+  locationId: string | null;
+  deliveryEnabled: boolean;
+  deliveryFee: number;
+  freeDeliveryAbove: number | null;
+  published: boolean;
+};
 
 export function OnlineStoreForm({
   store,

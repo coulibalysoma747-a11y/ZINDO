@@ -2,11 +2,11 @@
 
 import { z } from "zod";
 import { revalidatePath } from "next/cache";
-import { prisma } from "@/lib/prisma";
+import { supabase } from "@/lib/supabase";
 import { requirePermission } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
 import { logAction } from "@/lib/audit";
-import type { OnlineOrderStatus } from "@prisma/client";
+import type { OnlineOrderStatus } from "@/lib/db-types";
 
 export type ActionState = { error?: string; success?: string } | undefined;
 
@@ -51,23 +51,43 @@ export async function saveOnlineStoreAction(
     return { error: "Choisissez la boutique/dépôt qui servira les commandes avant de publier" };
   }
 
-  const slugTaken = await prisma.onlineStore.findFirst({
-    where: { slug: parsed.data.slug, businessId: { not: user.businessId } },
-  });
+  const { data: slugTaken } = await supabase
+    .from("online_stores")
+    .select("id")
+    .eq("slug", parsed.data.slug)
+    .neq("business_id", user.businessId)
+    .maybeSingle();
   if (slugTaken) return { error: "Cette adresse est déjà utilisée par un autre commerce, choisissez-en une autre" };
 
   if (parsed.data.locationId) {
-    const location = await prisma.location.findFirst({
-      where: { id: parsed.data.locationId, businessId: user.businessId },
-    });
+    const { data: location } = await supabase
+      .from("locations")
+      .select("id")
+      .eq("id", parsed.data.locationId)
+      .eq("business_id", user.businessId)
+      .maybeSingle();
     if (!location) return { error: "Boutique/dépôt introuvable" };
   }
 
-  await prisma.onlineStore.upsert({
-    where: { businessId: user.businessId },
-    update: parsed.data,
-    create: { ...parsed.data, businessId: user.businessId },
-  });
+  const { error } = await supabase.from("online_stores").upsert(
+    {
+      business_id: user.businessId,
+      slug: parsed.data.slug,
+      store_name: parsed.data.storeName,
+      description: parsed.data.description ?? null,
+      contact_phone: parsed.data.contactPhone ?? null,
+      location_id: parsed.data.locationId ?? null,
+      delivery_enabled: parsed.data.deliveryEnabled,
+      delivery_fee: parsed.data.deliveryFee,
+      free_delivery_above: parsed.data.freeDeliveryAbove ?? null,
+      published: parsed.data.published,
+    },
+    { onConflict: "business_id", ignoreDuplicates: false }
+  );
+  if (error) {
+    console.error("[saveOnlineStoreAction] Échec de l'enregistrement :", error.message);
+    return { error: "Impossible d'enregistrer la boutique en ligne" };
+  }
 
   await logAction({
     businessId: user.businessId,
@@ -88,15 +108,22 @@ export async function updateOnlineOrderStatusAction(
 ) {
   const user = await requirePermission(PERMISSIONS.SALES_VIEW);
 
-  const order = await prisma.onlineOrder.findFirst({
-    where: { id: orderId, store: { businessId: user.businessId } },
-  });
+  const { data: order } = await supabase
+    .from("online_orders")
+    .select("id, merchantNote:merchant_note, store:online_stores!inner(businessId:business_id)")
+    .eq("id", orderId)
+    .eq("online_stores.business_id", user.businessId)
+    .maybeSingle();
   if (!order) return { error: "Commande introuvable" };
 
-  await prisma.onlineOrder.update({
-    where: { id: orderId },
-    data: { status, merchantNote: merchantNote ?? order.merchantNote },
-  });
+  const { error } = await supabase
+    .from("online_orders")
+    .update({ status, merchant_note: merchantNote ?? (order.merchantNote as string | null) })
+    .eq("id", orderId);
+  if (error) {
+    console.error("[updateOnlineOrderStatusAction] Échec de la mise à jour :", error.message);
+    return { error: "Impossible de mettre à jour la commande" };
+  }
 
   await logAction({
     businessId: user.businessId,
