@@ -50,7 +50,7 @@ export function FactureView({
         </div>
       </div>
 
-      {isCancelled && <Badge tone="red">Facture annulée — stock réintégré</Badge>}
+      {isCancelled && <Badge tone="red" className="print:hidden">Facture annulée — stock réintégré</Badge>}
 
       <Facture data={data} />
     </div>

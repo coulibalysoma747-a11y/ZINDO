@@ -41,7 +41,7 @@ export function SaleReceiptView({
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-center justify-between gap-3">
+      <div className="flex flex-wrap items-center justify-between gap-3 print:hidden">
         <Link href="/ventes/historique" className="flex items-center gap-1 text-sm text-zinc-500 hover:text-zinc-700">
           <ArrowLeft className="h-4 w-4" /> Retour à l&apos;historique
         </Link>
@@ -73,7 +73,7 @@ export function SaleReceiptView({
         </div>
       </div>
 
-      {isCancelled && <Badge tone="red">Vente annulée — stock réintégré</Badge>}
+      {isCancelled && <Badge tone="red" className="print:hidden">Vente annulée — stock réintégré</Badge>}
 
       <Receipt data={data} width={width} />
     </div>

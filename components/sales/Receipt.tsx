@@ -100,16 +100,14 @@ export function Receipt({ data, width = "80mm" }: { data: ReceiptData; width?: R
             padding: 0 !important;
             background: #fff !important;
           }
-          body * {
-            visibility: hidden;
-          }
-          #zindo-receipt, #zindo-receipt * {
-            visibility: visible;
-          }
+          /* On ne masque plus le reste avec visibility:hidden (qui garde sa
+             place dans la mise en page et peut décaler/dédoubler le ticket
+             selon l'endroit où #zindo-receipt est imbriqué). Chaque écran qui
+             affiche un ticket masque explicitement le reste de son propre
+             contenu avec print:hidden (display:none) — voir ReceiptPrintPanel
+             et les pages dédiées. Ici on se contente de faire flotter le
+             ticket normalement, sans position absolue/fixe. */
           #zindo-receipt {
-            position: absolute;
-            top: 0;
-            left: 0;
             width: ${width === "A4" ? "190mm" : width};
             max-width: none;
             margin: 0;

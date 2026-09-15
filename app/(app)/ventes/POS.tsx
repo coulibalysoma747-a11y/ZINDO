@@ -196,9 +196,12 @@ export function POS({
     // grille de produits/panier/formulaires reste invisible mais garde sa
     // hauteur dans le document imprimé (visibility: hidden ne libère pas
     // l'espace, contrairement à display: none) — assez pour pousser le
-    // document sur 2 pages et faire imprimer le ticket une fois par page
-    // (voir le CSS d'impression de Receipt/Facture, qui le positionne en
-    // absolute en haut de la page).
+    // document sur 2 pages et faire imprimer le ticket une fois par page.
+    // Important : ReceiptPrintPanel doit rester EN DEHORS de ce conteneur
+    // print:hidden (voir plus bas) — imbriqué dedans, le ticket lui-même
+    // héritait de display:none à l'impression et ne sortait donc jamais
+    // (page blanche).
+    <>
     <div className="grid grid-cols-1 gap-6 lg:grid-cols-3 print:hidden">
       <div className="space-y-4 lg:col-span-2">
         <div className="flex flex-wrap items-start justify-between gap-3">
@@ -464,10 +467,11 @@ export function POS({
       </div>
 
       <ClientFormModal open={newClientOpen} onClose={() => setNewClientOpen(false)} />
+    </div>
 
       {receiptDoc && (
         <ReceiptPrintPanel doc={receiptDoc} autoPrint={autoPrintReceipt} onClose={() => setReceiptDoc(null)} />
       )}
-    </div>
+    </>
   );
 }

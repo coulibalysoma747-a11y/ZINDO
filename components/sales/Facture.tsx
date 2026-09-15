@@ -53,12 +53,12 @@ export function Facture({ data }: { data: FactureData }) {
         @media print {
           @page { size: A4; margin: 14mm; }
           html, body { margin: 0 !important; padding: 0 !important; background: #fff !important; }
-          body * { visibility: hidden; }
-          #zindo-facture, #zindo-facture * { visibility: visible; }
+          /* Comme pour Receipt.tsx : pas de visibility:hidden/position absolue
+             ici. Chaque écran qui affiche une facture masque explicitement le
+             reste de son propre contenu avec print:hidden (display:none) —
+             voir ReceiptPrintPanel et les pages dédiées. La facture flotte
+             simplement dans le flux normal. */
           #zindo-facture {
-            position: absolute;
-            top: 0;
-            left: 0;
             width: 100%;
             margin: 0;
             box-shadow: none;
