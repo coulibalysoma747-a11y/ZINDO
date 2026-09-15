@@ -3,7 +3,8 @@ import { requirePermission } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
 import { supabase } from "@/lib/supabase";
 import { formatMoney, formatDate } from "@/lib/format";
-import { Card, CardBody } from "@/components/ui/Card";
+import { getUpcomingInstallmentsAction } from "@/lib/actions/installments";
+import { Card, CardBody, CardHeader } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { EmptyState } from "@/components/ui/Empty";
 
@@ -17,6 +18,8 @@ type SaleRow = {
 export default async function CreditsPage() {
   const user = await requirePermission(PERMISSIONS.CUSTOMERS_VIEW);
   const currency = user.business.currency;
+
+  const upcomingInstallments = await getUpcomingInstallmentsAction();
 
   const { data } = await supabase
     .from("sales")
@@ -98,6 +101,49 @@ export default async function CreditsPage() {
               ))}
             </tbody>
           </table>
+        </Card>
+      )}
+
+      {upcomingInstallments.length > 0 && (
+        <Card>
+          <CardHeader>
+            <h2 className="font-semibold text-zinc-900">Échéances à venir</h2>
+          </CardHeader>
+          <CardBody className="overflow-x-auto p-0">
+            <table className="w-full min-w-[600px] text-sm">
+              <thead className="bg-zinc-50 text-left text-zinc-500">
+                <tr>
+                  <th className="px-4 py-3 font-medium">Client</th>
+                  <th className="px-4 py-3 font-medium">Vente</th>
+                  <th className="px-4 py-3 font-medium">Échéance</th>
+                  <th className="px-4 py-3 text-right font-medium">Montant restant</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-zinc-100">
+                {upcomingInstallments.map((i) => {
+                  const isLate = new Date(i.dueDate) < new Date();
+                  return (
+                    <tr key={i.id} className="hover:bg-zinc-50">
+                      <td className="px-4 py-3">
+                        <Link href={`/clients/${i.customerId}`} className="font-medium text-zinc-900 hover:text-emerald-600">
+                          {i.customerName}
+                        </Link>
+                      </td>
+                      <td className="px-4 py-3">
+                        <Link href={`/ventes/${i.saleId}`} className="font-mono text-xs text-emerald-600 hover:underline">
+                          {i.saleNumber}
+                        </Link>
+                      </td>
+                      <td className="px-4 py-3 text-zinc-600">{formatDate(new Date(i.dueDate))}</td>
+                      <td className="px-4 py-3 text-right">
+                        <Badge tone={isLate ? "red" : "amber"}>{formatMoney(i.amount - i.paidAmount, currency)}</Badge>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </CardBody>
         </Card>
       )}
     </div>

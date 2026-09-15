@@ -8,6 +8,8 @@ import { Receipt, type ReceiptData, type ReceiptWidth } from "@/components/sales
 import { Badge } from "@/components/ui/Badge";
 import { ReceiptActions } from "./ReceiptActions";
 import { CancelSaleButton } from "./CancelSaleButton";
+import { InstallmentSection } from "./InstallmentSection";
+import type { InstallmentPlan } from "@/lib/actions/installments";
 
 const WIDTH_OPTIONS: { value: ReceiptWidth; label: string }[] = [
   { value: "58mm", label: "58 mm" },
@@ -21,12 +23,16 @@ export function SaleReceiptView({
   saleId,
   isCancelled,
   canEdit,
+  canOfferInstallments,
+  installmentPlan,
 }: {
   data: ReceiptData;
   defaultWidth: ReceiptWidth;
   saleId: string;
   isCancelled: boolean;
   canEdit: boolean;
+  canOfferInstallments: boolean;
+  installmentPlan: InstallmentPlan | null;
 }) {
   const [width, setWidth] = useState<ReceiptWidth>(defaultWidth);
   const searchParams = useSearchParams();
@@ -76,6 +82,10 @@ export function SaleReceiptView({
       {isCancelled && <Badge tone="red" className="print:hidden">Vente annulée — stock réintégré</Badge>}
 
       <Receipt data={data} width={width} />
+
+      {canOfferInstallments && (
+        <InstallmentSection saleId={saleId} remaining={data.remaining ?? 0} currency={data.currency ?? "XOF"} plan={installmentPlan} />
+      )}
     </div>
   );
 }

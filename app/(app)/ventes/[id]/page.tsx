@@ -1,5 +1,8 @@
 import { notFound } from "next/navigation";
+import { requireUser } from "@/lib/auth";
+import { supabase } from "@/lib/supabase";
 import { getSaleDocumentAction } from "@/lib/actions/receipt";
+import { getInstallmentPlanAction } from "@/lib/actions/installments";
 import { SaleReceiptView } from "./SaleReceiptView";
 import { FactureView } from "./FactureView";
 
@@ -12,8 +15,30 @@ export default async function SaleReceiptPage({
   const doc = await getSaleDocumentAction(id);
   if (!doc.success) notFound();
 
+  const user = await requireUser();
+  const [{ data: saleRow }, installmentPlan] = await Promise.all([
+    supabase
+      .from("sales")
+      .select("status, customerId:customer_id")
+      .eq("id", id)
+      .eq("business_id", user.businessId)
+      .maybeSingle(),
+    getInstallmentPlanAction(id),
+  ]);
+  const canOfferInstallments =
+    !!saleRow?.customerId && (saleRow?.status === "CREDIT" || saleRow?.status === "PARTIELLE") && !doc.isCancelled;
+
   if (doc.documentType === "FACTURE") {
-    return <FactureView data={doc.data} saleId={doc.saleId} isCancelled={doc.isCancelled} canEdit={doc.canEdit} />;
+    return (
+      <FactureView
+        data={doc.data}
+        saleId={doc.saleId}
+        isCancelled={doc.isCancelled}
+        canEdit={doc.canEdit}
+        canOfferInstallments={canOfferInstallments}
+        installmentPlan={installmentPlan}
+      />
+    );
   }
 
   return (
@@ -23,6 +48,8 @@ export default async function SaleReceiptPage({
       saleId={doc.saleId}
       isCancelled={doc.isCancelled}
       canEdit={doc.canEdit}
+      canOfferInstallments={canOfferInstallments}
+      installmentPlan={installmentPlan}
     />
   );
 }

@@ -8,17 +8,23 @@ import { Facture, type FactureData } from "@/components/sales/Facture";
 import { Badge } from "@/components/ui/Badge";
 import { ReceiptActions } from "./ReceiptActions";
 import { CancelSaleButton } from "./CancelSaleButton";
+import { InstallmentSection } from "./InstallmentSection";
+import type { InstallmentPlan } from "@/lib/actions/installments";
 
 export function FactureView({
   data,
   saleId,
   isCancelled,
   canEdit,
+  canOfferInstallments,
+  installmentPlan,
 }: {
   data: FactureData;
   saleId: string;
   isCancelled: boolean;
   canEdit: boolean;
+  canOfferInstallments: boolean;
+  installmentPlan: InstallmentPlan | null;
 }) {
   const searchParams = useSearchParams();
 
@@ -53,6 +59,10 @@ export function FactureView({
       {isCancelled && <Badge tone="red" className="print:hidden">Facture annulée — stock réintégré</Badge>}
 
       <Facture data={data} />
+
+      {canOfferInstallments && (
+        <InstallmentSection saleId={saleId} remaining={data.remaining ?? 0} currency={data.currency ?? "XOF"} plan={installmentPlan} />
+      )}
     </div>
   );
 }
