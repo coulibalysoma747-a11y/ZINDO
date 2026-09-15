@@ -36,6 +36,10 @@ const DESCRIPTIONS: Record<string, { short: string; long: string }> = {
     short: "Préparez un devis pour un client, sans toucher au stock, puis convertissez-le en vente une fois accepté.",
     long: "Composez un devis produit par produit pour un client, avec une date de validité — aucun impact sur le stock tant qu'il n'est pas transformé en vente. Suivez son statut (brouillon, envoyé, accepté, refusé) et convertissez-le en une vraie vente en un clic une fois le client d'accord, sans ressaisir les articles.",
   },
+  "/immatriculation-engins": {
+    short: "Suivez le dossier d'immatriculation de chaque moto vendue : CMC, WW, dépôt au ministère, récépissé, carte grise.",
+    long: "Un dossier démarre automatiquement à chaque vente d'engin. Tant que la vente n'est pas soldée, seul le reçu est remis au client — le WW (carte provisoire) ne peut être émis qu'une fois le paiement complet. Suivez ensuite chaque étape jusqu'à la remise de la carte grise : CMC, WW émis, dépôt au ministère, récépissé reçu puis remis, carte grise reçue puis remise. Réservé à l'activité « Boutique de motos ».",
+  },
   "/vente-engin": {
     short: "Vente dédiée d'un engin (moto) : choisir le modèle puis l'exemplaire précis, encaisser, imprimer le reçu.",
     long: "Écran de vente spécialisé pour un engin à suivi individuel : choisissez le modèle de moto, puis l'exemplaire précis par son numéro de châssis, encaissez et imprimez le reçu — sans passer par le panier multi-articles de l'écran de vente général. Réservé à l'activité « Boutique de motos ».",

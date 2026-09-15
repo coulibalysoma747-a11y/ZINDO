@@ -26,6 +26,7 @@ import {
   Crown,
   Bike,
   FileSignature,
+  IdCard,
 } from "lucide-react";
 
 // Module simple (sans "use client") pour que cette table icône-par-module
@@ -61,4 +62,5 @@ export const NAV_ICONS: Record<NavItem["icon"], React.ComponentType<{ className?
   subscription: Crown,
   "vehicle-sales": Bike,
   quotes: FileSignature,
+  "vehicle-registration": IdCard,
 };

@@ -30,7 +30,8 @@ export type NavItem = {
     | "online-store"
     | "subscription"
     | "vehicle-sales"
-    | "quotes";
+    | "quotes"
+    | "vehicle-registration";
   permission?: Permission;
   featureFlag?: string;
   planFeature?: string;
@@ -48,6 +49,13 @@ export const NAV_ITEMS: NavItem[] = [
     href: "/vente-engin",
     icon: "vehicle-sales",
     permission: PERMISSIONS.SALES_CREATE,
+    requireActivity: MOTO_ACTIVITY_KEY,
+  },
+  {
+    label: "Immatriculation Engins",
+    href: "/immatriculation-engins",
+    icon: "vehicle-registration",
+    permission: PERMISSIONS.SALES_VIEW,
     requireActivity: MOTO_ACTIVITY_KEY,
   },
   { label: "Facture A4", href: "/factures", icon: "invoices", permission: PERMISSIONS.SALES_CREATE },

@@ -206,8 +206,22 @@ async function createVehicleSaleImpl(input: VehicleSaleInput): Promise<VehicleSa
     console.error("[createVehicleSaleAction] Échec de l'enregistrement des détails de vente :", detailsError.message);
   }
 
+  // Un dossier d'immatriculation démarre pour chaque engin vendu — voir
+  // lib/actions/vehicle-registrations.ts. Son statut (en attente de
+  // paiement, WW à émettre...) est recalculé à la lecture à partir du solde
+  // de la vente, jamais stocké ici.
+  const { error: registrationError } = await supabase.from("vehicle_registrations").insert({
+    sale_id: saleResult.saleId,
+    business_id: user.businessId,
+    vehicle_unit_id: vehicleUnitId,
+  });
+  if (registrationError) {
+    console.error("[createVehicleSaleAction] Échec de la création du dossier d'immatriculation :", registrationError.message);
+  }
+
   await logAction({ businessId: user.businessId, userId: user.id, action: "CREATE", entity: "VehicleSale", entityId: saleResult.saleId });
   revalidatePath("/vente-engin");
+  revalidatePath("/immatriculation-engins");
 
   return saleResult;
 }

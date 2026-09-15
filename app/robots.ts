@@ -14,6 +14,7 @@ export default function robots(): MetadataRoute.Robots {
         "/ventes",
         "/vente-engin",
         "/devis",
+        "/immatriculation-engins",
         "/achats",
         "/clients",
         "/fournisseurs",

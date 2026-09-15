@@ -404,6 +404,39 @@ create table vehicle_sale_details (
 );
 create index on vehicle_sale_details (business_id, created_at);
 
+-- Dossier d'immatriculation d'un engin vendu (CMC, WW/carte provisoire,
+-- dépôt au ministère, récépissé, carte grise) — un dossier est créé
+-- automatiquement à chaque vente d'engin (voir
+-- lib/actions/vehicle-sales.ts::createVehicleSaleAction). Le statut du
+-- dossier n'est PAS stocké : il est recalculé à la lecture à partir de ces
+-- champs et du solde de la vente (lib/actions/vehicle-registrations.ts),
+-- pour ne jamais pouvoir se désynchroniser des données réellement saisies.
+create table vehicle_registrations (
+  id text primary key default gen_random_uuid()::text,
+  business_id text not null references businesses(id) on delete cascade,
+  sale_id text not null references sales(id) on delete cascade,
+  vehicle_unit_id text references vehicle_units(id),
+  cmc_available boolean not null default false,
+  cmc_number text,
+  cmc_date date,
+  ww_number text,
+  ww_issued_date date,
+  ww_handed_to_client boolean not null default false,
+  ministry_deposit_date date,
+  ministry_deposit_reference text,
+  receipt_number text,
+  receipt_received_date date,
+  receipt_handed_to_client boolean not null default false,
+  gray_card_number text,
+  gray_card_received_date date,
+  gray_card_handed_to_client boolean not null default false,
+  notes text,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  unique (sale_id)
+);
+create index on vehicle_registrations (business_id, created_at);
+
 create table cash_sessions (
   id text primary key default gen_random_uuid()::text,
   business_id text not null references businesses(id) on delete cascade,
