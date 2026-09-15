@@ -124,9 +124,12 @@ export function CatalogImportWizard({ currency }: { currency: string }) {
             ))}
           </ul>
         )}
-        <div className="flex gap-2">
-          <ButtonLink href="/produits">Voir mes produits</ButtonLink>
+        <div className="flex flex-col gap-2 sm:flex-row">
+          <ButtonLink href="/produits" className="w-full sm:w-auto">
+            Voir mes produits
+          </ButtonLink>
           <Button
+            className="w-full sm:w-auto"
             variant="outline"
             onClick={() => {
               setStep("upload");
@@ -160,19 +163,23 @@ export function CatalogImportWizard({ currency }: { currency: string }) {
               key={row.key}
               className={`rounded-2xl border p-4 transition ${row.included ? "border-zinc-200 bg-white" : "border-zinc-100 bg-zinc-50 opacity-60"}`}
             >
-              <div className="flex items-start gap-3">
+              {/* En-tête de carte : case à cocher, photo, retirer — toujours sur une
+                  seule ligne compacte, y compris sur téléphone. Les champs passent
+                  en dessous, sur toute la largeur, pour ne jamais se retrouver
+                  écrasés dans une rangée trop étroite sur petit écran. */}
+              <div className="flex items-center gap-3">
                 <input
                   type="checkbox"
                   checked={row.included}
                   onChange={(e) => updateRow(row.key, { included: e.target.checked })}
-                  className="mt-2.5 h-4 w-4 shrink-0 rounded accent-zindo-green-500"
+                  className="h-5 w-5 shrink-0 rounded accent-zindo-green-500"
                 />
 
                 <div className="relative shrink-0">
                   <button
                     type="button"
                     onClick={() => setOpenPicker(openPicker === row.key ? null : row.key)}
-                    className="flex h-16 w-16 items-center justify-center overflow-hidden rounded-xl border border-zinc-200 bg-zinc-50 hover:border-zindo-green-300"
+                    className="flex h-14 w-14 items-center justify-center overflow-hidden rounded-xl border border-zinc-200 bg-zinc-50 hover:border-zindo-green-300"
                     title="Choisir une photo"
                   >
                     {row.imageIndex != null && images[row.imageIndex] ? (
@@ -183,7 +190,7 @@ export function CatalogImportWizard({ currency }: { currency: string }) {
                     )}
                   </button>
                   {openPicker === row.key && (
-                    <div className="absolute left-0 top-[calc(100%+4px)] z-10 w-64 rounded-xl border border-zinc-200 bg-white p-2 shadow-lg">
+                    <div className="absolute left-0 top-[calc(100%+4px)] z-10 w-64 max-w-[calc(100vw-3rem)] rounded-xl border border-zinc-200 bg-white p-2 shadow-lg">
                       <p className="mb-1.5 px-1 text-xs font-medium text-zinc-500">Choisir une photo</p>
                       <div className="grid grid-cols-4 gap-1.5">
                         <button
@@ -217,64 +224,70 @@ export function CatalogImportWizard({ currency }: { currency: string }) {
                   )}
                 </div>
 
-                <div className="grid min-w-0 flex-1 grid-cols-1 gap-2 sm:grid-cols-2">
-                  <Field label="Nom" htmlFor={`name-${row.key}`}>
-                    <Input
-                      id={`name-${row.key}`}
-                      value={row.name}
-                      onChange={(e) => updateRow(row.key, { name: e.target.value })}
-                    />
-                  </Field>
-                  <Field label="Référence (facultatif)" htmlFor={`ref-${row.key}`}>
-                    <Input
-                      id={`ref-${row.key}`}
-                      value={row.reference}
-                      placeholder="générée automatiquement si vide"
-                      onChange={(e) => updateRow(row.key, { reference: e.target.value })}
-                    />
-                  </Field>
-                  <Field label="Unité" htmlFor={`unit-${row.key}`}>
-                    <Input
-                      id={`unit-${row.key}`}
-                      value={row.unit}
-                      onChange={(e) => updateRow(row.key, { unit: e.target.value })}
-                    />
-                  </Field>
-                  <div className="grid grid-cols-2 gap-2">
-                    <Field label="Prix d'achat" htmlFor={`pp-${row.key}`}>
-                      <Input
-                        id={`pp-${row.key}`}
-                        type="number"
-                        min={0}
-                        value={row.purchasePrice}
-                        onChange={(e) => updateRow(row.key, { purchasePrice: e.target.value })}
-                      />
-                    </Field>
-                    <Field label="Prix de vente" htmlFor={`sp-${row.key}`}>
-                      <Input
-                        id={`sp-${row.key}`}
-                        type="number"
-                        min={0}
-                        value={row.salePrice}
-                        onChange={(e) => updateRow(row.key, { salePrice: e.target.value })}
-                      />
-                    </Field>
-                  </div>
-                  {row.salePrice && (
-                    <p className="col-span-full -mt-1 text-xs text-zinc-400">
-                      Prix de vente : {formatMoney(Number(row.salePrice) || 0, currency)}
-                    </p>
-                  )}
-                </div>
+                <span className="min-w-0 flex-1 truncate text-sm font-medium text-zinc-700 sm:hidden">
+                  {row.name || "Sans nom"}
+                </span>
 
                 <button
                   type="button"
                   onClick={() => removeRow(row.key)}
-                  className="mt-1 shrink-0 rounded-lg p-1.5 text-zinc-300 hover:bg-red-50 hover:text-red-500"
+                  className="ml-auto shrink-0 rounded-lg p-1.5 text-zinc-300 hover:bg-red-50 hover:text-red-500"
                   title="Retirer cette ligne"
                 >
                   <X className="h-4 w-4" />
                 </button>
+              </div>
+
+              <div className="mt-3 grid min-w-0 grid-cols-1 gap-2 sm:grid-cols-2">
+                <Field label="Nom" htmlFor={`name-${row.key}`}>
+                  <Input
+                    id={`name-${row.key}`}
+                    value={row.name}
+                    onChange={(e) => updateRow(row.key, { name: e.target.value })}
+                  />
+                </Field>
+                <Field label="Référence (facultatif)" htmlFor={`ref-${row.key}`}>
+                  <Input
+                    id={`ref-${row.key}`}
+                    value={row.reference}
+                    placeholder="générée automatiquement si vide"
+                    onChange={(e) => updateRow(row.key, { reference: e.target.value })}
+                  />
+                </Field>
+                <Field label="Unité" htmlFor={`unit-${row.key}`}>
+                  <Input
+                    id={`unit-${row.key}`}
+                    value={row.unit}
+                    onChange={(e) => updateRow(row.key, { unit: e.target.value })}
+                  />
+                </Field>
+                <div className="grid grid-cols-2 gap-2">
+                  <Field label="Prix d'achat" htmlFor={`pp-${row.key}`}>
+                    <Input
+                      id={`pp-${row.key}`}
+                      type="number"
+                      min={0}
+                      inputMode="decimal"
+                      value={row.purchasePrice}
+                      onChange={(e) => updateRow(row.key, { purchasePrice: e.target.value })}
+                    />
+                  </Field>
+                  <Field label="Prix de vente" htmlFor={`sp-${row.key}`}>
+                    <Input
+                      id={`sp-${row.key}`}
+                      type="number"
+                      min={0}
+                      inputMode="decimal"
+                      value={row.salePrice}
+                      onChange={(e) => updateRow(row.key, { salePrice: e.target.value })}
+                    />
+                  </Field>
+                </div>
+                {row.salePrice && (
+                  <p className="col-span-full -mt-1 text-xs text-zinc-400">
+                    Prix de vente : {formatMoney(Number(row.salePrice) || 0, currency)}
+                  </p>
+                )}
               </div>
             </div>
           ))}
@@ -282,8 +295,8 @@ export function CatalogImportWizard({ currency }: { currency: string }) {
 
         {rows.length === 0 && <p className="text-sm text-zinc-500">Toutes les lignes ont été retirées.</p>}
 
-        <div className="flex items-center gap-3 border-t border-zinc-100 pt-4">
-          <Button onClick={handleImport} disabled={importing || includedCount === 0}>
+        <div className="sticky bottom-0 -mx-4 flex flex-col gap-2 border-t border-zinc-100 bg-white/95 px-4 py-3 backdrop-blur sm:static sm:mx-0 sm:flex-row sm:items-center sm:gap-3 sm:bg-transparent sm:px-0 sm:pt-4 sm:backdrop-blur-none">
+          <Button className="w-full sm:w-auto" onClick={handleImport} disabled={importing || includedCount === 0}>
             {importing ? (
               <>
                 <Loader2 className="h-4 w-4 animate-spin" /> Import en cours...
@@ -293,6 +306,7 @@ export function CatalogImportWizard({ currency }: { currency: string }) {
             )}
           </Button>
           <Button
+            className="w-full sm:w-auto"
             variant="outline"
             disabled={importing}
             onClick={() => {
@@ -312,7 +326,7 @@ export function CatalogImportWizard({ currency }: { currency: string }) {
   return (
     <form
       action={handleAnalyze}
-      className="space-y-4 rounded-2xl border border-dashed border-zinc-300 bg-zinc-50 p-8 text-center"
+      className="space-y-4 rounded-2xl border border-dashed border-zinc-300 bg-zinc-50 p-5 text-center sm:p-8"
     >
       <UploadCloud className="mx-auto h-8 w-8 text-zinc-400" />
       <div>
