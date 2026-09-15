@@ -4,6 +4,10 @@ import { supabase } from "@/lib/supabase";
 import { getLocations, getCurrentLocation } from "@/lib/location";
 import { PurchaseForm } from "./PurchaseForm";
 
+// Marge de sécurité pour l'enregistrement d'un achat (plusieurs appels réseau
+// vers Supabase par article, même parallélisés).
+export const maxDuration = 30;
+
 export default async function NewPurchasePage() {
   const user = await requirePermission(PERMISSIONS.PURCHASES_MANAGE);
 

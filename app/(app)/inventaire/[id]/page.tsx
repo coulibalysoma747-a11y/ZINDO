@@ -9,6 +9,10 @@ import { Card, CardBody, CardHeader } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { ValidateInventoryButton } from "./ValidateInventoryButton";
 
+// La validation d'un inventaire peut porter sur des dizaines/centaines de
+// produits (voir validateInventoryAction) — marge de sécurité.
+export const maxDuration = 30;
+
 type InventoryRow = {
   id: string;
   reference: string;

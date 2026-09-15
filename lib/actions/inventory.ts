@@ -106,29 +106,34 @@ export async function validateInventoryAction(inventoryId: string) {
     .select("productId:product_id, difference")
     .eq("inventory_id", inventory.id);
 
-  for (const item of (items ?? []) as Array<{ productId: string; difference: number }>) {
-    if (item.difference === 0) continue;
+  // En parallèle — un inventaire peut porter sur des dizaines/centaines de
+  // produits, un for-loop séquentiel risquait le délai maximum d'une
+  // fonction Vercel (voir la même remarque sur createSaleAction).
+  await Promise.all(
+    ((items ?? []) as Array<{ productId: string; difference: number }>)
+      .filter((item) => item.difference !== 0)
+      .map(async (item) => {
+        const { oldStock, newStock } = await adjustStock({
+          productId: item.productId,
+          locationId: inventory.locationId as string,
+          delta: item.difference,
+        });
 
-    const { oldStock, newStock } = await adjustStock({
-      productId: item.productId,
-      locationId: inventory.locationId as string,
-      delta: item.difference,
-    });
-
-    const { error: movementError } = await supabase.from("stock_movements").insert({
-      business_id: user.businessId,
-      location_id: inventory.locationId,
-      product_id: item.productId,
-      direction: item.difference > 0 ? "IN" : "OUT",
-      reason: "INVENTAIRE",
-      quantity: Math.abs(item.difference),
-      old_stock: oldStock,
-      new_stock: newStock,
-      user_id: user.id,
-      note: `Correction inventaire ${inventory.reference}`,
-    });
-    if (movementError) console.error("[validateInventoryAction] Échec de l'écriture du mouvement :", movementError.message);
-  }
+        const { error: movementError } = await supabase.from("stock_movements").insert({
+          business_id: user.businessId,
+          location_id: inventory.locationId,
+          product_id: item.productId,
+          direction: item.difference > 0 ? "IN" : "OUT",
+          reason: "INVENTAIRE",
+          quantity: Math.abs(item.difference),
+          old_stock: oldStock,
+          new_stock: newStock,
+          user_id: user.id,
+          note: `Correction inventaire ${inventory.reference}`,
+        });
+        if (movementError) console.error("[validateInventoryAction] Échec de l'écriture du mouvement :", movementError.message);
+      })
+  );
 
   const { error: updateError } = await supabase
     .from("inventories")

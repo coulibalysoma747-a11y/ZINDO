@@ -90,33 +90,39 @@ export async function createPurchaseAction(input: CreatePurchaseInput): Promise<
     return { success: false, error: "Impossible d'enregistrer les articles de l'achat" };
   }
 
-  for (const item of input.items) {
-    const { error: priceError } = await supabase
-      .from("products")
-      .update({ purchase_price: item.unitPrice })
-      .eq("id", item.productId);
-    if (priceError) console.error("[createPurchaseAction] Échec de la mise à jour du prix d'achat :", priceError.message);
+  // En parallèle plutôt qu'un for-loop séquentiel (3 appels réseau par
+  // article) : chaque article touche des lignes différentes, rien ne les
+  // empêche de partir en même temps — évite d'approcher le délai maximum
+  // d'une fonction Vercel sur un gros bon de livraison.
+  await Promise.all(
+    input.items.map(async (item) => {
+      const { error: priceError } = await supabase
+        .from("products")
+        .update({ purchase_price: item.unitPrice })
+        .eq("id", item.productId);
+      if (priceError) console.error("[createPurchaseAction] Échec de la mise à jour du prix d'achat :", priceError.message);
 
-    const { oldStock, newStock } = await adjustStock({
-      productId: item.productId,
-      locationId: input.locationId,
-      delta: item.quantity,
-    });
+      const { oldStock, newStock } = await adjustStock({
+        productId: item.productId,
+        locationId: input.locationId,
+        delta: item.quantity,
+      });
 
-    const { error: movementError } = await supabase.from("stock_movements").insert({
-      business_id: user.businessId,
-      location_id: input.locationId,
-      product_id: item.productId,
-      direction: "IN",
-      reason: "ACHAT",
-      quantity: item.quantity,
-      old_stock: oldStock,
-      new_stock: newStock,
-      user_id: user.id,
-      note: `Achat ${number}`,
-    });
-    if (movementError) console.error("[createPurchaseAction] Échec de l'écriture du mouvement de stock :", movementError.message);
-  }
+      const { error: movementError } = await supabase.from("stock_movements").insert({
+        business_id: user.businessId,
+        location_id: input.locationId,
+        product_id: item.productId,
+        direction: "IN",
+        reason: "ACHAT",
+        quantity: item.quantity,
+        old_stock: oldStock,
+        new_stock: newStock,
+        user_id: user.id,
+        note: `Achat ${number}`,
+      });
+      if (movementError) console.error("[createPurchaseAction] Échec de l'écriture du mouvement de stock :", movementError.message);
+    })
+  );
 
   if (amountPaid > 0) {
     const { error: paymentError } = await supabase.from("supplier_payments").insert({

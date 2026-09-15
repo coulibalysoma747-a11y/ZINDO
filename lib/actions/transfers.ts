@@ -102,37 +102,45 @@ export async function createTransferAction(input: CreateTransferInput): Promise<
     return { success: false, error: "Impossible d'enregistrer les articles du transfert" };
   }
 
-  for (const item of input.items) {
-    const out = await adjustStock({ productId: item.productId, locationId: input.fromLocationId, delta: -item.quantity });
-    const { error: outError } = await supabase.from("stock_movements").insert({
-      business_id: user.businessId,
-      location_id: input.fromLocationId,
-      product_id: item.productId,
-      direction: "OUT",
-      reason: "TRANSFERT",
-      quantity: item.quantity,
-      old_stock: out.oldStock,
-      new_stock: out.newStock,
-      user_id: user.id,
-      note: `Transfert ${number} vers ${toLocation.name}`,
-    });
-    if (outError) console.error("[createTransferAction] Échec mouvement sortant :", outError.message);
-
-    const in_ = await adjustStock({ productId: item.productId, locationId: input.toLocationId, delta: item.quantity });
-    const { error: inError } = await supabase.from("stock_movements").insert({
-      business_id: user.businessId,
-      location_id: input.toLocationId,
-      product_id: item.productId,
-      direction: "IN",
-      reason: "TRANSFERT",
-      quantity: item.quantity,
-      old_stock: in_.oldStock,
-      new_stock: in_.newStock,
-      user_id: user.id,
-      note: `Transfert ${number} depuis ${fromLocation.name}`,
-    });
-    if (inError) console.error("[createTransferAction] Échec mouvement entrant :", inError.message);
-  }
+  // En parallèle (sortie et entrée touchent deux boutiques différentes, et
+  // chaque article est indépendant des autres) — voir la même remarque sur
+  // createSaleAction.
+  await Promise.all(
+    input.items.flatMap((item) => [
+      (async () => {
+        const out = await adjustStock({ productId: item.productId, locationId: input.fromLocationId, delta: -item.quantity });
+        const { error: outError } = await supabase.from("stock_movements").insert({
+          business_id: user.businessId,
+          location_id: input.fromLocationId,
+          product_id: item.productId,
+          direction: "OUT",
+          reason: "TRANSFERT",
+          quantity: item.quantity,
+          old_stock: out.oldStock,
+          new_stock: out.newStock,
+          user_id: user.id,
+          note: `Transfert ${number} vers ${toLocation.name}`,
+        });
+        if (outError) console.error("[createTransferAction] Échec mouvement sortant :", outError.message);
+      })(),
+      (async () => {
+        const in_ = await adjustStock({ productId: item.productId, locationId: input.toLocationId, delta: item.quantity });
+        const { error: inError } = await supabase.from("stock_movements").insert({
+          business_id: user.businessId,
+          location_id: input.toLocationId,
+          product_id: item.productId,
+          direction: "IN",
+          reason: "TRANSFERT",
+          quantity: item.quantity,
+          old_stock: in_.oldStock,
+          new_stock: in_.newStock,
+          user_id: user.id,
+          note: `Transfert ${number} depuis ${fromLocation.name}`,
+        });
+        if (inError) console.error("[createTransferAction] Échec mouvement entrant :", inError.message);
+      })(),
+    ])
+  );
 
   await logAction({
     businessId: user.businessId,

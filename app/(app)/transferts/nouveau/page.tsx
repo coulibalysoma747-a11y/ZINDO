@@ -5,6 +5,9 @@ import { getLocations, getCurrentLocation } from "@/lib/location";
 import { EmptyState } from "@/components/ui/Empty";
 import { TransferForm } from "./TransferForm";
 
+// Voir app/(app)/achats/nouveau/page.tsx pour l'explication.
+export const maxDuration = 30;
+
 export default async function NewTransferPage({
   searchParams,
 }: {

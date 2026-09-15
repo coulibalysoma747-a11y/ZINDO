@@ -39,27 +39,40 @@ async function recordStockMovements(
   items: { productId: string; quantity: number }[],
   params: { businessId: string; locationId: string; userId: string; direction: "IN" | "OUT"; reason: string; note: string }
 ) {
-  for (const item of items) {
-    if (item.quantity === 0) continue;
-    const { oldStock, newStock } = await adjustStock({
-      productId: item.productId,
-      locationId: params.locationId,
-      delta: params.direction === "IN" ? item.quantity : -item.quantity,
-    });
-    const { error } = await supabase.from("stock_movements").insert({
-      business_id: params.businessId,
-      location_id: params.locationId,
-      product_id: item.productId,
-      direction: params.direction,
-      reason: params.reason,
-      quantity: item.quantity,
-      old_stock: oldStock,
-      new_stock: newStock,
-      user_id: params.userId,
-      note: params.note,
-    });
-    if (error) console.error("[sales] Échec de l'écriture du mouvement de stock :", error.message);
-  }
+  // En parallèle plutôt qu'un for-loop séquentiel : chaque article touche une
+  // ligne product_stocks différente (adjustStock est atomique par ligne côté
+  // base), donc rien n'empêche de lancer les appels en même temps. Pour un
+  // panier de plusieurs dizaines d'articles, la version séquentielle pouvait
+  // approcher/dépasser le délai maximum d'une fonction Vercel.
+  await Promise.all(
+    items
+      .filter((item) => item.quantity !== 0)
+      .map((item) => recordOneStockMovement(item, params))
+  );
+}
+
+async function recordOneStockMovement(
+  item: { productId: string; quantity: number },
+  params: { businessId: string; locationId: string; userId: string; direction: "IN" | "OUT"; reason: string; note: string }
+) {
+  const { oldStock, newStock } = await adjustStock({
+    productId: item.productId,
+    locationId: params.locationId,
+    delta: params.direction === "IN" ? item.quantity : -item.quantity,
+  });
+  const { error } = await supabase.from("stock_movements").insert({
+    business_id: params.businessId,
+    location_id: params.locationId,
+    product_id: item.productId,
+    direction: params.direction,
+    reason: params.reason,
+    quantity: item.quantity,
+    old_stock: oldStock,
+    new_stock: newStock,
+    user_id: params.userId,
+    note: params.note,
+  });
+  if (error) console.error("[sales] Échec de l'écriture du mouvement de stock :", error.message);
 }
 
 export async function createSaleAction(input: CreateSaleInput): Promise<CreateSaleResult> {
@@ -258,26 +271,33 @@ export async function updateSaleAction(input: UpdateSaleInput): Promise<CreateSa
   const status = amountPaid >= total ? "PAYEE" : amountPaid > 0 ? "PARTIELLE" : "CREDIT";
 
   const newQtyMap = new Map(input.items.map((i) => [i.productId, i.quantity]));
-  for (const productId of productIds) {
+  const changedProductIds = productIds.filter((productId) => {
     const oldQty = oldQtyMap.get(productId) ?? 0;
     const newQty = newQtyMap.get(productId) ?? 0;
-    const delta = oldQty - newQty;
-    if (delta === 0) continue;
-    const { oldStock, newStock } = await adjustStock({ productId, locationId: sale.locationId as string, delta });
-    const { error } = await supabase.from("stock_movements").insert({
-      business_id: user.businessId,
-      location_id: sale.locationId,
-      product_id: productId,
-      direction: delta > 0 ? "IN" : "OUT",
-      reason: "CORRECTION",
-      quantity: Math.abs(delta),
-      old_stock: oldStock,
-      new_stock: newStock,
-      user_id: user.id,
-      note: `Modification vente ${sale.number}`,
-    });
-    if (error) console.error("[updateSaleAction] Échec de l'écriture du mouvement de stock :", error.message);
-  }
+    return oldQty - newQty !== 0;
+  });
+  // En parallèle (voir recordStockMovements dans createSaleAction pour la même remarque).
+  await Promise.all(
+    changedProductIds.map(async (productId) => {
+      const oldQty = oldQtyMap.get(productId) ?? 0;
+      const newQty = newQtyMap.get(productId) ?? 0;
+      const delta = oldQty - newQty;
+      const { oldStock, newStock } = await adjustStock({ productId, locationId: sale.locationId as string, delta });
+      const { error } = await supabase.from("stock_movements").insert({
+        business_id: user.businessId,
+        location_id: sale.locationId,
+        product_id: productId,
+        direction: delta > 0 ? "IN" : "OUT",
+        reason: "CORRECTION",
+        quantity: Math.abs(delta),
+        old_stock: oldStock,
+        new_stock: newStock,
+        user_id: user.id,
+        note: `Modification vente ${sale.number}`,
+      });
+      if (error) console.error("[updateSaleAction] Échec de l'écriture du mouvement de stock :", error.message);
+    })
+  );
 
   await supabase.from("sale_items").delete().eq("sale_id", sale.id);
   const { error: updateError } = await supabase
