@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { X, Printer } from "lucide-react";
 import { Receipt, type ReceiptWidth } from "@/components/sales/Receipt";
 import { Facture } from "@/components/sales/Facture";
+import { FactureEngin } from "@/components/sales/FactureEngin";
 import { Button } from "@/components/ui/Button";
 import type { SaleDocument } from "@/lib/actions/receipt";
 
@@ -62,10 +63,10 @@ export function ReceiptPrintPanel({
         <div className="flex items-center justify-between gap-2 print:hidden">
           <div>
             <p className="text-sm font-semibold text-zindo-ink-900">
-              {doc.documentType === "FACTURE" ? "Facture" : "Ticket"} enregistré
+              {doc.documentType === "TICKET" ? "Ticket" : "Facture"} enregistré{doc.documentType === "TICKET" ? "" : "e"}
             </p>
             <p className="text-xs text-zinc-500">
-              N° {doc.documentType === "FACTURE" ? doc.data.invoiceNumber : doc.data.ticketNumber}
+              N° {doc.documentType === "TICKET" ? doc.data.ticketNumber : doc.data.invoiceNumber}
             </p>
           </div>
           <button
@@ -96,7 +97,9 @@ export function ReceiptPrintPanel({
         )}
 
         <div className="flex-1 print:block">
-          {doc.documentType === "FACTURE" ? <Facture data={doc.data} /> : <Receipt data={doc.data} width={width} />}
+          {doc.documentType === "TICKET" && <Receipt data={doc.data} width={width} />}
+          {doc.documentType === "FACTURE" && <Facture data={doc.data} />}
+          {doc.documentType === "FACTURE_ENGIN" && <FactureEngin data={doc.data} />}
         </div>
 
         <div className="flex gap-2 pt-1 print:hidden">

@@ -8,6 +8,7 @@ import { generateQrDataUrl } from "@/lib/qrcode";
 import { getInvoiceCustomization } from "@/lib/invoice-customization";
 import type { ReceiptData, ReceiptWidth } from "@/components/sales/Receipt";
 import type { FactureData } from "@/components/sales/Facture";
+import type { FactureEnginData } from "@/components/sales/FactureEngin";
 
 const PAYMENT_LABELS: Record<string, string> = {
   ESPECES: "Espèces",
@@ -22,6 +23,37 @@ const STATUS_LABELS: Record<string, string> = {
   PARTIELLE: "Facture partiellement réglée",
   CREDIT: "Facture à crédit (non réglée)",
   ANNULEE: "Facture annulée",
+};
+
+type VehicleSaleDetailsRow = {
+  engineType: string | null;
+  brand: string | null;
+  modelLabel: string | null;
+  designation: string | null;
+  chassisNumber: string | null;
+  engineNumber: string | null;
+  color: string | null;
+  condition: string | null;
+  quantity: number;
+  customerName: string | null;
+  customerCivility: string | null;
+  customerProfession: string | null;
+  customerIdType: string | null;
+  customerIdNumber: string | null;
+  customerAddress: string | null;
+  customerPhone: string | null;
+  customerEmail: string | null;
+  warranty: boolean;
+  warrantyDuration: string | null;
+  warrantyMileageLimit: string | null;
+  warrantyCoveredItems: string | null;
+  warrantyConditions: string | null;
+  accessoryHelmet: boolean;
+  accessoryToolKit: boolean;
+  accessoryManual: boolean;
+  accessoryKeys: boolean;
+  accessorySafetyVest: boolean;
+  accessoryOther: string | null;
 };
 
 type SaleRow = {
@@ -58,6 +90,7 @@ export type SaleDocument =
       canEdit: boolean;
     }
   | { success: true; saleId: string; documentType: "FACTURE"; data: FactureData; isCancelled: boolean; canEdit: boolean }
+  | { success: true; saleId: string; documentType: "FACTURE_ENGIN"; data: FactureEnginData; isCancelled: boolean; canEdit: boolean }
   | { success: false; error: string };
 
 /**
@@ -96,6 +129,79 @@ export async function getSaleDocumentAction(saleId: string): Promise<SaleDocumen
 
   if (sale.documentType === "FACTURE") {
     const customization = await getInvoiceCustomization(user.businessId);
+
+    // Une vente d'engin (module Vente Engin) porte toujours une ligne
+    // vehicle_sale_details — dans ce cas, la facture imprimée est la
+    // FactureEngin dédiée (fiche du véhicule vendu) plutôt que la facture
+    // générique. Best-effort : si la table n'existe pas encore (migration
+    // pas encore exécutée), on retombe simplement sur la facture générique.
+    let vehicleDetails: VehicleSaleDetailsRow | null = null;
+    try {
+      const { data } = await supabase
+        .from("vehicle_sale_details")
+        .select(
+          "engineType:engine_type, brand, modelLabel:model_label, designation, chassisNumber:chassis_number, engineNumber:engine_number, color, quantity, " +
+            "customerName:customer_name, customerCivility:customer_civility, customerProfession:customer_profession, customerIdType:customer_id_type, customerIdNumber:customer_id_number, " +
+            "customerAddress:customer_address, customerPhone:customer_phone, customerEmail:customer_email, " +
+            "warranty, warrantyDuration:warranty_duration, warrantyMileageLimit:warranty_mileage_limit, warrantyCoveredItems:warranty_covered_items, warrantyConditions:warranty_conditions, " +
+            "accessoryHelmet:accessory_helmet, accessoryToolKit:accessory_tool_kit, accessoryManual:accessory_manual, accessoryKeys:accessory_keys, accessorySafetyVest:accessory_safety_vest, accessoryOther:accessory_other, condition"
+        )
+        .eq("sale_id", sale.id)
+        .maybeSingle();
+      vehicleDetails = data as unknown as VehicleSaleDetailsRow | null;
+    } catch (e) {
+      console.error("[getSaleDocumentAction] Échec de la lecture des détails d'engin :", e);
+    }
+
+    if (vehicleDetails) {
+      const factureEnginData: FactureEnginData = {
+        businessName: business.name,
+        businessActivity: business.activity,
+        businessPhone: business.phone,
+        businessAddress: business.address,
+        businessCity: business.city,
+        logoUrl: business.logoUrl,
+        invoiceNumber: sale.number,
+        date: new Date(sale.createdAt),
+        signerName: customization.invoiceSignerName,
+        customerName: vehicleDetails.customerName ?? sale.customer?.name,
+        customerCivility: vehicleDetails.customerCivility,
+        customerProfession: vehicleDetails.customerProfession,
+        customerIdType: vehicleDetails.customerIdType,
+        customerIdNumber: vehicleDetails.customerIdNumber,
+        customerAddress: vehicleDetails.customerAddress ?? sale.customer?.address,
+        customerPhone: vehicleDetails.customerPhone ?? sale.customer?.phone,
+        customerEmail: vehicleDetails.customerEmail,
+        engineType: vehicleDetails.engineType,
+        brand: vehicleDetails.brand,
+        modelLabel: vehicleDetails.modelLabel,
+        designation: vehicleDetails.designation,
+        chassisNumber: vehicleDetails.chassisNumber,
+        engineNumber: vehicleDetails.engineNumber,
+        color: vehicleDetails.color,
+        condition: vehicleDetails.condition,
+        quantity: vehicleDetails.quantity,
+        total: sale.total,
+        remaining,
+        accessoryHelmet: vehicleDetails.accessoryHelmet,
+        accessoryToolKit: vehicleDetails.accessoryToolKit,
+        accessoryManual: vehicleDetails.accessoryManual,
+        accessoryKeys: vehicleDetails.accessoryKeys,
+        accessorySafetyVest: vehicleDetails.accessorySafetyVest,
+        accessoryOther: vehicleDetails.accessoryOther,
+        warranty: vehicleDetails.warranty,
+        warrantyDuration: vehicleDetails.warrantyDuration,
+        warrantyMileageLimit: vehicleDetails.warrantyMileageLimit,
+        warrantyCoveredItems: vehicleDetails.warrantyCoveredItems,
+        warrantyConditions: vehicleDetails.warrantyConditions,
+        locationName: sale.location.name,
+        cashierName,
+        qrCodeDataUrl,
+        footerMessage: "Merci pour la confiance",
+        currency: business.currency,
+      };
+      return { success: true, saleId: sale.id, documentType: "FACTURE_ENGIN", data: factureEnginData, isCancelled, canEdit };
+    }
     const factureData: FactureData = {
       businessName: business.name,
       businessActivity: business.activity,

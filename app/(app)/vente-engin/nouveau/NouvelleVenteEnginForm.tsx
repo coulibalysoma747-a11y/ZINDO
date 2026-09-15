@@ -98,6 +98,10 @@ export function NouvelleVenteEnginForm({
 
   // Garantie & accessoires
   const [warranty, setWarranty] = useState(false);
+  const [warrantyDuration, setWarrantyDuration] = useState("");
+  const [warrantyMileageLimit, setWarrantyMileageLimit] = useState("");
+  const [warrantyCoveredItems, setWarrantyCoveredItems] = useState("");
+  const [warrantyConditions, setWarrantyConditions] = useState("");
   const [accessoryHelmet, setAccessoryHelmet] = useState(false);
   const [accessoryToolKit, setAccessoryToolKit] = useState(false);
   const [accessoryManual, setAccessoryManual] = useState(false);
@@ -202,6 +206,10 @@ export function NouvelleVenteEnginForm({
         amountPaid,
         documentType: "FACTURE",
         warranty,
+        warrantyDuration,
+        warrantyMileageLimit,
+        warrantyCoveredItems,
+        warrantyConditions,
         accessoryHelmet,
         accessoryToolKit,
         accessoryManual,
@@ -477,6 +485,22 @@ export function NouvelleVenteEnginForm({
                     <input type="checkbox" checked={warranty} onChange={(e) => setWarranty(e.target.checked)} className="h-4 w-4 rounded accent-zindo-green-500" />
                     Garantie éventuelle
                   </label>
+                  {warranty && (
+                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                      <Field label="Durée" htmlFor="warrantyDuration">
+                        <Input id="warrantyDuration" value={warrantyDuration} onChange={(e) => setWarrantyDuration(e.target.value)} placeholder="Ex : 3 mois" />
+                      </Field>
+                      <Field label="Kilométrage limite" htmlFor="warrantyMileageLimit">
+                        <Input id="warrantyMileageLimit" value={warrantyMileageLimit} onChange={(e) => setWarrantyMileageLimit(e.target.value)} placeholder="Ex : 1000 km" />
+                      </Field>
+                      <Field label="Éléments couverts" htmlFor="warrantyCoveredItems" hint="Ex : moteur, transmission">
+                        <Input id="warrantyCoveredItems" value={warrantyCoveredItems} onChange={(e) => setWarrantyCoveredItems(e.target.value)} />
+                      </Field>
+                      <Field label="Conditions" htmlFor="warrantyConditions">
+                        <Input id="warrantyConditions" value={warrantyConditions} onChange={(e) => setWarrantyConditions(e.target.value)} />
+                      </Field>
+                    </div>
+                  )}
                   <p className="text-xs font-medium uppercase tracking-wide text-zinc-500">Accessoires remis avec la moto</p>
                   <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                     <label className="flex items-center gap-2 text-sm text-zinc-700">

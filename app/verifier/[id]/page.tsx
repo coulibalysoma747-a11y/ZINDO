@@ -17,6 +17,7 @@ type SaleRow = {
   createdAt: string;
   status: string;
   total: number;
+  amountPaid: number;
   paymentMethod: string;
   business: { name: string; currency: string };
   location: { name: string };
@@ -33,7 +34,7 @@ export default async function VerifyTicketPage({
   const { data } = await supabase
     .from("sales")
     .select(
-      "id, number, createdAt:created_at, status, total, paymentMethod:payment_method, business:businesses(name, currency), location:locations(name), items:sale_items(id)"
+      "id, number, createdAt:created_at, status, total, amountPaid:amount_paid, paymentMethod:payment_method, business:businesses(name, currency), location:locations(name), items:sale_items(id)"
     )
     .eq("id", id)
     .maybeSingle();
@@ -115,6 +116,26 @@ export default async function VerifyTicketPage({
                 {formatMoney(sale.total, sale.business.currency)}
               </span>
             </div>
+
+            {sale.status !== "ANNULEE" && sale.amountPaid < sale.total && (
+              <>
+                <div className="mt-3 flex items-center justify-between">
+                  <span className="text-sm font-medium text-zinc-500">Versé</span>
+                  <span className="font-semibold text-zindo-ink-900">
+                    {formatMoney(sale.amountPaid, sale.business.currency)}
+                  </span>
+                </div>
+                <div className="mt-1.5 flex items-center justify-between">
+                  <span className="text-sm font-medium text-red-500">Reste à payer</span>
+                  <span className="font-bold text-red-600">
+                    {formatMoney(Math.max(0, sale.total - sale.amountPaid), sale.business.currency)}
+                  </span>
+                </div>
+              </>
+            )}
+            {sale.status !== "ANNULEE" && sale.amountPaid >= sale.total && (
+              <p className="mt-3 text-center text-sm font-medium text-zindo-success-600">Vente intégralement réglée</p>
+            )}
           </div>
         )}
       </div>

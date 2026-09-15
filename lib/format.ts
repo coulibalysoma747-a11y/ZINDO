@@ -24,6 +24,11 @@ export function formatDateTime(date: Date | string) {
   }).format(d);
 }
 
+export function formatTime(date: Date | string) {
+  const d = typeof date === "string" ? new Date(date) : date;
+  return new Intl.DateTimeFormat("fr-FR", { hour: "2-digit", minute: "2-digit" }).format(d);
+}
+
 /** "9 janvier 2026" — format long utilisé sur les factures A4 ("le {date}"). */
 export function formatLongDate(date: Date | string) {
   const d = typeof date === "string" ? new Date(date) : date;

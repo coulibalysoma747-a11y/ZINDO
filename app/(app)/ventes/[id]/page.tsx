@@ -5,6 +5,7 @@ import { getSaleDocumentAction } from "@/lib/actions/receipt";
 import { getInstallmentPlanAction } from "@/lib/actions/installments";
 import { SaleReceiptView } from "./SaleReceiptView";
 import { FactureView } from "./FactureView";
+import { FactureEnginView } from "./FactureEnginView";
 
 export default async function SaleReceiptPage({
   params,
@@ -27,6 +28,19 @@ export default async function SaleReceiptPage({
   ]);
   const canOfferInstallments =
     !!saleRow?.customerId && (saleRow?.status === "CREDIT" || saleRow?.status === "PARTIELLE") && !doc.isCancelled;
+
+  if (doc.documentType === "FACTURE_ENGIN") {
+    return (
+      <FactureEnginView
+        data={doc.data}
+        saleId={doc.saleId}
+        isCancelled={doc.isCancelled}
+        canEdit={doc.canEdit}
+        canOfferInstallments={canOfferInstallments}
+        installmentPlan={installmentPlan}
+      />
+    );
+  }
 
   if (doc.documentType === "FACTURE") {
     return (

@@ -40,6 +40,10 @@ export type VehicleSaleInput = {
   amountPaid: number;
   documentType?: "TICKET" | "FACTURE";
   warranty: boolean;
+  warrantyDuration?: string;
+  warrantyMileageLimit?: string;
+  warrantyCoveredItems?: string;
+  warrantyConditions?: string;
   accessoryHelmet: boolean;
   accessoryToolKit: boolean;
   accessoryManual: boolean;
@@ -193,6 +197,10 @@ async function createVehicleSaleImpl(input: VehicleSaleInput): Promise<VehicleSa
     customer_phone: input.customerPhone || null,
     customer_email: input.customerEmail || null,
     warranty: input.warranty,
+    warranty_duration: input.warrantyDuration || null,
+    warranty_mileage_limit: input.warrantyMileageLimit || null,
+    warranty_covered_items: input.warrantyCoveredItems || null,
+    warranty_conditions: input.warrantyConditions || null,
     accessory_helmet: input.accessoryHelmet,
     accessory_tool_kit: input.accessoryToolKit,
     accessory_manual: input.accessoryManual,
