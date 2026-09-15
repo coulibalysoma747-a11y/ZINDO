@@ -76,6 +76,39 @@ const REASONS = [
   },
 ];
 
+const FAQS = [
+  {
+    question: "Qu'est-ce que ZINDO ?",
+    answer:
+      "ZINDO est une application de gestion de stock, de caisse et de ventes conçue pour les commerces du Burkina Faso : boutiques, quincailleries, magasins de pièces détachées, boutiques de motos, alimentations et grossistes. Elle remplace les cahiers et les fichiers Excel.",
+  },
+  {
+    question: "ZINDO est-elle adaptée au FCFA et aux commerces burkinabè ?",
+    answer:
+      "Oui. ZINDO fonctionne nativement en FCFA et s'adapte à l'activité choisie à l'inscription (boutique générale, quincaillerie, pièces détachées, boutique de motos, alimentation...) pour proposer les bons champs et les bons modules.",
+  },
+  {
+    question: "Est-ce que ZINDO est gratuite ?",
+    answer:
+      "ZINDO propose une formule gratuite pour démarrer (produits, ventes et stock en quantité limitée), avec des formules payantes pour les commerces qui ont besoin de plusieurs utilisateurs, de plusieurs boutiques ou de fonctionnalités avancées.",
+  },
+  {
+    question: "Est-ce que je peux utiliser ZINDO sans connexion Internet ?",
+    answer:
+      "L'écran de caisse (Vente) fonctionne en mode hors ligne : vous pouvez continuer à encaisser sans connexion, les ventes se synchronisent automatiquement dès que la connexion revient.",
+  },
+  {
+    question: "ZINDO peut-elle gérer la vente de motos et d'engins ?",
+    answer:
+      "Oui, avec un module dédié : suivi de chaque moto par numéro de châssis, numéro de moteur, couleur et disponibilité du CMC, ainsi que la vente à crédit avec échéancier de versements.",
+  },
+  {
+    question: "Comment installer ZINDO sur mon téléphone ou mon ordinateur ?",
+    answer:
+      "ZINDO s'installe directement depuis le navigateur (bouton « Installer l'application », en haut de cette page) sur Android, iOS et Windows, sans passer par un store — c'est gratuit et ne prend que quelques secondes.",
+  },
+];
+
 const STEPS = [
   {
     icon: UserPlus,
@@ -94,12 +127,45 @@ const STEPS = [
   },
 ];
 
+const STRUCTURED_DATA = [
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    name: "ZINDO",
+    applicationCategory: "BusinessApplication",
+    operatingSystem: "Web, Android, iOS, Windows",
+    description:
+      "Application de gestion de stock, de caisse et de ventes pour les commerces du Burkina Faso (boutiques, quincailleries, pièces détachées, motos, alimentation).",
+    url: "https://zindo.vercel.app",
+    offers: {
+      "@type": "Offer",
+      price: "0",
+      priceCurrency: "XOF",
+    },
+    creator: {
+      "@type": "Person",
+      name: "Coulibaly Soma",
+    },
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: FAQS.map((f) => ({
+      "@type": "Question",
+      name: f.question,
+      acceptedAnswer: { "@type": "Answer", text: f.answer },
+    })),
+  },
+];
+
 export default async function RootPage() {
   const user = await getCurrentUser();
   if (user) redirect("/dashboard");
 
   return (
     <div className="theme-locked relative overflow-x-hidden bg-zindo-cream">
+      {/* eslint-disable-next-line react/no-danger */}
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(STRUCTURED_DATA) }} />
       <div aria-hidden className="pointer-events-none fixed inset-0 overflow-hidden">
         <div className="absolute -right-24 -top-24 h-96 w-96 rounded-full bg-zindo-green-100/70 blur-3xl" />
         <div className="absolute -bottom-32 -left-24 h-96 w-96 rounded-full bg-zindo-ink-50 blur-3xl" />
@@ -229,6 +295,26 @@ export default async function RootPage() {
                 <h3 className="mt-1 font-bold text-zindo-ink-900">{step.title}</h3>
                 <p className="mt-1.5 text-sm leading-relaxed text-zinc-500">{step.text}</p>
               </div>
+            ))}
+          </div>
+        </section>
+
+        {/* Questions fréquentes */}
+        <section className="mt-24">
+          <div className="mx-auto max-w-2xl text-center">
+            <h2 className="text-2xl font-extrabold tracking-tight text-zindo-ink-900 sm:text-3xl">
+              Questions fréquentes
+            </h2>
+          </div>
+          <div className="mx-auto mt-10 max-w-2xl divide-y divide-zinc-200 overflow-hidden rounded-2xl border border-zinc-200 bg-white">
+            {FAQS.map((faq) => (
+              <details key={faq.question} className="group px-5 py-4 open:bg-zindo-green-50/40">
+                <summary className="flex cursor-pointer list-none items-center justify-between gap-3 font-semibold text-zindo-ink-900">
+                  {faq.question}
+                  <span className="shrink-0 text-zindo-green-600 transition group-open:rotate-45">+</span>
+                </summary>
+                <p className="mt-2 text-sm leading-relaxed text-zinc-500">{faq.answer}</p>
+              </details>
             ))}
           </div>
         </section>

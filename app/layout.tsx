@@ -13,16 +13,30 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-const TITLE = "ZINDO — Gestion de stock et de ventes";
-const DESCRIPTION = "Gérez votre stock, vos ventes et vos bénéfices en temps réel, sans papier ni tableur.";
+const TITLE = "ZINDO — Application de gestion de stock et de caisse au Burkina Faso";
+const DESCRIPTION =
+  "ZINDO est l'application de gestion de stock, de caisse et de ventes pensée pour les commerces du Burkina Faso : boutiques, quincailleries, pièces détachées, motos, alimentation. Suivez votre stock en temps réel, encaissez et connaissez vos bénéfices, en FCFA.";
 
 export const metadata: Metadata = {
   // Requis par Next.js pour résoudre les URLs d'images relatives (openGraph,
   // twitter) en URLs absolues dans le HTML généré — sans ça, les aperçus de
   // lien (WhatsApp, Facebook...) reçoivent une URL invalide.
   metadataBase: new URL("https://zindo.vercel.app"),
-  title: TITLE,
+  title: {
+    default: TITLE,
+    template: "%s | ZINDO",
+  },
   description: DESCRIPTION,
+  keywords: [
+    "ZINDO",
+    "gestion de stock Burkina Faso",
+    "logiciel de caisse Burkina Faso",
+    "application de vente boutique",
+    "gestion de boutique Burkina Faso",
+    "application de facturation FCFA",
+    "logiciel pièces détachées moto",
+  ],
+  alternates: { canonical: "/" },
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
