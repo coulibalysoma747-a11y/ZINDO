@@ -31,7 +31,7 @@ import {
   Crown,
 } from "lucide-react";
 
-const ICONS: Record<NavItem["icon"], React.ComponentType<{ className?: string }>> = {
+export const NAV_ICONS: Record<NavItem["icon"], React.ComponentType<{ className?: string }>> = {
   dashboard: LayoutDashboard,
   assistant: Bot,
   sales: ShoppingCart,
@@ -61,7 +61,7 @@ const ICONS: Record<NavItem["icon"], React.ComponentType<{ className?: string }>
 export function SidebarLink({ item }: { item: NavItem }) {
   const pathname = usePathname();
   const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
-  const Icon = ICONS[item.icon];
+  const Icon = NAV_ICONS[item.icon];
   // Le lien Support transporte la page courante avec lui : c'est le seul
   // moyen pour /support de savoir sur quel écran l'utilisateur se trouvait
   // réellement, puisque son propre usePathname() ne renverrait que "/support".

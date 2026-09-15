@@ -6,6 +6,7 @@ import { Card, CardBody, CardHeader } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { EmptyState } from "@/components/ui/Empty";
 import { SupportForm } from "./SupportForm";
+import { ModulesGuide } from "./ModulesGuide";
 
 const SUPPORT_WHATSAPP_DISPLAY = "+226 04 05 99 29";
 const SUPPORT_WHATSAPP_LINK = "https://wa.me/22604059929";
@@ -48,7 +49,7 @@ export default async function SupportPage() {
   const tickets = (data ?? []) as unknown as TicketRow[];
 
   return (
-    <div className="max-w-2xl space-y-6">
+    <div className="max-w-4xl space-y-6">
       <div>
         <h1 className="text-xl font-bold text-zinc-900">Aide &amp; support</h1>
         <p className="text-sm text-zinc-500">
@@ -78,6 +79,8 @@ export default async function SupportPage() {
           </a>
         </CardBody>
       </Card>
+
+      <ModulesGuide />
 
       <Card>
         <CardHeader>
