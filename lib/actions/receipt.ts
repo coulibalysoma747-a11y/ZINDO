@@ -5,6 +5,7 @@ import { PERMISSIONS } from "@/lib/permissions";
 import { supabase } from "@/lib/supabase";
 import { getVerificationUrl } from "@/lib/verification";
 import { generateQrDataUrl } from "@/lib/qrcode";
+import { getInvoiceCustomization } from "@/lib/invoice-customization";
 import type { ReceiptData, ReceiptWidth } from "@/components/sales/Receipt";
 import type { FactureData } from "@/components/sales/Facture";
 
@@ -94,6 +95,7 @@ export async function getSaleDocumentAction(saleId: string): Promise<SaleDocumen
   const isCancelled = sale.status === "ANNULEE";
 
   if (sale.documentType === "FACTURE") {
+    const customization = await getInvoiceCustomization(user.businessId);
     const factureData: FactureData = {
       businessName: business.name,
       businessActivity: business.activity,
@@ -129,10 +131,10 @@ export async function getSaleDocumentAction(saleId: string): Promise<SaleDocumen
       footerMessage: business.ticketFooter,
       currency: business.currency,
       qrCodeDataUrl,
-      tagline: business.invoiceTagline,
-      mobileMoneyInfo: business.mobileMoneyInfo,
-      signerName: business.invoiceSignerName,
-      returnPolicy: business.invoiceReturnPolicy,
+      tagline: customization.invoiceTagline,
+      mobileMoneyInfo: customization.mobileMoneyInfo,
+      signerName: customization.invoiceSignerName,
+      returnPolicy: customization.invoiceReturnPolicy,
       statusLabel: STATUS_LABELS[sale.status] ?? null,
     };
     return { success: true, saleId: sale.id, documentType: "FACTURE", data: factureData, isCancelled, canEdit };

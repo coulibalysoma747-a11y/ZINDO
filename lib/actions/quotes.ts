@@ -8,6 +8,7 @@ import { logAction } from "@/lib/audit";
 import { generateQuoteNumber } from "@/lib/reference";
 import { registerFeatureFlag, isFeatureEnabled } from "@/lib/feature-flags";
 import { rethrowIfNavigationSignal } from "@/lib/action-errors";
+import { getInvoiceCustomization } from "@/lib/invoice-customization";
 import { createSaleAction } from "@/lib/actions/sales";
 import type { FactureData } from "@/components/sales/Facture";
 import type { PaymentMethod } from "@/lib/db-types";
@@ -207,6 +208,7 @@ export async function getQuoteDocumentAction(quoteId: string): Promise<QuoteDocu
 
   const business = user.business;
   const canEdit = await hasPermission(user.businessId, user.role, PERMISSIONS.SALES_CREATE, user.id);
+  const customization = await getInvoiceCustomization(user.businessId);
 
   const factureData: FactureData = {
     businessName: business.name,
@@ -233,9 +235,9 @@ export async function getQuoteDocumentAction(quoteId: string): Promise<QuoteDocu
     documentTitle: "Devis",
     partyLabel: "Devis pour",
     validUntil: quote.validUntil,
-    tagline: business.invoiceTagline,
-    mobileMoneyInfo: business.mobileMoneyInfo,
-    signerName: business.invoiceSignerName,
+    tagline: customization.invoiceTagline,
+    mobileMoneyInfo: customization.mobileMoneyInfo,
+    signerName: customization.invoiceSignerName,
   };
 
   return {

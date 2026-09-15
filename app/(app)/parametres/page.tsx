@@ -5,6 +5,7 @@ import { PERMISSIONS } from "@/lib/permissions";
 import { supabase } from "@/lib/supabase";
 import { findActivity } from "@/lib/activities";
 import { getLocations } from "@/lib/location";
+import { getInvoiceCustomization } from "@/lib/invoice-customization";
 import { listFasoStockStores, type FasoStockStore } from "@/lib/integrations/faso-stock";
 import { Card, CardBody, CardHeader } from "@/components/ui/Card";
 import { BusinessSettingsForm } from "./BusinessSettingsForm";
@@ -29,7 +30,7 @@ const ALL_METHODS: { method: PaymentMethod; defaultLabel: string }[] = [
 export default async function SettingsPage() {
   const user = await requirePermission(PERMISSIONS.SETTINGS_MANAGE);
 
-  const [{ data: configs }, { data: overrides }, { data: businessRow }, locations] = await Promise.all([
+  const [{ data: configs }, { data: overrides }, { data: businessRow }, locations, invoiceCustomization] = await Promise.all([
     supabase.from("payment_method_configs").select("method, label, enabled").eq("business_id", user.businessId),
     supabase.from("role_permissions").select("role, permission, allowed").eq("business_id", user.businessId),
     supabase
@@ -40,6 +41,7 @@ export default async function SettingsPage() {
       .eq("id", user.businessId)
       .maybeSingle(),
     getLocations(user.businessId),
+    getInvoiceCustomization(user.businessId),
   ]);
 
   const configMap = new Map((configs ?? []).map((c) => [c.method as string, c]));
@@ -105,7 +107,7 @@ export default async function SettingsPage() {
           <h2 className="font-semibold text-zinc-900">Commerce</h2>
         </CardHeader>
         <CardBody>
-          <BusinessSettingsForm business={user.business} />
+          <BusinessSettingsForm business={{ ...user.business, ...invoiceCustomization }} />
         </CardBody>
       </Card>
 
