@@ -4,7 +4,7 @@ import { supabase } from "@/lib/supabase";
 import { requireUser } from "@/lib/auth";
 
 const PRODUCT_FIELDS =
-  "id, businessId:business_id, reference, name, categoryId:category_id, brand, description, unit, purchasePrice:purchase_price, salePrice:sale_price, minStock:min_stock, shelfLocation:shelf_location, supplierId:supplier_id, photoUrl:photo_url, barcode, customFields:custom_fields, active, createdAt:created_at, updatedAt:updated_at";
+  "id, businessId:business_id, reference, name, categoryId:category_id, brand, description, unit, purchasePrice:purchase_price, salePrice:sale_price, minStock:min_stock, shelfLocation:shelf_location, supplierId:supplier_id, photoUrl:photo_url, barcode, customFields:custom_fields, active, createdAt:created_at, updatedAt:updated_at, trackUnits:track_units";
 
 type ProductRow = {
   id: string;
@@ -26,6 +26,7 @@ type ProductRow = {
   active: boolean;
   createdAt: string;
   updatedAt: string;
+  trackUnits: boolean;
 };
 
 export async function searchProductsAction(query: string, locationId: string) {

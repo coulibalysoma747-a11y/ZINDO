@@ -31,6 +31,7 @@ type SaleRow = {
       salePrice: number;
       purchasePrice: number;
       unit: string;
+      trackUnits: boolean;
     };
   }>;
 };
@@ -47,7 +48,7 @@ export default async function EditSalePage({
     .from("sales")
     .select(
       "id, number, status, locationId:location_id, customerId:customer_id, discount, paymentMethod:payment_method, amountPaid:amount_paid, location:locations(name), " +
-        "items:sale_items(productId:product_id, quantity, unitPrice:unit_price, discount, product:products(id, name, reference, barcode, photoUrl:photo_url, salePrice:sale_price, purchasePrice:purchase_price, unit))"
+        "items:sale_items(productId:product_id, quantity, unitPrice:unit_price, discount, product:products(id, name, reference, barcode, photoUrl:photo_url, salePrice:sale_price, purchasePrice:purchase_price, unit, trackUnits:track_units))"
     )
     .eq("id", id)
     .eq("business_id", user.businessId)
@@ -80,6 +81,7 @@ export default async function EditSalePage({
       salePrice: item.product.salePrice,
       purchasePrice: item.product.purchasePrice,
       unit: item.product.unit,
+      trackUnits: item.product.trackUnits,
       // Le stock déjà réservé par cette vente reste disponible pour la modification.
       quantity: (stockMap.get(item.productId) ?? 0) + item.quantity,
     },

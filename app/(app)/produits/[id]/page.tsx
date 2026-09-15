@@ -5,11 +5,14 @@ import { requirePermission, hasPermission } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
 import { supabase } from "@/lib/supabase";
 import { getActivityConfig } from "@/lib/activity-config";
+import { getLocations, getCurrentLocation } from "@/lib/location";
+import { getVehicleUnitsAction } from "@/lib/actions/vehicle-units";
 import { formatMoney, formatDateTime } from "@/lib/format";
 import { Card, CardBody, CardHeader } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { ButtonLink } from "@/components/ui/Button";
 import { ProductThumbnail } from "@/components/products/ProductThumbnail";
+import { VehicleUnitsPanel } from "@/components/products/VehicleUnitsPanel";
 import { ToggleActiveButton } from "./ToggleActiveButton";
 
 const REASON_LABELS: Record<string, string> = {
@@ -42,6 +45,7 @@ type ProductRow = {
   customFields: string | null;
   category: { name: string } | null;
   supplier: { name: string } | null;
+  trackUnits: boolean;
 };
 
 export default async function ProductDetailPage({
@@ -55,7 +59,7 @@ export default async function ProductDetailPage({
   const { data: productRow } = await supabase
     .from("products")
     .select(
-      "id, name, reference, photoUrl:photo_url, active, brand, unit, purchasePrice:purchase_price, salePrice:sale_price, minStock:min_stock, shelfLocation:shelf_location, barcode, description, customFields:custom_fields, category:categories(name), supplier:suppliers(name)"
+      "id, name, reference, photoUrl:photo_url, active, brand, unit, purchasePrice:purchase_price, salePrice:sale_price, minStock:min_stock, shelfLocation:shelf_location, barcode, description, customFields:custom_fields, category:categories(name), supplier:suppliers(name), trackUnits:track_units"
     )
     .eq("id", id)
     .eq("business_id", user.businessId)
@@ -96,11 +100,14 @@ export default async function ProductDetailPage({
   const currency = user.business.currency;
   const totalQuantity = stocks.reduce((s, st) => s + st.quantity, 0);
 
-  const [canManageStock, canTransfer, canSell, activityConfig] = await Promise.all([
+  const [canManageStock, canTransfer, canSell, activityConfig, vehicleUnits, locations, currentLocation] = await Promise.all([
     hasPermission(user.businessId, user.role, PERMISSIONS.STOCK_MANAGE, user.id),
     hasPermission(user.businessId, user.role, PERMISSIONS.TRANSFERS_MANAGE, user.id),
     hasPermission(user.businessId, user.role, PERMISSIONS.SALES_CREATE, user.id),
     getActivityConfig(user.business.activityKey),
+    product.trackUnits ? getVehicleUnitsAction(id) : Promise.resolve([]),
+    getLocations(user.businessId),
+    getCurrentLocation(user.businessId),
   ]);
 
   let customFieldValues: Record<string, string> = {};
@@ -251,6 +258,22 @@ export default async function ProductDetailPage({
           )}
         </CardBody>
       </Card>
+
+      {product.trackUnits && (
+        <Card>
+          <CardHeader>
+            <h2 className="font-semibold text-zinc-900">Exemplaires enregistrés (châssis)</h2>
+          </CardHeader>
+          <CardBody>
+            <VehicleUnitsPanel
+              productId={product.id}
+              units={vehicleUnits}
+              locations={locations.map((l) => ({ id: l.id as string, name: l.name as string }))}
+              defaultLocationId={currentLocation?.id}
+            />
+          </CardBody>
+        </Card>
+      )}
 
       <Card>
         <CardHeader>

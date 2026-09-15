@@ -15,6 +15,7 @@ export type PosProduct = {
   purchasePrice: number;
   quantity: number;
   unit: string;
+  trackUnits: boolean;
 };
 
 export function ProductGrid({

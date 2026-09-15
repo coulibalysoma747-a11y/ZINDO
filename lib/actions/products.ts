@@ -29,6 +29,7 @@ const productSchema = z.object({
   supplierId: z.string().optional(),
   barcode: z.string().optional(),
   reference: z.string().optional(),
+  trackUnits: z.coerce.boolean().default(false),
 });
 
 function parseCustomFields(formData: FormData, defs: { key: string }[]): string | null {
@@ -57,6 +58,7 @@ function parseProductForm(formData: FormData) {
     supplierId: formData.get("supplierId") || undefined,
     barcode: formData.get("barcode") || undefined,
     reference: formData.get("reference") || undefined,
+    trackUnits: formData.get("trackUnits") === "on" || formData.get("trackUnits") === "true",
   });
 }
 
@@ -129,6 +131,7 @@ export async function createProductAction(
       barcode: data.barcode || null,
       photo_url: photoUrl ?? null,
       custom_fields: customFields,
+      track_units: data.trackUnits,
     })
     .select("id")
     .single();
@@ -235,6 +238,7 @@ export async function updateProductAction(
       supplier_id: data.supplierId || null,
       barcode: data.barcode || null,
       custom_fields: customFields,
+      track_units: data.trackUnits,
       ...(photoUrl !== undefined ? { photo_url: photoUrl } : {}),
     })
     .eq("id", id);

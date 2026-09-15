@@ -15,6 +15,8 @@ export type CartItemInput = {
   quantity: number;
   unitPrice: number;
   discount: number;
+  /** Exemplaire précis vendu (produit à suivi unitaire — moto/engin), voir lib/actions/vehicle-units.ts. */
+  vehicleUnitId?: string;
 };
 
 export type CreateSaleInput = {
@@ -159,6 +161,32 @@ async function createSaleImpl(input: CreateSaleInput): Promise<CreateSaleResult>
     }
   }
 
+  // Produits à suivi unitaire (moto/engin) : vérifie que chaque exemplaire
+  // choisi est toujours "EN_STOCK" juste avant de vendre — un autre poste de
+  // caisse a pu le vendre entre-temps, ce que la vérification générique de
+  // quantité ci-dessus ne détecte pas forcément (le stock total du modèle
+  // peut rester suffisant même si CET exemplaire précis n'est plus dispo).
+  const vehicleUnitIds = input.items.map((i) => i.vehicleUnitId).filter((id): id is string => !!id);
+  if (vehicleUnitIds.length > 0) {
+    const { data: units } = await supabase
+      .from("vehicle_units")
+      .select("id, status, chassisNumber:chassis_number")
+      .eq("business_id", user.businessId)
+      .in("id", vehicleUnitIds);
+    const unitMap = new Map(
+      ((units ?? []) as unknown as Array<{ id: string; status: string; chassisNumber: string }>).map((u) => [u.id, u])
+    );
+    for (const unitId of vehicleUnitIds) {
+      const unit = unitMap.get(unitId);
+      if (!unit || unit.status !== "EN_STOCK") {
+        return {
+          success: false,
+          error: `L'exemplaire ${unit?.chassisNumber ?? ""} vient d'être vendu ou n'est plus disponible — rafraîchissez la page.`,
+        };
+      }
+    }
+  }
+
   const subtotal = input.items.reduce((sum, i) => sum + i.unitPrice * i.quantity - i.discount, 0);
   const total = Math.max(0, subtotal - input.discount);
   const amountPaid = Math.max(0, input.amountPaid);
@@ -212,6 +240,16 @@ async function createSaleImpl(input: CreateSaleInput): Promise<CreateSaleResult>
   if (itemsError) {
     console.error("[createSaleAction] Échec de l'enregistrement des articles :", itemsError.message);
     return { success: false, error: "Impossible d'enregistrer les articles de la vente" };
+  }
+
+  if (vehicleUnitIds.length > 0) {
+    const { error: unitsError } = await supabase
+      .from("vehicle_units")
+      .update({ status: "VENDU", sale_id: sale.id, updated_at: new Date().toISOString() })
+      .in("id", vehicleUnitIds);
+    if (unitsError) {
+      console.error("[createSaleAction] Échec du marquage des exemplaires vendus :", unitsError.message);
+    }
   }
 
   await recordStockMovements(input.items, {

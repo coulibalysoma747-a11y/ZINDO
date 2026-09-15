@@ -184,6 +184,13 @@ create table products (
   -- NULL sans conflit, tout en empêchant deux lignes du même commerce de
   -- pointer vers le même produit FasoStock.
   faso_stock_id text,
+  -- Suivi individuel (moto/engin : chaque exemplaire a son propre châssis,
+  -- moteur, couleur...) plutôt qu'une simple quantité en stock — voir la
+  -- table vehicle_units. Le stock de ce produit reste product_stocks comme
+  -- pour tous les autres (tenu à jour à chaque ajout/retrait/vente d'un
+  -- exemplaire), pour que le reste de l'app (alertes, rapports, caisse) n'ait
+  -- rien à connaître de cette distinction.
+  track_units boolean not null default false,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
   unique (business_id, reference),
@@ -192,6 +199,30 @@ create table products (
 create index on products (business_id);
 create index on products (business_id, barcode);
 create index on products (business_id, name);
+
+-- Exemplaires individuels d'un produit à suivi unitaire (motos/engins) : un
+-- exemplaire = une ligne, avec son propre numéro de châssis (identifiant
+-- réel du véhicule) et moteur. "EN_STOCK" tant qu'il n'a pas été vendu ;
+-- passe à "VENDU" (avec sale_id renseigné) au moment de la vente — voir
+-- lib/actions/vehicle-units.ts et la sélection d'exemplaire dans la caisse.
+create table vehicle_units (
+  id text primary key default gen_random_uuid()::text,
+  business_id text not null references businesses(id) on delete cascade,
+  product_id text not null references products(id) on delete cascade,
+  location_id text not null references locations(id),
+  chassis_number text not null,
+  engine_number text,
+  color text,
+  cmc_available boolean not null default false,
+  status text not null default 'EN_STOCK',
+  sale_id text references sales(id),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  unique (business_id, chassis_number)
+);
+create index on vehicle_units (business_id, product_id);
+create index on vehicle_units (location_id, status);
+create index on vehicle_units (sale_id);
 
 create table product_stocks (
   id text primary key default gen_random_uuid()::text,
@@ -321,6 +352,35 @@ create table customer_payments (
   created_at timestamptz not null default now()
 );
 create index on customer_payments (customer_id);
+
+-- Échéancier (acompte + versements datés) pour une vente à crédit/partielle
+-- — typiquement une vente d'engin. Un seul plan par vente. Chaque paiement
+-- d'échéance (installments_pay_action) insère aussi une ligne
+-- customer_payments, pour que l'historique du client reste la source
+-- unique de vérité sur ce qui a été réellement encaissé.
+create table installment_plans (
+  id text primary key default gen_random_uuid()::text,
+  business_id text not null references businesses(id) on delete cascade,
+  sale_id text not null references sales(id) on delete cascade,
+  customer_id text not null references customers(id),
+  down_payment double precision not null default 0,
+  created_at timestamptz not null default now(),
+  unique (sale_id)
+);
+create index on installment_plans (business_id, customer_id);
+
+create table installments (
+  id text primary key default gen_random_uuid()::text,
+  plan_id text not null references installment_plans(id) on delete cascade,
+  seq int not null,
+  due_date date not null,
+  amount double precision not null,
+  paid_amount double precision not null default 0,
+  paid_at timestamptz,
+  created_at timestamptz not null default now()
+);
+create index on installments (plan_id);
+create index on installments (due_date);
 
 -- ---------------------------------------------------------------------------
 -- Fournisseurs / achats

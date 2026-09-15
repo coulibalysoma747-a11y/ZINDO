@@ -13,6 +13,7 @@ import { createSaleAction } from "@/lib/actions/sales";
 import { getSaleDocumentAction, type SaleDocument } from "@/lib/actions/receipt";
 import { getPosProductsAction, findProductByExactCodeAction } from "@/lib/actions/product-search";
 import { ClientFormModal } from "@/app/(app)/clients/ClientFormModal";
+import { Modal } from "@/components/ui/Modal";
 import { PosSettingsButton } from "./PosSettingsButton";
 import { PrinterSettingsButton } from "./PrinterSettingsButton";
 import { ReceiptPrintPanel } from "./ReceiptPrintPanel";
@@ -29,12 +30,16 @@ import {
 } from "@/lib/offline/db";
 import { syncPendingSales } from "@/lib/offline/sync";
 import { buildOfflineDocument } from "@/lib/offline/build-document";
+import { getAvailableVehicleUnitsAction } from "@/lib/actions/vehicle-units";
 
 type CartLine = {
   product: PosProduct;
   quantity: number;
   unitPrice: number;
   discount: number;
+  /** Exemplaire précis (moto/engin à suivi unitaire) — jamais fusionné avec une autre ligne. */
+  vehicleUnitId?: string;
+  chassisNumber?: string;
 };
 
 const PAYMENT_LABELS: Record<PaymentMethod, string> = {
@@ -193,24 +198,66 @@ export function POS({
   const change = Math.max(0, amountPaid - total);
   const remaining = Math.max(0, total - amountPaid);
 
+  // Un produit "normal" n'a qu'une ligne de panier (identifiée par son id) ;
+  // un produit à suivi unitaire (moto/engin) peut avoir plusieurs lignes
+  // simultanées — une par exemplaire choisi — jamais fusionnées entre elles,
+  // donc identifiées par l'exemplaire précis plutôt que par le produit.
+  function lineKey(line: CartLine) {
+    return line.vehicleUnitId ?? line.product.id;
+  }
+
   function addProduct(product: PosProduct) {
+    if (product.trackUnits) {
+      openUnitPicker(product);
+      return;
+    }
     setCart((prev) => {
-      const existing = prev.find((l) => l.product.id === product.id);
+      const existing = prev.find((l) => !l.vehicleUnitId && l.product.id === product.id);
       if (existing) {
         return prev.map((l) =>
-          l.product.id === product.id ? { ...l, quantity: Math.min(l.quantity + 1, product.quantity) } : l
+          l === existing ? { ...l, quantity: Math.min(l.quantity + 1, product.quantity) } : l
         );
       }
       return [...prev, { product, quantity: 1, unitPrice: product.salePrice, discount: 0 }];
     });
   }
 
-  function updateLine(productId: string, patch: Partial<CartLine>) {
-    setCart((prev) => prev.map((l) => (l.product.id === productId ? { ...l, ...patch } : l)));
+  function updateLine(key: string, patch: Partial<CartLine>) {
+    setCart((prev) => prev.map((l) => (lineKey(l) === key ? { ...l, ...patch } : l)));
   }
 
-  function removeLine(productId: string) {
-    setCart((prev) => prev.filter((l) => l.product.id !== productId));
+  function removeLine(key: string) {
+    setCart((prev) => prev.filter((l) => lineKey(l) !== key));
+  }
+
+  const [unitPickerProduct, setUnitPickerProduct] = useState<PosProduct | null>(null);
+  const [availableUnits, setAvailableUnits] = useState<{ id: string; chassisNumber: string; color: string | null }[]>([]);
+  const [loadingUnits, setLoadingUnits] = useState(false);
+
+  function openUnitPicker(product: PosProduct) {
+    setUnitPickerProduct(product);
+    setLoadingUnits(true);
+    getAvailableVehicleUnitsAction(product.id, locationId)
+      .then((units) => {
+        const chosenIds = new Set(cart.map((l) => l.vehicleUnitId).filter(Boolean));
+        setAvailableUnits(units.filter((u) => !chosenIds.has(u.id)));
+      })
+      .finally(() => setLoadingUnits(false));
+  }
+
+  function addTrackedUnit(product: PosProduct, unit: { id: string; chassisNumber: string }) {
+    setCart((prev) => [
+      ...prev,
+      {
+        product,
+        quantity: 1,
+        unitPrice: product.salePrice,
+        discount: 0,
+        vehicleUnitId: unit.id,
+        chassisNumber: unit.chassisNumber,
+      },
+    ]);
+    setUnitPickerProduct(null);
   }
 
   async function handleScan(code: string) {
@@ -250,8 +297,14 @@ export function POS({
       quantity: l.quantity,
       unitPrice: l.unitPrice,
       discount: l.discount,
+      vehicleUnitId: l.vehicleUnitId,
     }));
     const documentType: "TICKET" | "FACTURE" = isFacture ? "FACTURE" : "TICKET";
+
+    if (cart.some((l) => l.vehicleUnitId) && !isOnline) {
+      setError("La vente d'un engin à suivi unitaire nécessite une connexion. Réessayez une fois en ligne.");
+      return;
+    }
 
     if (!isOnline) {
       startTransition(async () => {
@@ -468,54 +521,64 @@ export function POS({
                     </thead>
                     <tbody className="divide-y divide-zinc-100">
                       {cart.map((line) => (
-                        <tr key={line.product.id}>
+                        <tr key={lineKey(line)}>
                           <td className="px-4 py-2">
                             <p className="font-medium text-zinc-900">{line.product.name}</p>
-                            <p className="text-xs text-zinc-400">{line.product.reference}</p>
+                            <p className="text-xs text-zinc-400">
+                              {line.chassisNumber ? (
+                                <span className="font-mono font-semibold text-zinc-600">{line.chassisNumber}</span>
+                              ) : (
+                                line.product.reference
+                              )}
+                            </p>
                           </td>
                           <td className="px-4 py-2">
-                            <div className="flex items-center gap-1">
-                              <button
-                                type="button"
-                                onClick={() => updateLine(line.product.id, { quantity: Math.max(1, line.quantity - 1) })}
-                                className="rounded p-1 text-zinc-500 hover:bg-zinc-100"
-                              >
-                                <Minus className="h-3.5 w-3.5" />
-                              </button>
-                              <input
-                                type="number"
-                                min={1}
-                                max={line.product.quantity}
-                                value={line.quantity}
-                                onChange={(e) =>
-                                  updateLine(line.product.id, {
-                                    quantity: Math.min(
-                                      line.product.quantity,
-                                      Math.max(1, Number(e.target.value) || 1)
-                                    ),
-                                  })
-                                }
-                                className="h-7 w-14 rounded border border-zinc-200 text-center text-sm"
-                              />
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  updateLine(line.product.id, {
-                                    quantity: Math.min(line.product.quantity, line.quantity + 1),
-                                  })
-                                }
-                                className="rounded p-1 text-zinc-500 hover:bg-zinc-100"
-                              >
-                                <Plus className="h-3.5 w-3.5" />
-                              </button>
-                            </div>
+                            {line.vehicleUnitId ? (
+                              <span className="text-zinc-500">1 {line.product.unit}</span>
+                            ) : (
+                              <div className="flex items-center gap-1">
+                                <button
+                                  type="button"
+                                  onClick={() => updateLine(lineKey(line), { quantity: Math.max(1, line.quantity - 1) })}
+                                  className="rounded p-1 text-zinc-500 hover:bg-zinc-100"
+                                >
+                                  <Minus className="h-3.5 w-3.5" />
+                                </button>
+                                <input
+                                  type="number"
+                                  min={1}
+                                  max={line.product.quantity}
+                                  value={line.quantity}
+                                  onChange={(e) =>
+                                    updateLine(lineKey(line), {
+                                      quantity: Math.min(
+                                        line.product.quantity,
+                                        Math.max(1, Number(e.target.value) || 1)
+                                      ),
+                                    })
+                                  }
+                                  className="h-7 w-14 rounded border border-zinc-200 text-center text-sm"
+                                />
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    updateLine(lineKey(line), {
+                                      quantity: Math.min(line.product.quantity, line.quantity + 1),
+                                    })
+                                  }
+                                  className="rounded p-1 text-zinc-500 hover:bg-zinc-100"
+                                >
+                                  <Plus className="h-3.5 w-3.5" />
+                                </button>
+                              </div>
+                            )}
                           </td>
                           <td className="px-4 py-2 text-right">
                             <input
                               type="number"
                               min={0}
                               value={line.unitPrice}
-                              onChange={(e) => updateLine(line.product.id, { unitPrice: Number(e.target.value) || 0 })}
+                              onChange={(e) => updateLine(lineKey(line), { unitPrice: Number(e.target.value) || 0 })}
                               className="h-7 w-24 rounded border border-zinc-200 text-right text-sm"
                             />
                           </td>
@@ -524,7 +587,7 @@ export function POS({
                               type="number"
                               min={0}
                               value={line.discount}
-                              onChange={(e) => updateLine(line.product.id, { discount: Number(e.target.value) || 0 })}
+                              onChange={(e) => updateLine(lineKey(line), { discount: Number(e.target.value) || 0 })}
                               className="h-7 w-20 rounded border border-zinc-200 text-right text-sm"
                             />
                           </td>
@@ -534,7 +597,7 @@ export function POS({
                           <td className="px-4 py-2">
                             <button
                               type="button"
-                              onClick={() => removeLine(line.product.id)}
+                              onClick={() => removeLine(lineKey(line))}
                               className="rounded p-1 text-red-500 hover:bg-red-50"
                             >
                               <Trash2 className="h-4 w-4" />
@@ -549,15 +612,21 @@ export function POS({
                 {/* Version carte : téléphone. */}
                 <ul className="divide-y divide-zinc-100 sm:hidden">
                   {cart.map((line) => (
-                    <li key={line.product.id} className="space-y-2.5 p-3">
+                    <li key={lineKey(line)} className="space-y-2.5 p-3">
                       <div className="flex items-start justify-between gap-2">
                         <div className="min-w-0">
                           <p className="truncate font-medium text-zinc-900">{line.product.name}</p>
-                          <p className="text-xs text-zinc-400">{line.product.reference}</p>
+                          <p className="text-xs text-zinc-400">
+                            {line.chassisNumber ? (
+                              <span className="font-mono font-semibold text-zinc-600">{line.chassisNumber}</span>
+                            ) : (
+                              line.product.reference
+                            )}
+                          </p>
                         </div>
                         <button
                           type="button"
-                          onClick={() => removeLine(line.product.id)}
+                          onClick={() => removeLine(lineKey(line))}
                           className="shrink-0 rounded p-1.5 text-red-500 hover:bg-red-50"
                         >
                           <Trash2 className="h-4 w-4" />
@@ -565,36 +634,42 @@ export function POS({
                       </div>
 
                       <div className="flex items-center gap-1">
-                        <button
-                          type="button"
-                          onClick={() => updateLine(line.product.id, { quantity: Math.max(1, line.quantity - 1) })}
-                          className="rounded-lg border border-zinc-200 p-2 text-zinc-500 hover:bg-zinc-100"
-                        >
-                          <Minus className="h-4 w-4" />
-                        </button>
-                        <input
-                          type="number"
-                          min={1}
-                          max={line.product.quantity}
-                          value={line.quantity}
-                          onChange={(e) =>
-                            updateLine(line.product.id, {
-                              quantity: Math.min(line.product.quantity, Math.max(1, Number(e.target.value) || 1)),
-                            })
-                          }
-                          className="h-9 w-16 rounded-lg border border-zinc-200 text-center text-sm"
-                        />
-                        <button
-                          type="button"
-                          onClick={() =>
-                            updateLine(line.product.id, {
-                              quantity: Math.min(line.product.quantity, line.quantity + 1),
-                            })
-                          }
-                          className="rounded-lg border border-zinc-200 p-2 text-zinc-500 hover:bg-zinc-100"
-                        >
-                          <Plus className="h-4 w-4" />
-                        </button>
+                        {line.vehicleUnitId ? (
+                          <span className="text-sm text-zinc-500">1 {line.product.unit}</span>
+                        ) : (
+                          <>
+                            <button
+                              type="button"
+                              onClick={() => updateLine(lineKey(line), { quantity: Math.max(1, line.quantity - 1) })}
+                              className="rounded-lg border border-zinc-200 p-2 text-zinc-500 hover:bg-zinc-100"
+                            >
+                              <Minus className="h-4 w-4" />
+                            </button>
+                            <input
+                              type="number"
+                              min={1}
+                              max={line.product.quantity}
+                              value={line.quantity}
+                              onChange={(e) =>
+                                updateLine(lineKey(line), {
+                                  quantity: Math.min(line.product.quantity, Math.max(1, Number(e.target.value) || 1)),
+                                })
+                              }
+                              className="h-9 w-16 rounded-lg border border-zinc-200 text-center text-sm"
+                            />
+                            <button
+                              type="button"
+                              onClick={() =>
+                                updateLine(lineKey(line), {
+                                  quantity: Math.min(line.product.quantity, line.quantity + 1),
+                                })
+                              }
+                              className="rounded-lg border border-zinc-200 p-2 text-zinc-500 hover:bg-zinc-100"
+                            >
+                              <Plus className="h-4 w-4" />
+                            </button>
+                          </>
+                        )}
                         <span className="ml-auto text-right font-semibold text-zinc-900">
                           {formatMoney(line.unitPrice * line.quantity - line.discount, currency)}
                         </span>
@@ -608,7 +683,7 @@ export function POS({
                             min={0}
                             inputMode="decimal"
                             value={line.unitPrice}
-                            onChange={(e) => updateLine(line.product.id, { unitPrice: Number(e.target.value) || 0 })}
+                            onChange={(e) => updateLine(lineKey(line), { unitPrice: Number(e.target.value) || 0 })}
                             className="h-9 w-full rounded-lg border border-zinc-200 px-2 text-right text-sm"
                           />
                         </label>
@@ -619,7 +694,7 @@ export function POS({
                             min={0}
                             inputMode="decimal"
                             value={line.discount}
-                            onChange={(e) => updateLine(line.product.id, { discount: Number(e.target.value) || 0 })}
+                            onChange={(e) => updateLine(lineKey(line), { discount: Number(e.target.value) || 0 })}
                             className="h-9 w-full rounded-lg border border-zinc-200 px-2 text-right text-sm"
                           />
                         </label>
@@ -728,6 +803,37 @@ export function POS({
       </div>
 
       <ClientFormModal open={newClientOpen} onClose={() => setNewClientOpen(false)} />
+
+      <Modal
+        open={!!unitPickerProduct}
+        onClose={() => setUnitPickerProduct(null)}
+        title={unitPickerProduct ? `Choisir un exemplaire — ${unitPickerProduct.name}` : ""}
+      >
+        {loadingUnits ? (
+          <div className="flex items-center justify-center gap-2 py-8 text-sm text-zinc-400">
+            <Loader2 className="h-4 w-4 animate-spin" /> Chargement des exemplaires...
+          </div>
+        ) : availableUnits.length === 0 ? (
+          <p className="py-4 text-center text-sm text-zinc-500">
+            Aucun exemplaire disponible en stock pour ce modèle dans cette boutique.
+          </p>
+        ) : (
+          <ul className="max-h-80 space-y-1.5 overflow-y-auto">
+            {availableUnits.map((u) => (
+              <li key={u.id}>
+                <button
+                  type="button"
+                  onClick={() => unitPickerProduct && addTrackedUnit(unitPickerProduct, u)}
+                  className="flex w-full items-center justify-between rounded-lg border border-zinc-200 px-3 py-2.5 text-left hover:border-zindo-green-300 hover:bg-zindo-green-50"
+                >
+                  <span className="font-mono text-sm font-bold tracking-wide text-zinc-900">{u.chassisNumber}</span>
+                  {u.color && <span className="text-xs text-zinc-500">{u.color}</span>}
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+      </Modal>
     </div>
 
       {receiptDoc && (

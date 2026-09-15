@@ -19,7 +19,7 @@ export default async function EditProductPage({
     supabase
       .from("products")
       .select(
-        "name, reference, categoryId:category_id, brand, description, unit, purchasePrice:purchase_price, salePrice:sale_price, minStock:min_stock, shelfLocation:shelf_location, supplierId:supplier_id, barcode, photoUrl:photo_url, customFields:custom_fields"
+        "name, reference, categoryId:category_id, brand, description, unit, purchasePrice:purchase_price, salePrice:sale_price, minStock:min_stock, shelfLocation:shelf_location, supplierId:supplier_id, barcode, photoUrl:photo_url, customFields:custom_fields, trackUnits:track_units"
       )
       .eq("id", id)
       .eq("business_id", user.businessId)
@@ -68,6 +68,7 @@ export default async function EditProductPage({
           barcode: product.barcode as string | null,
           photoUrl: product.photoUrl as string | null,
           customFields: parsedCustomFields,
+          trackUnits: product.trackUnits as boolean,
         }}
         submitLabel="Enregistrer les modifications"
       />
