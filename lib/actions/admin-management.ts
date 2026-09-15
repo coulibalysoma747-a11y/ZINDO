@@ -3,7 +3,7 @@
 import { z } from "zod";
 import bcrypt from "bcryptjs";
 import { revalidatePath } from "next/cache";
-import { prisma } from "@/lib/prisma";
+import { supabase } from "@/lib/supabase";
 import { requireFounder } from "@/lib/superadmin-auth";
 import { logAdminAction } from "@/lib/admin-audit";
 
@@ -29,20 +29,26 @@ export async function createAdminAction(
   if (!parsed.success) return { error: parsed.error.issues[0]?.message };
 
   const email = parsed.data.email.toLowerCase();
-  const existing = await prisma.superAdmin.findUnique({ where: { email } });
+  const { data: existing } = await supabase.from("super_admins").select("id").eq("email", email).maybeSingle();
   if (existing) return { error: "Cet e-mail est déjà utilisé" };
 
   const passwordHash = await bcrypt.hash(parsed.data.password, 10);
-  const admin = await prisma.superAdmin.create({
-    data: { name: parsed.data.name, email, passwordHash, role: "ADMIN" },
-  });
+  const { data: admin, error } = await supabase
+    .from("super_admins")
+    .insert({ name: parsed.data.name, email, password_hash: passwordHash, role: "ADMIN" })
+    .select("id, name, email")
+    .single();
+  if (error || !admin) {
+    console.error("[createAdminAction] Échec de la création :", error?.message);
+    return { error: "Impossible de créer le compte administrateur" };
+  }
 
   await logAdminAction({
     superAdminId: founder.id,
     actorName: founder.name,
     action: "CREATE",
     entity: "SuperAdmin",
-    entityId: admin.id,
+    entityId: admin.id as string,
     details: `${admin.name} <${admin.email}>`,
   });
 
@@ -63,13 +69,17 @@ export async function deleteAdminAction(adminId: string, currentPassword: string
   const valid = await bcrypt.compare(currentPassword, founder.passwordHash);
   if (!valid) return { error: "Mot de passe incorrect" };
 
-  const target = await prisma.superAdmin.findUnique({ where: { id: adminId } });
+  const { data: target } = await supabase.from("super_admins").select("id, name, email, role").eq("id", adminId).maybeSingle();
   if (!target) return { error: "Compte introuvable" };
   if (target.role === "FOUNDER") {
     return { error: "Le compte fondateur ne peut pas être supprimé" };
   }
 
-  await prisma.superAdmin.delete({ where: { id: adminId } });
+  const { error } = await supabase.from("super_admins").delete().eq("id", adminId);
+  if (error) {
+    console.error("[deleteAdminAction] Échec de la suppression :", error.message);
+    return { error: "Impossible de supprimer le compte" };
+  }
 
   await logAdminAction({
     superAdminId: founder.id,

@@ -1,10 +1,10 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { prisma } from "@/lib/prisma";
+import { supabase } from "@/lib/supabase";
 import { requireSuperAdmin } from "@/lib/superadmin-auth";
 import { logAdminAction } from "@/lib/admin-audit";
-import type { SupportTicketStatus } from "@prisma/client";
+import type { SupportTicketStatus } from "@/lib/db-types";
 
 export type RespondResult = { success?: string; error?: string };
 
@@ -15,17 +15,25 @@ export async function respondToTicketAction(
 ): Promise<RespondResult> {
   const admin = await requireSuperAdmin();
 
-  const ticket = await prisma.supportTicket.findUnique({ where: { id: ticketId } });
+  const { data: ticket } = await supabase
+    .from("support_tickets")
+    .select("id, response, respondedAt:responded_at")
+    .eq("id", ticketId)
+    .maybeSingle();
   if (!ticket) return { error: "Demande introuvable" };
 
-  await prisma.supportTicket.update({
-    where: { id: ticketId },
-    data: {
-      response: response || ticket.response,
+  const { error } = await supabase
+    .from("support_tickets")
+    .update({
+      response: response || (ticket.response as string | null),
       status,
-      respondedAt: response ? new Date() : ticket.respondedAt,
-    },
-  });
+      responded_at: response ? new Date().toISOString() : (ticket.respondedAt as string | null),
+    })
+    .eq("id", ticketId);
+  if (error) {
+    console.error("[respondToTicketAction] Échec de la mise à jour :", error.message);
+    return { error: "Impossible d'enregistrer la réponse" };
+  }
 
   await logAdminAction({
     superAdminId: admin.id,

@@ -1,14 +1,25 @@
 import Link from "next/link";
 import { ChevronRight, Settings2 } from "lucide-react";
 import { requireSuperAdmin } from "@/lib/superadmin-auth";
-import { prisma } from "@/lib/prisma";
+import { supabase } from "@/lib/supabase";
 import { ACTIVITIES, ACTIVITY_CATEGORIES } from "@/lib/activities";
 import { Card, CardBody } from "@/components/ui/Card";
+
+type ConfigRow = {
+  activityKey: string;
+  terminology: string | null;
+  hiddenNavHrefs: string | null;
+  defaultCategories: string | null;
+  customFields: string | null;
+};
 
 export default async function AdminActivitiesPage() {
   await requireSuperAdmin();
 
-  const configs = await prisma.activityConfig.findMany();
+  const { data } = await supabase
+    .from("activity_configs")
+    .select("activityKey:activity_key, terminology, hiddenNavHrefs:hidden_nav_hrefs, defaultCategories:default_categories, customFields:custom_fields");
+  const configs = (data ?? []) as unknown as ConfigRow[];
   const configMap = new Map(configs.map((c) => [c.activityKey, c]));
 
   function isConfigured(key: string) {

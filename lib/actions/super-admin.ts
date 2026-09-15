@@ -2,23 +2,32 @@
 
 import bcrypt from "bcryptjs";
 import { revalidatePath } from "next/cache";
-import { prisma } from "@/lib/prisma";
+import { supabase } from "@/lib/supabase";
 import { requireSuperAdmin } from "@/lib/superadmin-auth";
 import { logAdminAction } from "@/lib/admin-audit";
-import type { Role } from "@prisma/client";
+import type { Role } from "@/lib/db-types";
 
 export type ActionState = { error?: string; success?: string } | undefined;
 
 export async function toggleBusinessSuspendedAction(businessId: string, suspended: boolean) {
   const admin = await requireSuperAdmin();
-  const business = await prisma.business.update({ where: { id: businessId }, data: { suspended } });
+  const { data: business, error } = await supabase
+    .from("businesses")
+    .update({ suspended })
+    .eq("id", businessId)
+    .select("name")
+    .single();
+  if (error || !business) {
+    console.error("[toggleBusinessSuspendedAction] Échec de la mise à jour :", error?.message);
+    return { error: "Impossible de mettre à jour le commerce" };
+  }
   await logAdminAction({
     superAdminId: admin.id,
     actorName: admin.name,
     action: suspended ? "SUSPEND" : "REACTIVATE",
     entity: "Business",
     entityId: businessId,
-    details: business.name,
+    details: business.name as string,
   });
   revalidatePath("/admin/commercants");
   revalidatePath(`/admin/commercants/${businessId}`);
@@ -27,7 +36,16 @@ export async function toggleBusinessSuspendedAction(businessId: string, suspende
 
 export async function toggleUserActiveAction(userId: string, active: boolean) {
   const admin = await requireSuperAdmin();
-  const user = await prisma.user.update({ where: { id: userId }, data: { active } });
+  const { data: user, error } = await supabase
+    .from("users")
+    .update({ active })
+    .eq("id", userId)
+    .select("firstName:first_name, lastName:last_name")
+    .single();
+  if (error || !user) {
+    console.error("[toggleUserActiveAction] Échec de la mise à jour :", error?.message);
+    return { error: "Impossible de mettre à jour l'utilisateur" };
+  }
   await logAdminAction({
     superAdminId: admin.id,
     actorName: admin.name,
@@ -43,7 +61,16 @@ export async function toggleUserActiveAction(userId: string, active: boolean) {
 
 export async function updateUserRoleAction(userId: string, role: Role) {
   const admin = await requireSuperAdmin();
-  const user = await prisma.user.update({ where: { id: userId }, data: { role } });
+  const { data: user, error } = await supabase
+    .from("users")
+    .update({ role })
+    .eq("id", userId)
+    .select("firstName:first_name, lastName:last_name, businessId:business_id")
+    .single();
+  if (error || !user) {
+    console.error("[updateUserRoleAction] Échec de la mise à jour :", error?.message);
+    return { error: "Impossible de mettre à jour le rôle" };
+  }
   await logAdminAction({
     superAdminId: admin.id,
     actorName: admin.name,
@@ -69,11 +96,19 @@ export async function resetUserPasswordAction(
     return { error: "Le mot de passe doit contenir au moins 6 caractères" };
   }
 
-  const user = await prisma.user.findUnique({ where: { id: userId } });
+  const { data: user } = await supabase
+    .from("users")
+    .select("firstName:first_name, lastName:last_name, businessId:business_id")
+    .eq("id", userId)
+    .maybeSingle();
   if (!user) return { error: "Utilisateur introuvable" };
 
   const passwordHash = await bcrypt.hash(newPassword, 10);
-  await prisma.user.update({ where: { id: userId }, data: { passwordHash } });
+  const { error } = await supabase.from("users").update({ password_hash: passwordHash }).eq("id", userId);
+  if (error) {
+    console.error("[resetUserPasswordAction] Échec de la réinitialisation :", error.message);
+    return { error: "Impossible de réinitialiser le mot de passe" };
+  }
 
   await logAdminAction({
     superAdminId: admin.id,
@@ -90,11 +125,13 @@ export async function resetUserPasswordAction(
 
 export async function setGlobalPermissionAction(role: Role, permission: string, allowed: boolean) {
   const admin = await requireSuperAdmin();
-  await prisma.globalRolePermission.upsert({
-    where: { role_permission: { role, permission } },
-    update: { allowed },
-    create: { role, permission, allowed },
-  });
+  const { error } = await supabase
+    .from("global_role_permissions")
+    .upsert({ role, permission, allowed }, { onConflict: "role,permission", ignoreDuplicates: false });
+  if (error) {
+    console.error("[setGlobalPermissionAction] Échec de la mise à jour :", error.message);
+    return { error: "Impossible de mettre à jour la permission par défaut" };
+  }
   await logAdminAction({
     superAdminId: admin.id,
     actorName: admin.name,
@@ -108,7 +145,11 @@ export async function setGlobalPermissionAction(role: Role, permission: string, 
 
 export async function resetGlobalPermissionsAction(role: Role) {
   const admin = await requireSuperAdmin();
-  await prisma.globalRolePermission.deleteMany({ where: { role } });
+  const { error } = await supabase.from("global_role_permissions").delete().eq("role", role);
+  if (error) {
+    console.error("[resetGlobalPermissionsAction] Échec de la réinitialisation :", error.message);
+    return { error: "Impossible de réinitialiser les permissions par défaut" };
+  }
   await logAdminAction({
     superAdminId: admin.id,
     actorName: admin.name,
@@ -122,18 +163,17 @@ export async function resetGlobalPermissionsAction(role: Role) {
 
 export async function setUserPermissionAction(userId: string, permission: string, allowed: boolean) {
   const admin = await requireSuperAdmin();
-  const user = await prisma.user.update({
-    where: { id: userId },
-    data: {
-      permissionOverrides: {
-        upsert: {
-          where: { userId_permission: { userId, permission } },
-          update: { allowed },
-          create: { permission, allowed },
-        },
-      },
-    },
-  });
+  const { data: user } = await supabase.from("users").select("businessId:business_id").eq("id", userId).maybeSingle();
+  if (!user) return { error: "Utilisateur introuvable" };
+
+  const { error } = await supabase
+    .from("user_permissions")
+    .upsert({ user_id: userId, permission, allowed }, { onConflict: "user_id,permission", ignoreDuplicates: false });
+  if (error) {
+    console.error("[setUserPermissionAction] Échec de la mise à jour :", error.message);
+    return { error: "Impossible de mettre à jour ce module" };
+  }
+
   await logAdminAction({
     superAdminId: admin.id,
     actorName: admin.name,
@@ -149,8 +189,15 @@ export async function setUserPermissionAction(userId: string, permission: string
 
 export async function resetUserPermissionsAction(userId: string) {
   const admin = await requireSuperAdmin();
-  const user = await prisma.user.findUniqueOrThrow({ where: { id: userId }, select: { businessId: true } });
-  await prisma.userPermission.deleteMany({ where: { userId } });
+  const { data: user } = await supabase.from("users").select("businessId:business_id").eq("id", userId).maybeSingle();
+  if (!user) return { error: "Utilisateur introuvable" };
+
+  const { error } = await supabase.from("user_permissions").delete().eq("user_id", userId);
+  if (error) {
+    console.error("[resetUserPermissionsAction] Échec de la réinitialisation :", error.message);
+    return { error: "Impossible de réinitialiser les dérogations" };
+  }
+
   await logAdminAction({
     superAdminId: admin.id,
     actorName: admin.name,

@@ -2,7 +2,7 @@
 
 import { z } from "zod";
 import { revalidatePath } from "next/cache";
-import { prisma } from "@/lib/prisma";
+import { supabase } from "@/lib/supabase";
 import { requireSuperAdmin } from "@/lib/superadmin-auth";
 import { logAdminAction } from "@/lib/admin-audit";
 
@@ -29,17 +29,26 @@ export async function createFeatureFlagAction(
   });
   if (!parsed.success) return { error: parsed.error.issues[0]?.message };
 
-  const existing = await prisma.featureFlag.findUnique({ where: { key: parsed.data.key } });
+  const { data: existing } = await supabase.from("feature_flags").select("id").eq("key", parsed.data.key).maybeSingle();
   if (existing) return { error: "Cette clé existe déjà" };
 
-  const flag = await prisma.featureFlag.create({ data: parsed.data });
+  const { data: flag, error } = await supabase
+    .from("feature_flags")
+    .insert({ key: parsed.data.key, label: parsed.data.label, description: parsed.data.description ?? null })
+    .select("id, key")
+    .single();
+  if (error || !flag) {
+    console.error("[createFeatureFlagAction] Échec de la création :", error?.message);
+    return { error: "Impossible de créer la fonctionnalité" };
+  }
+
   await logAdminAction({
     superAdminId: admin.id,
     actorName: admin.name,
     action: "CREATE",
     entity: "FeatureFlag",
-    entityId: flag.id,
-    details: flag.key,
+    entityId: flag.id as string,
+    details: flag.key as string,
   });
 
   revalidatePath("/admin/fonctionnalites");
@@ -48,14 +57,24 @@ export async function createFeatureFlagAction(
 
 export async function setFeatureFlagGlobalAction(flagId: string, enabledGlobally: boolean) {
   const admin = await requireSuperAdmin();
-  const flag = await prisma.featureFlag.update({ where: { id: flagId }, data: { enabledGlobally } });
+  const { data: flag, error } = await supabase
+    .from("feature_flags")
+    .update({ enabled_globally: enabledGlobally })
+    .eq("id", flagId)
+    .select("key")
+    .single();
+  if (error || !flag) {
+    console.error("[setFeatureFlagGlobalAction] Échec de la mise à jour :", error?.message);
+    return { error: "Impossible de mettre à jour la fonctionnalité" };
+  }
+
   await logAdminAction({
     superAdminId: admin.id,
     actorName: admin.name,
     action: enabledGlobally ? "ENABLE_ALL" : "DISABLE_ALL",
     entity: "FeatureFlag",
     entityId: flagId,
-    details: flag.key,
+    details: flag.key as string,
   });
   revalidatePath("/admin/fonctionnalites");
   return { success: enabledGlobally ? "Activée pour tous les commerçants" : "Désactivée globalement" };
@@ -63,11 +82,17 @@ export async function setFeatureFlagGlobalAction(flagId: string, enabledGlobally
 
 export async function setFeatureFlagBusinessAction(flagId: string, businessId: string, enabled: boolean) {
   const admin = await requireSuperAdmin();
-  await prisma.featureFlagBusiness.upsert({
-    where: { featureFlagId_businessId: { featureFlagId: flagId, businessId } },
-    update: { enabled },
-    create: { featureFlagId: flagId, businessId, enabled },
-  });
+  const { error } = await supabase
+    .from("feature_flag_businesses")
+    .upsert(
+      { feature_flag_id: flagId, business_id: businessId, enabled },
+      { onConflict: "feature_flag_id,business_id", ignoreDuplicates: false }
+    );
+  if (error) {
+    console.error("[setFeatureFlagBusinessAction] Échec de la mise à jour :", error.message);
+    return { error: "Impossible de mettre à jour pour ce commerce" };
+  }
+
   await logAdminAction({
     superAdminId: admin.id,
     actorName: admin.name,
@@ -82,14 +107,20 @@ export async function setFeatureFlagBusinessAction(flagId: string, businessId: s
 
 export async function deleteFeatureFlagAction(flagId: string) {
   const admin = await requireSuperAdmin();
-  const flag = await prisma.featureFlag.delete({ where: { id: flagId } });
+  const { data: flag } = await supabase.from("feature_flags").select("key").eq("id", flagId).maybeSingle();
+  const { error } = await supabase.from("feature_flags").delete().eq("id", flagId);
+  if (error) {
+    console.error("[deleteFeatureFlagAction] Échec de la suppression :", error.message);
+    return { error: "Impossible de supprimer la fonctionnalité" };
+  }
+
   await logAdminAction({
     superAdminId: admin.id,
     actorName: admin.name,
     action: "DELETE",
     entity: "FeatureFlag",
     entityId: flagId,
-    details: flag.key,
+    details: (flag?.key as string | undefined) ?? "",
   });
   revalidatePath("/admin/fonctionnalites");
   return { success: "Fonctionnalité supprimée" };

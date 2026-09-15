@@ -2,7 +2,7 @@
 
 import { z } from "zod";
 import { revalidatePath } from "next/cache";
-import { prisma } from "@/lib/prisma";
+import { supabase } from "@/lib/supabase";
 import { requireSuperAdmin } from "@/lib/superadmin-auth";
 import { logAdminAction } from "@/lib/admin-audit";
 import { ACTIVITIES } from "@/lib/activities";
@@ -54,22 +54,21 @@ export async function saveActivityConfigAction(
     return { error: "Champs personnalisés invalides" };
   }
 
-  await prisma.activityConfig.upsert({
-    where: { activityKey },
-    update: {
+  const { error } = await supabase.from("activity_configs").upsert(
+    {
+      activity_key: activityKey,
       terminology: JSON.stringify(terminology),
-      hiddenNavHrefs: JSON.stringify(hiddenNavHrefs),
-      defaultCategories: JSON.stringify(defaultCategories),
-      customFields: JSON.stringify(customFields),
+      hidden_nav_hrefs: JSON.stringify(hiddenNavHrefs),
+      default_categories: JSON.stringify(defaultCategories),
+      custom_fields: JSON.stringify(customFields),
+      updated_at: new Date().toISOString(),
     },
-    create: {
-      activityKey,
-      terminology: JSON.stringify(terminology),
-      hiddenNavHrefs: JSON.stringify(hiddenNavHrefs),
-      defaultCategories: JSON.stringify(defaultCategories),
-      customFields: JSON.stringify(customFields),
-    },
-  });
+    { onConflict: "activity_key", ignoreDuplicates: false }
+  );
+  if (error) {
+    console.error("[saveActivityConfigAction] Échec de l'enregistrement :", error.message);
+    return { error: "Impossible d'enregistrer la configuration" };
+  }
 
   await logAdminAction({
     superAdminId: admin.id,

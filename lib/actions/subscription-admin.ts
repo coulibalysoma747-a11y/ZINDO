@@ -2,7 +2,7 @@
 
 import { z } from "zod";
 import { revalidatePath } from "next/cache";
-import { prisma } from "@/lib/prisma";
+import { supabase } from "@/lib/supabase";
 import { requireSuperAdmin } from "@/lib/superadmin-auth";
 import { logAdminAction } from "@/lib/admin-audit";
 import { activateInvoicePayment } from "@/lib/subscription-fulfillment";
@@ -30,11 +30,15 @@ export async function confirmInvoicePaymentAction(invoiceId: string) {
 
 export async function cancelInvoiceAction(invoiceId: string) {
   const admin = await requireSuperAdmin();
-  const invoice = await prisma.subscriptionInvoice.findUnique({ where: { id: invoiceId } });
+  const { data: invoice } = await supabase.from("subscription_invoices").select("id, status").eq("id", invoiceId).maybeSingle();
   if (!invoice) return { error: "Facture introuvable" };
   if (invoice.status !== "EN_ATTENTE") return { error: "Seule une facture en attente peut être annulée" };
 
-  await prisma.subscriptionInvoice.update({ where: { id: invoiceId }, data: { status: "ANNULEE" } });
+  const { error } = await supabase.from("subscription_invoices").update({ status: "ANNULEE" }).eq("id", invoiceId);
+  if (error) {
+    console.error("[cancelInvoiceAction] Échec de l'annulation :", error.message);
+    return { error: "Impossible d'annuler la facture" };
+  }
   await logAdminAction({
     superAdminId: admin.id,
     actorName: admin.name,
@@ -54,14 +58,17 @@ export async function assignBusinessPlanAction(
   billingCycle: "MONTHLY" | "ANNUAL"
 ) {
   const admin = await requireSuperAdmin();
-  const plan = await prisma.subscriptionPlan.findUnique({ where: { key: planKey } });
+  const { data: plan } = await supabase.from("subscription_plans").select("id, label").eq("key", planKey).maybeSingle();
   if (!plan) return { error: "Palier introuvable" };
 
-  await prisma.businessSubscription.upsert({
-    where: { businessId },
-    update: { planId: plan.id, billingCycle, status: "ACTIVE" },
-    create: { businessId, planId: plan.id, billingCycle, status: "ACTIVE" },
-  });
+  const { error } = await supabase.from("business_subscriptions").upsert(
+    { business_id: businessId, plan_id: plan.id, billing_cycle: billingCycle, status: "ACTIVE" },
+    { onConflict: "business_id", ignoreDuplicates: false }
+  );
+  if (error) {
+    console.error("[assignBusinessPlanAction] Échec de la mise à jour :", error.message);
+    return { error: "Impossible de mettre à jour l'abonnement" };
+  }
 
   await logAdminAction({
     superAdminId: admin.id,
@@ -105,18 +112,25 @@ export async function updateSubscriptionPlanAction(
   const validKeys = new Set(FEATURE_CATALOG.map((f) => f.key));
   const features = formData.getAll("features").map(String).filter((k) => validKeys.has(k));
 
-  const plan = await prisma.subscriptionPlan.update({
-    where: { id: planId },
-    data: {
+  const { data: plan, error } = await supabase
+    .from("subscription_plans")
+    .update({
       label: parsed.data.label,
-      monthlyPrice: parsed.data.monthlyPrice,
-      annualPrice: parsed.data.annualPrice,
-      maxProducts: parsed.data.maxProducts ?? null,
-      maxUsers: parsed.data.maxUsers ?? null,
-      maxLocations: parsed.data.maxLocations ?? null,
+      monthly_price: parsed.data.monthlyPrice,
+      annual_price: parsed.data.annualPrice,
+      max_products: parsed.data.maxProducts ?? null,
+      max_users: parsed.data.maxUsers ?? null,
+      max_locations: parsed.data.maxLocations ?? null,
       features: JSON.stringify(features),
-    },
-  });
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", planId)
+    .select("label")
+    .single();
+  if (error || !plan) {
+    console.error("[updateSubscriptionPlanAction] Échec de la mise à jour :", error?.message);
+    return { error: "Impossible de mettre à jour le palier" };
+  }
 
   await logAdminAction({
     superAdminId: admin.id,
@@ -124,7 +138,7 @@ export async function updateSubscriptionPlanAction(
     action: "UPDATE",
     entity: "SubscriptionPlan",
     entityId: planId,
-    details: plan.label,
+    details: plan.label as string,
   });
 
   revalidatePath("/admin/abonnements");

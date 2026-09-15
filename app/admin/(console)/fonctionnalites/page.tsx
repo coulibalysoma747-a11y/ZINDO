@@ -1,19 +1,30 @@
 import { requireSuperAdmin } from "@/lib/superadmin-auth";
-import { prisma } from "@/lib/prisma";
+import { supabase } from "@/lib/supabase";
 import { EmptyState } from "@/components/ui/Empty";
 import { CreateFeatureFlagForm } from "./CreateFeatureFlagForm";
 import { FeatureFlagCard } from "./FeatureFlagCard";
 
+type FlagRow = {
+  id: string;
+  key: string;
+  label: string;
+  description: string | null;
+  enabledGlobally: boolean;
+};
+
 export default async function AdminFeatureFlagsPage() {
   await requireSuperAdmin();
 
-  const [flags, businesses] = await Promise.all([
-    prisma.featureFlag.findMany({
-      include: { overrides: true },
-      orderBy: { createdAt: "desc" },
-    }),
-    prisma.business.findMany({ orderBy: { name: "asc" }, select: { id: true, name: true } }),
+  const [{ data: flagsData }, { data: overridesData }, { data: businesses }] = await Promise.all([
+    supabase
+      .from("feature_flags")
+      .select("id, key, label, description, enabledGlobally:enabled_globally")
+      .order("created_at", { ascending: false }),
+    supabase.from("feature_flag_businesses").select("id, featureFlagId:feature_flag_id, businessId:business_id, enabled"),
+    supabase.from("businesses").select("id, name").order("name", { ascending: true }),
   ]);
+  const flags = (flagsData ?? []) as unknown as FlagRow[];
+  const overrides = (overridesData ?? []) as unknown as Array<{ featureFlagId: string; businessId: string; enabled: boolean }>;
 
   return (
     <div className="space-y-6">
@@ -39,8 +50,10 @@ export default async function AdminFeatureFlagsPage() {
             <FeatureFlagCard
               key={flag.id}
               flag={flag}
-              businesses={businesses}
-              overrides={flag.overrides.map((o) => ({ businessId: o.businessId, enabled: o.enabled }))}
+              businesses={businesses ?? []}
+              overrides={overrides
+                .filter((o) => o.featureFlagId === flag.id)
+                .map((o) => ({ businessId: o.businessId, enabled: o.enabled }))}
             />
           ))}
         </div>

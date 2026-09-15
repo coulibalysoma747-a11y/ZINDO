@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { requireSuperAdmin } from "@/lib/superadmin-auth";
-import { prisma } from "@/lib/prisma";
+import { supabase } from "@/lib/supabase";
 import { ACTIVITIES } from "@/lib/activities";
 import { NAV_ITEMS } from "@/lib/nav";
 import { ActivityConfigForm } from "./ActivityConfigForm";
@@ -20,7 +20,11 @@ export default async function AdminActivityConfigPage({
   const activity = ACTIVITIES.find((a) => a.key === key);
   if (!activity) notFound();
 
-  const config = await prisma.activityConfig.findUnique({ where: { activityKey: key } });
+  const { data: config } = await supabase
+    .from("activity_configs")
+    .select("terminology, hiddenNavHrefs:hidden_nav_hrefs, defaultCategories:default_categories, customFields:custom_fields")
+    .eq("activity_key", key)
+    .maybeSingle();
 
   const hideableNavItems = NAV_ITEMS.filter((item) => !ALWAYS_VISIBLE_HREFS.includes(item.href)).map((item) => ({
     href: item.href,
@@ -45,10 +49,10 @@ export default async function AdminActivityConfigPage({
         activityKey={activity.key}
         hideableNavItems={hideableNavItems}
         initial={{
-          terminology: config?.terminology ? JSON.parse(config.terminology) : {},
-          hiddenNavHrefs: config?.hiddenNavHrefs ? JSON.parse(config.hiddenNavHrefs) : [],
-          defaultCategories: config?.defaultCategories ? JSON.parse(config.defaultCategories) : [],
-          customFields: config?.customFields ? JSON.parse(config.customFields) : [],
+          terminology: config?.terminology ? JSON.parse(config.terminology as string) : {},
+          hiddenNavHrefs: config?.hiddenNavHrefs ? JSON.parse(config.hiddenNavHrefs as string) : [],
+          defaultCategories: config?.defaultCategories ? JSON.parse(config.defaultCategories as string) : [],
+          customFields: config?.customFields ? JSON.parse(config.customFields as string) : [],
         }}
       />
     </div>
