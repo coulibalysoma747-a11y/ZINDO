@@ -26,6 +26,7 @@ create type billing_cycle as enum ('MONTHLY','ANNUAL');
 create type subscription_status as enum ('ACTIVE','PAST_DUE');
 create type invoice_status as enum ('EN_ATTENTE','PAYEE','ANNULEE');
 create type invoice_payment_method as enum ('MANUEL','CINETPAY');
+create type quote_status as enum ('BROUILLON','ENVOYE','ACCEPTE','REFUSE','EXPIRE','CONVERTI');
 
 -- ---------------------------------------------------------------------------
 -- Commerce / compte
@@ -55,6 +56,7 @@ create table businesses (
   next_session_seq int not null default 1,
   next_online_order_seq int not null default 1,
   next_invoice_seq int not null default 1,
+  next_quote_seq int not null default 1,
   -- Intégration FasoStock (lib/integrations/faso-stock.ts) : synchronisation
   -- à sens unique FasoStock → ZINDO (leur API est en lecture seule). La clé
   -- n'est jamais renvoyée au navigateur, uniquement lue côté serveur.
@@ -311,6 +313,48 @@ create table sale_items (
 );
 create index on sale_items (sale_id);
 create index on sale_items (product_id);
+
+-- Devis : proposition commerciale envoyée à un client avant la vente, sans
+-- impact sur le stock. Convertible en vente réelle (table sales) une fois
+-- accepté — voir lib/actions/quotes.ts::convertQuoteToSaleAction, qui
+-- réutilise createSaleAction pour que la conversion passe par les mêmes
+-- vérifications de stock/session que n'importe quelle autre vente.
+create table quotes (
+  id text primary key default gen_random_uuid()::text,
+  business_id text not null references businesses(id) on delete cascade,
+  location_id text not null references locations(id),
+  number text not null,
+  customer_id text references customers(id),
+  customer_name text,
+  customer_phone text,
+  user_id text not null references users(id),
+  subtotal double precision not null default 0,
+  discount double precision not null default 0,
+  total double precision not null default 0,
+  status quote_status not null default 'BROUILLON',
+  valid_until date,
+  note text,
+  converted_sale_id text references sales(id),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  unique (business_id, number)
+);
+create index on quotes (business_id, created_at);
+create index on quotes (location_id);
+create index on quotes (customer_id);
+
+create table quote_items (
+  id text primary key default gen_random_uuid()::text,
+  quote_id text not null references quotes(id) on delete cascade,
+  product_id text references products(id),
+  name text not null,
+  unit text,
+  quantity double precision not null,
+  unit_price double precision not null,
+  discount double precision not null default 0,
+  total double precision not null
+);
+create index on quote_items (quote_id);
 
 create table cash_sessions (
   id text primary key default gen_random_uuid()::text,

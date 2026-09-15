@@ -6,7 +6,14 @@ import { supabase } from "@/lib/supabase";
 // ventes/produits créés au même instant.
 async function nextSeq(
   businessId: string,
-  field: "next_product_seq" | "next_sale_seq" | "next_purchase_seq" | "next_session_seq" | "next_online_order_seq" | "next_invoice_seq"
+  field:
+    | "next_product_seq"
+    | "next_sale_seq"
+    | "next_purchase_seq"
+    | "next_session_seq"
+    | "next_online_order_seq"
+    | "next_invoice_seq"
+    | "next_quote_seq"
 ) {
   const { data, error } = await supabase.rpc("increment_business_seq", {
     p_business_id: businessId,
@@ -48,6 +55,11 @@ export async function generateOnlineOrderNumber(businessId: string) {
 export async function generateSubscriptionInvoiceNumber(businessId: string) {
   const seq = await nextSeq(businessId, "next_invoice_seq");
   return `ZND-FAC-${pad(seq)}`;
+}
+
+export async function generateQuoteNumber(businessId: string) {
+  const seq = await nextSeq(businessId, "next_quote_seq");
+  return `ZND-D-${pad(seq)}`;
 }
 
 export function generateInventoryReference() {

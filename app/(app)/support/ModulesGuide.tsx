@@ -32,6 +32,10 @@ const DESCRIPTIONS: Record<string, { short: string; long: string }> = {
     short: "Générez une facture détaillée au format A4 plutôt qu'un simple ticket de caisse.",
     long: "Comme l'écran de vente, mais le document généré est une facture détaillée au format A4 (tableau ligne par ligne, espace de signature, QR code de vérification) plutôt qu'un ticket de caisse compact — utile pour les clients professionnels ou les grosses commandes.",
   },
+  "/devis": {
+    short: "Préparez un devis pour un client, sans toucher au stock, puis convertissez-le en vente une fois accepté.",
+    long: "Composez un devis produit par produit pour un client, avec une date de validité — aucun impact sur le stock tant qu'il n'est pas transformé en vente. Suivez son statut (brouillon, envoyé, accepté, refusé) et convertissez-le en une vraie vente en un clic une fois le client d'accord, sans ressaisir les articles.",
+  },
   "/vente-engin": {
     short: "Vente dédiée d'un engin (moto) : choisir le modèle puis l'exemplaire précis, encaisser, imprimer le reçu.",
     long: "Écran de vente spécialisé pour un engin à suivi individuel : choisissez le modèle de moto, puis l'exemplaire précis par son numéro de châssis, encaissez et imprimez le reçu — sans passer par le panier multi-articles de l'écran de vente général. Réservé à l'activité « Boutique de motos ».",

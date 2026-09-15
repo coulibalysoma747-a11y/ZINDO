@@ -30,13 +30,19 @@ export type FactureData = {
   subtotal: number;
   discount?: number;
   total: number;
-  paymentMethodLabel: string;
-  amountPaid: number;
+  paymentMethodLabel?: string;
+  amountPaid?: number;
   change?: number;
   remaining?: number;
   footerMessage?: string | null;
   currency?: string;
   qrCodeDataUrl?: string | null;
+  /** "Facture" par défaut — utilisé aussi pour le module Devis (voir app/(app)/devis). */
+  documentTitle?: string;
+  /** "DOIT" par défaut. */
+  partyLabel?: string;
+  /** Devis uniquement : affichée sous le numéro. */
+  validUntil?: Date | string | null;
 };
 
 /**
@@ -106,17 +112,20 @@ export function Facture({ data }: { data: FactureData }) {
         {/* Titre */}
         <div className="mt-6 text-center">
           <p className="inline-block border-b-2 border-zindo-ink-900 pb-1.5 text-2xl font-bold uppercase tracking-[0.2em] text-zindo-ink-900">
-            Facture
+            {data.documentTitle ?? "Facture"}
           </p>
           <p className="mt-2 text-sm text-zinc-500">
             N° <span className="font-semibold text-zinc-900">{data.invoiceNumber}</span>
           </p>
+          {data.validUntil && (
+            <p className="mt-1 text-sm text-zinc-500">Valable jusqu&apos;au {formatLongDate(data.validUntil)}</p>
+          )}
         </div>
 
         {/* Client + détails de la vente */}
         <div className="mt-8 flex flex-wrap items-start justify-between gap-4">
           <div className="leading-relaxed">
-            <span className="font-bold text-zinc-900 underline">DOIT</span>
+            <span className="font-bold text-zinc-900 underline">{data.partyLabel ?? "DOIT"}</span>
             <span className="text-zinc-900"> : {data.customerName ?? "Client de passage"}</span>
             {data.customerPhone && <p className="text-sm text-zinc-600">{data.customerPhone}</p>}
             {data.customerAddress && <p className="text-sm text-zinc-600">{data.customerAddress}</p>}
@@ -127,9 +136,11 @@ export function Facture({ data }: { data: FactureData }) {
                 Émise par <span className="font-medium text-zinc-900">{data.cashierName}</span>
               </p>
             )}
-            <p>
-              Paiement : <span className="font-medium text-zinc-900">{data.paymentMethodLabel}</span>
-            </p>
+            {data.paymentMethodLabel && (
+              <p>
+                Paiement : <span className="font-medium text-zinc-900">{data.paymentMethodLabel}</span>
+              </p>
+            )}
           </div>
         </div>
 
@@ -183,12 +194,13 @@ export function Facture({ data }: { data: FactureData }) {
         </p>
 
         {/* Paiement / reste à payer */}
-        {(data.amountPaid > 0 || (!!data.remaining && data.remaining > 0) || (!!data.change && data.change > 0)) && (
+        {!!data.paymentMethodLabel &&
+          ((data.amountPaid ?? 0) > 0 || (!!data.remaining && data.remaining > 0) || (!!data.change && data.change > 0)) && (
           <div className="mt-4 flex justify-end border-t border-zinc-200 pt-3">
             <div className="w-64 space-y-1.5 text-sm text-zinc-600">
               <div className="flex justify-between">
                 <span>Payé</span>
-                <span>{money(data.amountPaid)}</span>
+                <span>{money(data.amountPaid ?? 0)}</span>
               </div>
               {!!data.change && data.change > 0 && (
                 <div className="flex justify-between font-medium text-emerald-600">
