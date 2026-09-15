@@ -1,6 +1,6 @@
 import "server-only";
 import type Anthropic from "@anthropic-ai/sdk";
-import { prisma } from "@/lib/prisma";
+import { supabase } from "@/lib/supabase";
 import { startOfToday, startOfWeek, startOfMonth } from "@/lib/format";
 
 type PeriodKey = "today" | "week" | "month" | "all";
@@ -78,29 +78,34 @@ export function createToolExecutor(businessId: string, locationId: string, curre
       case "get_dashboard_summary": {
         const today = startOfToday();
         const monthStart = startOfMonth();
-        const [salesToday, salesMonth, stocks] = await Promise.all([
-          prisma.sale.aggregate({
-            where: { businessId, locationId, status: { not: "ANNULEE" }, createdAt: { gte: today } },
-            _sum: { total: true },
-            _count: true,
-          }),
-          prisma.sale.aggregate({
-            where: { businessId, locationId, status: { not: "ANNULEE" }, createdAt: { gte: monthStart } },
-            _sum: { total: true },
-          }),
-          prisma.productStock.findMany({
-            where: { locationId, product: { businessId, active: true } },
-            include: { product: { select: { purchasePrice: true, minStock: true } } },
-          }),
+        const [{ data: salesMonthData }, { data: stocksData }] = await Promise.all([
+          supabase
+            .from("sales")
+            .select("total, createdAt:created_at")
+            .eq("business_id", businessId)
+            .eq("location_id", locationId)
+            .neq("status", "ANNULEE")
+            .gte("created_at", monthStart.toISOString()),
+          supabase
+            .from("product_stocks")
+            .select("quantity, product:products!inner(purchasePrice:purchase_price, minStock:min_stock, businessId:business_id, active)")
+            .eq("location_id", locationId)
+            .eq("products.business_id", businessId)
+            .eq("products.active", true),
         ]);
+
+        const salesMonth = (salesMonthData ?? []) as unknown as Array<{ total: number; createdAt: string }>;
+        const salesToday = salesMonth.filter((s) => new Date(s.createdAt) >= today);
+        const stocks = (stocksData ?? []) as unknown as Array<{ quantity: number; product: { purchasePrice: number; minStock: number } }>;
+
         const stockValue = stocks.reduce((s, st) => s + st.quantity * st.product.purchasePrice, 0);
         const outOfStock = stocks.filter((s) => s.quantity <= 0).length;
         const lowStock = stocks.filter((s) => s.quantity > 0 && s.quantity <= s.product.minStock).length;
         return JSON.stringify({
           currency,
-          ventesDuJour: salesToday._sum.total ?? 0,
-          nombreVentesDuJour: salesToday._count,
-          ventesDuMois: salesMonth._sum.total ?? 0,
+          ventesDuJour: salesToday.reduce((s, sale) => s + sale.total, 0),
+          nombreVentesDuJour: salesToday.length,
+          ventesDuMois: salesMonth.reduce((s, sale) => s + sale.total, 0),
           valeurStock: stockValue,
           produitsEnStock: stocks.filter((s) => s.quantity > 0).length,
           produitsEnRupture: outOfStock,
@@ -114,22 +119,29 @@ export function createToolExecutor(businessId: string, locationId: string, curre
         const limit = Math.min(Number(input.limit) || 10, 20);
         const start = periodStart(period);
 
-        const items = await prisma.saleItem.findMany({
-          where: {
-            sale: {
-              businessId,
-              locationId,
-              status: { not: "ANNULEE" },
-              ...(start ? { createdAt: { gte: start } } : {}),
-            },
-          },
-          select: { quantity: true, total: true, unitCost: true, product: { select: { name: true } } },
-        });
+        let query = supabase
+          .from("sale_items")
+          .select(
+            "quantity, total, unitCost:unit_cost, product:products(name), sale:sales!inner(businessId:business_id, locationId:location_id, status, createdAt:created_at)"
+          )
+          .eq("sales.business_id", businessId)
+          .eq("sales.location_id", locationId)
+          .neq("sales.status", "ANNULEE");
+        if (start) query = query.gte("sales.created_at", start.toISOString());
+        const { data } = await query;
+
+        const items = (data ?? []) as unknown as Array<{
+          quantity: number;
+          total: number;
+          unitCost: number;
+          product: { name: string } | null;
+        }>;
 
         const byProduct = new Map<string, { name: string; quantity: number; revenue: number; profit: number }>();
         for (const item of items) {
+          if (!item.product) continue;
           const existing = byProduct.get(item.product.name);
-          const profit = (item.total - item.unitCost * item.quantity);
+          const profit = item.total - item.unitCost * item.quantity;
           if (existing) {
             existing.quantity += item.quantity;
             existing.revenue += item.total;
@@ -160,19 +172,23 @@ export function createToolExecutor(businessId: string, locationId: string, curre
         const search = typeof input.search === "string" ? input.search : undefined;
         const onlyLowOrOut = input.onlyLowOrOut === true;
 
-        const stocks = await prisma.productStock.findMany({
-          where: {
-            locationId,
-            product: {
-              businessId,
-              active: true,
-              ...(search ? { name: { contains: search, mode: "insensitive" as const } } : {}),
-            },
-          },
-          include: { product: { select: { name: true, unit: true, minStock: true } } },
-          orderBy: { product: { name: "asc" } },
-          take: 50,
-        });
+        let query = supabase
+          .from("product_stocks")
+          .select("quantity, product:products!inner(name, unit, minStock:min_stock, businessId:business_id, active)")
+          .eq("location_id", locationId)
+          .eq("products.business_id", businessId)
+          .eq("products.active", true)
+          .limit(50);
+        if (search) {
+          const escaped = search.replace(/[%_\\]/g, (m) => `\\${m}`);
+          query = query.ilike("products.name", `%${escaped}%`);
+        }
+        const { data } = await query;
+
+        const stocks = (data ?? []) as unknown as Array<{
+          quantity: number;
+          product: { name: string; unit: string; minStock: number };
+        }>;
 
         const rows = stocks
           .map((s) => ({
@@ -182,7 +198,8 @@ export function createToolExecutor(businessId: string, locationId: string, curre
             seuilMinimum: s.product.minStock,
             statut: s.quantity <= 0 ? "rupture" : s.quantity <= s.product.minStock ? "faible" : "ok",
           }))
-          .filter((r) => !onlyLowOrOut || r.statut !== "ok");
+          .filter((r) => !onlyLowOrOut || r.statut !== "ok")
+          .sort((a, b) => a.nom.localeCompare(b.nom));
 
         return JSON.stringify({ produits: rows });
       }
@@ -191,35 +208,40 @@ export function createToolExecutor(businessId: string, locationId: string, curre
         const currentStart = startOfMonth();
         const previousStart = new Date(currentStart.getFullYear(), currentStart.getMonth() - 1, 1);
 
-        const [currentItems, previousItems] = await Promise.all([
-          prisma.saleItem.findMany({
-            where: { sale: { businessId, locationId, status: { not: "ANNULEE" }, createdAt: { gte: currentStart } } },
-            select: { total: true, product: { select: { category: { select: { name: true } } } } },
-          }),
-          prisma.saleItem.findMany({
-            where: {
-              sale: {
-                businessId,
-                locationId,
-                status: { not: "ANNULEE" },
-                createdAt: { gte: previousStart, lt: currentStart },
-              },
-            },
-            select: { total: true, product: { select: { category: { select: { name: true } } } } },
-          }),
+        const selectItems =
+          "total, product:products(category:categories(name)), sale:sales!inner(businessId:business_id, locationId:location_id, status, createdAt:created_at)";
+
+        const [{ data: currentData }, { data: previousData }] = await Promise.all([
+          supabase
+            .from("sale_items")
+            .select(selectItems)
+            .eq("sales.business_id", businessId)
+            .eq("sales.location_id", locationId)
+            .neq("sales.status", "ANNULEE")
+            .gte("sales.created_at", currentStart.toISOString()),
+          supabase
+            .from("sale_items")
+            .select(selectItems)
+            .eq("sales.business_id", businessId)
+            .eq("sales.location_id", locationId)
+            .neq("sales.status", "ANNULEE")
+            .gte("sales.created_at", previousStart.toISOString())
+            .lt("sales.created_at", currentStart.toISOString()),
         ]);
 
-        function sumByCategory(items: typeof currentItems) {
+        type ItemRow = { total: number; product: { category: { name: string } | null } | null };
+
+        function sumByCategory(items: ItemRow[]) {
           const map = new Map<string, number>();
           for (const item of items) {
-            const name = item.product.category?.name ?? "Sans catégorie";
+            const name = item.product?.category?.name ?? "Sans catégorie";
             map.set(name, (map.get(name) ?? 0) + item.total);
           }
           return map;
         }
 
-        const current = sumByCategory(currentItems);
-        const previous = sumByCategory(previousItems);
+        const current = sumByCategory((currentData ?? []) as unknown as ItemRow[]);
+        const previous = sumByCategory((previousData ?? []) as unknown as ItemRow[]);
         const categories = new Set([...current.keys(), ...previous.keys()]);
 
         const rows = Array.from(categories).map((name) => {
@@ -233,22 +255,31 @@ export function createToolExecutor(businessId: string, locationId: string, curre
       }
 
       case "get_credit_summary": {
-        const sales = await prisma.sale.findMany({
-          where: { businessId, locationId, status: { in: ["CREDIT", "PARTIELLE"] } },
-          include: { customer: true },
-        });
+        const { data } = await supabase
+          .from("sales")
+          .select("total, amountPaid:amount_paid, createdAt:created_at, customer:customers(id, name)")
+          .eq("business_id", businessId)
+          .eq("location_id", locationId)
+          .in("status", ["CREDIT", "PARTIELLE"]);
+        const sales = (data ?? []) as unknown as Array<{
+          total: number;
+          amountPaid: number;
+          createdAt: string;
+          customer: { id: string; name: string } | null;
+        }>;
 
         const byCustomer = new Map<string, { name: string; amount: number; since: Date }>();
         for (const sale of sales) {
           if (!sale.customer) continue;
           const remaining = sale.total - sale.amountPaid;
           if (remaining <= 0) continue;
+          const createdAt = new Date(sale.createdAt);
           const existing = byCustomer.get(sale.customer.id);
           if (existing) {
             existing.amount += remaining;
-            if (sale.createdAt < existing.since) existing.since = sale.createdAt;
+            if (createdAt < existing.since) existing.since = createdAt;
           } else {
-            byCustomer.set(sale.customer.id, { name: sale.customer.name, amount: remaining, since: sale.createdAt });
+            byCustomer.set(sale.customer.id, { name: sale.customer.name, amount: remaining, since: createdAt });
           }
         }
 
@@ -264,16 +295,23 @@ export function createToolExecutor(businessId: string, locationId: string, curre
         const limit = Math.min(Number(input.limit) || 5, 15);
         const currentStart = startOfMonth();
 
-        const items = await prisma.saleItem.findMany({
-          where: { sale: { businessId, locationId, status: { not: "ANNULEE" }, createdAt: { gte: currentStart } } },
-          select: {
-            quantity: true,
-            product: { select: { name: true, salePrice: true, purchasePrice: true } },
-          },
-        });
+        const { data } = await supabase
+          .from("sale_items")
+          .select(
+            "quantity, product:products(name, salePrice:sale_price, purchasePrice:purchase_price), sale:sales!inner(businessId:business_id, locationId:location_id, status, createdAt:created_at)"
+          )
+          .eq("sales.business_id", businessId)
+          .eq("sales.location_id", locationId)
+          .neq("sales.status", "ANNULEE")
+          .gte("sales.created_at", currentStart.toISOString());
+        const items = (data ?? []) as unknown as Array<{
+          quantity: number;
+          product: { name: string; salePrice: number; purchasePrice: number } | null;
+        }>;
 
         const byProduct = new Map<string, { name: string; qty: number; salePrice: number; purchasePrice: number }>();
         for (const item of items) {
+          if (!item.product) continue;
           const existing = byProduct.get(item.product.name);
           if (existing) existing.qty += item.quantity;
           else
