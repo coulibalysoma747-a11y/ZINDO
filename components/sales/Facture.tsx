@@ -43,7 +43,9 @@ export type FactureData = {
  * Facture A4 — mise en page calquée sur le modèle de facture commerciale
  * papier utilisé par les commerçants (en-tête centré, mention "DOIT :",
  * tableau encadré, montant en toutes lettres, cachet), avec en plus un QR
- * code de vérification. Document distinct du ticket de caisse compact
+ * code de vérification. Police serif et double-filets pour un rendu de
+ * document officiel, en noir et blanc uniquement (pas de couleur de marque
+ * — choix délibéré). Document distinct du ticket de caisse compact
  * (components/sales/Receipt.tsx). Autonome (CSS d'impression embarqué).
  */
 export function Facture({ data }: { data: FactureData }) {
@@ -73,54 +75,53 @@ export function Facture({ data }: { data: FactureData }) {
 
       <div
         id="zindo-facture"
-        className="mx-auto w-full max-w-[210mm] rounded-2xl border border-zinc-200 bg-white p-10 text-zinc-800 shadow-sm"
+        className="mx-auto w-full max-w-[210mm] rounded-2xl border border-zinc-200 bg-white p-12 font-serif text-zinc-800 shadow-sm"
       >
-        {/* En-tête : identité du commerce, centrée */}
-        <div className="border-b-2 border-zindo-ink-900 pb-4 text-center">
+        {/* En-tête : identité du commerce, centrée, filet double façon papier à en-tête */}
+        <div className="border-b-4 border-double border-zindo-ink-900 pb-5 text-center">
           {data.logoUrl && (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={data.logoUrl} alt={data.businessName} className="mx-auto mb-2 h-14 w-14 object-contain" />
+            <img src={data.logoUrl} alt={data.businessName} className="mx-auto mb-3 h-14 w-14 object-contain" />
           )}
-          <p className="text-2xl font-extrabold uppercase tracking-wide text-zindo-ink-900">{data.businessName}</p>
-          {data.businessActivity && <p className="mt-0.5 text-sm text-zinc-600">{data.businessActivity}</p>}
+          <p className="text-3xl font-bold uppercase tracking-wide text-zindo-ink-900">{data.businessName}</p>
+          {data.businessActivity && (
+            <p className="mt-1.5 text-xs uppercase tracking-[0.15em] text-zinc-500">{data.businessActivity}</p>
+          )}
           {(data.locationAddress ?? data.businessAddress) && (
-            <p className="mt-0.5 text-sm text-zinc-500">{data.locationAddress ?? data.businessAddress}</p>
+            <p className="mt-1.5 text-sm leading-relaxed text-zinc-600">{data.locationAddress ?? data.businessAddress}</p>
           )}
-          <p className="text-sm text-zinc-500">
-            {[
-              data.businessPhone ? `Tél : ${data.businessPhone}` : null,
-              data.businessEmail,
-            ]
-              .filter(Boolean)
-              .join("  ·  ")}
-          </p>
+          {(data.businessPhone || data.businessEmail) && (
+            <p className="text-sm leading-relaxed text-zinc-600">
+              {[data.businessPhone ? `Tél : ${data.businessPhone}` : null, data.businessEmail].filter(Boolean).join("  ·  ")}
+            </p>
+          )}
         </div>
 
         {/* Lieu et date */}
-        <p className="mt-4 text-right text-sm text-zinc-600">
+        <p className="mt-6 text-right text-sm italic text-zinc-600">
           {(data.businessCity ?? data.locationName) ? `${data.businessCity ?? data.locationName}, ` : ""}
           le {formatLongDate(data.date)}
         </p>
 
         {/* Titre */}
-        <div className="mt-4 text-center">
-          <p className="inline-block border-b-2 border-zindo-ink-900 pb-1 text-xl font-extrabold uppercase tracking-wide text-zindo-ink-900">
+        <div className="mt-6 text-center">
+          <p className="inline-block border-b-2 border-zindo-ink-900 pb-1.5 text-2xl font-bold uppercase tracking-[0.2em] text-zindo-ink-900">
             Facture
           </p>
-          <p className="mt-1 text-sm text-zinc-500">
+          <p className="mt-2 text-sm text-zinc-500">
             N° <span className="font-semibold text-zinc-900">{data.invoiceNumber}</span>
           </p>
         </div>
 
         {/* Client + détails de la vente */}
-        <div className="mt-6 flex flex-wrap items-start justify-between gap-4">
-          <div>
-            <span className="font-semibold text-zinc-900 underline">DOIT</span>
+        <div className="mt-8 flex flex-wrap items-start justify-between gap-4">
+          <div className="leading-relaxed">
+            <span className="font-bold text-zinc-900 underline">DOIT</span>
             <span className="text-zinc-900"> : {data.customerName ?? "Client de passage"}</span>
             {data.customerPhone && <p className="text-sm text-zinc-600">{data.customerPhone}</p>}
             {data.customerAddress && <p className="text-sm text-zinc-600">{data.customerAddress}</p>}
           </div>
-          <div className="text-right text-sm text-zinc-600">
+          <div className="text-right text-sm leading-relaxed text-zinc-600">
             {data.cashierName && (
               <p>
                 Émise par <span className="font-medium text-zinc-900">{data.cashierName}</span>
@@ -133,37 +134,40 @@ export function Facture({ data }: { data: FactureData }) {
         </div>
 
         {/* Tableau des articles, encadré */}
-        <table className="mt-6 w-full border-collapse text-sm">
+        <table className="mt-8 w-full border-collapse text-sm">
           <thead>
-            <tr className="bg-zinc-100 text-left text-xs uppercase tracking-wide text-zinc-600">
-              <th className="border border-zinc-300 px-2 py-2">Désignation</th>
-              <th className="border border-zinc-300 px-2 py-2 text-right">Qté</th>
-              <th className="border border-zinc-300 px-2 py-2 text-right">P. Unitaire</th>
-              <th className="border border-zinc-300 px-2 py-2 text-right">P. Total</th>
+            <tr className="bg-zinc-50 text-left text-xs uppercase tracking-wide text-zinc-600">
+              <th className="border border-zinc-300 px-3 py-3">Désignation</th>
+              <th className="w-20 border border-zinc-300 px-3 py-3 text-right">Qté</th>
+              <th className="w-32 border border-zinc-300 px-3 py-3 text-right">P. Unitaire</th>
+              <th className="w-32 border border-zinc-300 px-3 py-3 text-right">P. Total</th>
             </tr>
           </thead>
           <tbody>
             {data.items.map((item, i) => (
-              <tr key={i}>
-                <td className="border border-zinc-300 px-2 py-2 font-medium text-zinc-900">{item.name}</td>
-                <td className="border border-zinc-300 px-2 py-2 text-right">{item.quantity}</td>
-                <td className="border border-zinc-300 px-2 py-2 text-right">{money(item.unitPrice)}</td>
-                <td className="border border-zinc-300 px-2 py-2 text-right font-medium text-zinc-900">{money(item.total)}</td>
+              <tr key={i} className="even:bg-zinc-50/60">
+                <td className="border border-zinc-300 px-3 py-2.5 font-medium text-zinc-900">{item.name}</td>
+                <td className="border border-zinc-300 px-3 py-2.5 text-right">{item.quantity}</td>
+                <td className="border border-zinc-300 px-3 py-2.5 text-right">{money(item.unitPrice)}</td>
+                <td className="border border-zinc-300 px-3 py-2.5 text-right font-medium text-zinc-900">{money(item.total)}</td>
               </tr>
             ))}
             {!!data.discount && data.discount > 0 && (
               <tr>
-                <td colSpan={3} className="border border-zinc-300 px-2 py-2 text-right text-zinc-600">
+                <td colSpan={3} className="border border-zinc-300 px-3 py-2.5 text-right text-zinc-600">
                   Remise globale
                 </td>
-                <td className="border border-zinc-300 px-2 py-2 text-right text-zinc-600">-{money(data.discount)}</td>
+                <td className="border border-zinc-300 px-3 py-2.5 text-right text-zinc-600">-{money(data.discount)}</td>
               </tr>
             )}
-            <tr className="bg-zinc-50">
-              <td colSpan={3} className="border border-zinc-300 px-2 py-2 text-right font-extrabold text-zindo-ink-900">
+            <tr>
+              <td
+                colSpan={3}
+                className="border border-zinc-300 border-t-2 border-t-zindo-ink-900 px-3 py-3 text-right text-base font-extrabold text-zindo-ink-900"
+              >
                 TOTAL
               </td>
-              <td className="border border-zinc-300 px-2 py-2 text-right font-extrabold text-zindo-ink-900">
+              <td className="border border-zinc-300 border-t-2 border-t-zindo-ink-900 px-3 py-3 text-right text-base font-extrabold text-zindo-ink-900">
                 {money(data.total)}
               </td>
             </tr>
@@ -171,8 +175,8 @@ export function Facture({ data }: { data: FactureData }) {
         </table>
 
         {/* Montant en toutes lettres */}
-        <p className="mt-4 text-sm text-zinc-700">
-          Arrêtée la présente facture à la somme de :{" "}
+        <p className="mt-6 text-sm leading-relaxed text-zinc-700">
+          <span className="italic">Arrêtée la présente facture à la somme de</span> :{" "}
           <span className="font-semibold text-zinc-900">
             {amountInWords} {currencyWord}.
           </span>
@@ -180,8 +184,8 @@ export function Facture({ data }: { data: FactureData }) {
 
         {/* Paiement / reste à payer */}
         {(data.amountPaid > 0 || (!!data.remaining && data.remaining > 0) || (!!data.change && data.change > 0)) && (
-          <div className="mt-3 flex justify-end">
-            <div className="w-64 space-y-1 text-sm text-zinc-600">
+          <div className="mt-4 flex justify-end border-t border-zinc-200 pt-3">
+            <div className="w-64 space-y-1.5 text-sm text-zinc-600">
               <div className="flex justify-between">
                 <span>Payé</span>
                 <span>{money(data.amountPaid)}</span>
@@ -203,21 +207,23 @@ export function Facture({ data }: { data: FactureData }) {
         )}
 
         {/* Pied de page : QR code de vérification + cachet */}
-        <div className="mt-14 flex items-end justify-between gap-6">
+        <div className="mt-16 flex items-end justify-between gap-6">
           <div className="flex items-end gap-4">
             {data.qrCodeDataUrl && (
               <div className="flex flex-col items-center gap-1">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={data.qrCodeDataUrl} alt="QR code de vérification" width={70} height={70} />
+                <img src={data.qrCodeDataUrl} alt="QR code de vérification" width={76} height={76} />
                 <p className="text-[10px] tracking-wide text-zinc-400">Scannez pour vérifier</p>
               </div>
             )}
-            <p className="max-w-xs text-xs text-zinc-400">{data.footerMessage ?? "Merci pour votre confiance."}</p>
+            <p className="max-w-xs text-xs leading-relaxed text-zinc-400">
+              {data.footerMessage ?? "Merci pour votre confiance."}
+            </p>
           </div>
 
           <div className="text-center">
-            <p className="mb-10 text-xs font-semibold uppercase tracking-wide text-zinc-500">Le Responsable</p>
-            <div className="w-48 border-t border-zinc-300" />
+            <p className="mb-12 text-xs font-semibold uppercase tracking-[0.15em] text-zinc-500">Le Responsable</p>
+            <div className="w-52 border-t border-zinc-300" />
           </div>
         </div>
       </div>
