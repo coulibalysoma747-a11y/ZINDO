@@ -39,16 +39,20 @@ export function ReceiptPrintPanel({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // `print:absolute` est essentiel : en impression, un élément `position: fixed`
-  // se répète automatiquement sur CHAQUE page générée par le navigateur (c'est
-  // le comportement standard pour les en-têtes/pieds de page fixes) — ce qui
-  // imprimait le ticket en double. `position: absolute` n'a pas ce comportement.
-  // Le reste de ce panneau (rideau, cadre, boutons) est masqué au moment
-  // d'imprimer par le CSS embarqué dans Receipt/Facture lui-même
-  // (body * { visibility: hidden }, #zindo-receipt/#zindo-facture { visibility:
-  // visible; ... }) — inutile de dupliquer cette logique ici.
+  // `print:contents` sur les deux conteneurs englobants (au lieu de laisser
+  // leur position/overflow habituels) : Receipt/Facture positionne son propre
+  // contenu en `position: absolute` par rapport à son ancêtre positionné le
+  // plus proche pour l'impression. Sans `contents`, cet ancêtre restait le
+  // tiroir (position: relative, overflow-y-auto, hauteur d'écran) : même
+  // invisible, cette boîte continuait de faire office de repère et de zone de
+  // recadrage pour l'impression, ce qui faisait apparaître le ticket hors
+  // cadre / une page blanche selon les navigateurs. `display: contents`
+  // supprime la boîte elle-même (tout en gardant ses enfants dans l'arbre),
+  // ce qui laisse le ticket se positionner par rapport à la page réelle —
+  // exactement comme sur la page dédiée /ventes/[id], qui n'a jamais eu ce
+  // problème.
   return (
-    <div className="fixed print:absolute inset-0 z-50 flex">
+    <div className="fixed inset-0 z-50 flex print:contents">
       {/* Rideau semi-transparent — cliquer en dehors du panneau le ferme, sans jamais quitter la page. */}
       <button
         type="button"
@@ -57,7 +61,7 @@ export function ReceiptPrintPanel({
         className="absolute inset-0 bg-zindo-ink-900/40 backdrop-blur-[1px]"
       />
 
-      <div className="relative flex h-full w-full max-w-sm flex-col gap-3 overflow-y-auto border-r border-zinc-200 bg-zinc-50 p-4 shadow-2xl animate-zindo-fade-in">
+      <div className="relative flex h-full w-full max-w-sm flex-col gap-3 overflow-y-auto border-r border-zinc-200 bg-zinc-50 p-4 shadow-2xl animate-zindo-fade-in print:contents">
         <div className="flex items-center justify-between gap-2">
           <div>
             <p className="text-sm font-semibold text-zindo-ink-900">
@@ -94,7 +98,7 @@ export function ReceiptPrintPanel({
           </div>
         )}
 
-        <div className="flex-1">
+        <div className="flex-1 print:contents">
           {doc.documentType === "FACTURE" ? <Facture data={doc.data} /> : <Receipt data={doc.data} width={width} />}
         </div>
 
