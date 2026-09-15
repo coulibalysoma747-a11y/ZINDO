@@ -55,6 +55,14 @@ create table businesses (
   next_session_seq int not null default 1,
   next_online_order_seq int not null default 1,
   next_invoice_seq int not null default 1,
+  -- Intégration FasoStock (lib/integrations/faso-stock.ts) : synchronisation
+  -- à sens unique FasoStock → ZINDO (leur API est en lecture seule). La clé
+  -- n'est jamais renvoyée au navigateur, uniquement lue côté serveur.
+  faso_stock_api_key text,
+  faso_stock_store_mapping text,
+  faso_stock_last_sync_at timestamptz,
+  faso_stock_last_sync_status text,
+  faso_stock_last_sync_error text,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
@@ -169,9 +177,17 @@ create table products (
   barcode text,
   custom_fields text,
   active boolean not null default true,
+  -- Identifiant du produit côté FasoStock, pour retrouver un produit déjà
+  -- synchronisé lors des synchronisations suivantes (mise à jour plutôt que
+  -- doublon). NULL pour tout produit créé manuellement dans ZINDO — une
+  -- contrainte unique standard (pas un index partiel) autorise plusieurs
+  -- NULL sans conflit, tout en empêchant deux lignes du même commerce de
+  -- pointer vers le même produit FasoStock.
+  faso_stock_id text,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
-  unique (business_id, reference)
+  unique (business_id, reference),
+  unique (business_id, faso_stock_id)
 );
 create index on products (business_id);
 create index on products (business_id, barcode);

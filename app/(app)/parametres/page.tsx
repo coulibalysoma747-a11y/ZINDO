@@ -4,11 +4,19 @@ import { requirePermission } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
 import { supabase } from "@/lib/supabase";
 import { findActivity } from "@/lib/activities";
+import { getLocations } from "@/lib/location";
+import { listFasoStockStores, type FasoStockStore } from "@/lib/integrations/faso-stock";
 import { Card, CardBody, CardHeader } from "@/components/ui/Card";
 import { BusinessSettingsForm } from "./BusinessSettingsForm";
 import { PaymentMethodsPanel } from "./PaymentMethodsPanel";
 import { PermissionsPanel } from "./PermissionsPanel";
+import { FasoStockPanel } from "./FasoStockPanel";
 import type { PaymentMethod, Role } from "@/lib/db-types";
+
+// La synchronisation FasoStock déclenchée depuis cette page peut porter sur
+// des milliers de produits (pagination + écritures par lots) — au-delà de la
+// durée par défaut d'une fonction Vercel (10s).
+export const maxDuration = 120;
 
 const ALL_METHODS: { method: PaymentMethod; defaultLabel: string }[] = [
   { method: "ESPECES", defaultLabel: "Espèces" },
@@ -21,9 +29,17 @@ const ALL_METHODS: { method: PaymentMethod; defaultLabel: string }[] = [
 export default async function SettingsPage() {
   const user = await requirePermission(PERMISSIONS.SETTINGS_MANAGE);
 
-  const [{ data: configs }, { data: overrides }] = await Promise.all([
+  const [{ data: configs }, { data: overrides }, { data: businessRow }, locations] = await Promise.all([
     supabase.from("payment_method_configs").select("method, label, enabled").eq("business_id", user.businessId),
     supabase.from("role_permissions").select("role, permission, allowed").eq("business_id", user.businessId),
+    supabase
+      .from("businesses")
+      .select(
+        "fasoStockApiKey:faso_stock_api_key, fasoStockStoreMapping:faso_stock_store_mapping, fasoStockLastSyncAt:faso_stock_last_sync_at, fasoStockLastSyncStatus:faso_stock_last_sync_status, fasoStockLastSyncError:faso_stock_last_sync_error"
+      )
+      .eq("id", user.businessId)
+      .maybeSingle(),
+    getLocations(user.businessId),
   ]);
 
   const configMap = new Map((configs ?? []).map((c) => [c.method as string, c]));
@@ -34,6 +50,23 @@ export default async function SettingsPage() {
   }));
 
   const activity = findActivity(user.business.activityKey);
+
+  const fasoStockApiKey = businessRow?.fasoStockApiKey as string | null;
+  let fasoStockStores: FasoStockStore[] = [];
+  if (fasoStockApiKey) {
+    try {
+      fasoStockStores = await listFasoStockStores(fasoStockApiKey);
+    } catch {
+      // La clé peut avoir été révoquée depuis — le panneau proposera de
+      // recharger, ce qui remontera l'erreur exacte à l'utilisateur.
+    }
+  }
+  let fasoStockMapping: Record<string, string> = {};
+  try {
+    fasoStockMapping = businessRow?.fasoStockStoreMapping ? JSON.parse(businessRow.fasoStockStoreMapping as string) : {};
+  } catch {
+    fasoStockMapping = {};
+  }
 
   return (
     <div className="space-y-6">
@@ -82,6 +115,23 @@ export default async function SettingsPage() {
         </CardHeader>
         <CardBody>
           <PaymentMethodsPanel methods={paymentMethods} />
+        </CardBody>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <h2 className="font-semibold text-zinc-900">Intégration FasoStock</h2>
+        </CardHeader>
+        <CardBody>
+          <FasoStockPanel
+            initiallyConnected={!!fasoStockApiKey}
+            initialStores={fasoStockStores}
+            locations={locations.map((l) => ({ id: l.id as string, name: l.name as string }))}
+            initialMapping={fasoStockMapping}
+            lastSyncAt={(businessRow?.fasoStockLastSyncAt as string | null) ?? null}
+            lastSyncStatus={(businessRow?.fasoStockLastSyncStatus as string | null) ?? null}
+            lastSyncError={(businessRow?.fasoStockLastSyncError as string | null) ?? null}
+          />
         </CardBody>
       </Card>
 
