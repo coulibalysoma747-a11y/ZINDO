@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useMemo, useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Trash2, Plus, Minus, UserPlus, Search, Loader2, Wallet, Lock } from "lucide-react";
 import { ProductGrid, type PosProduct } from "@/components/products/ProductGrid";
@@ -11,11 +10,13 @@ import { Button } from "@/components/ui/Button";
 import { Field, Input, Select } from "@/components/ui/Input";
 import { formatMoney, formatDateTime } from "@/lib/format";
 import { createSaleAction } from "@/lib/actions/sales";
+import { getSaleDocumentAction, type SaleDocument } from "@/lib/actions/receipt";
 import { getPosProductsAction, findProductByExactCodeAction } from "@/lib/actions/product-search";
 import { ClientFormModal } from "@/app/(app)/clients/ClientFormModal";
 import { PosSettingsButton } from "./PosSettingsButton";
 import { PrinterSettingsButton } from "./PrinterSettingsButton";
-import type { PaymentMethod } from "@prisma/client";
+import { ReceiptPrintPanel } from "./ReceiptPrintPanel";
+import type { PaymentMethod } from "@/lib/db-types";
 
 type CartLine = {
   product: PosProduct;
@@ -88,7 +89,7 @@ export function POS({
   const [newClientOpen, setNewClientOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
-  const router = useRouter();
+  const [receiptDoc, setReceiptDoc] = useState<Extract<SaleDocument, { success: true }> | null>(null);
 
   const filteredProducts = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -172,7 +173,21 @@ export function POS({
         setError(result.error);
         return;
       }
-      router.push(autoPrintReceipt ? `/ventes/${result.saleId}?print=1` : `/ventes/${result.saleId}`);
+
+      // On ne quitte jamais la page Vente après un encaissement : la caissière
+      // doit pouvoir enchaîner immédiatement sur le client suivant. Le
+      // ticket/la facture s'affiche dans un panneau (impression auto si activée
+      // dans les réglages) plutôt que sur une page séparée.
+      setCart([]);
+      setCustomerId("");
+      setDiscount(0);
+      setAmountPaidInput("");
+
+      const doc = await getSaleDocumentAction(result.saleId);
+      if (doc.success) setReceiptDoc(doc);
+      else setError("Vente enregistrée, mais impossible de charger le ticket pour l'impression.");
+
+      getPosProductsAction(locationId).then(setProducts);
     });
   }
 
@@ -442,6 +457,10 @@ export function POS({
       </div>
 
       <ClientFormModal open={newClientOpen} onClose={() => setNewClientOpen(false)} />
+
+      {receiptDoc && (
+        <ReceiptPrintPanel doc={receiptDoc} autoPrint={autoPrintReceipt} onClose={() => setReceiptDoc(null)} />
+      )}
     </div>
   );
 }
