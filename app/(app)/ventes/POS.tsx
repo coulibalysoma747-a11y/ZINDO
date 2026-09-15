@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useMemo, useState, useTransition } from "react";
+import { useCallback, useEffect, useMemo, useState, useTransition } from "react";
 import Link from "next/link";
-import { Trash2, Plus, Minus, UserPlus, Search, Loader2, Wallet, Lock } from "lucide-react";
+import { Trash2, Plus, Minus, UserPlus, Search, Loader2, Wallet, Lock, WifiOff, RefreshCw } from "lucide-react";
 import { ProductGrid, type PosProduct } from "@/components/products/ProductGrid";
 import { BarcodeScannerButton } from "@/components/products/BarcodeScannerButton";
 import { Card, CardBody, CardHeader } from "@/components/ui/Card";
@@ -17,6 +17,18 @@ import { PosSettingsButton } from "./PosSettingsButton";
 import { PrinterSettingsButton } from "./PrinterSettingsButton";
 import { ReceiptPrintPanel } from "./ReceiptPrintPanel";
 import type { PaymentMethod } from "@/lib/db-types";
+import type { ReceiptWidth } from "@/components/sales/Receipt";
+import {
+  cacheOfflineSnapshot,
+  getCachedSnapshot,
+  decrementCachedStock,
+  queueOfflineSale,
+  getPendingSales,
+  type CachedBusinessInfo,
+  type PendingSale,
+} from "@/lib/offline/db";
+import { syncPendingSales } from "@/lib/offline/sync";
+import { buildOfflineDocument } from "@/lib/offline/build-document";
 
 type CartLine = {
   product: PosProduct;
@@ -51,6 +63,7 @@ export function POS({
   autoPrintReceipt: initialAutoPrint,
   printerTicketWidth: initialPrinterWidth,
   session,
+  businessInfo,
 }: {
   mode?: "pos" | "facture";
   customers: { id: string; name: string; phone: string | null }[];
@@ -62,6 +75,7 @@ export function POS({
   autoPrintReceipt: boolean;
   printerTicketWidth: string | null;
   session: SessionInfo;
+  businessInfo: CachedBusinessInfo;
 }) {
   const isFacture = mode === "facture";
   const [cart, setCart] = useState<CartLine[]>([]);
@@ -71,13 +85,74 @@ export function POS({
   const [autoPrintReceipt, setAutoPrintReceipt] = useState(initialAutoPrint);
   const [printerTicketWidth, setPrinterTicketWidth] = useState(initialPrinterWidth);
 
+  // Mode hors ligne : reste utilisable si la connexion tombe pendant que
+  // cette page est déjà ouverte (le cas réel le plus fréquent avec une
+  // connexion intermittente) — pas un démarrage à froid sans jamais avoir
+  // été en ligne. Voir lib/offline/.
+  const [isOnline, setIsOnline] = useState(true);
+  const [pendingSales, setPendingSales] = useState<PendingSale[]>([]);
+  const [syncing, setSyncing] = useState(false);
+
+  const refreshPendingSales = useCallback(() => {
+    getPendingSales().then(setPendingSales);
+  }, []);
+
+  const runSync = useCallback(async () => {
+    setSyncing(true);
+    try {
+      await syncPendingSales();
+    } finally {
+      setSyncing(false);
+      refreshPendingSales();
+      getPosProductsAction(locationId)
+        .then(setProducts)
+        .catch(() => {});
+    }
+  }, [locationId, refreshPendingSales]);
+
+  useEffect(() => {
+    setIsOnline(navigator.onLine);
+    refreshPendingSales();
+    function handleOnline() {
+      setIsOnline(true);
+      runSync();
+    }
+    function handleOffline() {
+      setIsOnline(false);
+    }
+    window.addEventListener("online", handleOnline);
+    window.addEventListener("offline", handleOffline);
+    return () => {
+      window.removeEventListener("online", handleOnline);
+      window.removeEventListener("offline", handleOffline);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   useEffect(() => {
     setCart([]);
     setLoadingProducts(true);
-    getPosProductsAction(locationId).then((result) => {
-      setProducts(result);
-      setLoadingProducts(false);
-    });
+    getPosProductsAction(locationId)
+      .then((result) => {
+        setProducts(result);
+        setLoadingProducts(false);
+        cacheOfflineSnapshot({
+          locationId,
+          products: result,
+          customers,
+          businessInfo,
+          paymentMethods: paymentMethods.map((m) => ({ method: m.method, label: m.label || PAYMENT_LABELS[m.method] })),
+        });
+      })
+      .catch(async () => {
+        // Hors ligne dès le chargement (rechargement de la page pendant une
+        // coupure) : on retombe sur le cache local plutôt que de bloquer.
+        const cached = await getCachedSnapshot(locationId);
+        if (cached) setProducts(cached.products);
+        setLoadingProducts(false);
+        setIsOnline(false);
+      });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [locationId]);
 
   const [customerId, setCustomerId] = useState("");
@@ -139,9 +214,24 @@ export function POS({
   }
 
   async function handleScan(code: string) {
-    const product = await findProductByExactCodeAction(code, locationId);
-    if (product) addProduct(product);
-    else setError(`Aucun produit trouvé pour le code "${code}"`);
+    // Cherche d'abord localement (rapide, fonctionne hors ligne) avant
+    // d'interroger le serveur — utile aussi en ligne pour un scan instantané.
+    const local = products.find((p) => p.barcode === code || p.reference === code);
+    if (local) {
+      addProduct(local);
+      return;
+    }
+    if (!isOnline) {
+      setError(`Aucun produit trouvé pour le code "${code}"`);
+      return;
+    }
+    try {
+      const product = await findProductByExactCodeAction(code, locationId);
+      if (product) addProduct(product);
+      else setError(`Aucun produit trouvé pour le code "${code}"`);
+    } catch {
+      setError(`Aucun produit trouvé pour le code "${code}"`);
+    }
   }
 
   function handleSubmit() {
@@ -154,20 +244,76 @@ export function POS({
       setError("Sélectionnez un client pour une vente à crédit ou un paiement partiel");
       return;
     }
+
+    const items = cart.map((l) => ({
+      productId: l.product.id,
+      quantity: l.quantity,
+      unitPrice: l.unitPrice,
+      discount: l.discount,
+    }));
+    const documentType: "TICKET" | "FACTURE" = isFacture ? "FACTURE" : "TICKET";
+
+    if (!isOnline) {
+      startTransition(async () => {
+        const clientRef = crypto.randomUUID();
+        const selectedCustomer = customers.find((c) => c.id === customerId) ?? null;
+
+        await queueOfflineSale({
+          clientRef,
+          createdAt: new Date().toISOString(),
+          input: { locationId, items, customerId: customerId || undefined, discount, paymentMethod, amountPaid, documentType, clientRef },
+          cashierName: session.cashierName,
+          customerName: selectedCustomer?.name ?? null,
+        });
+        await decrementCachedStock(items);
+
+        const doc = buildOfflineDocument({
+          documentType,
+          clientRef,
+          items: cart.map((l) => ({
+            productId: l.product.id,
+            quantity: l.quantity,
+            unitPrice: l.unitPrice,
+            discount: l.discount,
+            name: l.product.name,
+            unit: l.product.unit,
+          })),
+          cashierName: session.cashierName,
+          customer: selectedCustomer,
+          business: businessInfo,
+          paymentMethod,
+          discount,
+          amountPaid,
+          defaultWidth: (printerTicketWidth as ReceiptWidth) || "80mm",
+        });
+
+        // Répercute la vente hors ligne sur le stock affiché localement, pour
+        // ne pas proposer de survendre avant la prochaine synchronisation.
+        setProducts((prev) =>
+          prev.map((p) => {
+            const line = cart.find((l) => l.product.id === p.id);
+            return line ? { ...p, quantity: Math.max(0, p.quantity - line.quantity) } : p;
+          })
+        );
+        setCart([]);
+        setCustomerId("");
+        setDiscount(0);
+        setAmountPaidInput("");
+        setReceiptDoc(doc);
+        refreshPendingSales();
+      });
+      return;
+    }
+
     startTransition(async () => {
       const result = await createSaleAction({
         locationId,
-        items: cart.map((l) => ({
-          productId: l.product.id,
-          quantity: l.quantity,
-          unitPrice: l.unitPrice,
-          discount: l.discount,
-        })),
+        items,
         customerId: customerId || undefined,
         discount,
         paymentMethod,
         amountPaid,
-        documentType: isFacture ? "FACTURE" : "TICKET",
+        documentType,
       });
       if (!result.success) {
         setError(result.error);
@@ -244,6 +390,31 @@ export function POS({
             </Link>
           </div>
         </div>
+
+        {(!isOnline || pendingSales.length > 0) && (
+          <div
+            className={`flex flex-wrap items-center justify-between gap-2 rounded-lg border px-3 py-2 text-xs ${
+              !isOnline ? "border-amber-200 bg-amber-50 text-amber-800" : "border-blue-200 bg-blue-50 text-blue-800"
+            }`}
+          >
+            <div className="flex items-center gap-2">
+              {!isOnline ? <WifiOff className="h-4 w-4 shrink-0" /> : <RefreshCw className="h-4 w-4 shrink-0" />}
+              <span>
+                {!isOnline
+                  ? `Hors ligne — les ventes sont enregistrées sur cet appareil et se synchroniseront au retour de la connexion.${
+                      pendingSales.length > 0 ? ` (${pendingSales.length} en attente)` : ""
+                    }`
+                  : `${pendingSales.length} vente(s) en attente de synchronisation.`}
+              </span>
+            </div>
+            {isOnline && pendingSales.length > 0 && (
+              <Button size="sm" variant="outline" onClick={runSync} disabled={syncing}>
+                {syncing ? "Synchronisation..." : "Synchroniser maintenant"}
+              </Button>
+            )}
+          </div>
+        )}
+
         <div className="flex gap-2">
           <div className="relative flex-1">
             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" />

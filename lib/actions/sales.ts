@@ -26,6 +26,13 @@ export type CreateSaleInput = {
   amountPaid: number;
   note?: string;
   documentType?: "TICKET" | "FACTURE";
+  /**
+   * Référence générée côté client pour une vente enregistrée hors ligne
+   * (voir lib/offline/), rejouée ici dès le retour de la connexion. Rend
+   * l'appel idempotent : si une vente porte déjà cette référence pour ce
+   * commerce, elle est renvoyée telle quelle plutôt que dupliquée.
+   */
+  clientRef?: string;
 };
 
 export type CreateSaleResult = { success: true; saleId: string } | { success: false; error: string };
@@ -94,6 +101,16 @@ export async function createSaleAction(input: CreateSaleInput): Promise<CreateSa
 
 async function createSaleImpl(input: CreateSaleInput): Promise<CreateSaleResult> {
   const user = await requirePermission(PERMISSIONS.SALES_CREATE);
+
+  if (input.clientRef) {
+    const { data: existing } = await supabase
+      .from("sales")
+      .select("id")
+      .eq("business_id", user.businessId)
+      .eq("client_ref", input.clientRef)
+      .maybeSingle();
+    if (existing) return { success: true, saleId: existing.id as string };
+  }
 
   if (!input.locationId) return { success: false, error: "Boutique introuvable" };
   if (!input.items || input.items.length === 0) {
@@ -169,6 +186,7 @@ async function createSaleImpl(input: CreateSaleInput): Promise<CreateSaleResult>
       status,
       document_type: input.documentType ?? "TICKET",
       note: input.note ?? null,
+      client_ref: input.clientRef ?? null,
     })
     .select("id")
     .single();

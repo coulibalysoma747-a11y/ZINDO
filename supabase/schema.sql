@@ -254,8 +254,15 @@ create table sales (
   status sale_status not null default 'PAYEE',
   document_type text not null default 'TICKET',
   note text,
+  -- Référence générée côté client pour une vente créée hors ligne (voir
+  -- lib/offline/), rejouée vers ce même endpoint dès le retour de la
+  -- connexion. Permet de détecter un rejeu (retry réseau, double clic sur
+  -- "Synchroniser") et de ne jamais créer deux fois la même vente. NULL pour
+  -- toute vente créée normalement en ligne.
+  client_ref text,
   created_at timestamptz not null default now(),
-  unique (business_id, number)
+  unique (business_id, number),
+  unique (business_id, client_ref)
 );
 create index on sales (business_id, created_at);
 create index on sales (location_id);

@@ -69,6 +69,18 @@ export async function POSPageContent({ mode }: { mode: "pos" | "facture" }) {
         openedAt: new Date(session.openedAt).toISOString(),
         cashierName: `${session.user.firstName} ${session.user.lastName}`,
       }}
+      businessInfo={{
+        businessName: user.business.name,
+        businessActivity: user.business.activity,
+        businessPhone: user.business.phone,
+        businessAddress: user.business.address,
+        businessCity: user.business.city,
+        logoUrl: user.business.logoUrl,
+        locationName: currentLocation.name,
+        locationAddress: currentLocation.address,
+        currency: user.business.currency,
+        footerMessage: user.business.ticketFooter,
+      }}
     />
   );
 }
