@@ -58,12 +58,24 @@ Règles :
     for (let i = 0; i < MAX_TOOL_ITERATIONS; i++) {
       const response = await client.messages.create({
         model: ASSISTANT_MODEL,
-        max_tokens: 2048,
+        // Claude Opus 5 réfléchit (extended thinking) par défaut, et ce
+        // raisonnement est décompté du même budget que max_tokens — avec une
+        // limite trop basse, le modèle pouvait être coupé avant même
+        // d'émettre un appel d'outil ou sa réponse finale, d'où l'assistant
+        // qui ne répondait jamais correctement.
+        max_tokens: 8000,
         output_config: { effort: "medium" },
         system: systemPrompt,
         tools: ASSISTANT_TOOLS,
         messages,
       });
+
+      if (response.stop_reason === "refusal") {
+        return {
+          success: false,
+          error: "L'assistant n'a pas pu répondre à cette question. Essayez de la reformuler.",
+        };
+      }
 
       if (response.stop_reason !== "tool_use") {
         const text = response.content
