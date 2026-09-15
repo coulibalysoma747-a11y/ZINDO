@@ -362,6 +362,48 @@ create table quote_items (
 );
 create index on quote_items (quote_id);
 
+-- Détails d'une vente d'engin (module Vente Engin, activité "Boutique de
+-- motos") : capture les informations supplémentaires attendues sur une
+-- facture de vente de moto (état, garantie, accessoires remis, pièce
+-- d'identité de l'acheteur...) au-delà de ce que sales/sale_items modélisent
+-- déjà. Une ligne par vente, créée juste après la vente elle-même — voir
+-- lib/actions/vehicle-sales.ts::createVehicleSaleAction.
+create table vehicle_sale_details (
+  id text primary key default gen_random_uuid()::text,
+  sale_id text not null references sales(id) on delete cascade,
+  business_id text not null references businesses(id) on delete cascade,
+  vehicle_unit_id text references vehicle_units(id),
+  engine_type text,
+  condition text,
+  brand text,
+  model_label text,
+  designation text,
+  chassis_number text,
+  engine_number text,
+  color text,
+  quantity int not null default 1,
+  customer_name text,
+  customer_civility text,
+  customer_profession text,
+  customer_id_type text,
+  customer_id_number text,
+  customer_address text,
+  customer_phone text,
+  customer_email text,
+  warranty boolean not null default false,
+  accessory_helmet boolean not null default false,
+  accessory_tool_kit boolean not null default false,
+  accessory_manual boolean not null default false,
+  accessory_keys boolean not null default false,
+  accessory_safety_vest boolean not null default false,
+  accessory_other text,
+  internal_reference text,
+  observations text,
+  created_at timestamptz not null default now(),
+  unique (sale_id)
+);
+create index on vehicle_sale_details (business_id, created_at);
+
 create table cash_sessions (
   id text primary key default gen_random_uuid()::text,
   business_id text not null references businesses(id) on delete cascade,

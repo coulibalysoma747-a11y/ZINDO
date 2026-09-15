@@ -231,23 +231,24 @@ export async function deleteVehicleUnitAction(unitId: string): Promise<VehicleUn
 export async function getAvailableVehicleUnitsAction(
   productId: string,
   locationId: string
-): Promise<{ id: string; chassisNumber: string; color: string | null }[]> {
+): Promise<{ id: string; chassisNumber: string; engineNumber: string | null; color: string | null }[]> {
   const user = await requireUser();
   const { data } = await supabase
     .from("vehicle_units")
-    .select("id, chassisNumber:chassis_number, color")
+    .select("id, chassisNumber:chassis_number, engineNumber:engine_number, color")
     .eq("business_id", user.businessId)
     .eq("product_id", productId)
     .eq("location_id", locationId)
     .eq("status", "EN_STOCK")
     .order("chassis_number", { ascending: true });
-  return (data ?? []) as unknown as { id: string; chassisNumber: string; color: string | null }[];
+  return (data ?? []) as unknown as { id: string; chassisNumber: string; engineNumber: string | null; color: string | null }[];
 }
 
 export type VehicleModel = {
   id: string;
   name: string;
   reference: string;
+  brand: string | null;
   photoUrl: string | null;
   salePrice: number;
   unit: string;
@@ -260,7 +261,7 @@ export async function getVehicleModelsAction(locationId: string): Promise<Vehicl
 
   const { data: products } = await supabase
     .from("products")
-    .select("id, name, reference, photoUrl:photo_url, salePrice:sale_price, unit")
+    .select("id, name, reference, brand, photoUrl:photo_url, salePrice:sale_price, unit")
     .eq("business_id", user.businessId)
     .eq("track_units", true)
     .eq("active", true)
