@@ -17,6 +17,7 @@ export function ProductForm({
   locations,
   defaultLocationId,
   customFieldDefs,
+  showTrackUnits = false,
   initial,
   submitLabel,
 }: {
@@ -26,6 +27,8 @@ export function ProductForm({
   locations: Option[];
   defaultLocationId?: string;
   customFieldDefs?: CustomFieldDef[];
+  /** N'affiche la case "suivi individuel" que pour l'activité "Boutique de motos" — voir lib/activities.ts. */
+  showTrackUnits?: boolean;
   initial?: {
     name: string;
     reference: string;
@@ -173,24 +176,26 @@ export function ProductForm({
         <Textarea id="description" name="description" defaultValue={initial?.description ?? ""} rows={3} />
       </Field>
 
-      <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-zinc-200 p-3.5">
-        <input
-          type="checkbox"
-          name="trackUnits"
-          defaultChecked={initial?.trackUnits ?? false}
-          className="mt-0.5 h-4 w-4 shrink-0 rounded accent-zindo-green-500"
-        />
-        <span>
-          <span className="block text-sm font-medium text-zinc-900">
-            Suivre chaque exemplaire individuellement (moto, engin...)
+      {showTrackUnits && (
+        <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-zinc-200 p-3.5">
+          <input
+            type="checkbox"
+            name="trackUnits"
+            defaultChecked={initial?.trackUnits ?? false}
+            className="mt-0.5 h-4 w-4 shrink-0 rounded accent-zindo-green-500"
+          />
+          <span>
+            <span className="block text-sm font-medium text-zinc-900">
+              Suivre chaque exemplaire individuellement (moto, engin...)
+            </span>
+            <span className="block text-xs text-zinc-500">
+              Au lieu d&apos;une simple quantité, chaque exemplaire aura sa propre fiche (numéro de châssis, numéro de
+              moteur, couleur, disponibilité du CMC). Le stock affiché correspond au nombre d&apos;exemplaires
+              enregistrés — gérable depuis la fiche du produit une fois créé.
+            </span>
           </span>
-          <span className="block text-xs text-zinc-500">
-            Au lieu d&apos;une simple quantité, chaque exemplaire aura sa propre fiche (numéro de châssis, numéro de
-            moteur, couleur, disponibilité du CMC). Le stock affiché correspond au nombre d&apos;exemplaires
-            enregistrés — gérable depuis la fiche du produit une fois créé.
-          </span>
-        </span>
-      </label>
+        </label>
+      )}
 
       {customFieldDefs && customFieldDefs.length > 0 && (
         <div className="grid grid-cols-1 gap-4 border-t border-zinc-100 pt-4 sm:grid-cols-2">

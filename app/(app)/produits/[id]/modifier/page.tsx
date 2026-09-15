@@ -4,6 +4,7 @@ import { PERMISSIONS } from "@/lib/permissions";
 import { supabase } from "@/lib/supabase";
 import { getLocations } from "@/lib/location";
 import { getActivityConfig } from "@/lib/activity-config";
+import { MOTO_ACTIVITY_KEY } from "@/lib/activities";
 import { ProductForm } from "@/components/products/ProductForm";
 import { updateProductAction } from "@/lib/actions/products";
 
@@ -53,6 +54,7 @@ export default async function EditProductPage({
         suppliers={suppliers ?? []}
         locations={locations}
         customFieldDefs={activityConfig.customFields}
+        showTrackUnits={user.business.activityKey === MOTO_ACTIVITY_KEY}
         initial={{
           name: product.name as string,
           reference: product.reference as string,

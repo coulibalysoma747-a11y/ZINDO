@@ -7,6 +7,7 @@ import { requirePermission, requireUser } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
 import { logAction } from "@/lib/audit";
 import { adjustStock } from "@/lib/stock";
+import { MOTO_ACTIVITY_KEY } from "@/lib/activities";
 
 export type VehicleUnit = {
   id: string;
@@ -51,6 +52,9 @@ export type VehicleUnitActionResult = { error?: string; success?: string };
 /** Enregistre un nouvel exemplaire (moto/engin) et augmente le stock du produit d'une unité. */
 export async function addVehicleUnitAction(productId: string, formData: FormData): Promise<VehicleUnitActionResult> {
   const user = await requirePermission(PERMISSIONS.PRODUCTS_MANAGE);
+  if (user.business.activityKey !== MOTO_ACTIVITY_KEY) {
+    return { error: "Le suivi individuel des exemplaires est réservé à l'activité Boutique de motos" };
+  }
 
   const parsed = unitSchema.safeParse({
     chassisNumber: formData.get("chassisNumber"),
@@ -130,6 +134,9 @@ const updateUnitSchema = z.object({
 
 export async function updateVehicleUnitAction(unitId: string, formData: FormData): Promise<VehicleUnitActionResult> {
   const user = await requirePermission(PERMISSIONS.PRODUCTS_MANAGE);
+  if (user.business.activityKey !== MOTO_ACTIVITY_KEY) {
+    return { error: "Le suivi individuel des exemplaires est réservé à l'activité Boutique de motos" };
+  }
 
   const parsed = updateUnitSchema.safeParse({
     chassisNumber: formData.get("chassisNumber"),
@@ -174,6 +181,9 @@ export async function updateVehicleUnitAction(unitId: string, formData: FormData
 /** Retire un exemplaire non vendu (erreur de saisie, doublon...) et diminue le stock d'une unité. */
 export async function deleteVehicleUnitAction(unitId: string): Promise<VehicleUnitActionResult> {
   const user = await requirePermission(PERMISSIONS.PRODUCTS_MANAGE);
+  if (user.business.activityKey !== MOTO_ACTIVITY_KEY) {
+    return { error: "Le suivi individuel des exemplaires est réservé à l'activité Boutique de motos" };
+  }
 
   const { data: unit } = await supabase
     .from("vehicle_units")

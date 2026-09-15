@@ -5,6 +5,7 @@ import { requirePermission, hasPermission } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
 import { supabase } from "@/lib/supabase";
 import { getActivityConfig } from "@/lib/activity-config";
+import { MOTO_ACTIVITY_KEY } from "@/lib/activities";
 import { getLocations, getCurrentLocation } from "@/lib/location";
 import { getVehicleUnitsAction } from "@/lib/actions/vehicle-units";
 import { formatMoney, formatDateTime } from "@/lib/format";
@@ -99,13 +100,15 @@ export default async function ProductDetailPage({
 
   const currency = user.business.currency;
   const totalQuantity = stocks.reduce((s, st) => s + st.quantity, 0);
+  const isMotoActivity = user.business.activityKey === MOTO_ACTIVITY_KEY;
+  const showVehicleUnits = product.trackUnits && isMotoActivity;
 
   const [canManageStock, canTransfer, canSell, activityConfig, vehicleUnits, locations, currentLocation] = await Promise.all([
     hasPermission(user.businessId, user.role, PERMISSIONS.STOCK_MANAGE, user.id),
     hasPermission(user.businessId, user.role, PERMISSIONS.TRANSFERS_MANAGE, user.id),
     hasPermission(user.businessId, user.role, PERMISSIONS.SALES_CREATE, user.id),
     getActivityConfig(user.business.activityKey),
-    product.trackUnits ? getVehicleUnitsAction(id) : Promise.resolve([]),
+    showVehicleUnits ? getVehicleUnitsAction(id) : Promise.resolve([]),
     getLocations(user.businessId),
     getCurrentLocation(user.businessId),
   ]);
@@ -259,7 +262,7 @@ export default async function ProductDetailPage({
         </CardBody>
       </Card>
 
-      {product.trackUnits && (
+      {showVehicleUnits && (
         <Card>
           <CardHeader>
             <h2 className="font-semibold text-zinc-900">Exemplaires enregistrés (châssis)</h2>

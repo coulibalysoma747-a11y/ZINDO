@@ -11,6 +11,7 @@ import { generateProductReference } from "@/lib/reference";
 import { saveProductPhoto, deleteUploadedImage } from "@/lib/photo-upload";
 import { getActivityConfig } from "@/lib/activity-config";
 import { checkLimit } from "@/lib/subscription";
+import { MOTO_ACTIVITY_KEY } from "@/lib/activities";
 
 export type ActionState = { error?: string; success?: string } | undefined;
 
@@ -131,7 +132,10 @@ export async function createProductAction(
       barcode: data.barcode || null,
       photo_url: photoUrl ?? null,
       custom_fields: customFields,
-      track_units: data.trackUnits,
+      // Réservé à l'activité "Boutique de motos" (lib/activities.ts) — même si
+      // le formulaire envoyait true par erreur/manipulation, on l'ignore pour
+      // toute autre activité.
+      track_units: data.trackUnits && user.business.activityKey === MOTO_ACTIVITY_KEY,
     })
     .select("id")
     .single();
@@ -238,7 +242,10 @@ export async function updateProductAction(
       supplier_id: data.supplierId || null,
       barcode: data.barcode || null,
       custom_fields: customFields,
-      track_units: data.trackUnits,
+      // Réservé à l'activité "Boutique de motos" (lib/activities.ts) — même si
+      // le formulaire envoyait true par erreur/manipulation, on l'ignore pour
+      // toute autre activité.
+      track_units: data.trackUnits && user.business.activityKey === MOTO_ACTIVITY_KEY,
       ...(photoUrl !== undefined ? { photo_url: photoUrl } : {}),
     })
     .eq("id", id);

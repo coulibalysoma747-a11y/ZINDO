@@ -3,6 +3,7 @@ import { PERMISSIONS } from "@/lib/permissions";
 import { supabase } from "@/lib/supabase";
 import { getLocations, getCurrentLocation } from "@/lib/location";
 import { getActivityConfig } from "@/lib/activity-config";
+import { MOTO_ACTIVITY_KEY } from "@/lib/activities";
 import { ProductForm } from "@/components/products/ProductForm";
 import { createProductAction } from "@/lib/actions/products";
 
@@ -30,6 +31,7 @@ export default async function NewProductPage() {
         locations={locations}
         defaultLocationId={currentLocation?.id}
         customFieldDefs={activityConfig.customFields}
+        showTrackUnits={user.business.activityKey === MOTO_ACTIVITY_KEY}
         submitLabel="Créer le produit"
       />
     </div>

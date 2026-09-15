@@ -3,6 +3,9 @@ export type ActivityCategory = {
   label: string;
 };
 
+/** Seule activité pour laquelle le suivi individuel des engins (châssis/moteur/couleur/CMC) est proposé — voir lib/actions/vehicle-units.ts. */
+export const MOTO_ACTIVITY_KEY = "boutique_moto";
+
 export type Activity = {
   key: string;
   emoji: string;
