@@ -8,6 +8,7 @@ import { requirePermission } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
 import { logAction } from "@/lib/audit";
 import { adjustStock, getStockQuantity } from "@/lib/stock";
+import { rethrowIfNavigationSignal } from "@/lib/action-errors";
 
 export type ActionState = { error?: string; success?: string } | undefined;
 
@@ -33,6 +34,16 @@ export async function createStockMovementAction(
   _prevState: ActionState,
   formData: FormData
 ): Promise<ActionState> {
+  try {
+    return await createStockMovementImpl(direction, formData);
+  } catch (e) {
+    rethrowIfNavigationSignal(e);
+    console.error("[createStockMovementAction] Erreur inattendue :", e);
+    return { error: "Une erreur inattendue est survenue. Réessayez dans un instant." };
+  }
+}
+
+async function createStockMovementImpl(direction: "IN" | "OUT", formData: FormData): Promise<ActionState> {
   const user = await requirePermission(PERMISSIONS.STOCK_MANAGE);
   const parsed = movementSchema.safeParse({
     productId: formData.get("productId"),

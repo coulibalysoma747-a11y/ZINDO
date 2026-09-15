@@ -7,6 +7,7 @@ import { PERMISSIONS } from "@/lib/permissions";
 import { logAction } from "@/lib/audit";
 import { generatePurchaseNumber } from "@/lib/reference";
 import { adjustStock } from "@/lib/stock";
+import { rethrowIfNavigationSignal } from "@/lib/action-errors";
 
 export type PurchaseItemInput = {
   productId: string;
@@ -27,6 +28,16 @@ export type CreatePurchaseResult =
   | { success: false; error: string };
 
 export async function createPurchaseAction(input: CreatePurchaseInput): Promise<CreatePurchaseResult> {
+  try {
+    return await createPurchaseImpl(input);
+  } catch (e) {
+    rethrowIfNavigationSignal(e);
+    console.error("[createPurchaseAction] Erreur inattendue :", e);
+    return { success: false, error: "Une erreur inattendue est survenue. Réessayez dans un instant." };
+  }
+}
+
+async function createPurchaseImpl(input: CreatePurchaseInput): Promise<CreatePurchaseResult> {
   const user = await requirePermission(PERMISSIONS.PURCHASES_MANAGE);
 
   if (!input.supplierId) return { success: false, error: "Sélectionnez un fournisseur" };

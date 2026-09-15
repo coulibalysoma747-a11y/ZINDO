@@ -7,6 +7,7 @@ import { PERMISSIONS } from "@/lib/permissions";
 import { logAction } from "@/lib/audit";
 import { generateSaleNumber } from "@/lib/reference";
 import { adjustStock } from "@/lib/stock";
+import { rethrowIfNavigationSignal } from "@/lib/action-errors";
 import type { PaymentMethod } from "@/lib/db-types";
 
 export type CartItemInput = {
@@ -75,7 +76,23 @@ async function recordOneStockMovement(
   if (error) console.error("[sales] Échec de l'écriture du mouvement de stock :", error.message);
 }
 
+/**
+ * Filet de sécurité : une panne inattendue (ex. fonction Postgres manquante,
+ * coupure réseau vers Supabase...) ne doit jamais faire planter tout l'écran
+ * de caisse avec la page d'erreur générique — la caissière doit voir un
+ * message clair et pouvoir réessayer, pas un écran bloqué.
+ */
 export async function createSaleAction(input: CreateSaleInput): Promise<CreateSaleResult> {
+  try {
+    return await createSaleImpl(input);
+  } catch (e) {
+    rethrowIfNavigationSignal(e);
+    console.error("[createSaleAction] Erreur inattendue :", e);
+    return { success: false, error: "Une erreur inattendue est survenue. Réessayez dans un instant." };
+  }
+}
+
+async function createSaleImpl(input: CreateSaleInput): Promise<CreateSaleResult> {
   const user = await requirePermission(PERMISSIONS.SALES_CREATE);
 
   if (!input.locationId) return { success: false, error: "Boutique introuvable" };
@@ -217,6 +234,16 @@ export type UpdateSaleInput = {
 };
 
 export async function updateSaleAction(input: UpdateSaleInput): Promise<CreateSaleResult> {
+  try {
+    return await updateSaleImpl(input);
+  } catch (e) {
+    rethrowIfNavigationSignal(e);
+    console.error("[updateSaleAction] Erreur inattendue :", e);
+    return { success: false, error: "Une erreur inattendue est survenue. Réessayez dans un instant." };
+  }
+}
+
+async function updateSaleImpl(input: UpdateSaleInput): Promise<CreateSaleResult> {
   const user = await requirePermission(PERMISSIONS.SALES_CREATE);
 
   const { data: sale } = await supabase
@@ -352,6 +379,16 @@ export async function updateSaleAction(input: UpdateSaleInput): Promise<CreateSa
 }
 
 export async function cancelSaleAction(saleId: string) {
+  try {
+    return await cancelSaleImpl(saleId);
+  } catch (e) {
+    rethrowIfNavigationSignal(e);
+    console.error("[cancelSaleAction] Erreur inattendue :", e);
+    return { error: "Une erreur inattendue est survenue. Réessayez dans un instant." };
+  }
+}
+
+async function cancelSaleImpl(saleId: string) {
   const user = await requirePermission(PERMISSIONS.SALES_VIEW);
 
   const { data: sale } = await supabase

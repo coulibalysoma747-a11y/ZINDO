@@ -7,6 +7,7 @@ import { PERMISSIONS } from "@/lib/permissions";
 import { logAction } from "@/lib/audit";
 import { generateInventoryReference } from "@/lib/reference";
 import { adjustStock } from "@/lib/stock";
+import { rethrowIfNavigationSignal } from "@/lib/action-errors";
 
 export type CreateInventoryInput = {
   locationId: string;
@@ -90,6 +91,16 @@ export async function createInventoryAction(input: CreateInventoryInput): Promis
 }
 
 export async function validateInventoryAction(inventoryId: string) {
+  try {
+    return await validateInventoryImpl(inventoryId);
+  } catch (e) {
+    rethrowIfNavigationSignal(e);
+    console.error("[validateInventoryAction] Erreur inattendue :", e);
+    return { error: "Une erreur inattendue est survenue. Réessayez dans un instant." };
+  }
+}
+
+async function validateInventoryImpl(inventoryId: string) {
   const user = await requirePermission(PERMISSIONS.INVENTORY_MANAGE);
 
   const { data: inventory } = await supabase

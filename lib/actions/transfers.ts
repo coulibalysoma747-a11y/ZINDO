@@ -6,6 +6,7 @@ import { requirePermission } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
 import { logAction } from "@/lib/audit";
 import { adjustStock } from "@/lib/stock";
+import { rethrowIfNavigationSignal } from "@/lib/action-errors";
 
 export type TransferItemInput = {
   productId: string;
@@ -33,6 +34,16 @@ async function nextTransferNumber(businessId: string) {
 }
 
 export async function createTransferAction(input: CreateTransferInput): Promise<CreateTransferResult> {
+  try {
+    return await createTransferImpl(input);
+  } catch (e) {
+    rethrowIfNavigationSignal(e);
+    console.error("[createTransferAction] Erreur inattendue :", e);
+    return { success: false, error: "Une erreur inattendue est survenue. Réessayez dans un instant." };
+  }
+}
+
+async function createTransferImpl(input: CreateTransferInput): Promise<CreateTransferResult> {
   const user = await requirePermission(PERMISSIONS.TRANSFERS_MANAGE);
 
   if (!input.fromLocationId || !input.toLocationId) {
