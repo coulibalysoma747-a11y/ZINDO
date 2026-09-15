@@ -71,52 +71,81 @@ export default async function SalesHistoryPage({
       {sales.length === 0 ? (
         <EmptyState title="Aucune vente sur cette période" />
       ) : (
-        <Card className="overflow-x-auto">
-          <table className="w-full min-w-[700px] text-sm">
-            <thead className="bg-zinc-50 text-left text-zinc-500">
-              <tr>
-                <th className="px-4 py-3 font-medium">N°</th>
-                <th className="px-4 py-3 font-medium">Date</th>
-                <th className="px-4 py-3 font-medium">Boutique</th>
-                <th className="px-4 py-3 font-medium">Client</th>
-                <th className="px-4 py-3 font-medium">Vendeur</th>
-                <th className="px-4 py-3 font-medium">Statut</th>
-                <th className="px-4 py-3 text-right font-medium">Total</th>
-                <th className="px-4 py-3" />
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-zinc-100">
-              {sales.map((s) => (
-                <tr key={s.id} className="hover:bg-zinc-50">
-                  <td className="px-4 py-3">
-                    <Link href={`/ventes/${s.id}`} className="font-mono text-xs text-emerald-600 hover:underline">
-                      {s.number}
-                    </Link>
-                  </td>
-                  <td className="px-4 py-3 text-zinc-600">{formatDateTime(new Date(s.createdAt))}</td>
-                  <td className="px-4 py-3 text-zinc-600">{s.location.name}</td>
-                  <td className="px-4 py-3 text-zinc-600">{s.customer?.name ?? "Client de passage"}</td>
-                  <td className="px-4 py-3 text-zinc-600">
-                    {s.user.firstName} {s.user.lastName}
-                  </td>
-                  <td className="px-4 py-3">
-                    <Badge tone={STATUS_TONE[s.status]}>{s.status}</Badge>
-                  </td>
-                  <td className="px-4 py-3 text-right font-medium text-zinc-900">{formatMoney(s.total, currency)}</td>
-                  <td className="px-4 py-3 text-right">
-                    <Link
-                      href={`/ventes/${s.id}?print=1`}
-                      title="Réimprimer le ticket"
-                      className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 px-2.5 py-1.5 text-xs font-medium text-zinc-600 hover:border-emerald-300 hover:bg-emerald-50 hover:text-emerald-700"
-                    >
-                      <Printer className="h-3.5 w-3.5" /> Réimprimer
-                    </Link>
-                  </td>
+        <>
+          <Card className="hidden overflow-x-auto sm:block">
+            <table className="w-full min-w-[700px] text-sm">
+              <thead className="bg-zinc-50 text-left text-zinc-500">
+                <tr>
+                  <th className="px-4 py-3 font-medium">N°</th>
+                  <th className="px-4 py-3 font-medium">Date</th>
+                  <th className="px-4 py-3 font-medium">Boutique</th>
+                  <th className="px-4 py-3 font-medium">Client</th>
+                  <th className="px-4 py-3 font-medium">Vendeur</th>
+                  <th className="px-4 py-3 font-medium">Statut</th>
+                  <th className="px-4 py-3 text-right font-medium">Total</th>
+                  <th className="px-4 py-3" />
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </Card>
+              </thead>
+              <tbody className="divide-y divide-zinc-100">
+                {sales.map((s) => (
+                  <tr key={s.id} className="hover:bg-zinc-50">
+                    <td className="px-4 py-3">
+                      <Link href={`/ventes/${s.id}`} className="font-mono text-xs text-emerald-600 hover:underline">
+                        {s.number}
+                      </Link>
+                    </td>
+                    <td className="px-4 py-3 text-zinc-600">{formatDateTime(new Date(s.createdAt))}</td>
+                    <td className="px-4 py-3 text-zinc-600">{s.location.name}</td>
+                    <td className="px-4 py-3 text-zinc-600">{s.customer?.name ?? "Client de passage"}</td>
+                    <td className="px-4 py-3 text-zinc-600">
+                      {s.user.firstName} {s.user.lastName}
+                    </td>
+                    <td className="px-4 py-3">
+                      <Badge tone={STATUS_TONE[s.status]}>{s.status}</Badge>
+                    </td>
+                    <td className="px-4 py-3 text-right font-medium text-zinc-900">{formatMoney(s.total, currency)}</td>
+                    <td className="px-4 py-3 text-right">
+                      <Link
+                        href={`/ventes/${s.id}?print=1`}
+                        title="Réimprimer le ticket"
+                        className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 px-2.5 py-1.5 text-xs font-medium text-zinc-600 hover:border-emerald-300 hover:bg-emerald-50 hover:text-emerald-700"
+                      >
+                        <Printer className="h-3.5 w-3.5" /> Réimprimer
+                      </Link>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </Card>
+
+          <div className="space-y-2 sm:hidden">
+            {sales.map((s) => (
+              <Card key={s.id} className="p-3">
+                <div className="flex items-start justify-between gap-2">
+                  <Link href={`/ventes/${s.id}`} className="font-mono text-xs text-emerald-600 hover:underline">
+                    {s.number}
+                  </Link>
+                  <Badge tone={STATUS_TONE[s.status]}>{s.status}</Badge>
+                </div>
+                <p className="mt-1 text-sm text-zinc-700">{s.customer?.name ?? "Client de passage"}</p>
+                <p className="text-xs text-zinc-500">
+                  {formatDateTime(new Date(s.createdAt))} · {s.location.name} · {s.user.firstName} {s.user.lastName}
+                </p>
+                <div className="mt-2 flex items-center justify-between">
+                  <span className="font-semibold text-zinc-900">{formatMoney(s.total, currency)}</span>
+                  <Link
+                    href={`/ventes/${s.id}?print=1`}
+                    title="Réimprimer le ticket"
+                    className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 px-2.5 py-1.5 text-xs font-medium text-zinc-600 hover:border-emerald-300 hover:bg-emerald-50 hover:text-emerald-700"
+                  >
+                    <Printer className="h-3.5 w-3.5" /> Réimprimer
+                  </Link>
+                </div>
+              </Card>
+            ))}
+          </div>
+        </>
       )}
     </div>
   );

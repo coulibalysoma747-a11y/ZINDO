@@ -99,58 +99,104 @@ export default async function ProductsPage({
           }
         />
       ) : (
-        <Card className="overflow-x-auto">
-          <table className="w-full min-w-[720px] text-sm">
-            <thead className="bg-zinc-50 text-left text-zinc-500">
-              <tr>
-                <th className="px-4 py-3 font-medium">Produit</th>
-                <th className="px-4 py-3 font-medium">Référence</th>
-                <th className="px-4 py-3 font-medium">Catégorie</th>
-                <th className="px-4 py-3 text-right font-medium">Prix de vente</th>
-                <th className="px-4 py-3 text-right font-medium">Stock ({currentLocation?.name ?? "—"})</th>
-                <th className="px-4 py-3 font-medium">Statut</th>
-                <th className="px-4 py-3" />
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-zinc-100">
-              {filtered.map((p) => (
-                <tr key={p.id as string} className="hover:bg-zinc-50">
-                  <td className="px-4 py-3">
-                    <div className="flex items-center gap-3">
-                      <ProductThumbnail photoUrl={p.photoUrl as string | null} name={p.name as string} size={40} />
-                      <div className="min-w-0">
-                        <Link href={`/produits/${p.id}`} className="font-medium text-zinc-900 hover:text-emerald-600">
-                          {p.name as string}
-                        </Link>
-                        {p.brand ? <p className="text-xs text-zinc-400">{p.brand as string}</p> : null}
+        <>
+          {/* Tableau : bureau/tablette. En dessous de sm, une table à 7 colonnes
+              n'est lisible qu'en faisant défiler horizontalement en boucle pour
+              chaque produit — remplacée par une liste de cartes (voir plus bas). */}
+          <Card className="hidden overflow-x-auto sm:block">
+            <table className="w-full min-w-[720px] text-sm">
+              <thead className="bg-zinc-50 text-left text-zinc-500">
+                <tr>
+                  <th className="px-4 py-3 font-medium">Produit</th>
+                  <th className="px-4 py-3 font-medium">Référence</th>
+                  <th className="px-4 py-3 font-medium">Catégorie</th>
+                  <th className="px-4 py-3 text-right font-medium">Prix de vente</th>
+                  <th className="px-4 py-3 text-right font-medium">Stock ({currentLocation?.name ?? "—"})</th>
+                  <th className="px-4 py-3 font-medium">Statut</th>
+                  <th className="px-4 py-3" />
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-zinc-100">
+                {filtered.map((p) => (
+                  <tr key={p.id as string} className="hover:bg-zinc-50">
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-3">
+                        <ProductThumbnail photoUrl={p.photoUrl as string | null} name={p.name as string} size={40} />
+                        <div className="min-w-0">
+                          <Link href={`/produits/${p.id}`} className="font-medium text-zinc-900 hover:text-emerald-600">
+                            {p.name as string}
+                          </Link>
+                          {p.brand ? <p className="text-xs text-zinc-400">{p.brand as string}</p> : null}
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-4 py-3 font-mono text-xs text-zinc-500">{p.reference as string}</td>
+                    <td className="px-4 py-3 text-zinc-600">{p.category?.name ?? "—"}</td>
+                    <td className="px-4 py-3 text-right font-medium text-zinc-900">
+                      {formatMoney(p.salePrice as number, user.business.currency)}
+                    </td>
+                    <td className="px-4 py-3 text-right text-zinc-700">
+                      {p.quantity} {p.unit as string}
+                    </td>
+                    <td className="px-4 py-3">
+                      {p.quantity <= 0 ? (
+                        <Badge tone="red">Rupture</Badge>
+                      ) : p.quantity <= (p.minStock as number) ? (
+                        <Badge tone="amber">Stock faible</Badge>
+                      ) : (
+                        <Badge tone="emerald">En stock</Badge>
+                      )}
+                    </td>
+                    <td className="px-4 py-3 text-right">
+                      <ProductRowMenu productId={p.id as string} />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </Card>
+
+          {/* Liste de cartes : téléphone. */}
+          <div className="space-y-2 sm:hidden">
+            {filtered.map((p) => (
+              <Card key={p.id as string} className="p-3">
+                <div className="flex items-start gap-3">
+                  <ProductThumbnail photoUrl={p.photoUrl as string | null} name={p.name as string} size={44} />
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-start justify-between gap-2">
+                      <Link href={`/produits/${p.id}`} className="font-medium text-zinc-900 hover:text-emerald-600">
+                        {p.name as string}
+                      </Link>
+                      <ProductRowMenu productId={p.id as string} />
+                    </div>
+                    {p.brand ? <p className="text-xs text-zinc-400">{p.brand as string}</p> : null}
+                    <p className="mt-0.5 text-xs text-zinc-500">
+                      {p.reference as string}
+                      {p.category?.name ? ` · ${p.category.name}` : ""}
+                    </p>
+                    <div className="mt-2 flex items-center justify-between gap-2">
+                      <span className="font-medium text-zinc-900">
+                        {formatMoney(p.salePrice as number, user.business.currency)}
+                      </span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs text-zinc-500">
+                          {p.quantity} {p.unit as string}
+                        </span>
+                        {p.quantity <= 0 ? (
+                          <Badge tone="red">Rupture</Badge>
+                        ) : p.quantity <= (p.minStock as number) ? (
+                          <Badge tone="amber">Faible</Badge>
+                        ) : (
+                          <Badge tone="emerald">OK</Badge>
+                        )}
                       </div>
                     </div>
-                  </td>
-                  <td className="px-4 py-3 font-mono text-xs text-zinc-500">{p.reference as string}</td>
-                  <td className="px-4 py-3 text-zinc-600">{p.category?.name ?? "—"}</td>
-                  <td className="px-4 py-3 text-right font-medium text-zinc-900">
-                    {formatMoney(p.salePrice as number, user.business.currency)}
-                  </td>
-                  <td className="px-4 py-3 text-right text-zinc-700">
-                    {p.quantity} {p.unit as string}
-                  </td>
-                  <td className="px-4 py-3">
-                    {p.quantity <= 0 ? (
-                      <Badge tone="red">Rupture</Badge>
-                    ) : p.quantity <= (p.minStock as number) ? (
-                      <Badge tone="amber">Stock faible</Badge>
-                    ) : (
-                      <Badge tone="emerald">En stock</Badge>
-                    )}
-                  </td>
-                  <td className="px-4 py-3 text-right">
-                    <ProductRowMenu productId={p.id as string} />
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </Card>
+                  </div>
+                </div>
+              </Card>
+            ))}
+          </div>
+        </>
       )}
     </div>
   );

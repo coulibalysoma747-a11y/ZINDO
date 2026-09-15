@@ -83,49 +83,76 @@ export default async function StockPage({
       {movements.length === 0 ? (
         <EmptyState title="Aucun mouvement sur cette période" />
       ) : (
-        <Card className="overflow-x-auto">
-          <table className="w-full min-w-[700px] text-sm">
-            <thead className="bg-zinc-50 text-left text-zinc-500">
-              <tr>
-                <th className="px-4 py-3 font-medium">Date</th>
-                <th className="px-4 py-3 font-medium">Boutique</th>
-                <th className="px-4 py-3 font-medium">Produit</th>
-                <th className="px-4 py-3 font-medium">Motif</th>
-                <th className="px-4 py-3 text-right font-medium">Quantité</th>
-                <th className="px-4 py-3 text-right font-medium">Stock avant → après</th>
-                <th className="px-4 py-3 font-medium">Utilisateur</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-zinc-100">
-              {movements.map((m) => (
-                <tr key={m.id} className="hover:bg-zinc-50">
-                  <td className="px-4 py-3 text-zinc-600">{formatDateTime(new Date(m.createdAt))}</td>
-                  <td className="px-4 py-3 text-zinc-600">{m.location.name}</td>
-                  <td className="px-4 py-3">
-                    <Link href={`/produits/${m.productId}`} className="font-medium text-zinc-900 hover:text-emerald-600">
-                      {m.product.name}
-                    </Link>
-                  </td>
-                  <td className="px-4 py-3">
-                    <Badge tone={m.direction === "IN" ? "emerald" : "red"}>
-                      {REASON_LABELS[m.reason] ?? m.reason}
-                    </Badge>
-                  </td>
-                  <td className="px-4 py-3 text-right text-zinc-700">
-                    {m.direction === "IN" ? "+" : "-"}
-                    {m.quantity}
-                  </td>
-                  <td className="px-4 py-3 text-right text-zinc-500">
-                    {m.oldStock} → {m.newStock}
-                  </td>
-                  <td className="px-4 py-3 text-zinc-600">
-                    {m.user.firstName} {m.user.lastName}
-                  </td>
+        <>
+          <Card className="hidden overflow-x-auto sm:block">
+            <table className="w-full min-w-[700px] text-sm">
+              <thead className="bg-zinc-50 text-left text-zinc-500">
+                <tr>
+                  <th className="px-4 py-3 font-medium">Date</th>
+                  <th className="px-4 py-3 font-medium">Boutique</th>
+                  <th className="px-4 py-3 font-medium">Produit</th>
+                  <th className="px-4 py-3 font-medium">Motif</th>
+                  <th className="px-4 py-3 text-right font-medium">Quantité</th>
+                  <th className="px-4 py-3 text-right font-medium">Stock avant → après</th>
+                  <th className="px-4 py-3 font-medium">Utilisateur</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </Card>
+              </thead>
+              <tbody className="divide-y divide-zinc-100">
+                {movements.map((m) => (
+                  <tr key={m.id} className="hover:bg-zinc-50">
+                    <td className="px-4 py-3 text-zinc-600">{formatDateTime(new Date(m.createdAt))}</td>
+                    <td className="px-4 py-3 text-zinc-600">{m.location.name}</td>
+                    <td className="px-4 py-3">
+                      <Link href={`/produits/${m.productId}`} className="font-medium text-zinc-900 hover:text-emerald-600">
+                        {m.product.name}
+                      </Link>
+                    </td>
+                    <td className="px-4 py-3">
+                      <Badge tone={m.direction === "IN" ? "emerald" : "red"}>
+                        {REASON_LABELS[m.reason] ?? m.reason}
+                      </Badge>
+                    </td>
+                    <td className="px-4 py-3 text-right text-zinc-700">
+                      {m.direction === "IN" ? "+" : "-"}
+                      {m.quantity}
+                    </td>
+                    <td className="px-4 py-3 text-right text-zinc-500">
+                      {m.oldStock} → {m.newStock}
+                    </td>
+                    <td className="px-4 py-3 text-zinc-600">
+                      {m.user.firstName} {m.user.lastName}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </Card>
+
+          <div className="space-y-2 sm:hidden">
+            {movements.map((m) => (
+              <Card key={m.id} className="p-3">
+                <div className="flex items-start justify-between gap-2">
+                  <Link href={`/produits/${m.productId}`} className="font-medium text-zinc-900 hover:text-emerald-600">
+                    {m.product.name}
+                  </Link>
+                  <Badge tone={m.direction === "IN" ? "emerald" : "red"}>{REASON_LABELS[m.reason] ?? m.reason}</Badge>
+                </div>
+                <p className="mt-0.5 text-xs text-zinc-500">
+                  {formatDateTime(new Date(m.createdAt))} · {m.location.name}
+                </p>
+                <div className="mt-2 flex items-center justify-between text-sm">
+                  <span className="text-zinc-700">
+                    {m.direction === "IN" ? "+" : "-"}
+                    {m.quantity} ({m.oldStock} → {m.newStock})
+                  </span>
+                  <span className="text-xs text-zinc-500">
+                    {m.user.firstName} {m.user.lastName}
+                  </span>
+                </div>
+              </Card>
+            ))}
+          </div>
+        </>
       )}
     </div>
   );
