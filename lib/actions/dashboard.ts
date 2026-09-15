@@ -5,6 +5,13 @@ import { startOfToday, startOfMonth } from "@/lib/format";
 export async function getDashboardData(businessId: string, locationId: string) {
   const today = startOfToday();
   const monthStart = startOfMonth();
+  const sevenDaysAgo = new Date(today);
+  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 6);
+  // Point de départ des ventes "récentes" (7 derniers jours, pour le mini
+  // graphique du tableau de bord mobile) — peut déborder avant le début du
+  // mois en cours, donc une requête séparée de monthSales plutôt qu'un filtre
+  // sur les mêmes lignes.
+  const recentStart = sevenDaysAgo < monthStart ? sevenDaysAgo : monthStart;
 
   const [salesRes, stocksRes] = await Promise.all([
     supabase
@@ -13,7 +20,7 @@ export async function getDashboardData(businessId: string, locationId: string) {
       .eq("business_id", businessId)
       .eq("location_id", locationId)
       .neq("status", "ANNULEE")
-      .gte("created_at", monthStart.toISOString()),
+      .gte("created_at", recentStart.toISOString()),
     supabase
       .from("product_stocks")
       .select("quantity, product:products!inner(id, name, purchasePrice:purchase_price, minStock:min_stock, businessId:business_id, active)")
@@ -22,11 +29,25 @@ export async function getDashboardData(businessId: string, locationId: string) {
       .eq("products.active", true),
   ]);
 
-  const monthSales = salesRes.data ?? [];
+  const recentSales = salesRes.data ?? [];
+  const monthSales = recentSales.filter((s) => new Date(s.createdAt as string) >= monthStart);
   const todaySales = monthSales.filter((s) => new Date(s.createdAt as string) >= today);
   const salesMonth = monthSales.reduce((sum, s) => sum + (s.total as number), 0);
   const salesToday = todaySales.reduce((sum, s) => sum + (s.total as number), 0);
   const salesCountToday = todaySales.length;
+
+  // Ventes des 7 derniers jours (index 0 = il y a 6 jours, index 6 = aujourd'hui)
+  // pour le mini graphique en barres du tableau de bord mobile.
+  const salesLast7Days = new Array(7).fill(0) as number[];
+  let salesYesterday = 0;
+  for (const s of recentSales) {
+    const d = new Date(s.createdAt as string);
+    const dayStart = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+    const diffDays = Math.round((today.getTime() - dayStart.getTime()) / 86400000);
+    const idx = 6 - diffDays;
+    if (idx >= 0 && idx < 7) salesLast7Days[idx] += s.total as number;
+    if (diffDays === 1) salesYesterday += s.total as number;
+  }
 
   const stocks = (stocksRes.data ?? []) as unknown as Array<{
     quantity: number;
@@ -55,6 +76,8 @@ export async function getDashboardData(businessId: string, locationId: string) {
 
   return {
     salesToday,
+    salesYesterday,
+    salesLast7Days,
     salesMonth,
     profitToday,
     productCount,

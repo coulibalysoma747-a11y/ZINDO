@@ -9,6 +9,7 @@ import { Card, CardBody, CardHeader } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { EmptyState } from "@/components/ui/Empty";
 import { ButtonLink } from "@/components/ui/Button";
+import { MobileHome } from "./MobileHome";
 import {
   DollarSign,
   TrendingUp,
@@ -35,23 +36,60 @@ export default async function DashboardPage() {
     );
   }
 
-  const [data, topProducts, locationsOverview, canSell, canViewStock, canManageStock, canManageProducts, canManagePurchases] =
-    await Promise.all([
-      getDashboardData(user.businessId, currentLocation.id),
-      getTopProducts(user.businessId, currentLocation.id),
-      getLocationsStockOverview(user.businessId),
-      hasPermission(user.businessId, user.role, PERMISSIONS.SALES_CREATE, user.id),
-      hasPermission(user.businessId, user.role, PERMISSIONS.STOCK_VIEW, user.id),
-      hasPermission(user.businessId, user.role, PERMISSIONS.STOCK_MANAGE, user.id),
-      hasPermission(user.businessId, user.role, PERMISSIONS.PRODUCTS_MANAGE, user.id),
-      hasPermission(user.businessId, user.role, PERMISSIONS.PURCHASES_MANAGE, user.id),
-    ]);
+  const [
+    data,
+    topProducts,
+    locationsOverview,
+    canSell,
+    canViewStock,
+    canManageStock,
+    canManageProducts,
+    canManagePurchases,
+    canViewProducts,
+    canViewCustomers,
+    canViewSuppliers,
+    canManageExpenses,
+    canViewReports,
+  ] = await Promise.all([
+    getDashboardData(user.businessId, currentLocation.id),
+    getTopProducts(user.businessId, currentLocation.id),
+    getLocationsStockOverview(user.businessId),
+    hasPermission(user.businessId, user.role, PERMISSIONS.SALES_CREATE, user.id),
+    hasPermission(user.businessId, user.role, PERMISSIONS.STOCK_VIEW, user.id),
+    hasPermission(user.businessId, user.role, PERMISSIONS.STOCK_MANAGE, user.id),
+    hasPermission(user.businessId, user.role, PERMISSIONS.PRODUCTS_MANAGE, user.id),
+    hasPermission(user.businessId, user.role, PERMISSIONS.PURCHASES_MANAGE, user.id),
+    hasPermission(user.businessId, user.role, PERMISSIONS.PRODUCTS_VIEW, user.id),
+    hasPermission(user.businessId, user.role, PERMISSIONS.CUSTOMERS_VIEW, user.id),
+    hasPermission(user.businessId, user.role, PERMISSIONS.SUPPLIERS_MANAGE, user.id),
+    hasPermission(user.businessId, user.role, PERMISSIONS.EXPENSES_MANAGE, user.id),
+    hasPermission(user.businessId, user.role, PERMISSIONS.REPORTS_VIEW, user.id),
+  ]);
 
   const totalStockValue = locationsOverview.reduce((s, l) => s + l.stockValue, 0);
   const hasQuickActions = canSell || canManageProducts || canManageStock || canManagePurchases;
 
   return (
-    <div className="space-y-6">
+    <div>
+      {/* Accueil mobile : hero + raccourcis + alertes, calqués sur la maquette
+          fournie par l'utilisateur. Le tableau de bord "bureau" ci-dessous
+          (stats détaillées, tableaux) reste inchangé à partir de sm. */}
+      <div className="sm:hidden">
+        <MobileHome
+          firstName={user.firstName}
+          currency={currency}
+          data={data}
+          canSell={canSell}
+          canViewProducts={canViewProducts}
+          canViewStock={canViewStock}
+          canViewCustomers={canViewCustomers}
+          canViewSuppliers={canViewSuppliers}
+          canManageExpenses={canManageExpenses}
+          canViewReports={canViewReports}
+        />
+      </div>
+
+    <div className="hidden space-y-6 sm:block">
       <div>
         <h1 className="text-xl font-bold text-zinc-900">Tableau de bord</h1>
         <p className="text-sm text-zinc-500">
@@ -254,6 +292,7 @@ export default async function DashboardPage() {
           )}
         </div>
       )}
+    </div>
     </div>
   );
 }
