@@ -161,48 +161,50 @@ export default async function AdminBusinessDetailPage({
           <h2 className="font-semibold text-zinc-900">Utilisateurs ({users.length})</h2>
         </CardHeader>
         <CardBody className="p-0">
-          <table className="w-full text-sm">
-            <thead className="bg-zinc-50 text-left text-zinc-500">
-              <tr>
-                <th className="px-4 py-2 font-medium">Nom</th>
-                <th className="px-4 py-2 font-medium">Contact</th>
-                <th className="px-4 py-2 font-medium">Rôle</th>
-                <th className="px-4 py-2 font-medium">Statut</th>
-                <th className="px-4 py-2" />
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-zinc-100">
-              {users.map((u) => (
-                <tr key={u.id}>
-                  <td className="px-4 py-2 text-zinc-900">
-                    {u.firstName} {u.lastName}
-                  </td>
-                  <td className="px-4 py-2 text-zinc-600">
-                    {u.phone}
-                    {u.email ? ` — ${u.email}` : ""}
-                  </td>
-                  <td className="px-4 py-2">
-                    <UserRoleSelect userId={u.id} role={u.role} />
-                  </td>
-                  <td className="px-4 py-2">
-                    {u.active ? <Badge tone="emerald">Actif</Badge> : <Badge tone="zinc">Désactivé</Badge>}
-                  </td>
-                  <td className="px-4 py-2 text-right">
-                    <div className="flex items-center justify-end gap-2">
-                      <Link
-                        href={`/admin/commercants/${business.id}/utilisateurs/${u.id}`}
-                        className="rounded-lg border border-zindo-green-200 px-2.5 py-1.5 text-xs font-medium text-zindo-green-600 hover:bg-zindo-green-50"
-                      >
-                        Modules
-                      </Link>
-                      <ResetPasswordButton userId={u.id} userName={`${u.firstName} ${u.lastName}`} />
-                      <UserActiveToggle userId={u.id} active={u.active} />
-                    </div>
-                  </td>
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[680px] text-sm">
+              <thead className="bg-zinc-50 text-left text-zinc-500">
+                <tr>
+                  <th className="px-4 py-2 font-medium">Nom</th>
+                  <th className="px-4 py-2 font-medium">Contact</th>
+                  <th className="px-4 py-2 font-medium">Rôle</th>
+                  <th className="px-4 py-2 font-medium">Statut</th>
+                  <th className="px-4 py-2" />
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="divide-y divide-zinc-100">
+                {users.map((u) => (
+                  <tr key={u.id}>
+                    <td className="px-4 py-2 text-zinc-900">
+                      {u.firstName} {u.lastName}
+                    </td>
+                    <td className="px-4 py-2 text-zinc-600">
+                      {u.phone}
+                      {u.email ? ` — ${u.email}` : ""}
+                    </td>
+                    <td className="px-4 py-2">
+                      <UserRoleSelect userId={u.id} role={u.role} />
+                    </td>
+                    <td className="px-4 py-2">
+                      {u.active ? <Badge tone="emerald">Actif</Badge> : <Badge tone="zinc">Désactivé</Badge>}
+                    </td>
+                    <td className="px-4 py-2 text-right">
+                      <div className="flex items-center justify-end gap-2">
+                        <Link
+                          href={`/admin/commercants/${business.id}/utilisateurs/${u.id}`}
+                          className="rounded-lg border border-zindo-green-200 px-2.5 py-1.5 text-xs font-medium text-zindo-green-600 hover:bg-zindo-green-50"
+                        >
+                          Modules
+                        </Link>
+                        <ResetPasswordButton userId={u.id} userName={`${u.firstName} ${u.lastName}`} />
+                        <UserActiveToggle userId={u.id} active={u.active} />
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </CardBody>
       </Card>
     </div>

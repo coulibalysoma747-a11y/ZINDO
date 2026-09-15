@@ -110,21 +110,23 @@ export default async function OnlineOrdersPage() {
                   </div>
                 </div>
 
-                <table className="w-full text-sm">
-                  <tbody className="divide-y divide-zinc-100">
-                    {order.items.map((item) => (
-                      <tr key={item.id}>
-                        <td className="py-1 text-zinc-700">{item.product.name}</td>
-                        <td className="py-1 text-right text-zinc-500">
-                          {item.quantity} × {formatMoney(item.unitPrice, currency)}
-                        </td>
-                        <td className="py-1 text-right font-medium text-zinc-900">
-                          {formatMoney(item.total, currency)}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+                <div className="overflow-x-auto">
+                  <table className="w-full min-w-[320px] text-sm">
+                    <tbody className="divide-y divide-zinc-100">
+                      {order.items.map((item) => (
+                        <tr key={item.id}>
+                          <td className="py-1 text-zinc-700">{item.product.name}</td>
+                          <td className="py-1 text-right text-zinc-500">
+                            {item.quantity} × {formatMoney(item.unitPrice, currency)}
+                          </td>
+                          <td className="py-1 text-right font-medium text-zinc-900">
+                            {formatMoney(item.total, currency)}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
 
                 <div className="flex justify-end gap-4 border-t border-zinc-100 pt-2 text-sm">
                   <span className="text-zinc-500">Sous-total {formatMoney(order.subtotal, currency)}</span>

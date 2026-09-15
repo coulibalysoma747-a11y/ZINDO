@@ -57,7 +57,7 @@ export function PlanEditForm({
               <Input id={`label-${plan.id}`} name="label" defaultValue={plan.label} required />
             </Field>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <Field label="Prix mensuel (FCFA)" htmlFor={`monthly-${plan.id}`}>
                 <Input id={`monthly-${plan.id}`} name="monthlyPrice" type="number" min={0} defaultValue={plan.monthlyPrice} required />
               </Field>
@@ -66,7 +66,7 @@ export function PlanEditForm({
               </Field>
             </div>
 
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
               <Field label="Max produits" htmlFor={`products-${plan.id}`} hint="Vide = illimité">
                 <Input id={`products-${plan.id}`} name="maxProducts" type="number" min={0} defaultValue={plan.maxProducts ?? ""} />
               </Field>

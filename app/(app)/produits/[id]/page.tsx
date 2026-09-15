@@ -218,6 +218,7 @@ export default async function ProductDetailPage({
           {stocks.length === 0 ? (
             <p className="p-5 text-sm text-zinc-500">Aucun stock enregistré dans une boutique.</p>
           ) : (
+            <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead className="bg-zinc-50 text-left text-zinc-500">
                 <tr>
@@ -246,6 +247,7 @@ export default async function ProductDetailPage({
                 ))}
               </tbody>
             </table>
+            </div>
           )}
         </CardBody>
       </Card>

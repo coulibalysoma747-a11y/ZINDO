@@ -49,7 +49,7 @@ export function SupplierFormModal({
         <Field label="Entreprise (facultatif)" htmlFor="company">
           <Input id="company" name="company" defaultValue={supplier?.company ?? ""} />
         </Field>
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <Field label="Téléphone" htmlFor="phone">
             <Input id="phone" name="phone" defaultValue={supplier?.phone ?? ""} />
           </Field>

@@ -41,7 +41,7 @@ export default async function LocationsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-xl font-bold text-zinc-900">Boutiques &amp; dépôts</h1>
           <p className="text-sm text-zinc-500">

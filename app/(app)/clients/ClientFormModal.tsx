@@ -43,7 +43,7 @@ export function ClientFormModal({
         <Field label="Nom" htmlFor="name">
           <Input id="name" name="name" defaultValue={customer?.name} required autoFocus />
         </Field>
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <Field label="Téléphone" htmlFor="phone">
             <Input id="phone" name="phone" defaultValue={customer?.phone ?? ""} />
           </Field>

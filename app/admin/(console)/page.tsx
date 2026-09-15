@@ -87,34 +87,36 @@ export default async function AdminDashboardPage() {
           {recentBusinesses.length === 0 ? (
             <p className="p-5 text-sm text-zinc-500">Aucun commerçant pour le moment.</p>
           ) : (
-            <table className="w-full text-sm">
-              <thead className="bg-zinc-50 text-left text-zinc-500">
-                <tr>
-                  <th className="px-4 py-2 font-medium">Nom</th>
-                  <th className="px-4 py-2 font-medium">Utilisateurs</th>
-                  <th className="px-4 py-2 font-medium">Plan</th>
-                  <th className="px-4 py-2 font-medium">Statut</th>
-                  <th className="px-4 py-2 font-medium">Créé le</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-zinc-100">
-                {recentBusinesses.map((b) => (
-                  <tr key={b.id} className="hover:bg-zinc-50">
-                    <td className="px-4 py-2">
-                      <Link href={`/admin/commercants/${b.id}`} className="font-medium text-zindo-green-600 hover:underline">
-                        {b.name}
-                      </Link>
-                    </td>
-                    <td className="px-4 py-2 text-zinc-600">{b.users?.[0]?.count ?? 0}</td>
-                    <td className="px-4 py-2 text-zinc-600">{b.plan}</td>
-                    <td className="px-4 py-2">
-                      {b.suspended ? <Badge tone="red">Suspendu</Badge> : <Badge tone="emerald">Actif</Badge>}
-                    </td>
-                    <td className="px-4 py-2 text-zinc-600">{formatDateTime(b.createdAt)}</td>
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[560px] text-sm">
+                <thead className="bg-zinc-50 text-left text-zinc-500">
+                  <tr>
+                    <th className="px-4 py-2 font-medium">Nom</th>
+                    <th className="px-4 py-2 font-medium">Utilisateurs</th>
+                    <th className="px-4 py-2 font-medium">Plan</th>
+                    <th className="px-4 py-2 font-medium">Statut</th>
+                    <th className="px-4 py-2 font-medium">Créé le</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="divide-y divide-zinc-100">
+                  {recentBusinesses.map((b) => (
+                    <tr key={b.id} className="hover:bg-zinc-50">
+                      <td className="px-4 py-2">
+                        <Link href={`/admin/commercants/${b.id}`} className="font-medium text-zindo-green-600 hover:underline">
+                          {b.name}
+                        </Link>
+                      </td>
+                      <td className="px-4 py-2 text-zinc-600">{b.users?.[0]?.count ?? 0}</td>
+                      <td className="px-4 py-2 text-zinc-600">{b.plan}</td>
+                      <td className="px-4 py-2">
+                        {b.suspended ? <Badge tone="red">Suspendu</Badge> : <Badge tone="emerald">Actif</Badge>}
+                      </td>
+                      <td className="px-4 py-2 text-zinc-600">{formatDateTime(b.createdAt)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           )}
         </CardBody>
       </Card>

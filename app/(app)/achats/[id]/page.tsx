@@ -67,26 +67,28 @@ export default async function PurchaseDetailPage({
           <h2 className="font-semibold text-zinc-900">Produits reçus</h2>
         </CardHeader>
         <CardBody className="p-0">
-          <table className="w-full text-sm">
-            <thead className="bg-zinc-50 text-left text-zinc-500">
-              <tr>
-                <th className="px-4 py-2 font-medium">Produit</th>
-                <th className="px-4 py-2 text-right font-medium">Quantité</th>
-                <th className="px-4 py-2 text-right font-medium">Prix d&apos;achat</th>
-                <th className="px-4 py-2 text-right font-medium">Total</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-zinc-100">
-              {purchase.items.map((item) => (
-                <tr key={item.id}>
-                  <td className="px-4 py-2 font-medium text-zinc-900">{item.product.name}</td>
-                  <td className="px-4 py-2 text-right text-zinc-700">{item.quantity}</td>
-                  <td className="px-4 py-2 text-right text-zinc-700">{formatMoney(item.unitPrice, currency)}</td>
-                  <td className="px-4 py-2 text-right font-medium text-zinc-900">{formatMoney(item.total, currency)}</td>
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[420px] text-sm">
+              <thead className="bg-zinc-50 text-left text-zinc-500">
+                <tr>
+                  <th className="px-4 py-2 font-medium">Produit</th>
+                  <th className="px-4 py-2 text-right font-medium">Quantité</th>
+                  <th className="px-4 py-2 text-right font-medium">Prix d&apos;achat</th>
+                  <th className="px-4 py-2 text-right font-medium">Total</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="divide-y divide-zinc-100">
+                {purchase.items.map((item) => (
+                  <tr key={item.id}>
+                    <td className="px-4 py-2 font-medium text-zinc-900">{item.product.name}</td>
+                    <td className="px-4 py-2 text-right text-zinc-700">{item.quantity}</td>
+                    <td className="px-4 py-2 text-right text-zinc-700">{formatMoney(item.unitPrice, currency)}</td>
+                    <td className="px-4 py-2 text-right font-medium text-zinc-900">{formatMoney(item.total, currency)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </CardBody>
       </Card>
 

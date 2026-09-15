@@ -71,32 +71,34 @@ export default async function InventoryDetailPage({
           <h2 className="font-semibold text-zinc-900">Comptage</h2>
         </CardHeader>
         <CardBody className="p-0">
-          <table className="w-full text-sm">
-            <thead className="bg-zinc-50 text-left text-zinc-500">
-              <tr>
-                <th className="px-4 py-2 font-medium">Produit</th>
-                <th className="px-4 py-2 text-right font-medium">Stock théorique</th>
-                <th className="px-4 py-2 text-right font-medium">Stock réel</th>
-                <th className="px-4 py-2 text-right font-medium">Écart</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-zinc-100">
-              {inventory.items.map((item) => (
-                <tr key={item.id}>
-                  <td className="px-4 py-2 font-medium text-zinc-900">{item.product.name}</td>
-                  <td className="px-4 py-2 text-right text-zinc-700">{item.theoreticalQty}</td>
-                  <td className="px-4 py-2 text-right text-zinc-700">{item.realQty}</td>
-                  <td
-                    className={`px-4 py-2 text-right font-medium ${
-                      item.difference === 0 ? "text-zinc-400" : item.difference > 0 ? "text-emerald-600" : "text-red-600"
-                    }`}
-                  >
-                    {item.difference > 0 ? `+${item.difference}` : item.difference}
-                  </td>
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[420px] text-sm">
+              <thead className="bg-zinc-50 text-left text-zinc-500">
+                <tr>
+                  <th className="px-4 py-2 font-medium">Produit</th>
+                  <th className="px-4 py-2 text-right font-medium">Stock théorique</th>
+                  <th className="px-4 py-2 text-right font-medium">Stock réel</th>
+                  <th className="px-4 py-2 text-right font-medium">Écart</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="divide-y divide-zinc-100">
+                {inventory.items.map((item) => (
+                  <tr key={item.id}>
+                    <td className="px-4 py-2 font-medium text-zinc-900">{item.product.name}</td>
+                    <td className="px-4 py-2 text-right text-zinc-700">{item.theoreticalQty}</td>
+                    <td className="px-4 py-2 text-right text-zinc-700">{item.realQty}</td>
+                    <td
+                      className={`px-4 py-2 text-right font-medium ${
+                        item.difference === 0 ? "text-zinc-400" : item.difference > 0 ? "text-emerald-600" : "text-red-600"
+                      }`}
+                    >
+                      {item.difference > 0 ? `+${item.difference}` : item.difference}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </CardBody>
       </Card>
     </div>

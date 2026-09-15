@@ -147,26 +147,28 @@ export default async function DashboardPage() {
                     description="Les produits les plus vendus apparaîtront ici dès votre première vente."
                   />
                 ) : (
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="text-left text-zinc-500">
-                        <th className="pb-2 font-medium">Produit</th>
-                        <th className="pb-2 font-medium">Qté vendue</th>
-                        <th className="pb-2 text-right font-medium">Total</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-zinc-100">
-                      {topProducts.map((p) => (
-                        <tr key={p.productId}>
-                          <td className="py-2 text-zinc-900">{p.name}</td>
-                          <td className="py-2 text-zinc-600">{p.quantity}</td>
-                          <td className="py-2 text-right font-medium text-zinc-900">
-                            {formatMoney(p.total, currency)}
-                          </td>
+                  <div className="overflow-x-auto">
+                    <table className="w-full min-w-[320px] text-sm">
+                      <thead>
+                        <tr className="text-left text-zinc-500">
+                          <th className="pb-2 font-medium">Produit</th>
+                          <th className="pb-2 font-medium">Qté vendue</th>
+                          <th className="pb-2 text-right font-medium">Total</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                      </thead>
+                      <tbody className="divide-y divide-zinc-100">
+                        {topProducts.map((p) => (
+                          <tr key={p.productId}>
+                            <td className="py-2 text-zinc-900">{p.name}</td>
+                            <td className="py-2 text-zinc-600">{p.quantity}</td>
+                            <td className="py-2 text-right font-medium text-zinc-900">
+                              {formatMoney(p.total, currency)}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
                 )}
               </CardBody>
             </Card>

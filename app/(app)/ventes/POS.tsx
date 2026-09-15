@@ -278,95 +278,185 @@ export function POS({
             {cart.length === 0 ? (
               <p className="p-8 text-center text-sm text-zinc-500">Le panier est vide.</p>
             ) : (
-              <table className="w-full text-sm">
-                <thead className="bg-zinc-50 text-left text-zinc-500">
-                  <tr>
-                    <th className="px-4 py-2 font-medium">Produit</th>
-                    <th className="px-4 py-2 font-medium">Qté</th>
-                    <th className="px-4 py-2 text-right font-medium">P.U.</th>
-                    <th className="px-4 py-2 text-right font-medium">Remise</th>
-                    <th className="px-4 py-2 text-right font-medium">Total</th>
-                    <th className="px-4 py-2" />
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-zinc-100">
+              <>
+                {/* Version tableau : confortable à partir de sm (tablette/bureau). En
+                    dessous, une table à 6 colonnes avec des champs numériques serait
+                    illisible et impossible à remplir sur téléphone — voir la version
+                    carte juste en dessous, réservée à sm:hidden. */}
+                <div className="hidden overflow-x-auto sm:block">
+                  <table className="w-full text-sm">
+                    <thead className="bg-zinc-50 text-left text-zinc-500">
+                      <tr>
+                        <th className="px-4 py-2 font-medium">Produit</th>
+                        <th className="px-4 py-2 font-medium">Qté</th>
+                        <th className="px-4 py-2 text-right font-medium">P.U.</th>
+                        <th className="px-4 py-2 text-right font-medium">Remise</th>
+                        <th className="px-4 py-2 text-right font-medium">Total</th>
+                        <th className="px-4 py-2" />
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-zinc-100">
+                      {cart.map((line) => (
+                        <tr key={line.product.id}>
+                          <td className="px-4 py-2">
+                            <p className="font-medium text-zinc-900">{line.product.name}</p>
+                            <p className="text-xs text-zinc-400">{line.product.reference}</p>
+                          </td>
+                          <td className="px-4 py-2">
+                            <div className="flex items-center gap-1">
+                              <button
+                                type="button"
+                                onClick={() => updateLine(line.product.id, { quantity: Math.max(1, line.quantity - 1) })}
+                                className="rounded p-1 text-zinc-500 hover:bg-zinc-100"
+                              >
+                                <Minus className="h-3.5 w-3.5" />
+                              </button>
+                              <input
+                                type="number"
+                                min={1}
+                                max={line.product.quantity}
+                                value={line.quantity}
+                                onChange={(e) =>
+                                  updateLine(line.product.id, {
+                                    quantity: Math.min(
+                                      line.product.quantity,
+                                      Math.max(1, Number(e.target.value) || 1)
+                                    ),
+                                  })
+                                }
+                                className="h-7 w-14 rounded border border-zinc-200 text-center text-sm"
+                              />
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  updateLine(line.product.id, {
+                                    quantity: Math.min(line.product.quantity, line.quantity + 1),
+                                  })
+                                }
+                                className="rounded p-1 text-zinc-500 hover:bg-zinc-100"
+                              >
+                                <Plus className="h-3.5 w-3.5" />
+                              </button>
+                            </div>
+                          </td>
+                          <td className="px-4 py-2 text-right">
+                            <input
+                              type="number"
+                              min={0}
+                              value={line.unitPrice}
+                              onChange={(e) => updateLine(line.product.id, { unitPrice: Number(e.target.value) || 0 })}
+                              className="h-7 w-24 rounded border border-zinc-200 text-right text-sm"
+                            />
+                          </td>
+                          <td className="px-4 py-2 text-right">
+                            <input
+                              type="number"
+                              min={0}
+                              value={line.discount}
+                              onChange={(e) => updateLine(line.product.id, { discount: Number(e.target.value) || 0 })}
+                              className="h-7 w-20 rounded border border-zinc-200 text-right text-sm"
+                            />
+                          </td>
+                          <td className="px-4 py-2 text-right font-medium text-zinc-900">
+                            {formatMoney(line.unitPrice * line.quantity - line.discount, currency)}
+                          </td>
+                          <td className="px-4 py-2">
+                            <button
+                              type="button"
+                              onClick={() => removeLine(line.product.id)}
+                              className="rounded p-1 text-red-500 hover:bg-red-50"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* Version carte : téléphone. */}
+                <ul className="divide-y divide-zinc-100 sm:hidden">
                   {cart.map((line) => (
-                    <tr key={line.product.id}>
-                      <td className="px-4 py-2">
-                        <p className="font-medium text-zinc-900">{line.product.name}</p>
-                        <p className="text-xs text-zinc-400">{line.product.reference}</p>
-                      </td>
-                      <td className="px-4 py-2">
-                        <div className="flex items-center gap-1">
-                          <button
-                            type="button"
-                            onClick={() => updateLine(line.product.id, { quantity: Math.max(1, line.quantity - 1) })}
-                            className="rounded p-1 text-zinc-500 hover:bg-zinc-100"
-                          >
-                            <Minus className="h-3.5 w-3.5" />
-                          </button>
-                          <input
-                            type="number"
-                            min={1}
-                            max={line.product.quantity}
-                            value={line.quantity}
-                            onChange={(e) =>
-                              updateLine(line.product.id, {
-                                quantity: Math.min(
-                                  line.product.quantity,
-                                  Math.max(1, Number(e.target.value) || 1)
-                                ),
-                              })
-                            }
-                            className="h-7 w-14 rounded border border-zinc-200 text-center text-sm"
-                          />
-                          <button
-                            type="button"
-                            onClick={() =>
-                              updateLine(line.product.id, {
-                                quantity: Math.min(line.product.quantity, line.quantity + 1),
-                              })
-                            }
-                            className="rounded p-1 text-zinc-500 hover:bg-zinc-100"
-                          >
-                            <Plus className="h-3.5 w-3.5" />
-                          </button>
+                    <li key={line.product.id} className="space-y-2.5 p-3">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="min-w-0">
+                          <p className="truncate font-medium text-zinc-900">{line.product.name}</p>
+                          <p className="text-xs text-zinc-400">{line.product.reference}</p>
                         </div>
-                      </td>
-                      <td className="px-4 py-2 text-right">
-                        <input
-                          type="number"
-                          min={0}
-                          value={line.unitPrice}
-                          onChange={(e) => updateLine(line.product.id, { unitPrice: Number(e.target.value) || 0 })}
-                          className="h-7 w-24 rounded border border-zinc-200 text-right text-sm"
-                        />
-                      </td>
-                      <td className="px-4 py-2 text-right">
-                        <input
-                          type="number"
-                          min={0}
-                          value={line.discount}
-                          onChange={(e) => updateLine(line.product.id, { discount: Number(e.target.value) || 0 })}
-                          className="h-7 w-20 rounded border border-zinc-200 text-right text-sm"
-                        />
-                      </td>
-                      <td className="px-4 py-2 text-right font-medium text-zinc-900">
-                        {formatMoney(line.unitPrice * line.quantity - line.discount, currency)}
-                      </td>
-                      <td className="px-4 py-2">
                         <button
                           type="button"
                           onClick={() => removeLine(line.product.id)}
-                          className="rounded p-1 text-red-500 hover:bg-red-50"
+                          className="shrink-0 rounded p-1.5 text-red-500 hover:bg-red-50"
                         >
                           <Trash2 className="h-4 w-4" />
                         </button>
-                      </td>
-                    </tr>
+                      </div>
+
+                      <div className="flex items-center gap-1">
+                        <button
+                          type="button"
+                          onClick={() => updateLine(line.product.id, { quantity: Math.max(1, line.quantity - 1) })}
+                          className="rounded-lg border border-zinc-200 p-2 text-zinc-500 hover:bg-zinc-100"
+                        >
+                          <Minus className="h-4 w-4" />
+                        </button>
+                        <input
+                          type="number"
+                          min={1}
+                          max={line.product.quantity}
+                          value={line.quantity}
+                          onChange={(e) =>
+                            updateLine(line.product.id, {
+                              quantity: Math.min(line.product.quantity, Math.max(1, Number(e.target.value) || 1)),
+                            })
+                          }
+                          className="h-9 w-16 rounded-lg border border-zinc-200 text-center text-sm"
+                        />
+                        <button
+                          type="button"
+                          onClick={() =>
+                            updateLine(line.product.id, {
+                              quantity: Math.min(line.product.quantity, line.quantity + 1),
+                            })
+                          }
+                          className="rounded-lg border border-zinc-200 p-2 text-zinc-500 hover:bg-zinc-100"
+                        >
+                          <Plus className="h-4 w-4" />
+                        </button>
+                        <span className="ml-auto text-right font-semibold text-zinc-900">
+                          {formatMoney(line.unitPrice * line.quantity - line.discount, currency)}
+                        </span>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-2">
+                        <label className="block">
+                          <span className="mb-1 block text-xs text-zinc-500">P.U.</span>
+                          <input
+                            type="number"
+                            min={0}
+                            inputMode="decimal"
+                            value={line.unitPrice}
+                            onChange={(e) => updateLine(line.product.id, { unitPrice: Number(e.target.value) || 0 })}
+                            className="h-9 w-full rounded-lg border border-zinc-200 px-2 text-right text-sm"
+                          />
+                        </label>
+                        <label className="block">
+                          <span className="mb-1 block text-xs text-zinc-500">Remise</span>
+                          <input
+                            type="number"
+                            min={0}
+                            inputMode="decimal"
+                            value={line.discount}
+                            onChange={(e) => updateLine(line.product.id, { discount: Number(e.target.value) || 0 })}
+                            className="h-9 w-full rounded-lg border border-zinc-200 px-2 text-right text-sm"
+                          />
+                        </label>
+                      </div>
+                    </li>
                   ))}
-                </tbody>
-              </table>
+                </ul>
+              </>
             )}
           </CardBody>
         </Card>

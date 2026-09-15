@@ -12,7 +12,10 @@ export function Card({ className, ...props }: React.HTMLAttributes<HTMLDivElemen
 export function CardHeader({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
   return (
     <div
-      className={cn("flex items-center justify-between border-b border-zinc-100 px-5 py-4 dark:border-slate-800", className)}
+      className={cn(
+        "flex flex-wrap items-center justify-between gap-2 border-b border-zinc-100 px-5 py-4 dark:border-slate-800",
+        className
+      )}
       {...props}
     />
   );

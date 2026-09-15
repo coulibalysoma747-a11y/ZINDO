@@ -124,50 +124,52 @@ export function TransferForm({
           {lines.length === 0 ? (
             <p className="p-8 text-center text-sm text-zinc-500">Aucun produit ajouté.</p>
           ) : (
-            <table className="w-full text-sm">
-              <thead className="bg-zinc-50 text-left text-zinc-500">
-                <tr>
-                  <th className="px-4 py-2 font-medium">Produit</th>
-                  <th className="px-4 py-2 text-right font-medium">Disponible</th>
-                  <th className="px-4 py-2 text-right font-medium">Quantité à transférer</th>
-                  <th className="px-4 py-2" />
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-zinc-100">
-                {lines.map((line) => (
-                  <tr key={line.product.id}>
-                    <td className="px-4 py-2 font-medium text-zinc-900">{line.product.name}</td>
-                    <td className="px-4 py-2 text-right text-zinc-500">
-                      {line.product.quantity} {line.product.unit}
-                    </td>
-                    <td className="px-4 py-2 text-right">
-                      <input
-                        type="number"
-                        min={1}
-                        max={line.product.quantity}
-                        value={line.quantity}
-                        onChange={(e) =>
-                          updateQuantity(
-                            line.product.id,
-                            Math.min(line.product.quantity, Math.max(1, Number(e.target.value) || 1))
-                          )
-                        }
-                        className="h-8 w-24 rounded border border-zinc-200 text-right text-sm"
-                      />
-                    </td>
-                    <td className="px-4 py-2">
-                      <button
-                        type="button"
-                        onClick={() => removeLine(line.product.id)}
-                        className="rounded p-1 text-red-500 hover:bg-red-50"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </button>
-                    </td>
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[480px] text-sm">
+                <thead className="bg-zinc-50 text-left text-zinc-500">
+                  <tr>
+                    <th className="px-4 py-2 font-medium">Produit</th>
+                    <th className="px-4 py-2 text-right font-medium">Disponible</th>
+                    <th className="px-4 py-2 text-right font-medium">Quantité à transférer</th>
+                    <th className="px-4 py-2" />
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="divide-y divide-zinc-100">
+                  {lines.map((line) => (
+                    <tr key={line.product.id}>
+                      <td className="px-4 py-2 font-medium text-zinc-900">{line.product.name}</td>
+                      <td className="px-4 py-2 text-right text-zinc-500">
+                        {line.product.quantity} {line.product.unit}
+                      </td>
+                      <td className="px-4 py-2 text-right">
+                        <input
+                          type="number"
+                          min={1}
+                          max={line.product.quantity}
+                          value={line.quantity}
+                          onChange={(e) =>
+                            updateQuantity(
+                              line.product.id,
+                              Math.min(line.product.quantity, Math.max(1, Number(e.target.value) || 1))
+                            )
+                          }
+                          className="h-8 w-24 rounded border border-zinc-200 text-right text-sm"
+                        />
+                      </td>
+                      <td className="px-4 py-2">
+                        <button
+                          type="button"
+                          onClick={() => removeLine(line.product.id)}
+                          className="rounded p-1 text-red-500 hover:bg-red-50"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           )}
         </CardBody>
       </Card>

@@ -128,34 +128,36 @@ export default async function SupplierDetailPage({
               <EmptyState title="Aucun achat enregistré" />
             </div>
           ) : (
-            <table className="w-full text-sm">
-              <thead className="bg-zinc-50 text-left text-zinc-500">
-                <tr>
-                  <th className="px-4 py-2 font-medium">N°</th>
-                  <th className="px-4 py-2 font-medium">Date</th>
-                  <th className="px-4 py-2 font-medium">Statut</th>
-                  <th className="px-4 py-2 text-right font-medium">Total</th>
-                  <th className="px-4 py-2 text-right font-medium">Payé</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-zinc-100">
-                {purchases.map((p) => (
-                  <tr key={p.id}>
-                    <td className="px-4 py-2">
-                      <Link href={`/achats/${p.id}`} className="font-mono text-xs text-emerald-600 hover:underline">
-                        {p.number}
-                      </Link>
-                    </td>
-                    <td className="px-4 py-2 text-zinc-600">{formatDate(new Date(p.createdAt))}</td>
-                    <td className="px-4 py-2">
-                      <Badge tone={p.status === "RECUE" ? "emerald" : "amber"}>{p.status}</Badge>
-                    </td>
-                    <td className="px-4 py-2 text-right text-zinc-900">{formatMoney(p.total, currency)}</td>
-                    <td className="px-4 py-2 text-right text-zinc-600">{formatMoney(p.amountPaid, currency)}</td>
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[480px] text-sm">
+                <thead className="bg-zinc-50 text-left text-zinc-500">
+                  <tr>
+                    <th className="px-4 py-2 font-medium">N°</th>
+                    <th className="px-4 py-2 font-medium">Date</th>
+                    <th className="px-4 py-2 font-medium">Statut</th>
+                    <th className="px-4 py-2 text-right font-medium">Total</th>
+                    <th className="px-4 py-2 text-right font-medium">Payé</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="divide-y divide-zinc-100">
+                  {purchases.map((p) => (
+                    <tr key={p.id}>
+                      <td className="px-4 py-2">
+                        <Link href={`/achats/${p.id}`} className="font-mono text-xs text-emerald-600 hover:underline">
+                          {p.number}
+                        </Link>
+                      </td>
+                      <td className="px-4 py-2 text-zinc-600">{formatDate(new Date(p.createdAt))}</td>
+                      <td className="px-4 py-2">
+                        <Badge tone={p.status === "RECUE" ? "emerald" : "amber"}>{p.status}</Badge>
+                      </td>
+                      <td className="px-4 py-2 text-right text-zinc-900">{formatMoney(p.total, currency)}</td>
+                      <td className="px-4 py-2 text-right text-zinc-600">{formatMoney(p.amountPaid, currency)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           )}
         </CardBody>
       </Card>
