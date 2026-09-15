@@ -10,6 +10,49 @@ const HREF_TO_TERM: Record<string, TermKey> = Object.fromEntries(
   Object.entries(TERM_NAV_HREF).map(([term, href]) => [href, term as TermKey])
 );
 
+export type ModuleUnavailableReason = "permission" | "feature" | "plan" | "activity";
+export type ModuleAvailability = { allowed: boolean; reason: ModuleUnavailableReason | null };
+
+/**
+ * Disponibilité de CHAQUE module (pas seulement ceux visibles dans le menu)
+ * pour ce compte, avec la raison si indisponible — utilisé par le guide des
+ * modules de la page Aide pour ne jamais proposer d'aller sur une page à
+ * laquelle le compte n'a pas accès (permission de rôle, fonctionnalité
+ * désactivée, formule d'abonnement, ou type d'activité).
+ */
+export async function getNavItemsAvailability(
+  businessId: string,
+  role: Role,
+  userId: string,
+  activityKey?: string | null
+): Promise<Record<string, ModuleAvailability>> {
+  const [activityConfig, planLimits] = await Promise.all([
+    getActivityConfig(activityKey),
+    getBusinessLimits(businessId),
+  ]);
+
+  const entries = await Promise.all(
+    NAV_ITEMS.map(async (item) => {
+      const [permissionOk, featureOk] = await Promise.all([
+        item.permission ? hasPermission(businessId, role, item.permission, userId) : true,
+        item.featureFlag ? isFeatureEnabled(item.featureFlag, businessId) : true,
+      ]);
+      const planOk = item.planFeature ? planLimits.features.includes(item.planFeature) : true;
+      const hiddenByActivity = activityConfig.hiddenNavHrefs.includes(item.href);
+
+      let reason: ModuleUnavailableReason | null = null;
+      if (!permissionOk) reason = "permission";
+      else if (!featureOk) reason = "feature";
+      else if (!planOk) reason = "plan";
+      else if (hiddenByActivity) reason = "activity";
+
+      return [item.href, { allowed: reason === null, reason }] as const;
+    })
+  );
+
+  return Object.fromEntries(entries);
+}
+
 export async function getVisibleNavItems(
   businessId: string,
   role: Role,

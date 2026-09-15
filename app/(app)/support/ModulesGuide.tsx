@@ -1,7 +1,15 @@
 import { NAV_ITEMS } from "@/lib/nav";
 import { NAV_ICONS } from "@/components/layout/nav-icons";
+import type { ModuleAvailability, ModuleUnavailableReason } from "@/lib/nav-server";
 import { Badge } from "@/components/ui/Badge";
 import { ModuleCard } from "./ModuleCard";
+
+const UNAVAILABLE_MESSAGES: Record<ModuleUnavailableReason, string> = {
+  permission: "Votre rôle actuel n'a pas accès à ce module.",
+  feature: "Cette fonctionnalité n'est pas encore activée pour votre compte.",
+  plan: "Non inclus dans votre formule d'abonnement actuelle.",
+  activity: "Ce module ne s'applique pas à votre type d'activité.",
+};
 
 // Une description courte et une explication détaillée par module, dans
 // l'ordre du menu (lib/nav.ts) — sert de guide de référence sur la page
@@ -102,20 +110,21 @@ const DESCRIPTIONS: Record<string, { short: string; long: string }> = {
   },
 };
 
-export function ModulesGuide() {
+export function ModulesGuide({ availability }: { availability: Record<string, ModuleAvailability> }) {
   const modules = NAV_ITEMS.filter((item) => item.href !== "/support" && DESCRIPTIONS[item.href]);
 
   return (
     <div>
       <h2 className="font-semibold text-zinc-900">Les {modules.length} modules de ZINDO</h2>
       <p className="mb-3 text-sm text-zinc-500">
-        Cliquez sur un module pour voir son explication détaillée et y accéder directement. Certains n&apos;apparaissent
-        pas dans votre menu si votre rôle ou votre formule d&apos;abonnement ne les inclut pas.
+        Cliquez sur un module pour voir son explication détaillée et y accéder directement. Un module grisé
+        n&apos;est pas disponible sur votre compte — la carte indique pourquoi, sans lien vers la page.
       </p>
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {modules.map((item) => {
           const Icon = NAV_ICONS[item.icon];
           const { short, long } = DESCRIPTIONS[item.href];
+          const moduleAvailability = availability[item.href] ?? { allowed: true, reason: null };
           return (
             <ModuleCard
               key={item.href}
@@ -124,6 +133,9 @@ export function ModulesGuide() {
               icon={<Icon className="h-4.5 w-4.5" />}
               shortDescription={short}
               longDescription={long}
+              available={moduleAvailability.allowed}
+              unavailableMessage={moduleAvailability.reason ? UNAVAILABLE_MESSAGES[moduleAvailability.reason] : undefined}
+              showSubscriptionLink={moduleAvailability.reason === "plan"}
               badge={
                 <>
                   {item.badge && (
@@ -131,9 +143,14 @@ export function ModulesGuide() {
                       {item.badge}
                     </Badge>
                   )}
-                  {item.planFeature && (
+                  {moduleAvailability.reason === "plan" && (
                     <Badge tone="amber" className="text-[10px]">
                       Premium
+                    </Badge>
+                  )}
+                  {!moduleAvailability.allowed && moduleAvailability.reason !== "plan" && (
+                    <Badge tone="zinc" className="text-[10px]">
+                      Indisponible
                     </Badge>
                   )}
                 </>

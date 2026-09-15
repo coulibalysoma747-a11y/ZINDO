@@ -2,6 +2,7 @@ import { MessageCircle } from "lucide-react";
 import { requireUser } from "@/lib/auth";
 import { supabase } from "@/lib/supabase";
 import { formatDateTime } from "@/lib/format";
+import { getNavItemsAvailability } from "@/lib/nav-server";
 import { Card, CardBody, CardHeader } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { EmptyState } from "@/components/ui/Empty";
@@ -38,14 +39,17 @@ type TicketRow = {
 export default async function SupportPage() {
   const user = await requireUser();
 
-  const { data } = await supabase
-    .from("support_tickets")
-    .select(
-      "id, subject, message, pageUrl:page_url, status, response, respondedAt:responded_at, createdAt:created_at, user:users(firstName:first_name, lastName:last_name)"
-    )
-    .eq("business_id", user.businessId)
-    .order("created_at", { ascending: false })
-    .limit(100);
+  const [{ data }, availability] = await Promise.all([
+    supabase
+      .from("support_tickets")
+      .select(
+        "id, subject, message, pageUrl:page_url, status, response, respondedAt:responded_at, createdAt:created_at, user:users(firstName:first_name, lastName:last_name)"
+      )
+      .eq("business_id", user.businessId)
+      .order("created_at", { ascending: false })
+      .limit(100),
+    getNavItemsAvailability(user.businessId, user.role, user.id, user.business.activityKey),
+  ]);
   const tickets = (data ?? []) as unknown as TicketRow[];
 
   return (
@@ -80,7 +84,7 @@ export default async function SupportPage() {
         </CardBody>
       </Card>
 
-      <ModulesGuide />
+      <ModulesGuide availability={availability} />
 
       <Card>
         <CardHeader>
