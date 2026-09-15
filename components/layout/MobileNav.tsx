@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { X } from "lucide-react";
 import { cn } from "@/lib/cn";
 import type { NavItem } from "@/lib/nav";
+import { ZindoLogo } from "@/components/auth/ZindoLogo";
 
 export function MobileNav({
   open,
@@ -33,12 +34,10 @@ export function MobileNav({
         <div className="min-h-0 flex-1 overflow-y-auto">
           <div className="flex items-center justify-between gap-2 border-b border-slate-800/80 p-4">
             <div className="flex min-w-0 items-center gap-3">
-              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-tr from-orange-600 to-amber-500 font-black text-white shadow-lg shadow-orange-500/20">
-                Z
-              </div>
+              <ZindoLogo size={36} />
               <div className="min-w-0">
                 <p className="truncate text-sm font-extrabold text-white">ZINDO</p>
-                <span className="inline-block max-w-full truncate rounded-full bg-orange-500/10 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wider text-orange-400">
+                <span className="inline-block max-w-full truncate rounded-full bg-zindo-green-500/15 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wider text-zindo-green-400">
                   {businessName}
                 </span>
               </div>
@@ -58,7 +57,7 @@ export function MobileNav({
                   className={cn(
                     "flex items-center justify-between rounded-xl px-3.5 py-2.5 text-sm font-medium transition-colors",
                     active
-                      ? "bg-gradient-to-r from-orange-500 to-amber-500 text-white shadow-md shadow-orange-500/25"
+                      ? "bg-gradient-to-r from-zindo-green-600 to-zindo-green-500 text-white shadow-md shadow-zindo-green-800/25"
                       : "text-slate-400 hover:bg-slate-800/60 hover:text-slate-100"
                   )}
                 >
@@ -67,7 +66,7 @@ export function MobileNav({
                     <span
                       className={cn(
                         "rounded-md px-1.5 py-0.5 text-[10px] font-bold",
-                        active ? "bg-white/20 text-white" : "bg-orange-500/20 text-orange-400"
+                        active ? "bg-white/20 text-white" : "bg-zindo-green-500/20 text-zindo-green-400"
                       )}
                     >
                       {item.badge}
@@ -93,7 +92,7 @@ export function MobileNav({
                 className={cn(
                   "flex items-center rounded-xl px-3.5 py-2.5 text-sm font-medium transition-colors",
                   pathname === item.href
-                    ? "bg-gradient-to-r from-orange-500 to-amber-500 text-white shadow-md shadow-orange-500/25"
+                    ? "bg-gradient-to-r from-zindo-green-600 to-zindo-green-500 text-white shadow-md shadow-zindo-green-800/25"
                     : "text-slate-400 hover:bg-slate-800/60 hover:text-slate-100"
                 )}
               >

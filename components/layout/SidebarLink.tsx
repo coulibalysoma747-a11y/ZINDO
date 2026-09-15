@@ -76,7 +76,7 @@ export function SidebarLink({ item }: { item: NavItem }) {
       className={cn(
         "group flex items-center justify-between rounded-xl px-3.5 py-2.5 text-sm font-medium transition-all duration-200",
         active
-          ? "bg-gradient-to-r from-orange-500 to-amber-500 text-white shadow-md shadow-orange-500/25"
+          ? "bg-gradient-to-r from-zindo-green-600 to-zindo-green-500 text-white shadow-md shadow-zindo-green-800/25"
           : "text-slate-400 hover:bg-slate-800/60 hover:text-slate-100"
       )}
     >
@@ -84,7 +84,7 @@ export function SidebarLink({ item }: { item: NavItem }) {
         <Icon
           className={cn(
             "h-4.5 w-4.5 transition-transform duration-200 group-hover:scale-110",
-            active ? "text-white" : "text-slate-400 group-hover:text-orange-400"
+            active ? "text-white" : "text-slate-400 group-hover:text-zindo-green-400"
           )}
         />
         <span>{item.label}</span>
@@ -95,7 +95,7 @@ export function SidebarLink({ item }: { item: NavItem }) {
             "rounded-md px-1.5 py-0.5 text-[10px] font-bold transition-colors",
             active
               ? "bg-white/20 text-white"
-              : "bg-orange-500/20 text-orange-400 group-hover:bg-orange-500 group-hover:text-white"
+              : "bg-zindo-green-500/20 text-zindo-green-400 group-hover:bg-zindo-green-500 group-hover:text-white"
           )}
         >
           {item.badge}

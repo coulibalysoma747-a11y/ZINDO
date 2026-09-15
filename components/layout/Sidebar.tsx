@@ -1,5 +1,6 @@
 import type { NavItem } from "@/lib/nav";
 import { SidebarLink } from "./SidebarLink";
+import { ZindoLogo } from "@/components/auth/ZindoLogo";
 
 export function Sidebar({
   businessName,
@@ -18,12 +19,10 @@ export function Sidebar({
     <aside className="sticky top-0 hidden h-screen w-64 shrink-0 flex-col justify-between border-r border-slate-800 bg-slate-900 text-slate-300 shadow-xl md:flex">
       <div className="min-h-0 flex-1 overflow-y-auto">
         <div className="flex items-center gap-3 border-b border-slate-800/80 p-5">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-tr from-orange-600 to-amber-500 text-xl font-black text-white shadow-lg shadow-orange-500/20">
-            Z
-          </div>
+          <ZindoLogo size={40} />
           <div className="min-w-0">
             <h1 className="truncate text-lg font-extrabold tracking-wide text-white">ZINDO</h1>
-            <span className="inline-block max-w-full truncate rounded-full bg-orange-500/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-orange-400">
+            <span className="inline-block max-w-full truncate rounded-full bg-zindo-green-500/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-zindo-green-400">
               {businessName}
             </span>
           </div>
