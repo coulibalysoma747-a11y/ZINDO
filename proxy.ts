@@ -55,6 +55,10 @@ export async function proxy(request: NextRequest) {
 
 export const config = {
   matcher: [
-    "/((?!_next/static|_next/image|favicon.ico|manifest.json|sw.js|icons/|.*\\.(?:svg|png|jpg|jpeg|webp)$).*)",
+    // robots.txt et sitemap.xml doivent rester accessibles sans session, sans
+    // quoi les robots d'indexation (Google...) se font rediriger vers /login
+    // et reçoivent une page de connexion HTML à la place — empêchant ZINDO
+    // d'être indexé du tout, quel que soit le contenu réel de ces fichiers.
+    "/((?!_next/static|_next/image|favicon.ico|manifest.json|robots.txt|sitemap.xml|sw.js|icons/|.*\\.(?:svg|png|jpg|jpeg|webp)$).*)",
   ],
 };
