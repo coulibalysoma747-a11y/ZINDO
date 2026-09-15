@@ -38,7 +38,8 @@ export async function getNavItemsAvailability(
         item.featureFlag ? isFeatureEnabled(item.featureFlag, businessId) : true,
       ]);
       const planOk = item.planFeature ? planLimits.features.includes(item.planFeature) : true;
-      const hiddenByActivity = activityConfig.hiddenNavHrefs.includes(item.href);
+      const hiddenByActivity =
+        activityConfig.hiddenNavHrefs.includes(item.href) || (!!item.requireActivity && item.requireActivity !== activityKey);
 
       let reason: ModuleUnavailableReason | null = null;
       if (!permissionOk) reason = "permission";
@@ -71,7 +72,8 @@ export async function getVisibleNavItems(
         item.featureFlag ? isFeatureEnabled(item.featureFlag, businessId) : true,
       ]);
       const planOk = item.planFeature ? planLimits.features.includes(item.planFeature) : true;
-      const hiddenByActivity = activityConfig.hiddenNavHrefs.includes(item.href);
+      const hiddenByActivity =
+        activityConfig.hiddenNavHrefs.includes(item.href) || (!!item.requireActivity && item.requireActivity !== activityKey);
       return { item, allowed: permissionOk && featureOk && planOk && !hiddenByActivity };
     })
   );

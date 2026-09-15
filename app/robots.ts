@@ -12,6 +12,7 @@ export default function robots(): MetadataRoute.Robots {
         "/produits",
         "/stock",
         "/ventes",
+        "/vente-engin",
         "/achats",
         "/clients",
         "/fournisseurs",

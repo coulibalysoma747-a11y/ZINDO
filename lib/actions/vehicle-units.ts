@@ -243,3 +243,47 @@ export async function getAvailableVehicleUnitsAction(
     .order("chassis_number", { ascending: true });
   return (data ?? []) as unknown as { id: string; chassisNumber: string; color: string | null }[];
 }
+
+export type VehicleModel = {
+  id: string;
+  name: string;
+  reference: string;
+  photoUrl: string | null;
+  salePrice: number;
+  unit: string;
+  availableCount: number;
+};
+
+/** Modèles de moto (produits à suivi unitaire) avec leur nombre d'exemplaires disponibles dans une boutique — pour le module Vente Engin. */
+export async function getVehicleModelsAction(locationId: string): Promise<VehicleModel[]> {
+  const user = await requireUser();
+
+  const { data: products } = await supabase
+    .from("products")
+    .select("id, name, reference, photoUrl:photo_url, salePrice:sale_price, unit")
+    .eq("business_id", user.businessId)
+    .eq("track_units", true)
+    .eq("active", true)
+    .order("name", { ascending: true });
+  if (!products || products.length === 0) return [];
+
+  const { data: units } = await supabase
+    .from("vehicle_units")
+    .select("productId:product_id")
+    .eq("business_id", user.businessId)
+    .eq("location_id", locationId)
+    .eq("status", "EN_STOCK")
+    .in(
+      "product_id",
+      products.map((p) => p.id as string)
+    );
+  const countByProduct = new Map<string, number>();
+  for (const u of (units ?? []) as unknown as Array<{ productId: string }>) {
+    countByProduct.set(u.productId, (countByProduct.get(u.productId) ?? 0) + 1);
+  }
+
+  return (products as unknown as Array<Omit<VehicleModel, "availableCount">>).map((p) => ({
+    ...p,
+    availableCount: countByProduct.get(p.id) ?? 0,
+  }));
+}

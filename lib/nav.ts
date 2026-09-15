@@ -1,4 +1,5 @@
 import { PERMISSIONS, type Permission } from "@/lib/permissions";
+import { MOTO_ACTIVITY_KEY } from "@/lib/activities";
 
 export type NavItem = {
   label: string;
@@ -27,17 +28,27 @@ export type NavItem = {
     | "invoices"
     | "support"
     | "online-store"
-    | "subscription";
+    | "subscription"
+    | "vehicle-sales";
   permission?: Permission;
   featureFlag?: string;
   planFeature?: string;
   badge?: string;
+  /** N'apparaît que pour ce type d'activité précis (lib/activities.ts) — voir lib/nav-server.ts. */
+  requireActivity?: string;
 };
 
 export const NAV_ITEMS: NavItem[] = [
   { label: "Tableau de bord", href: "/dashboard", icon: "dashboard" },
   { label: "Assistant IA", href: "/assistant", icon: "assistant", permission: PERMISSIONS.ASSISTANT_USE, planFeature: "assistant_ia", badge: "IA" },
   { label: "Vente / Caisse", href: "/ventes", icon: "sales", permission: PERMISSIONS.SALES_CREATE },
+  {
+    label: "Vente Engin",
+    href: "/vente-engin",
+    icon: "vehicle-sales",
+    permission: PERMISSIONS.SALES_CREATE,
+    requireActivity: MOTO_ACTIVITY_KEY,
+  },
   { label: "Facture A4", href: "/factures", icon: "invoices", permission: PERMISSIONS.SALES_CREATE },
   { label: "Historique des ventes", href: "/ventes/historique", icon: "history", permission: PERMISSIONS.SALES_VIEW },
   { label: "Sessions de caisse", href: "/ventes/sessions", icon: "cash-sessions", permission: PERMISSIONS.CASH_SESSIONS_MANAGE },
