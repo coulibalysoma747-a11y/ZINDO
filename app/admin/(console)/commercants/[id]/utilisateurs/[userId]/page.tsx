@@ -1,12 +1,22 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
-import { prisma } from "@/lib/prisma";
+import { supabase } from "@/lib/supabase";
 import { DEFAULT_ROLE_PERMISSIONS, ROLE_LABELS } from "@/lib/permissions";
 import { NAV_ITEMS } from "@/lib/nav";
 import { Card, CardBody, CardHeader } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { UserModulesPanel } from "./UserModulesPanel";
+
+type UserRow = {
+  id: string;
+  firstName: string;
+  lastName: string;
+  phone: string;
+  email: string | null;
+  role: "ADMIN" | "VENDEUR" | "GESTIONNAIRE_STOCK";
+  business: { name: string };
+};
 
 export default async function AdminUserModulesPage({
   params,
@@ -15,16 +25,23 @@ export default async function AdminUserModulesPage({
 }) {
   const { id: businessId, userId } = await params;
 
-  const user = await prisma.user.findFirst({
-    where: { id: userId, businessId },
-    include: { business: true, permissionOverrides: true },
-  });
-  if (!user) notFound();
+  const { data: userData } = await supabase
+    .from("users")
+    .select("id, firstName:first_name, lastName:last_name, phone, email, role, business:businesses(name)")
+    .eq("id", userId)
+    .eq("business_id", businessId)
+    .maybeSingle();
+  if (!userData) notFound();
+  const user = userData as unknown as UserRow;
 
-  const [roleOverrides, globalOverrides] = await Promise.all([
-    prisma.rolePermission.findMany({ where: { businessId, role: user.role } }),
-    prisma.globalRolePermission.findMany({ where: { role: user.role } }),
+  const [{ data: userOverridesData }, { data: roleOverridesData }, { data: globalOverridesData }] = await Promise.all([
+    supabase.from("user_permissions").select("permission, allowed").eq("user_id", userId),
+    supabase.from("role_permissions").select("permission, allowed").eq("business_id", businessId).eq("role", user.role),
+    supabase.from("global_role_permissions").select("permission, allowed").eq("role", user.role),
   ]);
+  const userOverrides = (userOverridesData ?? []) as Array<{ permission: string; allowed: boolean }>;
+  const roleOverrides = (roleOverridesData ?? []) as Array<{ permission: string; allowed: boolean }>;
+  const globalOverrides = (globalOverridesData ?? []) as Array<{ permission: string; allowed: boolean }>;
 
   // Certains modules du menu partagent la même permission sous-jacente (ex. Clients
   // et Crédits utilisent tous deux CUSTOMERS_VIEW) : on regroupe par permission pour
@@ -77,9 +94,9 @@ export default async function AdminUserModulesPage({
             userId={user.id}
             role={user.role}
             modules={modules}
-            userOverrides={user.permissionOverrides.map((o) => ({ permission: o.permission, allowed: o.allowed }))}
-            roleOverrides={roleOverrides.map((o) => ({ permission: o.permission, allowed: o.allowed }))}
-            globalOverrides={globalOverrides.map((o) => ({ permission: o.permission, allowed: o.allowed }))}
+            userOverrides={userOverrides}
+            roleOverrides={roleOverrides}
+            globalOverrides={globalOverrides}
             defaultPermissions={DEFAULT_ROLE_PERMISSIONS[user.role]}
           />
         </CardBody>

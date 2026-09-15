@@ -1,14 +1,30 @@
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { requireSuperAdmin } from "@/lib/superadmin-auth";
-import { prisma } from "@/lib/prisma";
+import { supabase } from "@/lib/supabase";
 import { FEATURE_CATALOG } from "@/lib/subscription";
 import { PlanEditForm } from "./PlanEditForm";
+
+type PlanRow = {
+  id: string;
+  key: string;
+  label: string;
+  monthlyPrice: number;
+  annualPrice: number;
+  maxProducts: number | null;
+  maxUsers: number | null;
+  maxLocations: number | null;
+  features: string;
+};
 
 export default async function AdminPlansPage() {
   await requireSuperAdmin();
 
-  const plans = await prisma.subscriptionPlan.findMany({ orderBy: { order: "asc" } });
+  const { data } = await supabase
+    .from("subscription_plans")
+    .select("id, key, label, monthlyPrice:monthly_price, annualPrice:annual_price, maxProducts:max_products, maxUsers:max_users, maxLocations:max_locations, features")
+    .order("order", { ascending: true });
+  const plans = (data ?? []) as unknown as PlanRow[];
 
   return (
     <div className="max-w-4xl space-y-6">

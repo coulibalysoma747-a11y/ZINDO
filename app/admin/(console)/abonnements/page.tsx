@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Wallet, TrendingUp, Users, Receipt, Settings2 } from "lucide-react";
 import { requireSuperAdmin } from "@/lib/superadmin-auth";
-import { prisma } from "@/lib/prisma";
+import { supabase } from "@/lib/supabase";
 import { formatMoney, formatDateTime } from "@/lib/format";
 import { Card, CardBody, CardHeader } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
@@ -14,6 +14,30 @@ const CYCLE_LABELS = { MONTHLY: "Mensuel", ANNUAL: "Annuel" } as const;
 const INVOICE_STATUS_TONE = { EN_ATTENTE: "amber", PAYEE: "emerald", ANNULEE: "zinc" } as const;
 const INVOICE_STATUS_LABELS = { EN_ATTENTE: "En attente", PAYEE: "Payée", ANNULEE: "Annulée" } as const;
 
+type PlanRow = { id: string; key: string; label: string; monthlyPrice: number; annualPrice: number };
+type SubscriptionRow = {
+  id: string;
+  businessId: string;
+  billingCycle: "MONTHLY" | "ANNUAL";
+  status: "ACTIVE" | "PAST_DUE";
+  currentPeriodEnd: string | null;
+  business: { name: string };
+  plan: { key: string; label: string; monthlyPrice: number; annualPrice: number };
+};
+type InvoiceRow = {
+  id: string;
+  number: string;
+  planLabel: string;
+  billingCycle: "MONTHLY" | "ANNUAL";
+  amount: number;
+  status: keyof typeof INVOICE_STATUS_LABELS;
+  paymentReference: string | null;
+  proofNote: string | null;
+  createdAt: string;
+  paidAt: string | null;
+  business: { name: string };
+};
+
 export default async function AdminSubscriptionsPage() {
   await requireSuperAdmin();
 
@@ -21,28 +45,44 @@ export default async function AdminSubscriptionsPage() {
   monthStart.setDate(1);
   monthStart.setHours(0, 0, 0, 0);
 
-  const [plans, subscriptions, pendingInvoices, recentInvoices, paidThisMonth, businessesWithoutSub] =
-    await Promise.all([
-      prisma.subscriptionPlan.findMany({ orderBy: { order: "asc" } }),
-      prisma.businessSubscription.findMany({ include: { business: true, plan: true }, orderBy: { updatedAt: "desc" } }),
-      prisma.subscriptionInvoice.findMany({
-        where: { status: "EN_ATTENTE" },
-        include: { business: true },
-        orderBy: { createdAt: "asc" },
-      }),
-      prisma.subscriptionInvoice.findMany({
-        where: { status: { not: "EN_ATTENTE" } },
-        include: { business: true },
-        orderBy: { createdAt: "desc" },
-        take: 20,
-      }),
-      prisma.subscriptionInvoice.aggregate({
-        where: { status: "PAYEE", paidAt: { gte: monthStart } },
-        _sum: { amount: true },
-        _count: true,
-      }),
-      prisma.business.count({ where: { subscription: null } }),
-    ]);
+  const [
+    { data: plansData },
+    { data: subscriptionsData },
+    { data: pendingInvoicesData },
+    { data: recentInvoicesData },
+    { data: paidThisMonthData },
+    { count: totalBusinesses },
+    { count: subscribedBusinesses },
+  ] = await Promise.all([
+    supabase.from("subscription_plans").select("id, key, label, monthlyPrice:monthly_price, annualPrice:annual_price").order("order", { ascending: true }),
+    supabase
+      .from("business_subscriptions")
+      .select(
+        "id, businessId:business_id, billingCycle:billing_cycle, status, currentPeriodEnd:current_period_end, business:businesses(name), plan:subscription_plans(key, label, monthlyPrice:monthly_price, annualPrice:annual_price)"
+      )
+      .order("updated_at", { ascending: false }),
+    supabase
+      .from("subscription_invoices")
+      .select("id, number, planLabel:plan_label, billingCycle:billing_cycle, amount, status, paymentReference:payment_reference, proofNote:proof_note, createdAt:created_at, business:businesses(name)")
+      .eq("status", "EN_ATTENTE")
+      .order("created_at", { ascending: true }),
+    supabase
+      .from("subscription_invoices")
+      .select("id, number, planLabel:plan_label, billingCycle:billing_cycle, amount, status, createdAt:created_at, business:businesses(name)")
+      .neq("status", "EN_ATTENTE")
+      .order("created_at", { ascending: false })
+      .limit(20),
+    supabase.from("subscription_invoices").select("amount").eq("status", "PAYEE").gte("paid_at", monthStart.toISOString()),
+    supabase.from("businesses").select("id", { count: "exact", head: true }),
+    supabase.from("business_subscriptions").select("id", { count: "exact", head: true }),
+  ]);
+
+  const plans = (plansData ?? []) as unknown as PlanRow[];
+  const subscriptions = (subscriptionsData ?? []) as unknown as SubscriptionRow[];
+  const pendingInvoices = (pendingInvoicesData ?? []) as unknown as InvoiceRow[];
+  const recentInvoices = (recentInvoicesData ?? []) as unknown as InvoiceRow[];
+  const paidThisMonthAmount = ((paidThisMonthData ?? []) as Array<{ amount: number }>).reduce((s, i) => s + i.amount, 0);
+  const businessesWithoutSub = (totalBusinesses ?? 0) - (subscribedBusinesses ?? 0);
 
   const mrr = subscriptions
     .filter((s) => s.status === "ACTIVE")
@@ -54,7 +94,7 @@ export default async function AdminSubscriptionsPage() {
   const currency = "XOF";
   const stats = [
     { label: "Revenu mensuel récurrent (MRR)", value: formatMoney(Math.round(mrr), currency), icon: TrendingUp, tone: "text-emerald-600 bg-emerald-50" },
-    { label: "Encaissé ce mois-ci", value: formatMoney(paidThisMonth._sum.amount ?? 0, currency), icon: Wallet, tone: "text-zindo-green-600 bg-zindo-green-50" },
+    { label: "Encaissé ce mois-ci", value: formatMoney(paidThisMonthAmount, currency), icon: Wallet, tone: "text-zindo-green-600 bg-zindo-green-50" },
     { label: "Factures en attente", value: pendingInvoices.length, icon: Receipt, tone: "text-amber-600 bg-amber-50" },
     { label: "Commerces sans palier assigné", value: businessesWithoutSub, icon: Users, tone: "text-zinc-600 bg-zinc-100" },
   ];
@@ -108,7 +148,7 @@ export default async function AdminSubscriptionsPage() {
                   </p>
                   <p className="text-xs text-zinc-500">
                     {inv.planLabel} ({CYCLE_LABELS[inv.billingCycle]}) — {formatMoney(inv.amount, currency)} —{" "}
-                    {formatDateTime(inv.createdAt)}
+                    {formatDateTime(new Date(inv.createdAt))}
                   </p>
                   {inv.paymentReference ? (
                     <p className="mt-1 text-xs text-emerald-700">
@@ -164,7 +204,7 @@ export default async function AdminSubscriptionsPage() {
                       </Badge>
                     </td>
                     <td className="px-4 py-3 text-zinc-600">
-                      {s.currentPeriodEnd ? formatDateTime(s.currentPeriodEnd) : "—"}
+                      {s.currentPeriodEnd ? formatDateTime(new Date(s.currentPeriodEnd)) : "—"}
                     </td>
                   </tr>
                 ))}
@@ -205,7 +245,7 @@ export default async function AdminSubscriptionsPage() {
                     <td className="px-4 py-3">
                       <Badge tone={INVOICE_STATUS_TONE[inv.status]}>{INVOICE_STATUS_LABELS[inv.status]}</Badge>
                     </td>
-                    <td className="px-4 py-3 text-zinc-600">{formatDateTime(inv.createdAt)}</td>
+                    <td className="px-4 py-3 text-zinc-600">{formatDateTime(new Date(inv.createdAt))}</td>
                   </tr>
                 ))}
               </tbody>

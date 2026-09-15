@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { ExternalLink } from "lucide-react";
 import { requireSuperAdmin } from "@/lib/superadmin-auth";
-import { prisma } from "@/lib/prisma";
+import { supabase } from "@/lib/supabase";
 import { formatDateTime } from "@/lib/format";
 import { Card, CardBody } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
@@ -20,20 +20,36 @@ const STATUS_TONE = {
   RESOLU: "emerald",
 } as const;
 
+type TicketRow = {
+  id: string;
+  subject: string;
+  message: string;
+  pageUrl: string | null;
+  status: keyof typeof STATUS_LABELS;
+  response: string | null;
+  createdAt: string;
+  businessId: string;
+  business: { name: string };
+  user: { firstName: string; lastName: string };
+};
+
 export default async function AdminSupportPage() {
   await requireSuperAdmin();
 
-  const tickets = await prisma.supportTicket.findMany({
-    include: { business: true, user: true },
-    orderBy: { createdAt: "desc" },
-    take: 200,
-  });
+  const { data } = await supabase
+    .from("support_tickets")
+    .select(
+      "id, subject, message, pageUrl:page_url, status, response, createdAt:created_at, businessId:business_id, business:businesses(name), user:users(firstName:first_name, lastName:last_name)"
+    )
+    .order("created_at", { ascending: false })
+    .limit(200);
+  const tickets = (data ?? []) as unknown as TicketRow[];
 
   // Les demandes non traitées remontent en premier, peu importe leur date.
   const sorted = [...tickets].sort((a, b) => {
     if (a.status === "RESOLU" && b.status !== "RESOLU") return 1;
     if (a.status !== "RESOLU" && b.status === "RESOLU") return -1;
-    return b.createdAt.getTime() - a.createdAt.getTime();
+    return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
   });
 
   const openCount = tickets.filter((t) => t.status !== "RESOLU").length;
@@ -65,11 +81,9 @@ export default async function AdminSupportPage() {
                       >
                         {t.business.name} <ExternalLink className="h-3 w-3" />
                       </Link>{" "}
-                      — {t.user.firstName} {t.user.lastName} — {formatDateTime(t.createdAt)}
+                      — {t.user.firstName} {t.user.lastName} — {formatDateTime(new Date(t.createdAt))}
                     </p>
-                    {t.pageUrl && (
-                      <p className="mt-0.5 font-mono text-xs text-zinc-400">Page : {t.pageUrl}</p>
-                    )}
+                    {t.pageUrl && <p className="mt-0.5 font-mono text-xs text-zinc-400">Page : {t.pageUrl}</p>}
                   </div>
                   <Badge tone={STATUS_TONE[t.status]}>{STATUS_LABELS[t.status]}</Badge>
                 </div>

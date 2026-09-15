@@ -4,7 +4,7 @@ import { useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Select } from "@/components/ui/Input";
 import { assignBusinessPlanAction } from "@/lib/actions/subscription-admin";
-import type { SubscriptionPlan, BillingCycle } from "@prisma/client";
+import type { BillingCycle } from "@/lib/db-types";
 
 export function BusinessPlanSelect({
   businessId,
@@ -15,7 +15,7 @@ export function BusinessPlanSelect({
   businessId: string;
   planKey: string | null;
   billingCycle: BillingCycle | null;
-  plans: SubscriptionPlan[];
+  plans: { key: string; label: string }[];
 }) {
   const [pending, startTransition] = useTransition();
   const router = useRouter();

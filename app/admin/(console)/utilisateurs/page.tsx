@@ -1,17 +1,32 @@
 import Link from "next/link";
-import { prisma } from "@/lib/prisma";
+import { supabase } from "@/lib/supabase";
 import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { EmptyState } from "@/components/ui/Empty";
 import { UserActiveToggle } from "./UserActiveToggle";
 import { UserRoleSelect } from "./UserRoleSelect";
 
+type UserRow = {
+  id: string;
+  firstName: string;
+  lastName: string;
+  phone: string;
+  email: string | null;
+  role: "ADMIN" | "VENDEUR" | "GESTIONNAIRE_STOCK";
+  active: boolean;
+  businessId: string;
+  business: { name: string };
+};
+
 export default async function AdminUsersPage() {
-  const users = await prisma.user.findMany({
-    orderBy: { createdAt: "desc" },
-    include: { business: true },
-    take: 500,
-  });
+  const { data } = await supabase
+    .from("users")
+    .select(
+      "id, firstName:first_name, lastName:last_name, phone, email, role, active, businessId:business_id, business:businesses(name)"
+    )
+    .order("created_at", { ascending: false })
+    .limit(500);
+  const users = (data ?? []) as unknown as UserRow[];
 
   return (
     <div className="space-y-6">

@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
-import { prisma } from "@/lib/prisma";
+import { supabase } from "@/lib/supabase";
 import { formatDateTime, formatMoney } from "@/lib/format";
 import { Card, CardBody, CardHeader } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
@@ -11,6 +11,29 @@ import { ResetPasswordButton } from "./ResetPasswordButton";
 import { UserActiveToggle } from "../../utilisateurs/UserActiveToggle";
 import { UserRoleSelect } from "../../utilisateurs/UserRoleSelect";
 
+type BusinessRow = {
+  id: string;
+  name: string;
+  suspended: boolean;
+  activity: string | null;
+  city: string | null;
+  country: string;
+  phone: string | null;
+  email: string | null;
+  address: string | null;
+  currency: string;
+  createdAt: string;
+};
+type UserRow = {
+  id: string;
+  firstName: string;
+  lastName: string;
+  phone: string;
+  email: string | null;
+  role: "ADMIN" | "VENDEUR" | "GESTIONNAIRE_STOCK";
+  active: boolean;
+};
+
 export default async function AdminBusinessDetailPage({
   params,
 }: {
@@ -18,23 +41,43 @@ export default async function AdminBusinessDetailPage({
 }) {
   const { id } = await params;
 
-  const business = await prisma.business.findUnique({
-    where: { id },
-    include: {
-      users: { orderBy: { createdAt: "asc" } },
-      _count: { select: { sales: true, products: true, locations: true } },
-      subscription: { include: { plan: true } },
-    },
-  });
-  if (!business) notFound();
+  const { data: businessData } = await supabase
+    .from("businesses")
+    .select("id, name, suspended, activity, city, country, phone, email, address, currency, createdAt:created_at")
+    .eq("id", id)
+    .maybeSingle();
+  if (!businessData) notFound();
+  const business = businessData as unknown as BusinessRow;
 
-  const [totalRevenue, plans] = await Promise.all([
-    prisma.sale.aggregate({
-      where: { businessId: business.id, status: { not: "ANNULEE" } },
-      _sum: { total: true },
-    }),
-    prisma.subscriptionPlan.findMany({ orderBy: { order: "asc" } }),
+  const [
+    { data: usersData },
+    { count: productCount },
+    { count: salesCount },
+    { count: locationCount },
+    { data: salesForRevenue },
+    { data: subscriptionData },
+    { data: plansData },
+  ] = await Promise.all([
+    supabase
+      .from("users")
+      .select("id, firstName:first_name, lastName:last_name, phone, email, role, active")
+      .eq("business_id", id)
+      .order("created_at", { ascending: true }),
+    supabase.from("products").select("id", { count: "exact", head: true }).eq("business_id", id),
+    supabase.from("sales").select("id", { count: "exact", head: true }).eq("business_id", id),
+    supabase.from("locations").select("id", { count: "exact", head: true }).eq("business_id", id),
+    supabase.from("sales").select("total").eq("business_id", id).neq("status", "ANNULEE"),
+    supabase
+      .from("business_subscriptions")
+      .select("billingCycle:billing_cycle, plan:subscription_plans(key)")
+      .eq("business_id", id)
+      .maybeSingle(),
+    supabase.from("subscription_plans").select("key, label").order("order", { ascending: true }),
   ]);
+  const users = (usersData ?? []) as unknown as UserRow[];
+  const totalRevenue = ((salesForRevenue ?? []) as Array<{ total: number }>).reduce((s, sale) => s + sale.total, 0);
+  const subscription = subscriptionData as unknown as { billingCycle: "MONTHLY" | "ANNUAL"; plan: { key: string } } | null;
+  const plans = (plansData ?? []) as unknown as Array<{ key: string; label: string }>;
 
   return (
     <div className="space-y-6">
@@ -59,21 +102,19 @@ export default async function AdminBusinessDetailPage({
         <Card>
           <CardBody>
             <p className="text-xs text-zinc-500">Produits</p>
-            <p className="text-lg font-bold text-zinc-900">{business._count.products}</p>
+            <p className="text-lg font-bold text-zinc-900">{productCount ?? 0}</p>
           </CardBody>
         </Card>
         <Card>
           <CardBody>
             <p className="text-xs text-zinc-500">Ventes</p>
-            <p className="text-lg font-bold text-zinc-900">{business._count.sales}</p>
+            <p className="text-lg font-bold text-zinc-900">{salesCount ?? 0}</p>
           </CardBody>
         </Card>
         <Card>
           <CardBody>
             <p className="text-xs text-zinc-500">Chiffre d&apos;affaires cumulé</p>
-            <p className="text-lg font-bold text-zinc-900">
-              {formatMoney(totalRevenue._sum.total ?? 0, business.currency)}
-            </p>
+            <p className="text-lg font-bold text-zinc-900">{formatMoney(totalRevenue, business.currency)}</p>
           </CardBody>
         </Card>
       </div>
@@ -97,18 +138,18 @@ export default async function AdminBusinessDetailPage({
           </div>
           <div>
             <p className="text-zinc-400">Boutiques / dépôts</p>
-            <p className="text-zinc-700">{business._count.locations}</p>
+            <p className="text-zinc-700">{locationCount ?? 0}</p>
           </div>
           <div>
             <p className="text-zinc-400">Créé le</p>
-            <p className="text-zinc-700">{formatDateTime(business.createdAt)}</p>
+            <p className="text-zinc-700">{formatDateTime(new Date(business.createdAt))}</p>
           </div>
           <div>
             <p className="mb-1 text-zinc-400">Abonnement</p>
             <BusinessPlanSelect
               businessId={business.id}
-              planKey={business.subscription?.plan.key ?? null}
-              billingCycle={business.subscription?.billingCycle ?? null}
+              planKey={subscription?.plan.key ?? null}
+              billingCycle={subscription?.billingCycle ?? null}
               plans={plans}
             />
           </div>
@@ -117,7 +158,7 @@ export default async function AdminBusinessDetailPage({
 
       <Card>
         <CardHeader>
-          <h2 className="font-semibold text-zinc-900">Utilisateurs ({business.users.length})</h2>
+          <h2 className="font-semibold text-zinc-900">Utilisateurs ({users.length})</h2>
         </CardHeader>
         <CardBody className="p-0">
           <table className="w-full text-sm">
@@ -131,12 +172,15 @@ export default async function AdminBusinessDetailPage({
               </tr>
             </thead>
             <tbody className="divide-y divide-zinc-100">
-              {business.users.map((u) => (
+              {users.map((u) => (
                 <tr key={u.id}>
                   <td className="px-4 py-2 text-zinc-900">
                     {u.firstName} {u.lastName}
                   </td>
-                  <td className="px-4 py-2 text-zinc-600">{u.phone}{u.email ? ` — ${u.email}` : ""}</td>
+                  <td className="px-4 py-2 text-zinc-600">
+                    {u.phone}
+                    {u.email ? ` — ${u.email}` : ""}
+                  </td>
                   <td className="px-4 py-2">
                     <UserRoleSelect userId={u.id} role={u.role} />
                   </td>

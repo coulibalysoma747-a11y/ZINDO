@@ -1,15 +1,39 @@
 import Link from "next/link";
-import { prisma } from "@/lib/prisma";
+import { supabase } from "@/lib/supabase";
 import { formatDateTime } from "@/lib/format";
 import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { EmptyState } from "@/components/ui/Empty";
 
+type BusinessRow = {
+  id: string;
+  name: string;
+  activity: string | null;
+  plan: string;
+  suspended: boolean;
+  createdAt: string;
+};
+
 export default async function AdminBusinessesPage() {
-  const businesses = await prisma.business.findMany({
-    orderBy: { createdAt: "desc" },
-    include: { _count: { select: { users: true, sales: true } } },
-  });
+  const { data } = await supabase
+    .from("businesses")
+    .select("id, name, activity, plan, suspended, createdAt:created_at")
+    .order("created_at", { ascending: false });
+  const businesses = (data ?? []) as unknown as BusinessRow[];
+
+  const businessIds = businesses.map((b) => b.id);
+  const [{ data: users }, { data: sales }] = await Promise.all([
+    businessIds.length
+      ? supabase.from("users").select("id, businessId:business_id").in("business_id", businessIds)
+      : Promise.resolve({ data: [] as { id: string; businessId: string }[] }),
+    businessIds.length
+      ? supabase.from("sales").select("id, businessId:business_id").in("business_id", businessIds)
+      : Promise.resolve({ data: [] as { id: string; businessId: string }[] }),
+  ]);
+  const userCounts = new Map<string, number>();
+  for (const u of (users ?? []) as Array<{ businessId: string }>) userCounts.set(u.businessId, (userCounts.get(u.businessId) ?? 0) + 1);
+  const saleCounts = new Map<string, number>();
+  for (const s of (sales ?? []) as Array<{ businessId: string }>) saleCounts.set(s.businessId, (saleCounts.get(s.businessId) ?? 0) + 1);
 
   return (
     <div className="space-y-6">
@@ -43,13 +67,13 @@ export default async function AdminBusinessesPage() {
                     </Link>
                   </td>
                   <td className="px-4 py-3 text-zinc-600">{b.activity ?? "—"}</td>
-                  <td className="px-4 py-3 text-zinc-600">{b._count.users}</td>
-                  <td className="px-4 py-3 text-zinc-600">{b._count.sales}</td>
+                  <td className="px-4 py-3 text-zinc-600">{userCounts.get(b.id) ?? 0}</td>
+                  <td className="px-4 py-3 text-zinc-600">{saleCounts.get(b.id) ?? 0}</td>
                   <td className="px-4 py-3 text-zinc-600">{b.plan}</td>
                   <td className="px-4 py-3">
                     {b.suspended ? <Badge tone="red">Suspendu</Badge> : <Badge tone="emerald">Actif</Badge>}
                   </td>
-                  <td className="px-4 py-3 text-zinc-600">{formatDateTime(b.createdAt)}</td>
+                  <td className="px-4 py-3 text-zinc-600">{formatDateTime(new Date(b.createdAt))}</td>
                 </tr>
               ))}
             </tbody>

@@ -1,15 +1,27 @@
 import { Crown, ShieldCheck } from "lucide-react";
-import { prisma } from "@/lib/prisma";
+import { supabase } from "@/lib/supabase";
 import { requireFounder } from "@/lib/superadmin-auth";
 import { formatDateTime } from "@/lib/format";
 import { Card } from "@/components/ui/Card";
 import { CreateAdminForm } from "./CreateAdminForm";
 import { DeleteAdminButton } from "./DeleteAdminButton";
 
+type AdminRow = {
+  id: string;
+  name: string;
+  email: string;
+  role: "FOUNDER" | "ADMIN";
+  createdAt: string;
+};
+
 export default async function AdminAccountsPage() {
   const founder = await requireFounder();
 
-  const admins = await prisma.superAdmin.findMany({ orderBy: { createdAt: "asc" } });
+  const { data } = await supabase
+    .from("super_admins")
+    .select("id, name, email, role, createdAt:created_at")
+    .order("created_at", { ascending: true });
+  const admins = (data ?? []) as unknown as AdminRow[];
 
   return (
     <div className="space-y-6">
@@ -51,7 +63,7 @@ export default async function AdminAccountsPage() {
                 <td className="px-4 py-3 text-zinc-600">
                   {a.role === "FOUNDER" ? "Créateur • Fondateur • Propriétaire" : "Administrateur"}
                 </td>
-                <td className="px-4 py-3 text-zinc-600">{formatDateTime(a.createdAt)}</td>
+                <td className="px-4 py-3 text-zinc-600">{formatDateTime(new Date(a.createdAt))}</td>
                 <td className="px-4 py-3 text-right">
                   {a.role !== "FOUNDER" && a.id !== founder.id && (
                     <DeleteAdminButton adminId={a.id} adminName={a.name} />

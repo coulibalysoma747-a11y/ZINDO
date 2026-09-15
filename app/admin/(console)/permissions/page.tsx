@@ -1,9 +1,10 @@
-import { prisma } from "@/lib/prisma";
+import { supabase } from "@/lib/supabase";
 import { Card, CardBody, CardHeader } from "@/components/ui/Card";
 import { GlobalPermissionsPanel } from "./GlobalPermissionsPanel";
 
 export default async function AdminPermissionsPage() {
-  const overrides = await prisma.globalRolePermission.findMany();
+  const { data } = await supabase.from("global_role_permissions").select("role, permission, allowed");
+  const overrides = (data ?? []) as unknown as Array<{ role: "ADMIN" | "VENDEUR" | "GESTIONNAIRE_STOCK"; permission: string; allowed: boolean }>;
 
   return (
     <div className="space-y-6">
