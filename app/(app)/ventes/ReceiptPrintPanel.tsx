@@ -39,14 +39,16 @@ export function ReceiptPrintPanel({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Pas de classes print: ici : au moment d'imprimer, c'est le CSS embarqué par
-  // Receipt/Facture lui-même (body * { visibility: hidden }, #zindo-receipt/
-  // #zindo-facture { visibility: visible; position: absolute; ... }) qui masque
-  // tout le reste — y compris le rideau et le cadre de ce panneau — sans qu'il
-  // faille dupliquer cette logique ici (display:none couperait le rendu du
-  // ticket lui-même puisqu'il est imbriqué à l'intérieur).
+  // `print:absolute` est essentiel : en impression, un élément `position: fixed`
+  // se répète automatiquement sur CHAQUE page générée par le navigateur (c'est
+  // le comportement standard pour les en-têtes/pieds de page fixes) — ce qui
+  // imprimait le ticket en double. `position: absolute` n'a pas ce comportement.
+  // Le reste de ce panneau (rideau, cadre, boutons) est masqué au moment
+  // d'imprimer par le CSS embarqué dans Receipt/Facture lui-même
+  // (body * { visibility: hidden }, #zindo-receipt/#zindo-facture { visibility:
+  // visible; ... }) — inutile de dupliquer cette logique ici.
   return (
-    <div className="fixed inset-0 z-50 flex">
+    <div className="fixed print:absolute inset-0 z-50 flex">
       {/* Rideau semi-transparent — cliquer en dehors du panneau le ferme, sans jamais quitter la page. */}
       <button
         type="button"
