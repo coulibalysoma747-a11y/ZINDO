@@ -43,7 +43,10 @@ export function Topbar({
         <LocationSwitcher locations={locations} currentLocationId={currentLocationId} />
       </div>
       <div className="flex items-center gap-2">
-        <InstallAppButton className="hidden items-center gap-1.5 rounded-lg border border-zinc-200 px-3 py-1.5 text-xs font-semibold text-zinc-600 hover:border-zinc-300 dark:border-slate-700 dark:text-slate-300 sm:flex" />
+        <InstallAppButton
+          iconOnly
+          className="flex items-center gap-1.5 rounded-lg border border-zinc-200 px-2.5 py-1.5 text-xs font-semibold text-zinc-600 hover:border-zinc-300 dark:border-slate-700 dark:text-slate-300 sm:px-3"
+        />
         <div className="relative">
         <button
           onClick={() => setMenuOpen((v) => !v)}

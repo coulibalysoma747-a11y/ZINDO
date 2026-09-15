@@ -13,7 +13,6 @@ import { MobileHome } from "./MobileHome";
 import {
   DollarSign,
   TrendingUp,
-  Package,
   Boxes,
   ShoppingCart,
   AlertTriangle,
@@ -67,36 +66,28 @@ export default async function DashboardPage() {
   ]);
 
   const totalStockValue = locationsOverview.reduce((s, l) => s + l.stockValue, 0);
-  const hasQuickActions = canSell || canManageProducts || canManageStock || canManagePurchases;
 
   return (
-    <div>
-      {/* Accueil mobile : hero + raccourcis + alertes, calqués sur la maquette
-          fournie par l'utilisateur. Le tableau de bord "bureau" ci-dessous
-          (stats détaillées, tableaux) reste inchangé à partir de sm. */}
-      <div className="sm:hidden">
-        <MobileHome
-          firstName={user.firstName}
-          currency={currency}
-          data={data}
-          canSell={canSell}
-          canViewProducts={canViewProducts}
-          canViewStock={canViewStock}
-          canViewCustomers={canViewCustomers}
-          canViewSuppliers={canViewSuppliers}
-          canManageExpenses={canManageExpenses}
-          canViewReports={canViewReports}
-        />
-      </div>
+    <div className="space-y-6">
+      {/* Accueil (hero + raccourcis + alertes), calqué sur la maquette fournie
+          par l'utilisateur — commun au téléphone et à l'ordinateur. Les stats
+          détaillées et tableaux ci-dessous n'apparaissent qu'à partir de sm,
+          là où il y a la place de les afficher confortablement. */}
+      <MobileHome
+        firstName={user.firstName}
+        locationName={currentLocation.name}
+        currency={currency}
+        data={data}
+        canSell={canSell}
+        canViewProducts={canViewProducts}
+        canViewStock={canViewStock}
+        canViewCustomers={canViewCustomers}
+        canViewSuppliers={canViewSuppliers}
+        canManageExpenses={canManageExpenses}
+        canViewReports={canViewReports}
+      />
 
     <div className="hidden space-y-6 sm:block">
-      <div>
-        <h1 className="text-xl font-bold text-zinc-900">Tableau de bord</h1>
-        <p className="text-sm text-zinc-500">
-          Bonjour {user.firstName}, voici la situation de {currentLocation.name} aujourd&apos;hui.
-        </p>
-      </div>
-
       {(canSell || canViewStock) && (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {canSell && (
@@ -252,46 +243,6 @@ export default async function DashboardPage() {
         </div>
       )}
 
-      {hasQuickActions && (
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-          {canSell && (
-            <Link
-              href="/ventes"
-              className="flex flex-col items-center gap-2 rounded-xl border border-zinc-200 bg-white p-4 text-center hover:border-emerald-300 hover:bg-emerald-50 dark:border-slate-700 dark:bg-slate-900 dark:hover:bg-emerald-500/10"
-            >
-              <ShoppingCart className="h-5 w-5 text-emerald-600" />
-              <span className="text-sm font-medium text-zinc-700">Nouvelle vente</span>
-            </Link>
-          )}
-          {canManageProducts && (
-            <Link
-              href="/produits/nouveau"
-              className="flex flex-col items-center gap-2 rounded-xl border border-zinc-200 bg-white p-4 text-center hover:border-emerald-300 hover:bg-emerald-50 dark:border-slate-700 dark:bg-slate-900 dark:hover:bg-emerald-500/10"
-            >
-              <Package className="h-5 w-5 text-emerald-600" />
-              <span className="text-sm font-medium text-zinc-700">Ajouter un produit</span>
-            </Link>
-          )}
-          {canManageStock && (
-            <Link
-              href="/stock/entree"
-              className="flex flex-col items-center gap-2 rounded-xl border border-zinc-200 bg-white p-4 text-center hover:border-emerald-300 hover:bg-emerald-50 dark:border-slate-700 dark:bg-slate-900 dark:hover:bg-emerald-500/10"
-            >
-              <Boxes className="h-5 w-5 text-emerald-600" />
-              <span className="text-sm font-medium text-zinc-700">Entrée de stock</span>
-            </Link>
-          )}
-          {canManagePurchases && (
-            <Link
-              href="/achats/nouveau"
-              className="flex flex-col items-center gap-2 rounded-xl border border-zinc-200 bg-white p-4 text-center hover:border-emerald-300 hover:bg-emerald-50 dark:border-slate-700 dark:bg-slate-900 dark:hover:bg-emerald-500/10"
-            >
-              <DollarSign className="h-5 w-5 text-emerald-600" />
-              <span className="text-sm font-medium text-zinc-700">Nouvel achat</span>
-            </Link>
-          )}
-        </div>
-      )}
     </div>
     </div>
   );

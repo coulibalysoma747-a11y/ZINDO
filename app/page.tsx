@@ -112,7 +112,10 @@ export default async function RootPage() {
           <span className="text-lg font-extrabold tracking-tight text-zindo-ink-900">ZINDO</span>
         </div>
         <div className="flex items-center gap-2 sm:gap-3">
-          <InstallAppButton className="hidden items-center gap-1.5 rounded-xl border border-zinc-200 px-3 py-2 text-sm font-semibold text-zindo-ink-700 hover:border-zinc-300 sm:flex" />
+          <InstallAppButton
+            iconOnly
+            className="flex items-center gap-1.5 rounded-xl border border-zinc-200 px-2.5 py-2 text-sm font-semibold text-zindo-ink-700 hover:border-zinc-300 sm:px-3"
+          />
           <Link
             href="/login"
             className="rounded-xl px-3 py-2 text-sm font-semibold text-zindo-ink-700 hover:text-zindo-green-600 sm:px-4"

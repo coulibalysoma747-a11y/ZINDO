@@ -27,13 +27,15 @@ const TILE_TONES = {
 } as const;
 
 /**
- * Accueil mobile — calqué sur la maquette fournie par l'utilisateur (hero de
- * ventes du jour + raccourcis en grille + alertes). N'apparaît que sous sm ;
- * voir dashboard/page.tsx qui garde le tableau de bord "bureau" existant à
- * partir de sm.
+ * Accueil — calqué sur la maquette fournie par l'utilisateur (hero de ventes
+ * du jour + raccourcis en grille + alertes). Commun au téléphone et à
+ * l'ordinateur (voir dashboard/page.tsx) : la grille de raccourcis et le hero
+ * s'élargissent simplement à partir de sm/lg, les stats détaillées et
+ * tableaux "bureau" restant en plus, en dessous, à partir de sm.
  */
 export function MobileHome({
   firstName,
+  locationName,
   currency,
   data,
   canSell,
@@ -45,6 +47,7 @@ export function MobileHome({
   canViewReports,
 }: {
   firstName: string;
+  locationName: string;
   currency: string;
   data: DashboardData;
   canSell: boolean;
@@ -83,7 +86,7 @@ export function MobileHome({
   const tiles = allTiles.filter((t) => t.show);
 
   return (
-    <div className="space-y-5 pb-2">
+    <div className="space-y-5 pb-2 lg:max-w-5xl">
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-2.5">
           <ZindoLogo size={36} />
@@ -91,7 +94,7 @@ export function MobileHome({
             <p className="text-sm text-zinc-500">
               Bonjour, <span className="font-medium text-zinc-700">{firstName}</span>
             </p>
-            <p className="text-xs text-zinc-400">Bienvenue sur ZINDO</p>
+            <p className="text-xs text-zinc-400">{locationName} · aujourd&apos;hui</p>
           </div>
         </div>
         <Link
@@ -104,22 +107,22 @@ export function MobileHome({
         </Link>
       </div>
 
-      <div className="rounded-2xl bg-gradient-to-br from-zindo-green-500 to-zindo-green-600 p-5 text-white shadow-lg shadow-zindo-green-800/20">
+      <div className="rounded-2xl bg-gradient-to-br from-zindo-green-500 to-zindo-green-600 p-5 text-white shadow-lg shadow-zindo-green-800/20 sm:p-6">
         <p className="text-sm text-white/80">Ventes aujourd&apos;hui</p>
         <div className="mt-2 flex items-end justify-between gap-3">
           <div>
-            <p className="text-2xl font-bold leading-tight">{formatMoney(data.salesToday, currency)}</p>
+            <p className="text-2xl font-bold leading-tight sm:text-3xl">{formatMoney(data.salesToday, currency)}</p>
             {trendPct !== null && (
-              <p className="mt-1 text-xs font-medium text-white/90">
+              <p className="mt-1 text-xs font-medium text-white/90 sm:text-sm">
                 {trendPct >= 0 ? "↑" : "↓"} {Math.abs(trendPct)}% vs hier
               </p>
             )}
           </div>
-          <div className="flex h-12 items-end gap-1">
+          <div className="flex h-12 items-end gap-1 sm:h-16 sm:gap-1.5">
             {data.salesLast7Days.map((v, i) => (
               <div
                 key={i}
-                className={`w-2 rounded-full ${i === 6 ? "bg-white" : "bg-white/40"}`}
+                className={`w-2 rounded-full sm:w-2.5 ${i === 6 ? "bg-white" : "bg-white/40"}`}
                 style={{ height: `${Math.max(12, (v / maxDay) * 100)}%` }}
               />
             ))}
@@ -128,7 +131,7 @@ export function MobileHome({
       </div>
 
       {tiles.length > 0 && (
-        <div className="grid grid-cols-4 gap-3">
+        <div className="grid grid-cols-4 gap-3 md:grid-cols-8">
           {tiles.map((t) => {
             const Icon = t.icon;
             return (
@@ -148,7 +151,7 @@ export function MobileHome({
         {!hasAlerts ? (
           <p className="rounded-2xl bg-white px-4 py-3 text-sm text-zinc-500 shadow-sm">Aucune alerte pour le moment.</p>
         ) : (
-          <div className="divide-y divide-zinc-100 rounded-2xl bg-white shadow-sm">
+          <div className="divide-y divide-zinc-100 rounded-2xl bg-white shadow-sm sm:grid sm:grid-cols-2 sm:divide-x sm:divide-y-0">
             {data.lowStockProducts.length > 0 && (
               <Link href="/produits?filtre=stock-faible" className="flex items-center gap-3 px-4 py-3">
                 <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-amber-50 text-amber-500">
