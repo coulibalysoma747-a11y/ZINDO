@@ -40,7 +40,7 @@ export default async function AssistantPage() {
           <CardBody>
             <p className="text-sm font-medium text-amber-800">Assistant non configuré</p>
             <p className="mt-1 text-sm text-amber-700">
-              Ajoutez une clé <code className="rounded bg-amber-100 px-1">ANTHROPIC_API_KEY</code> dans le
+              Ajoutez une clé <code className="rounded bg-amber-100 px-1">DEEPSEEK_API_KEY</code> dans le
               fichier <code className="rounded bg-amber-100 px-1">.env</code> à la racine du projet, puis
               redémarrez le serveur pour activer les réponses aux questions. Les conseils automatiques
               ci-dessous restent disponibles sans configuration.

@@ -1,10 +1,9 @@
 "use server";
 
-import Anthropic from "@anthropic-ai/sdk";
 import { requirePermission } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
 import { getCurrentLocation } from "@/lib/location";
-import { getAnthropicClient, ASSISTANT_MODEL, isAssistantConfigured } from "@/lib/ai/client";
+import { createChatCompletion, isAssistantConfigured, DeepSeekError, type DeepSeekMessage } from "@/lib/ai/deepseek";
 import { ASSISTANT_TOOLS, createToolExecutor } from "@/lib/ai/tools";
 
 export type ChatMessage = { role: "user" | "assistant"; content: string };
@@ -22,8 +21,7 @@ export async function askAssistantAction(
   if (!isAssistantConfigured()) {
     return {
       success: false,
-      error:
-        "L'assistant IA n'est pas configuré. Ajoutez votre clé ANTHROPIC_API_KEY dans le fichier .env pour l'activer.",
+      error: "L'assistant IA n'est pas configuré. Ajoutez votre clé DEEPSEEK_API_KEY dans le fichier .env pour l'activer.",
     };
   }
 
@@ -36,7 +34,6 @@ export async function askAssistantAction(
     return { success: false, error: "Posez une question à l'assistant." };
   }
 
-  const client = getAnthropicClient();
   const executeTool = createToolExecutor(user.businessId, currentLocation.id, user.business.currency);
 
   const systemPrompt = `Tu es l'assistant commercial intelligent de ZINDO, une application de gestion de stock et de ventes pour les commerces au Burkina Faso.
@@ -49,54 +46,44 @@ Règles :
 - Si une question sort du cadre de la gestion du commerce (stock, ventes, clients, marges, crédits), réponds poliment que tu es limité à ces sujets.
 - Sois précis et cite des chiffres concrets issus des outils plutôt que des généralités.`;
 
-  const messages: Anthropic.MessageParam[] = [
-    ...history.map((m): Anthropic.MessageParam => ({ role: m.role, content: m.content })),
+  const messages: DeepSeekMessage[] = [
+    { role: "system", content: systemPrompt },
+    ...history.map((m): DeepSeekMessage => ({ role: m.role, content: m.content })),
     { role: "user", content: question },
   ];
 
   try {
     for (let i = 0; i < MAX_TOOL_ITERATIONS; i++) {
-      const response = await client.messages.create({
-        model: ASSISTANT_MODEL,
-        // Claude Opus 5 réfléchit (extended thinking) par défaut, et ce
-        // raisonnement est décompté du même budget que max_tokens — avec une
-        // limite trop basse, le modèle pouvait être coupé avant même
-        // d'émettre un appel d'outil ou sa réponse finale, d'où l'assistant
-        // qui ne répondait jamais correctement.
-        max_tokens: 8000,
-        output_config: { effort: "medium" },
-        system: systemPrompt,
-        tools: ASSISTANT_TOOLS,
+      const response = await createChatCompletion({
         messages,
+        tools: ASSISTANT_TOOLS,
+        maxTokens: 2000,
       });
 
-      if (response.stop_reason === "refusal") {
+      if (response.finishReason === "content_filter") {
         return {
           success: false,
           error: "L'assistant n'a pas pu répondre à cette question. Essayez de la reformuler.",
         };
       }
 
-      if (response.stop_reason !== "tool_use") {
-        const text = response.content
-          .filter((b): b is Anthropic.TextBlock => b.type === "text")
-          .map((b) => b.text)
-          .join("\n")
-          .trim();
+      if (response.finishReason !== "tool_calls" || response.toolCalls.length === 0) {
+        const text = (response.content ?? "").trim();
         return { success: true, reply: text || "Je n'ai pas pu générer de réponse." };
       }
 
-      messages.push({ role: "assistant", content: response.content });
+      messages.push({ role: "assistant", content: response.content, tool_calls: response.toolCalls });
 
-      const toolUseBlocks = response.content.filter(
-        (b): b is Anthropic.ToolUseBlock => b.type === "tool_use"
-      );
-      const toolResults: Anthropic.ToolResultBlockParam[] = [];
-      for (const block of toolUseBlocks) {
-        const result = await executeTool(block.name, block.input as Record<string, unknown>);
-        toolResults.push({ type: "tool_result", tool_use_id: block.id, content: result });
+      for (const call of response.toolCalls) {
+        let input: Record<string, unknown> = {};
+        try {
+          input = JSON.parse(call.function.arguments || "{}");
+        } catch {
+          // arguments malformés — l'outil reçoit un objet vide plutôt que de faire échouer tout le tour
+        }
+        const result = await executeTool(call.function.name, input);
+        messages.push({ role: "tool", tool_call_id: call.id, content: result });
       }
-      messages.push({ role: "user", content: toolResults });
     }
 
     return {
@@ -104,15 +91,12 @@ Règles :
       error: "L'assistant n'a pas pu conclure son analyse. Essayez de reformuler votre question.",
     };
   } catch (error) {
-    if (error instanceof Anthropic.AuthenticationError) {
-      return { success: false, error: "Clé API Anthropic invalide. Vérifiez ANTHROPIC_API_KEY dans .env." };
-    }
-    if (error instanceof Anthropic.RateLimitError) {
-      return { success: false, error: "Trop de requêtes vers l'assistant IA. Réessayez dans un instant." };
-    }
-    if (error instanceof Anthropic.APIError) {
+    if (error instanceof DeepSeekError) {
+      if (error.status === 401) return { success: false, error: "Clé API DeepSeek invalide. Vérifiez DEEPSEEK_API_KEY dans .env." };
+      if (error.status === 429) return { success: false, error: "Trop de requêtes vers l'assistant IA. Réessayez dans un instant." };
       return { success: false, error: `Erreur de l'assistant IA : ${error.message}` };
     }
+    console.error("[askAssistantAction] Erreur inattendue :", error);
     return { success: false, error: "Une erreur inattendue est survenue." };
   }
 }

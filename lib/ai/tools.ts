@@ -1,5 +1,5 @@
 import "server-only";
-import type Anthropic from "@anthropic-ai/sdk";
+import type { DeepSeekTool } from "@/lib/ai/deepseek";
 import { supabase } from "@/lib/supabase";
 import { startOfToday, startOfWeek, startOfMonth } from "@/lib/format";
 
@@ -12,62 +12,80 @@ function periodStart(period: PeriodKey): Date | undefined {
   return undefined;
 }
 
-export const ASSISTANT_TOOLS: Anthropic.Tool[] = [
+export const ASSISTANT_TOOLS: DeepSeekTool[] = [
   {
-    name: "get_dashboard_summary",
-    description:
-      "Vue d'ensemble de la boutique active : chiffre d'affaires du jour et du mois, valeur du stock, nombre de produits, nombre de produits en rupture ou à faible stock.",
-    input_schema: { type: "object", properties: {}, required: [] },
-  },
-  {
-    name: "get_top_selling_products",
-    description:
-      "Liste des produits les plus vendus sur une période, avec quantité vendue, chiffre d'affaires généré, bénéfice total et marge en %. Utilise sortBy='profit' pour répondre aux questions sur la rentabilité.",
-    input_schema: {
-      type: "object",
-      properties: {
-        period: { type: "string", enum: ["today", "week", "month", "all"], description: "Période à analyser (défaut: month)" },
-        sortBy: { type: "string", enum: ["quantity", "revenue", "profit"], description: "Critère de tri (défaut: quantity)" },
-        limit: { type: "number", description: "Nombre de produits à retourner (défaut: 10, max 20)" },
-      },
-      required: [],
+    type: "function",
+    function: {
+      name: "get_dashboard_summary",
+      description:
+        "Vue d'ensemble de la boutique active : chiffre d'affaires du jour et du mois, valeur du stock, nombre de produits, nombre de produits en rupture ou à faible stock.",
+      parameters: { type: "object", properties: {}, required: [] },
     },
   },
   {
-    name: "get_stock_levels",
-    description:
-      "Niveaux de stock actuels des produits de la boutique active. Peut filtrer par nom de produit et/ou ne retourner que les produits en rupture ou en stock faible.",
-    input_schema: {
-      type: "object",
-      properties: {
-        search: { type: "string", description: "Filtre par nom de produit (recherche partielle, insensible à la casse)" },
-        onlyLowOrOut: { type: "boolean", description: "Si true, ne retourne que les produits en rupture ou sous leur seuil minimum" },
+    type: "function",
+    function: {
+      name: "get_top_selling_products",
+      description:
+        "Liste des produits les plus vendus sur une période, avec quantité vendue, chiffre d'affaires généré, bénéfice total et marge en %. Utilise sortBy='profit' pour répondre aux questions sur la rentabilité.",
+      parameters: {
+        type: "object",
+        properties: {
+          period: { type: "string", enum: ["today", "week", "month", "all"], description: "Période à analyser (défaut: month)" },
+          sortBy: { type: "string", enum: ["quantity", "revenue", "profit"], description: "Critère de tri (défaut: quantity)" },
+          limit: { type: "number", description: "Nombre de produits à retourner (défaut: 10, max 20)" },
+        },
+        required: [],
       },
-      required: [],
     },
   },
   {
-    name: "get_sales_trend_by_category",
-    description:
-      "Compare le chiffre d'affaires de chaque catégorie de produits ce mois-ci par rapport au mois précédent, avec le pourcentage d'évolution.",
-    input_schema: { type: "object", properties: {}, required: [] },
-  },
-  {
-    name: "get_credit_summary",
-    description:
-      "Total des créances clients (ventes à crédit non totalement payées) et liste des clients qui doivent le plus d'argent au commerce.",
-    input_schema: { type: "object", properties: {}, required: [] },
-  },
-  {
-    name: "get_low_margin_products",
-    description:
-      "Produits qui se vendent bien ce mois-ci mais dont la marge (%) est faible — candidats à une révision de prix de vente.",
-    input_schema: {
-      type: "object",
-      properties: {
-        limit: { type: "number", description: "Nombre de produits à retourner (défaut: 5)" },
+    type: "function",
+    function: {
+      name: "get_stock_levels",
+      description:
+        "Niveaux de stock actuels des produits de la boutique active. Peut filtrer par nom de produit et/ou ne retourner que les produits en rupture ou en stock faible.",
+      parameters: {
+        type: "object",
+        properties: {
+          search: { type: "string", description: "Filtre par nom de produit (recherche partielle, insensible à la casse)" },
+          onlyLowOrOut: { type: "boolean", description: "Si true, ne retourne que les produits en rupture ou sous leur seuil minimum" },
+        },
+        required: [],
       },
-      required: [],
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "get_sales_trend_by_category",
+      description:
+        "Compare le chiffre d'affaires de chaque catégorie de produits ce mois-ci par rapport au mois précédent, avec le pourcentage d'évolution.",
+      parameters: { type: "object", properties: {}, required: [] },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "get_credit_summary",
+      description:
+        "Total des créances clients (ventes à crédit non totalement payées) et liste des clients qui doivent le plus d'argent au commerce.",
+      parameters: { type: "object", properties: {}, required: [] },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "get_low_margin_products",
+      description:
+        "Produits qui se vendent bien ce mois-ci mais dont la marge (%) est faible — candidats à une révision de prix de vente.",
+      parameters: {
+        type: "object",
+        properties: {
+          limit: { type: "number", description: "Nombre de produits à retourner (défaut: 5)" },
+        },
+        required: [],
+      },
     },
   },
 ];
