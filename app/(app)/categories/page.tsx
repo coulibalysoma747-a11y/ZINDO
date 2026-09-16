@@ -1,6 +1,7 @@
 import { requirePermission } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
 import { supabase } from "@/lib/supabase";
+import { CatalogTabs } from "@/components/products/CatalogTabs";
 import { CategoryManager } from "./CategoryManager";
 
 export default async function CategoriesPage() {
@@ -28,6 +29,7 @@ export default async function CategoriesPage() {
         <h1 className="text-xl font-bold text-zinc-900">Catégories</h1>
         <p className="text-sm text-zinc-500">Organisez vos produits par catégorie.</p>
       </div>
+      <CatalogTabs active="categories" />
       <CategoryManager
         categories={(categories ?? []).map((c) => ({
           id: c.id as string,

@@ -64,7 +64,19 @@ export async function searchProductsAction(query: string, locationId: string) {
   const trimmed = query.trim();
   if (trimmed.length > 0) {
     const escaped = trimmed.replace(/[%_\\]/g, (m) => `\\${m}`);
-    q = q.or(`name.ilike.%${escaped}%,reference.ilike.%${escaped}%,barcode.ilike.%${escaped}%`);
+    // "Autres noms" (ex. "Omo" pour "savon en poudre") : résolus séparément
+    // puis inclus dans le même .or(), pour retrouver un produit par un nom
+    // sous lequel il n'est pas affiché — voir supabase/schema.sql::product_aliases.
+    const { data: aliasMatches } = await supabase
+      .from("product_aliases")
+      .select("productId:product_id, product:products!inner(businessId:business_id)")
+      .eq("products.business_id", user.businessId)
+      .ilike("alias", `%${escaped}%`);
+    const aliasProductIds = [...new Set((aliasMatches ?? []).map((r) => r.productId as string))];
+    q = q.or(
+      `name.ilike.%${escaped}%,reference.ilike.%${escaped}%,barcode.ilike.%${escaped}%` +
+        (aliasProductIds.length > 0 ? `,id.in.(${aliasProductIds.join(",")})` : "")
+    );
   }
 
   const { data } = await q;

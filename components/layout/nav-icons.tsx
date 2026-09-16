@@ -26,6 +26,7 @@ import {
   Bike,
   FileSignature,
   IdCard,
+  Award,
 } from "lucide-react";
 
 // Module simple (sans "use client") pour que cette table icône-par-module
@@ -41,6 +42,7 @@ export const NAV_ICONS: Record<NavItem["icon"], React.ComponentType<{ className?
   invoices: FileText,
   products: Package,
   categories: Tags,
+  brands: Award,
   stock: Boxes,
   transfers: ArrowLeftRight,
   purchases: ShoppingBag,

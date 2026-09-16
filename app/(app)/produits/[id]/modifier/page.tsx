@@ -16,20 +16,23 @@ export default async function EditProductPage({
   const user = await requirePermission(PERMISSIONS.PRODUCTS_MANAGE);
   const { id } = await params;
 
-  const [{ data: product }, { data: categories }, { data: suppliers }, locations, activityConfig] = await Promise.all([
-    supabase
-      .from("products")
-      .select(
-        "name, reference, categoryId:category_id, brand, description, unit, purchasePrice:purchase_price, salePrice:sale_price, minStock:min_stock, shelfLocation:shelf_location, supplierId:supplier_id, barcode, photoUrl:photo_url, customFields:custom_fields, trackUnits:track_units"
-      )
-      .eq("id", id)
-      .eq("business_id", user.businessId)
-      .maybeSingle(),
-    supabase.from("categories").select("id, name").eq("business_id", user.businessId).order("name", { ascending: true }),
-    supabase.from("suppliers").select("id, name").eq("business_id", user.businessId).order("name", { ascending: true }),
-    getLocations(user.businessId),
-    getActivityConfig(user.business.activityKey),
-  ]);
+  const [{ data: product }, { data: categories }, { data: brands }, { data: suppliers }, locations, activityConfig, { data: aliasRows }] =
+    await Promise.all([
+      supabase
+        .from("products")
+        .select(
+          "name, reference, categoryId:category_id, brand, description, unit, purchasePrice:purchase_price, salePrice:sale_price, minStock:min_stock, shelfLocation:shelf_location, supplierId:supplier_id, barcode, photoUrl:photo_url, customFields:custom_fields, trackUnits:track_units"
+        )
+        .eq("id", id)
+        .eq("business_id", user.businessId)
+        .maybeSingle(),
+      supabase.from("categories").select("id, name").eq("business_id", user.businessId).order("name", { ascending: true }),
+      supabase.from("brands").select("id, name").eq("business_id", user.businessId).order("name", { ascending: true }),
+      supabase.from("suppliers").select("id, name").eq("business_id", user.businessId).order("name", { ascending: true }),
+      getLocations(user.businessId),
+      getActivityConfig(user.business.activityKey),
+      supabase.from("product_aliases").select("alias").eq("product_id", id).order("created_at", { ascending: true }),
+    ]);
 
   if (!product) notFound();
 
@@ -51,6 +54,7 @@ export default async function EditProductPage({
       <ProductForm
         action={updateProductAction.bind(null, id)}
         categories={categories ?? []}
+        brands={brands ?? []}
         suppliers={suppliers ?? []}
         locations={locations}
         customFieldDefs={activityConfig.customFields}
@@ -71,6 +75,7 @@ export default async function EditProductPage({
           photoUrl: product.photoUrl as string | null,
           customFields: parsedCustomFields,
           trackUnits: product.trackUnits as boolean,
+          aliases: (aliasRows ?? []).map((r) => r.alias as string),
         }}
         submitLabel="Enregistrer les modifications"
       />

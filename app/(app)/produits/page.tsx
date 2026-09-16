@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Plus, FileUp, QrCode } from "lucide-react";
+import { Plus, FileUp, FileDown, QrCode } from "lucide-react";
 import { requirePermission } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
 import { supabase } from "@/lib/supabase";
@@ -10,24 +10,28 @@ import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { EmptyState } from "@/components/ui/Empty";
 import { ButtonLink } from "@/components/ui/Button";
+import { CatalogTabs } from "@/components/products/CatalogTabs";
 import { ProductSearchBar } from "./ProductSearchBar";
 import { ProductThumbnail } from "@/components/products/ProductThumbnail";
 import { ProductRowMenu } from "@/components/products/ProductRowMenu";
+import { QuickPackagingButton } from "@/components/products/QuickPackagingModal";
+import { isPackagingUnitsModuleEnabled } from "@/lib/actions/packaging-units";
 
 const PAGE_SIZE = 200;
 
 export default async function ProductsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; categorie?: string; filtre?: string; page?: string }>;
+  searchParams: Promise<{ q?: string; categorie?: string; marque?: string; conditionnement?: string; filtre?: string; page?: string }>;
 }) {
   const user = await requirePermission(PERMISSIONS.PRODUCTS_VIEW);
-  const { q, categorie, filtre, page } = await searchParams;
+  const { q, categorie, marque, conditionnement, filtre, page } = await searchParams;
   const currentPage = Math.max(1, parseInt(page ?? "1", 10) || 1);
   const offset = (currentPage - 1) * PAGE_SIZE;
-  const [currentLocation, activityConfig] = await Promise.all([
+  const [currentLocation, activityConfig, packagingEnabled] = await Promise.all([
     getCurrentLocation(user.businessId),
     getActivityConfig(user.business.activityKey),
+    isPackagingUnitsModuleEnabled(user.businessId),
   ]);
   const productsLabel = resolveTerm(activityConfig, "products");
 
@@ -39,10 +43,31 @@ export default async function ProductsPage({
   // filtrage.
   const usesStockFilter = filtre === "stock-faible" || filtre === "rupture";
 
+  // Deux jeux d'identifiants résolus avant de construire la requête
+  // principale : les produits dont un "autre nom" correspond au terme
+  // recherché (pour l'inclure dans la recherche sans jointure), et — si le
+  // filtre Conditionnement est actif — ceux qui ont au moins un
+  // conditionnement enregistré.
+  const escapedQ = q ? q.trim().replace(/[%_\\]/g, (m) => `\\${m}`) : null;
+  const [aliasMatches, packagingProductIds] = await Promise.all([
+    escapedQ
+      ? supabase
+          .from("product_aliases")
+          .select("productId:product_id, product:products!inner(businessId:business_id)")
+          .eq("products.business_id", user.businessId)
+          .ilike("alias", `%${escapedQ}%`)
+      : Promise.resolve({ data: [] as { productId: string }[] }),
+    conditionnement
+      ? supabase.from("product_packaging_units").select("productId:product_id").eq("business_id", user.businessId)
+      : Promise.resolve({ data: [] as { productId: string }[] }),
+  ]);
+  const aliasProductIds = [...new Set((aliasMatches.data ?? []).map((r) => r.productId as string))];
+  const withPackagingIds = [...new Set((packagingProductIds.data ?? []).map((r) => r.productId as string))];
+
   let query = supabase
     .from("products")
     .select(
-      "id, name, reference, brand, unit, salePrice:sale_price, minStock:min_stock, photoUrl:photo_url, categoryId:category_id, category:categories(name)"
+      "id, name, reference, brand, unit, salePrice:sale_price, minStock:min_stock, photoUrl:photo_url, categoryId:category_id, category:categories(name), trackUnits:track_units"
     )
     .eq("business_id", user.businessId)
     .eq("active", true)
@@ -55,9 +80,10 @@ export default async function ProductsPage({
     .eq("business_id", user.businessId)
     .eq("active", true);
 
-  if (q) {
-    const escaped = q.trim().replace(/[%_\\]/g, (m) => `\\${m}`);
-    const orFilter = `name.ilike.%${escaped}%,reference.ilike.%${escaped}%,barcode.ilike.%${escaped}%`;
+  if (escapedQ) {
+    const orFilter =
+      `name.ilike.%${escapedQ}%,reference.ilike.%${escapedQ}%,barcode.ilike.%${escapedQ}%` +
+      (aliasProductIds.length > 0 ? `,id.in.(${aliasProductIds.join(",")})` : "");
     query = query.or(orFilter);
     countQuery = countQuery.or(orFilter);
   }
@@ -65,15 +91,40 @@ export default async function ProductsPage({
     query = query.eq("category_id", categorie);
     countQuery = countQuery.eq("category_id", categorie);
   }
+  if (marque) {
+    query = query.eq("brand", marque);
+    countQuery = countQuery.eq("brand", marque);
+  }
+  if (conditionnement === "avec") {
+    const ids = withPackagingIds.length > 0 ? withPackagingIds : ["__none__"];
+    query = query.in("id", ids);
+    countQuery = countQuery.in("id", ids);
+  } else if (conditionnement === "sans" && withPackagingIds.length > 0) {
+    query = query.not("id", "in", `(${withPackagingIds.join(",")})`);
+    countQuery = countQuery.not("id", "in", `(${withPackagingIds.join(",")})`);
+  }
 
-  const [{ data: products }, { count: rawCount }, { data: categories }, stocksRes] = await Promise.all([
+  const [{ data: products }, { count: rawCount }, { data: categories }, { data: brands }, stocksRes] = await Promise.all([
     query,
     countQuery,
     supabase.from("categories").select("id, name").eq("business_id", user.businessId).order("name", { ascending: true }),
+    supabase.from("brands").select("id, name").eq("business_id", user.businessId).order("name", { ascending: true }),
     currentLocation
       ? supabase.from("product_stocks").select("productId:product_id, quantity").eq("location_id", currentLocation.id)
       : Promise.resolve({ data: [] as { productId: string; quantity: number }[] }),
   ]);
+
+  const productIds = (products ?? []).map((p) => p.id as string);
+  const { data: aliasRows } =
+    productIds.length > 0
+      ? await supabase.from("product_aliases").select("productId:product_id, alias").in("product_id", productIds)
+      : { data: [] as { productId: string; alias: string }[] };
+  const aliasesByProduct = new Map<string, string[]>();
+  for (const r of aliasRows ?? []) {
+    const list = aliasesByProduct.get(r.productId as string) ?? [];
+    list.push(r.alias as string);
+    aliasesByProduct.set(r.productId as string, list);
+  }
 
   const stockByProduct = new Map(
     ((stocksRes.data ?? []) as { productId: string; quantity: number }[]).map((s) => [s.productId, s.quantity])
@@ -82,6 +133,7 @@ export default async function ProductsPage({
     ...p,
     category: p.category as unknown as { name: string } | null,
     quantity: stockByProduct.get(p.id as string) ?? 0,
+    aliases: aliasesByProduct.get(p.id as string) ?? [],
   }));
 
   const stockFiltered =
@@ -99,6 +151,8 @@ export default async function ProductsPage({
     const params = new URLSearchParams();
     if (q) params.set("q", q);
     if (categorie) params.set("categorie", categorie);
+    if (marque) params.set("marque", marque);
+    if (conditionnement) params.set("conditionnement", conditionnement);
     if (filtre) params.set("filtre", filtre);
     if (targetPage > 1) params.set("page", String(targetPage));
     const qs = params.toString();
@@ -116,19 +170,29 @@ export default async function ProductsPage({
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
+          <ButtonLink href="/produits/export" variant="outline">
+            <FileDown className="h-4 w-4" /> Exporter (CSV)
+          </ButtonLink>
+          <ButtonLink href="/produits/importer-csv" variant="outline">
+            <FileUp className="h-4 w-4" /> Importer CSV
+          </ButtonLink>
           <ButtonLink href="/produits/etiquettes" variant="outline">
             <QrCode className="h-4 w-4" /> QR codes
           </ButtonLink>
           <ButtonLink href="/produits/importer" variant="outline">
             <FileUp className="h-4 w-4" /> Importer un catalogue
           </ButtonLink>
-          <ButtonLink href="/produits/nouveau">
-            <Plus className="h-4 w-4" /> Nouveau produit
-          </ButtonLink>
+          <div className="hidden sm:block">
+            <ButtonLink href="/produits/nouveau">
+              <Plus className="h-4 w-4" /> Nouveau produit
+            </ButtonLink>
+          </div>
         </div>
       </div>
 
-      <ProductSearchBar categories={categories ?? []} />
+      <CatalogTabs active="produits" />
+
+      <ProductSearchBar categories={categories ?? []} brands={brands ?? []} showPackagingFilter={packagingEnabled} />
 
       {filtered.length === 0 ? (
         <EmptyState
@@ -169,6 +233,9 @@ export default async function ProductsPage({
                             {p.name as string}
                           </Link>
                           {p.brand ? <p className="text-xs text-zinc-400">{p.brand as string}</p> : null}
+                          {p.aliases.length > 0 && (
+                            <p className="truncate text-xs text-zinc-400">Aussi : {p.aliases.join(", ")}</p>
+                          )}
                         </div>
                       </div>
                     </td>
@@ -190,7 +257,18 @@ export default async function ProductsPage({
                       )}
                     </td>
                     <td className="px-4 py-3 text-right">
-                      <ProductRowMenu productId={p.id as string} />
+                      <div className="flex items-center justify-end gap-1">
+                        {packagingEnabled && !p.trackUnits && (
+                          <QuickPackagingButton
+                            productId={p.id as string}
+                            productName={p.name as string}
+                            baseUnit={p.unit as string}
+                            basePrice={p.salePrice as number}
+                            currency={user.business.currency}
+                          />
+                        )}
+                        <ProductRowMenu productId={p.id as string} />
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -209,9 +287,23 @@ export default async function ProductsPage({
                       <Link href={`/produits/${p.id}`} className="font-medium text-zinc-900 hover:text-emerald-600">
                         {p.name as string}
                       </Link>
-                      <ProductRowMenu productId={p.id as string} />
+                      <div className="flex shrink-0 items-center gap-1">
+                        {packagingEnabled && !p.trackUnits && (
+                          <QuickPackagingButton
+                            productId={p.id as string}
+                            productName={p.name as string}
+                            baseUnit={p.unit as string}
+                            basePrice={p.salePrice as number}
+                            currency={user.business.currency}
+                          />
+                        )}
+                        <ProductRowMenu productId={p.id as string} />
+                      </div>
                     </div>
                     {p.brand ? <p className="text-xs text-zinc-400">{p.brand as string}</p> : null}
+                    {p.aliases.length > 0 && (
+                      <p className="truncate text-xs text-zinc-400">Aussi : {p.aliases.join(", ")}</p>
+                    )}
                     <p className="mt-0.5 text-xs text-zinc-500">
                       {p.reference as string}
                       {p.category?.name ? ` · ${p.category.name}` : ""}
@@ -262,6 +354,14 @@ export default async function ProductsPage({
           )}
         </>
       )}
+
+      <Link
+        href="/produits/nouveau"
+        aria-label="Nouveau produit"
+        className="fixed bottom-6 right-5 z-20 flex h-14 w-14 items-center justify-center rounded-full bg-orange-500 text-white shadow-lg shadow-orange-500/30 hover:bg-orange-600 sm:hidden"
+      >
+        <Plus className="h-6 w-6" />
+      </Link>
     </div>
   );
 }

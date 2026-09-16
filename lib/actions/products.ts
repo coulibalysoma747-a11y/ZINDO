@@ -64,6 +64,33 @@ function parsePackagingRows(formData: FormData): { rows: PackagingRowInput[] } |
   return { rows };
 }
 
+const MAX_ALIASES = 20;
+
+/** Autres noms de recherche (voir ProductForm) — dédupliqués, plafonnés, jamais le nom principal lui-même. */
+function parseAliases(formData: FormData, productName: string): string[] {
+  const raw = formData.getAll("aliases").map((v) => String(v).trim());
+  const seen = new Set<string>();
+  const aliases: string[] = [];
+  for (const alias of raw) {
+    if (!alias || alias.toLowerCase() === productName.trim().toLowerCase()) continue;
+    const key = alias.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    aliases.push(alias);
+    if (aliases.length >= MAX_ALIASES) break;
+  }
+  return aliases;
+}
+
+async function replaceProductAliases(productId: string, aliases: string[]) {
+  await supabase.from("product_aliases").delete().eq("product_id", productId);
+  if (aliases.length === 0) return;
+  const { error } = await supabase
+    .from("product_aliases")
+    .insert(aliases.map((alias) => ({ product_id: productId, alias })));
+  if (error) console.error("[replaceProductAliases] Échec de l'enregistrement :", error.message);
+}
+
 function parseCustomFields(formData: FormData, defs: { key: string }[]): string | null {
   if (defs.length === 0) return null;
   const values: Record<string, string> = {};
@@ -225,6 +252,9 @@ export async function createProductAction(
     }
   }
 
+  const aliases = parseAliases(formData, data.name);
+  if (aliases.length > 0) await replaceProductAliases(product.id as string, aliases);
+
   await logAction({
     businessId: user.businessId,
     userId: user.id,
@@ -309,6 +339,8 @@ export async function updateProductAction(
     console.error("[updateProductAction] Échec de la mise à jour :", updateError.message);
     return { error: "Impossible de mettre à jour le produit" };
   }
+
+  await replaceProductAliases(id, parseAliases(formData, data.name));
 
   await logAction({
     businessId: user.businessId,

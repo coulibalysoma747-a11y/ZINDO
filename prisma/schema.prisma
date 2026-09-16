@@ -43,6 +43,7 @@ model Business {
 
   users               User[]
   categories          Category[]
+  brands              Brand[]
   products            Product[]
   suppliers           Supplier[]
   customers           Customer[]
@@ -186,6 +187,19 @@ model Category {
   @@index([businessId])
 }
 
+// Liste de marques gérée par le commerce, comme Category — Product.brand
+// reste un simple champ texte, non lié par clé étrangère (voir schema.sql).
+model Brand {
+  id         String   @id @default(cuid())
+  businessId String
+  business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  name       String
+  createdAt  DateTime @default(now())
+
+  @@unique([businessId, name])
+  @@index([businessId])
+}
+
 model Supplier {
   id         String   @id @default(cuid())
   businessId String
@@ -236,11 +250,23 @@ model Product {
   inventoryItems     InventoryItem[]
   stockTransferItems StockTransferItem[]
   onlineOrderItems   OnlineOrderItem[]
+  aliases            ProductAlias[]
 
   @@unique([businessId, reference])
   @@index([businessId])
   @@index([businessId, barcode])
   @@index([businessId, name])
+}
+
+// Autres noms sous lesquels un produit est recherché (voir schema.sql).
+model ProductAlias {
+  id        String   @id @default(cuid())
+  productId String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  alias     String
+  createdAt DateTime @default(now())
+
+  @@index([productId])
 }
 
 // Stock d'un produit dans un emplacement (boutique ou dépôt) donné.

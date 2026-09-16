@@ -61,6 +61,7 @@ const packagingSchema = z.object({
   name: z.string().min(1, "Le nom est requis"),
   multiplier: z.coerce.number().positive("Doit être supérieur à 0"),
   salePrice: z.coerce.number().min(0, "Prix invalide"),
+  barcode: z.string().optional(),
 });
 
 export type PackagingUnitActionResult = { error?: string; success?: string };
@@ -73,6 +74,7 @@ export async function addPackagingUnitAction(productId: string, formData: FormDa
     name: formData.get("name"),
     multiplier: formData.get("multiplier"),
     salePrice: formData.get("salePrice"),
+    barcode: formData.get("barcode") || undefined,
   });
   if (!parsed.success) return { error: parsed.error.issues[0]?.message };
 
@@ -85,12 +87,23 @@ export async function addPackagingUnitAction(productId: string, formData: FormDa
   if (!product) return { error: "Produit introuvable" };
   if (product.trackUnits) return { error: "Un produit à suivi individuel ne peut pas avoir de conditionnement" };
 
+  if (parsed.data.barcode) {
+    const { data: barcodeTaken } = await supabase
+      .from("product_packaging_units")
+      .select("id")
+      .eq("business_id", user.businessId)
+      .eq("barcode", parsed.data.barcode)
+      .maybeSingle();
+    if (barcodeTaken) return { error: "Ce code-barres est déjà utilisé par un autre conditionnement" };
+  }
+
   const { error } = await supabase.from("product_packaging_units").insert({
     business_id: user.businessId,
     product_id: productId,
     name: parsed.data.name,
     multiplier: parsed.data.multiplier,
     sale_price: parsed.data.salePrice,
+    barcode: parsed.data.barcode ?? null,
   });
   if (error) {
     console.error("[addPackagingUnitAction] Échec de la création :", error.message);
@@ -98,6 +111,7 @@ export async function addPackagingUnitAction(productId: string, formData: FormDa
   }
 
   revalidatePath(`/produits/${productId}`);
+  revalidatePath("/produits");
   return { success: "Conditionnement ajouté" };
 }
 

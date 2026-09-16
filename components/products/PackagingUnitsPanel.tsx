@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/Button";
 import { Field, Input } from "@/components/ui/Input";
 import { Badge } from "@/components/ui/Badge";
 import { formatMoney } from "@/lib/format";
+import { PackagingTypePicker } from "@/components/products/PackagingTypePicker";
 import {
   addPackagingUnitAction,
   updatePackagingUnitAction,
@@ -24,18 +25,26 @@ export function PackagingUnitsPanel({
   units,
   currency,
   baseUnit,
+  basePrice,
 }: {
   productId: string;
   units: PackagingUnit[];
   currency: string;
   baseUnit: string;
+  basePrice: number;
 }) {
   const [formOpen, setFormOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
+  const [multiplier, setMultiplier] = useState("");
+
+  const suggestedPrice = Number(multiplier) > 0 ? Math.round(Number(multiplier) * basePrice) : null;
 
   function handleAdd(formData: FormData) {
+    if (!formData.get("salePrice") && suggestedPrice != null) {
+      formData.set("salePrice", String(suggestedPrice));
+    }
     setError(null);
     startTransition(async () => {
       const result = await addPackagingUnitAction(productId, formData);
@@ -44,6 +53,7 @@ export function PackagingUnitsPanel({
         return;
       }
       setFormOpen(false);
+      setMultiplier("");
     });
   }
 
@@ -84,21 +94,48 @@ export function PackagingUnitsPanel({
       {error && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
 
       {formOpen && (
-        <form
-          action={handleAdd}
-          className="grid grid-cols-1 gap-3 rounded-xl border border-zinc-200 p-3 sm:grid-cols-3"
-        >
-          <Field label="Nom" htmlFor="name" hint='Ex : "Carton de 12"'>
-            <Input id="name" name="name" required />
+        <form action={handleAdd} className="space-y-3 rounded-xl border border-zinc-200 p-3">
+          <Field label="Type de conditionnement" htmlFor="name">
+            <PackagingTypePicker id="name" name="name" />
           </Field>
-          <Field label={`Unités de base (${baseUnit}) par colis`} htmlFor="multiplier">
-            <Input id="multiplier" name="multiplier" type="number" min={1} step="any" required />
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <Field label={`Nombre de pièces (${baseUnit}) par colis`} htmlFor="multiplier">
+              <Input
+                id="multiplier"
+                name="multiplier"
+                type="number"
+                min={1}
+                step="any"
+                required
+                value={multiplier}
+                onChange={(e) => setMultiplier(e.target.value)}
+              />
+            </Field>
+            <Field
+              label="Prix du lot entier"
+              htmlFor="salePrice"
+              hint="Vide = calculé automatiquement à partir du prix de vente unitaire"
+            >
+              <Input
+                id="salePrice"
+                name="salePrice"
+                type="number"
+                min={0}
+                placeholder={suggestedPrice != null ? String(suggestedPrice) : "auto"}
+              />
+            </Field>
+          </div>
+          <Field label="Code-barres du conditionnement (facultatif)" htmlFor="barcode">
+            <Input id="barcode" name="barcode" placeholder="Scanner ou saisir le code" />
           </Field>
-          <Field label="Prix de vente du colis" htmlFor="salePrice">
-            <Input id="salePrice" name="salePrice" type="number" min={0} required />
-          </Field>
-          <Button type="submit" disabled={pending} className="sm:col-span-3">
-            {pending ? "Enregistrement..." : "Enregistrer le conditionnement"}
+          {suggestedPrice != null && (
+            <p className="rounded-lg bg-zinc-50 px-3 py-2 text-xs text-zinc-500">
+              1 colis = {multiplier} {baseUnit} — soit {formatMoney(suggestedPrice, currency)} si le prix est laissé
+              vide.
+            </p>
+          )}
+          <Button type="submit" disabled={pending} className="w-full">
+            {pending ? "Enregistrement..." : "Ajouter"}
           </Button>
         </form>
       )}
@@ -157,7 +194,7 @@ export function PackagingUnitsPanel({
                     type="button"
                     onClick={() => handleDelete(u.id)}
                     disabled={pending}
-                    className="rounded-lg p-1.5 text-red-400 hover:bg-red-50 hover:text-red-600"
+                    className="rounded-lg p-1.5 text-red-400 hover:bg-red-50"
                     aria-label="Supprimer"
                   >
                     <Trash2 className="h-4 w-4" />

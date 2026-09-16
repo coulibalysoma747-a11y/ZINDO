@@ -293,7 +293,13 @@ export default async function ProductDetailPage({
             <h2 className="font-semibold text-zinc-900">Conditionnements</h2>
           </CardHeader>
           <CardBody>
-            <PackagingUnitsPanel productId={product.id} units={packagingUnits} currency={currency} baseUnit={product.unit} />
+            <PackagingUnitsPanel
+              productId={product.id}
+              units={packagingUnits}
+              currency={currency}
+              baseUnit={product.unit}
+              basePrice={product.salePrice}
+            />
           </CardBody>
         </Card>
       )}

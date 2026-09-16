@@ -60,6 +60,10 @@ const DESCRIPTIONS: Record<string, { short: string; long: string }> = {
     short: "Organisez vos produits par catégorie pour les retrouver plus facilement.",
     long: "Classez vos produits par catégorie (par exemple Freinage, Électricité, Boissons...) pour les retrouver plus vite dans le catalogue et à la caisse.",
   },
+  "/marques": {
+    short: "Gérez la liste des marques de vos produits.",
+    long: "Créez, renommez ou supprimez les marques de vos produits — retrouvées ensuite dans le sélecteur du formulaire produit et dans le filtre de la liste des produits.",
+  },
   "/stock": {
     short: "Suivez chaque mouvement de stock (entrée, sortie, vente, correction) avec l'ancien et le nouveau niveau.",
     long: "L'historique de tous les mouvements de stock : achats, ventes, corrections d'inventaire, produits endommagés, transferts... Chaque ligne indique la date, le motif, la quantité et le stock avant/après, avec l'utilisateur responsable du mouvement.",

@@ -157,6 +157,21 @@ create table categories (
 );
 create index on categories (business_id);
 
+-- Liste de marques gérée par le commerce (comme categories), pour alimenter
+-- le sélecteur du formulaire produit. products.brand reste un simple champ
+-- texte (voir plus bas) — cette table ne fait qu'aider à saisir une valeur
+-- cohérente, elle n'est pas référencée par une clé étrangère depuis
+-- products, pour ne rien changer aux lignes déjà synchronisées (ex. FasoStock,
+-- voir lib/faso-stock-sync.ts) qui écrivent directement ce champ texte.
+create table brands (
+  id text primary key default gen_random_uuid()::text,
+  business_id text not null references businesses(id) on delete cascade,
+  name text not null,
+  created_at timestamptz not null default now(),
+  unique (business_id, name)
+);
+create index on brands (business_id);
+
 create table suppliers (
   id text primary key default gen_random_uuid()::text,
   business_id text not null references businesses(id) on delete cascade,
@@ -223,6 +238,19 @@ create extension if not exists pg_trgm;
 create index if not exists products_name_trgm_idx on products using gin (name gin_trgm_ops);
 create index if not exists products_reference_trgm_idx on products using gin (reference gin_trgm_ops);
 create index if not exists products_barcode_trgm_idx on products using gin (barcode gin_trgm_ops);
+
+-- Autres noms sous lesquels un produit est recherché (ex. "Omo" pour "savon
+-- en poudre", "cube" pour "Maggi") — jusqu'à 20 par produit côté formulaire.
+-- N'affecte jamais le nom affiché sur les tickets/factures, seulement la
+-- recherche (voir lib/actions/product-search.ts et app/(app)/produits/page.tsx).
+create table product_aliases (
+  id text primary key default gen_random_uuid()::text,
+  product_id text not null references products(id) on delete cascade,
+  alias text not null,
+  created_at timestamptz not null default now()
+);
+create index on product_aliases (product_id);
+create index if not exists product_aliases_alias_trgm_idx on product_aliases using gin (alias gin_trgm_ops);
 
 -- Conditionnements de vente d'un produit (ex. "Carton de 12", "Carton de
 -- 24") en plus de l'unité de base déjà suivie par product_stocks — chacun a

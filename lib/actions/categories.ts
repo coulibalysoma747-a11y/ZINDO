@@ -14,6 +14,29 @@ const categorySchema = z.object({
   description: z.string().optional(),
 });
 
+/** Retourne la catégorie existante correspondant à ce nom (insensible à la casse), ou la crée — utilisé par le sélecteur du formulaire produit pour permettre de saisir une catégorie à la volée. */
+export async function getOrCreateCategoryByNameAction(name: string): Promise<{ id: string } | { error: string }> {
+  const user = await requirePermission(PERMISSIONS.PRODUCTS_MANAGE);
+  const trimmed = name.trim();
+  if (!trimmed) return { error: "Nom de catégorie vide" };
+
+  const { data: existing } = await supabase
+    .from("categories")
+    .select("id")
+    .eq("business_id", user.businessId)
+    .ilike("name", trimmed)
+    .maybeSingle();
+  if (existing) return { id: existing.id as string };
+
+  const { data: category, error } = await supabase
+    .from("categories")
+    .insert({ business_id: user.businessId, name: trimmed })
+    .select("id")
+    .single();
+  if (error || !category) return { error: "Impossible de créer la catégorie" };
+  return { id: category.id as string };
+}
+
 export async function createCategoryAction(
   _prevState: ActionState,
   formData: FormData

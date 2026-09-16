@@ -11,8 +11,9 @@ import { isPackagingUnitsModuleEnabled } from "@/lib/actions/packaging-units";
 export default async function NewProductPage() {
   const user = await requirePermission(PERMISSIONS.PRODUCTS_MANAGE);
 
-  const [{ data: categories }, { data: suppliers }, locations, currentLocation, activityConfig, packagingEnabled] = await Promise.all([
+  const [{ data: categories }, { data: brands }, { data: suppliers }, locations, currentLocation, activityConfig, packagingEnabled] = await Promise.all([
     supabase.from("categories").select("id, name").eq("business_id", user.businessId).order("name", { ascending: true }),
+    supabase.from("brands").select("id, name").eq("business_id", user.businessId).order("name", { ascending: true }),
     supabase.from("suppliers").select("id, name").eq("business_id", user.businessId).order("name", { ascending: true }),
     getLocations(user.businessId),
     getCurrentLocation(user.businessId),
@@ -29,6 +30,7 @@ export default async function NewProductPage() {
       <ProductForm
         action={createProductAction}
         categories={categories ?? []}
+        brands={brands ?? []}
         suppliers={suppliers ?? []}
         locations={locations}
         defaultLocationId={currentLocation?.id}
