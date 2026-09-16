@@ -41,6 +41,7 @@ export function BulkLabelPrintView({
   const [selected, setSelected] = useState<Set<string>>(new Set(products.filter((p) => !p.barcode).map((p) => p.id)));
   const [size, setSize] = useState<LabelSize>("50mm");
   const [quantityPerProduct, setQuantityPerProduct] = useState(1);
+  const [printMode, setPrintMode] = useState<"labels" | "a4">("labels");
   const { width, height } = LABEL_DIMENSIONS[size];
 
   const visible = useMemo(() => {
@@ -75,8 +76,25 @@ export function BulkLabelPrintView({
 
   return (
     <div className="space-y-4">
+      {/* Deux façons d'imprimer : une étiquette autocollante par page (pour une
+          imprimante d'étiquettes dédiée), ou plusieurs par feuille A4 (pour une
+          imprimante classique — on les découpe ensuite). */}
       <style>{`
         @media print {
+          ${
+            printMode === "a4"
+              ? `
+          @page { size: A4; margin: 10mm; }
+          html, body { margin: 0 !important; padding: 0 !important; background: #fff !important; }
+          body * { visibility: hidden; }
+          #zindo-bulk-labels, #zindo-bulk-labels * { visibility: visible; }
+          #zindo-bulk-labels {
+            position: absolute; top: 0; left: 0; margin: 0;
+            display: flex; flex-wrap: wrap; gap: 3mm; align-content: flex-start;
+          }
+          .barcode-label { border: 1px dashed #bbb !important; break-inside: avoid; page-break-inside: avoid; }
+          `
+              : `
           @page { size: ${width}mm ${height}mm; margin: 0; }
           html, body { margin: 0 !important; padding: 0 !important; background: #fff !important; }
           body * { visibility: hidden; }
@@ -84,6 +102,8 @@ export function BulkLabelPrintView({
           #zindo-bulk-labels { position: absolute; top: 0; left: 0; margin: 0; }
           .barcode-label { border: none !important; }
           .barcode-label:not(:last-child) { page-break-after: always; break-after: page; }
+          `
+          }
         }
       `}</style>
 
@@ -166,6 +186,26 @@ export function BulkLabelPrintView({
         <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-zinc-100 pt-4">
           <div className="flex flex-wrap items-center gap-2">
             <div className="flex gap-1 rounded-lg border border-zinc-200 bg-white p-1">
+              <button
+                type="button"
+                onClick={() => setPrintMode("labels")}
+                className={`rounded-md px-2.5 py-1 text-xs font-medium transition-colors ${
+                  printMode === "labels" ? "bg-zindo-green-600 text-white" : "text-zinc-600 hover:bg-zinc-100"
+                }`}
+              >
+                Étiquettes autocollantes
+              </button>
+              <button
+                type="button"
+                onClick={() => setPrintMode("a4")}
+                className={`rounded-md px-2.5 py-1 text-xs font-medium transition-colors ${
+                  printMode === "a4" ? "bg-zindo-green-600 text-white" : "text-zinc-600 hover:bg-zinc-100"
+                }`}
+              >
+                Feuille A4
+              </button>
+            </div>
+            <div className="flex gap-1 rounded-lg border border-zinc-200 bg-white p-1">
               {SIZE_OPTIONS.map((opt) => (
                 <button
                   key={opt.value}
@@ -213,6 +253,11 @@ export function BulkLabelPrintView({
             <Printer className="h-4 w-4" /> Imprimer {selectedProducts.length > 0 ? `(${selectedProducts.length * quantityPerProduct})` : ""}
           </Button>
         </div>
+        {printMode === "a4" && (
+          <p className="mt-2 text-xs text-zinc-400">
+            Plusieurs étiquettes par feuille A4, sur une imprimante classique — un contour pointillé indique où découper.
+          </p>
+        )}
       </Card>
 
       <div id="zindo-bulk-labels" className="flex flex-wrap justify-center gap-3">

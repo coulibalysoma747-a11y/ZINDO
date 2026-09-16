@@ -15,14 +15,30 @@ const SIZE_OPTIONS: { value: LabelSize; label: string }[] = [
 export function LabelPrintView({ data, productId }: { data: LabelData; productId: string }) {
   const [size, setSize] = useState<LabelSize>("50mm");
   const [quantity, setQuantity] = useState(1);
+  const [printMode, setPrintMode] = useState<"labels" | "a4">("labels");
   const { width, height } = LABEL_DIMENSIONS[size];
 
   return (
     <div className="space-y-4">
-      {/* CSS d'impression autonome : une étiquette = une page, taille exacte,
-          tout le reste de l'écran est masqué automatiquement. */}
+      {/* CSS d'impression autonome : soit une étiquette = une page (imprimante
+          d'étiquettes dédiée), soit plusieurs étiquettes par feuille A4
+          (imprimante classique, à découper ensuite). */}
       <style>{`
         @media print {
+          ${
+            printMode === "a4"
+              ? `
+          @page { size: A4; margin: 10mm; }
+          html, body { margin: 0 !important; padding: 0 !important; background: #fff !important; }
+          body * { visibility: hidden; }
+          #zindo-labels, #zindo-labels * { visibility: visible; }
+          #zindo-labels {
+            position: absolute; top: 0; left: 0; margin: 0;
+            display: flex; flex-wrap: wrap; gap: 3mm; align-content: flex-start;
+          }
+          .barcode-label { border: 1px dashed #bbb !important; break-inside: avoid; page-break-inside: avoid; }
+          `
+              : `
           @page { size: ${width}mm ${height}mm; margin: 0; }
           html, body { margin: 0 !important; padding: 0 !important; background: #fff !important; }
           body * { visibility: hidden; }
@@ -30,6 +46,8 @@ export function LabelPrintView({ data, productId }: { data: LabelData; productId
           #zindo-labels { position: absolute; top: 0; left: 0; margin: 0; }
           .barcode-label { border: none !important; }
           .barcode-label:not(:last-child) { page-break-after: always; break-after: page; }
+          `
+          }
         }
       `}</style>
 
@@ -41,6 +59,26 @@ export function LabelPrintView({ data, productId }: { data: LabelData; productId
           <ArrowLeft className="h-4 w-4" /> Retour au produit
         </Link>
         <div className="flex flex-wrap items-center gap-2">
+          <div className="flex gap-1 rounded-lg border border-zinc-200 bg-white p-1">
+            <button
+              type="button"
+              onClick={() => setPrintMode("labels")}
+              className={`rounded-md px-2.5 py-1 text-xs font-medium transition-colors ${
+                printMode === "labels" ? "bg-zindo-green-600 text-white" : "text-zinc-600 hover:bg-zinc-100"
+              }`}
+            >
+              Étiquettes
+            </button>
+            <button
+              type="button"
+              onClick={() => setPrintMode("a4")}
+              className={`rounded-md px-2.5 py-1 text-xs font-medium transition-colors ${
+                printMode === "a4" ? "bg-zindo-green-600 text-white" : "text-zinc-600 hover:bg-zinc-100"
+              }`}
+            >
+              Feuille A4
+            </button>
+          </div>
           <div className="flex gap-1 rounded-lg border border-zinc-200 bg-white p-1">
             {SIZE_OPTIONS.map((opt) => (
               <button
