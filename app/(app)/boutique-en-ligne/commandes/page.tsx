@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowLeft, Truck } from "lucide-react";
+import { Truck } from "lucide-react";
 import { requirePermission } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
 import { supabase } from "@/lib/supabase";
@@ -7,21 +7,33 @@ import { formatMoney, formatDateTime } from "@/lib/format";
 import { Card, CardBody } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { EmptyState } from "@/components/ui/Empty";
+import { OnlineStoreTabs } from "../OnlineStoreTabs";
 import { OrderStatusControls } from "./OrderStatusControls";
 
 const STATUS_TONE = {
   EN_ATTENTE: "amber",
   CONFIRMEE: "blue",
+  PRETE: "emerald",
   LIVREE: "emerald",
   ANNULEE: "zinc",
 } as const;
 
 const STATUS_LABELS = {
-  EN_ATTENTE: "En attente",
+  EN_ATTENTE: "À traiter",
   CONFIRMEE: "Confirmée",
-  LIVREE: "Livrée",
+  PRETE: "Prête",
+  LIVREE: "Encaissée",
   ANNULEE: "Annulée",
 } as const;
+
+const STATUS_FILTERS = [
+  { value: "", label: "Toutes" },
+  { value: "EN_ATTENTE", label: "À traiter" },
+  { value: "CONFIRMEE", label: "Confirmées" },
+  { value: "PRETE", label: "Prêtes" },
+  { value: "LIVREE", label: "Encaissées" },
+  { value: "ANNULEE", label: "Annulées" },
+] as const;
 
 type OrderRow = {
   id: string;
@@ -39,8 +51,13 @@ type OrderRow = {
   items: Array<{ id: string; quantity: number; unitPrice: number; total: number; product: { name: string } }>;
 };
 
-export default async function OnlineOrdersPage() {
+export default async function OnlineOrdersPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ statut?: string }>;
+}) {
   const user = await requirePermission(PERMISSIONS.SALES_VIEW);
+  const { statut } = await searchParams;
 
   const { data: store } = await supabase
     .from("online_stores")
@@ -59,7 +76,16 @@ export default async function OnlineOrdersPage() {
         .order("created_at", { ascending: false })
         .limit(200)
     : { data: [] as unknown[] };
-  const orders = (data ?? []) as unknown as OrderRow[];
+  const allOrders = (data ?? []) as unknown as OrderRow[];
+  const { count: pendingOrders } = store
+    ? await supabase
+        .from("online_orders")
+        .select("id", { count: "exact", head: true })
+        .eq("store_id", store.id)
+        .eq("status", "EN_ATTENTE")
+    : { count: 0 };
+
+  const orders = statut ? allOrders.filter((o) => o.status === statut) : allOrders;
 
   const currency = user.business.currency;
   const sorted = [...orders].sort((a, b) => {
@@ -70,19 +96,34 @@ export default async function OnlineOrdersPage() {
 
   return (
     <div className="max-w-3xl space-y-6">
-      <Link href="/boutique-en-ligne" className="flex items-center gap-1 text-sm text-zinc-500 hover:text-zinc-700">
-        <ArrowLeft className="h-4 w-4" /> Retour à la boutique en ligne
-      </Link>
-
       <div>
-        <h1 className="text-xl font-bold text-zinc-900">Commandes en ligne</h1>
-        <p className="text-sm text-zinc-500">{orders.length} commande(s) reçue(s)</p>
+        <h1 className="text-xl font-bold text-zinc-900">Boutique en ligne</h1>
+        <p className="text-sm text-zinc-500">
+          {allOrders.length} commande(s) reçue(s)
+          {statut ? ` — ${orders.length} affichée(s)` : ""}
+        </p>
+      </div>
+
+      <OnlineStoreTabs active="commandes" pendingCount={pendingOrders ?? 0} />
+
+      <div className="flex flex-wrap gap-1 rounded-lg border border-zinc-200 bg-white p-1">
+        {STATUS_FILTERS.map((f) => (
+          <Link
+            key={f.value}
+            href={f.value ? `/boutique-en-ligne/commandes?statut=${f.value}` : "/boutique-en-ligne/commandes"}
+            className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
+              (statut ?? "") === f.value ? "bg-orange-500 text-white" : "text-zinc-600 hover:bg-zinc-100"
+            }`}
+          >
+            {f.label}
+          </Link>
+        ))}
       </div>
 
       {sorted.length === 0 ? (
         <EmptyState
-          title="Aucune commande pour le moment"
-          description="Les commandes passées depuis votre boutique en ligne apparaîtront ici."
+          title="Aucune commande ici"
+          description="Partagez votre lien catalogue sur WhatsApp ou Facebook : les commandes de vos clients arriveront directement dans cet écran."
         />
       ) : (
         <div className="space-y-3">

@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { ShoppingBasket, Plus, Minus, Trash2, Truck, CheckCircle2 } from "lucide-react";
+import { ShoppingBasket, Plus, Minus, Trash2, Truck, Store, CheckCircle2 } from "lucide-react";
 import { formatMoney } from "@/lib/format";
 import { createOnlineOrderAction } from "@/lib/actions/online-store-public";
 
@@ -17,11 +17,23 @@ type Product = {
 type Store = {
   slug: string;
   storeName: string;
+  tagline: string | null;
   description: string | null;
+  coverPhotoUrl: string | null;
   contactPhone: string | null;
+  whatsappNumber: string | null;
+  address: string | null;
+  city: string | null;
+  footerMessage: string | null;
   deliveryEnabled: boolean;
   deliveryFee: number;
   freeDeliveryAbove: number | null;
+  deliveryNote: string | null;
+  pickupEnabled: boolean;
+  payOnDeliveryEnabled: boolean;
+  mobileMoneyEnabled: boolean;
+  mobileMoneyNumber: string | null;
+  minOrderAmount: number;
   currency: string;
   businessName: string;
 };
@@ -54,6 +66,12 @@ export function StorefrontView({ store, products }: { store: Store; products: Pr
       : 0;
   const total = subtotal + deliveryFee;
   const itemCount = cartItems.reduce((sum, i) => sum + i.qty, 0);
+  const belowMinimum = store.minOrderAmount > 0 && subtotal > 0 && subtotal < store.minOrderAmount;
+
+  const paymentMethods = [
+    store.payOnDeliveryEnabled ? "Paiement à la livraison / sur place" : null,
+    store.mobileMoneyEnabled ? `Mobile Money${store.mobileMoneyNumber ? ` (${store.mobileMoneyNumber})` : ""}` : null,
+  ].filter((m): m is string => !!m);
 
   function setQty(productId: string, qty: number, max: number) {
     const clamped = Math.max(0, Math.min(qty, max));
@@ -65,6 +83,10 @@ export function StorefrontView({ store, products }: { store: Store; products: Pr
     setError(null);
     if (cartItems.length === 0) {
       setError("Votre panier est vide");
+      return;
+    }
+    if (belowMinimum) {
+      setError(`Commande minimum : ${formatMoney(store.minOrderAmount, store.currency)}`);
       return;
     }
     if (wantsDelivery && !deliveryAddress.trim()) {
@@ -111,19 +133,48 @@ export function StorefrontView({ store, products }: { store: Store; products: Pr
 
   return (
     <div className="mx-auto max-w-3xl pb-28">
-      <header className="border-b border-zinc-200 bg-white px-4 py-6">
-        <div className="flex items-center gap-2 text-orange-500">
-          <ShoppingBasket className="h-6 w-6" />
-          <span className="text-xs font-semibold uppercase tracking-wide">Boutique en ligne</span>
-        </div>
-        <h1 className="mt-1 text-2xl font-bold text-zinc-900">{store.storeName}</h1>
-        {store.description && <p className="mt-1 text-sm text-zinc-500">{store.description}</p>}
-        {store.contactPhone && <p className="mt-1 text-sm text-zinc-500">Contact : {store.contactPhone}</p>}
-        {store.deliveryEnabled && (
-          <p className="mt-2 flex items-center gap-1 text-xs text-emerald-700">
-            <Truck className="h-3.5 w-3.5" /> Livraison disponible
-          </p>
+      <header className="border-b border-zinc-200 bg-white">
+        {store.coverPhotoUrl && (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={store.coverPhotoUrl} alt={store.storeName} className="h-32 w-full object-cover sm:h-48" />
         )}
+        <div className="px-4 py-6">
+          <div className="flex items-center gap-2 text-orange-500">
+            <ShoppingBasket className="h-6 w-6" />
+            <span className="text-xs font-semibold uppercase tracking-wide">Boutique en ligne</span>
+          </div>
+          <h1 className="mt-1 text-2xl font-bold text-zinc-900">{store.storeName}</h1>
+          {store.tagline && <p className="mt-0.5 text-sm font-medium text-orange-600">{store.tagline}</p>}
+          {store.description && <p className="mt-1 text-sm text-zinc-500">{store.description}</p>}
+          {(store.address || store.city) && (
+            <p className="mt-1 text-sm text-zinc-500">{[store.address, store.city].filter(Boolean).join(", ")}</p>
+          )}
+          {(store.contactPhone || store.whatsappNumber) && (
+            <p className="mt-1 text-sm text-zinc-500">
+              Contact : {[store.contactPhone, store.whatsappNumber && `WhatsApp ${store.whatsappNumber}`].filter(Boolean).join(" — ")}
+            </p>
+          )}
+          <div className="mt-2 flex flex-wrap items-center gap-3">
+            {store.deliveryEnabled && (
+              <span className="flex items-center gap-1 text-xs text-emerald-700">
+                <Truck className="h-3.5 w-3.5" /> Livraison disponible
+              </span>
+            )}
+            {store.pickupEnabled && (
+              <span className="flex items-center gap-1 text-xs text-emerald-700">
+                <Store className="h-3.5 w-3.5" /> Retrait en boutique
+              </span>
+            )}
+          </div>
+          {paymentMethods.length > 0 && (
+            <p className="mt-1 text-xs text-zinc-400">Paiement : {paymentMethods.join(" · ")}</p>
+          )}
+          {store.minOrderAmount > 0 && (
+            <p className="mt-1 text-xs text-zinc-400">
+              Commande minimum : {formatMoney(store.minOrderAmount, store.currency)}
+            </p>
+          )}
+        </div>
       </header>
 
       {products.length === 0 ? (
@@ -132,14 +183,23 @@ export function StorefrontView({ store, products }: { store: Store; products: Pr
         <div className="grid grid-cols-2 gap-3 p-4 sm:grid-cols-3">
           {products.map((p) => {
             const qty = cart[p.id] ?? 0;
+            const outOfStock = p.available <= 0;
             return (
-              <div key={p.id} className="flex flex-col rounded-lg border border-zinc-200 bg-white p-3">
-                <div className="mb-2 flex h-20 items-center justify-center overflow-hidden rounded bg-zinc-100">
+              <div
+                key={p.id}
+                className={`flex flex-col rounded-lg border border-zinc-200 bg-white p-3 ${outOfStock ? "opacity-50" : ""}`}
+              >
+                <div className="relative mb-2 flex h-20 items-center justify-center overflow-hidden rounded bg-zinc-100">
                   {p.photoUrl ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img src={p.photoUrl} alt={p.name} className="h-full w-full object-cover" />
                   ) : (
                     <ShoppingBasket className="h-6 w-6 text-zinc-300" />
+                  )}
+                  {outOfStock && (
+                    <span className="absolute inset-x-0 bottom-0 bg-zinc-900/70 py-0.5 text-center text-[10px] font-semibold text-white">
+                      Rupture
+                    </span>
                   )}
                 </div>
                 <p className="line-clamp-2 text-sm font-medium text-zinc-900">{p.name}</p>
@@ -147,7 +207,9 @@ export function StorefrontView({ store, products }: { store: Store; products: Pr
                   {formatMoney(p.salePrice, store.currency)} / {p.unit}
                 </p>
                 <div className="mt-2 flex items-center justify-between">
-                  {qty === 0 ? (
+                  {outOfStock ? (
+                    <span className="w-full py-1.5 text-center text-xs font-medium text-zinc-400">Indisponible</span>
+                  ) : qty === 0 ? (
                     <button
                       onClick={() => setQty(p.id, 1, p.available)}
                       className="w-full rounded-md bg-orange-500 py-1.5 text-xs font-medium text-white hover:bg-orange-600"
@@ -179,6 +241,10 @@ export function StorefrontView({ store, products }: { store: Store; products: Pr
             );
           })}
         </div>
+      )}
+
+      {store.footerMessage && (
+        <p className="px-4 pb-4 text-center text-xs text-zinc-400">{store.footerMessage}</p>
       )}
 
       {itemCount > 0 && !checkoutOpen && (
@@ -262,7 +328,16 @@ export function StorefrontView({ store, products }: { store: Store; products: Pr
                     onChange={(e) => setDeliveryAddress(e.target.value)}
                     className="w-full rounded-md border border-zinc-300 px-3 py-2 text-sm"
                   />
+                  {store.deliveryNote && <p className="mt-1 text-xs text-zinc-400">{store.deliveryNote}</p>}
                 </div>
+              )}
+              {!wantsDelivery && store.pickupEnabled && (
+                <p className="flex items-center gap-1.5 text-xs text-zinc-500">
+                  <Store className="h-3.5 w-3.5" /> À retirer en boutique
+                </p>
+              )}
+              {paymentMethods.length > 0 && (
+                <p className="text-xs text-zinc-500">Paiement : {paymentMethods.join(" ou ")}</p>
               )}
               <div>
                 <label className="mb-1 block text-xs font-medium text-zinc-600">Note (facultatif)</label>
@@ -291,6 +366,11 @@ export function StorefrontView({ store, products }: { store: Store; products: Pr
                 </div>
               </div>
 
+              {belowMinimum && (
+                <p className="rounded-md bg-amber-50 px-3 py-2 text-xs text-amber-700">
+                  Commande minimum : {formatMoney(store.minOrderAmount, store.currency)}
+                </p>
+              )}
               {error && <p className="rounded-md bg-red-50 px-3 py-2 text-xs text-red-700">{error}</p>}
 
               <div className="flex gap-2 pt-1">
@@ -303,7 +383,7 @@ export function StorefrontView({ store, products }: { store: Store; products: Pr
                 </button>
                 <button
                   type="submit"
-                  disabled={submitting}
+                  disabled={submitting || belowMinimum}
                   className="flex-1 rounded-lg bg-orange-500 py-2 text-sm font-semibold text-white hover:bg-orange-600 disabled:opacity-60"
                 >
                   {submitting ? "Envoi..." : "Confirmer la commande"}

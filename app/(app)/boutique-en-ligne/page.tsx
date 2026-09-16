@@ -10,6 +10,7 @@ import { Card, CardBody, CardHeader } from "@/components/ui/Card";
 import { ButtonLink } from "@/components/ui/Button";
 import { EmptyState } from "@/components/ui/Empty";
 import { OnlineStoreForm } from "./OnlineStoreForm";
+import { OnlineStoreTabs } from "./OnlineStoreTabs";
 
 export default async function OnlineStorePage() {
   const user = await requirePermission(PERMISSIONS.SETTINGS_MANAGE);
@@ -27,7 +28,9 @@ export default async function OnlineStorePage() {
   const { data: storeData } = await supabase
     .from("online_stores")
     .select(
-      "id, slug, storeName:store_name, description, contactPhone:contact_phone, locationId:location_id, deliveryEnabled:delivery_enabled, deliveryFee:delivery_fee, freeDeliveryAbove:free_delivery_above, published"
+      "id, slug, storeName:store_name, tagline, description, coverPhotoUrl:cover_photo_url, contactPhone:contact_phone, whatsappNumber:whatsapp_number, address, city, footerMessage:footer_message, locationId:location_id, " +
+        "deliveryEnabled:delivery_enabled, deliveryFee:delivery_fee, freeDeliveryAbove:free_delivery_above, deliveryNote:delivery_note, pickupEnabled:pickup_enabled, payOnDeliveryEnabled:pay_on_delivery_enabled, " +
+        "mobileMoneyEnabled:mobile_money_enabled, mobileMoneyNumber:mobile_money_number, minOrderAmount:min_order_amount, showOutOfStock:show_out_of_stock, published"
     )
     .eq("business_id", user.businessId)
     .maybeSingle();
@@ -35,12 +38,25 @@ export default async function OnlineStorePage() {
     id: string;
     slug: string;
     storeName: string;
+    tagline: string | null;
     description: string | null;
+    coverPhotoUrl: string | null;
     contactPhone: string | null;
+    whatsappNumber: string | null;
+    address: string | null;
+    city: string | null;
+    footerMessage: string | null;
     locationId: string | null;
     deliveryEnabled: boolean;
     deliveryFee: number;
     freeDeliveryAbove: number | null;
+    deliveryNote: string | null;
+    pickupEnabled: boolean;
+    payOnDeliveryEnabled: boolean;
+    mobileMoneyEnabled: boolean;
+    mobileMoneyNumber: string | null;
+    minOrderAmount: number;
+    showOutOfStock: boolean;
     published: boolean;
   } | null;
 
@@ -69,13 +85,13 @@ export default async function OnlineStorePage() {
             <h1 className="text-xl font-bold text-zinc-900">Boutique en ligne</h1>
           </div>
           <p className="text-sm text-zinc-500">
-            Configurez votre vitrine, partagez le lien à vos clients, et laissez-les commander en ligne.
+            Votre boutique qui ne ferme jamais : le même stock, les mêmes prix, ouverts 24h/24 sur un simple lien à
+            partager.
           </p>
         </div>
-        <ButtonLink href="/boutique-en-ligne/commandes" variant="outline">
-          Commandes {(pendingOrders ?? 0) > 0 && `(${pendingOrders} en attente)`}
-        </ButtonLink>
       </div>
+
+      <OnlineStoreTabs active="vitrine" pendingCount={pendingOrders ?? 0} />
 
       {publicUrl && store?.published && (
         <Card className="border-emerald-200 bg-emerald-50">
@@ -88,13 +104,16 @@ export default async function OnlineStorePage() {
                 {publicUrl}
               </Link>
             </div>
+            <ButtonLink href="/boutique-en-ligne/partager" variant="outline" size="sm">
+              Partager
+            </ButtonLink>
           </CardBody>
         </Card>
       )}
 
       <Card>
         <CardHeader>
-          <h2 className="font-semibold text-zinc-900">Configuration</h2>
+          <h2 className="font-semibold text-zinc-900">Ma vitrine</h2>
         </CardHeader>
         <CardBody>
           <OnlineStoreForm store={store} locations={locations.map((l) => ({ id: l.id, name: l.name }))} />

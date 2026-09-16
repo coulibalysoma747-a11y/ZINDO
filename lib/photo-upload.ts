@@ -76,6 +76,10 @@ export async function saveBusinessLogo(file: File) {
   return saveImage(file, "logos");
 }
 
+export async function saveOnlineStoreCoverPhoto(file: File) {
+  return saveImage(file, "boutique-covers");
+}
+
 /** Supprime une ancienne image envoyée (remplacement ou suppression) — best-effort, ne bloque jamais. */
 export async function deleteUploadedImage(url: string | null | undefined) {
   if (!url) return;

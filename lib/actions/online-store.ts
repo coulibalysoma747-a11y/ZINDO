@@ -6,6 +6,7 @@ import { supabase } from "@/lib/supabase";
 import { requirePermission } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
 import { logAction } from "@/lib/audit";
+import { saveOnlineStoreCoverPhoto, deleteUploadedImage } from "@/lib/photo-upload";
 import type { OnlineOrderStatus } from "@/lib/db-types";
 
 export type ActionState = { error?: string; success?: string } | undefined;
@@ -19,12 +20,24 @@ const slugSchema = z
 const storeSchema = z.object({
   slug: slugSchema,
   storeName: z.string().min(1, "Le nom de la boutique est requis"),
+  tagline: z.string().optional(),
   description: z.string().optional(),
   contactPhone: z.string().optional(),
+  whatsappNumber: z.string().optional(),
+  address: z.string().optional(),
+  city: z.string().optional(),
+  footerMessage: z.string().optional(),
   locationId: z.string().optional(),
   deliveryEnabled: z.coerce.boolean(),
   deliveryFee: z.coerce.number().min(0).default(0),
   freeDeliveryAbove: z.coerce.number().min(0).optional(),
+  deliveryNote: z.string().optional(),
+  pickupEnabled: z.coerce.boolean(),
+  payOnDeliveryEnabled: z.coerce.boolean(),
+  mobileMoneyEnabled: z.coerce.boolean(),
+  mobileMoneyNumber: z.string().optional(),
+  minOrderAmount: z.coerce.number().min(0).default(0),
+  showOutOfStock: z.coerce.boolean(),
   published: z.coerce.boolean(),
 });
 
@@ -37,18 +50,33 @@ export async function saveOnlineStoreAction(
   const parsed = storeSchema.safeParse({
     slug: (formData.get("slug") as string)?.trim().toLowerCase(),
     storeName: formData.get("storeName"),
+    tagline: formData.get("tagline") || undefined,
     description: formData.get("description") || undefined,
     contactPhone: formData.get("contactPhone") || undefined,
+    whatsappNumber: formData.get("whatsappNumber") || undefined,
+    address: formData.get("address") || undefined,
+    city: formData.get("city") || undefined,
+    footerMessage: formData.get("footerMessage") || undefined,
     locationId: formData.get("locationId") || undefined,
     deliveryEnabled: formData.get("deliveryEnabled") === "on",
     deliveryFee: formData.get("deliveryFee") || 0,
     freeDeliveryAbove: formData.get("freeDeliveryAbove") || undefined,
+    deliveryNote: formData.get("deliveryNote") || undefined,
+    pickupEnabled: formData.get("pickupEnabled") === "on",
+    payOnDeliveryEnabled: formData.get("payOnDeliveryEnabled") === "on",
+    mobileMoneyEnabled: formData.get("mobileMoneyEnabled") === "on",
+    mobileMoneyNumber: formData.get("mobileMoneyNumber") || undefined,
+    minOrderAmount: formData.get("minOrderAmount") || 0,
+    showOutOfStock: formData.get("showOutOfStock") === "on",
     published: formData.get("published") === "on",
   });
   if (!parsed.success) return { error: parsed.error.issues[0]?.message };
 
   if (parsed.data.published && !parsed.data.locationId) {
     return { error: "Choisissez la boutique/dépôt qui servira les commandes avant de publier" };
+  }
+  if (parsed.data.mobileMoneyEnabled && !parsed.data.mobileMoneyNumber?.trim()) {
+    return { error: "Indiquez le numéro Mobile Money à afficher au client" };
   }
 
   const { data: slugTaken } = await supabase
@@ -69,18 +97,50 @@ export async function saveOnlineStoreAction(
     if (!location) return { error: "Boutique/dépôt introuvable" };
   }
 
+  const { data: existing } = await supabase
+    .from("online_stores")
+    .select("coverPhotoUrl:cover_photo_url")
+    .eq("business_id", user.businessId)
+    .maybeSingle();
+
+  let coverPhotoUrl: string | null | undefined;
+  const coverPhotoFile = formData.get("coverPhoto");
+  const removeCoverPhoto = formData.get("removeCoverPhoto") === "true";
+  if (coverPhotoFile instanceof File && coverPhotoFile.size > 0) {
+    const result = await saveOnlineStoreCoverPhoto(coverPhotoFile);
+    if ("error" in result) return { error: result.error };
+    coverPhotoUrl = result.url;
+    await deleteUploadedImage(existing?.coverPhotoUrl as string | null | undefined);
+  } else if (removeCoverPhoto) {
+    coverPhotoUrl = null;
+    await deleteUploadedImage(existing?.coverPhotoUrl as string | null | undefined);
+  }
+
   const { error } = await supabase.from("online_stores").upsert(
     {
       business_id: user.businessId,
       slug: parsed.data.slug,
       store_name: parsed.data.storeName,
+      tagline: parsed.data.tagline ?? null,
       description: parsed.data.description ?? null,
       contact_phone: parsed.data.contactPhone ?? null,
+      whatsapp_number: parsed.data.whatsappNumber ?? null,
+      address: parsed.data.address ?? null,
+      city: parsed.data.city ?? null,
+      footer_message: parsed.data.footerMessage ?? null,
       location_id: parsed.data.locationId ?? null,
       delivery_enabled: parsed.data.deliveryEnabled,
       delivery_fee: parsed.data.deliveryFee,
       free_delivery_above: parsed.data.freeDeliveryAbove ?? null,
+      delivery_note: parsed.data.deliveryNote ?? null,
+      pickup_enabled: parsed.data.pickupEnabled,
+      pay_on_delivery_enabled: parsed.data.payOnDeliveryEnabled,
+      mobile_money_enabled: parsed.data.mobileMoneyEnabled,
+      mobile_money_number: parsed.data.mobileMoneyEnabled ? (parsed.data.mobileMoneyNumber ?? null) : null,
+      min_order_amount: parsed.data.minOrderAmount,
+      show_out_of_stock: parsed.data.showOutOfStock,
       published: parsed.data.published,
+      ...(coverPhotoUrl !== undefined ? { cover_photo_url: coverPhotoUrl } : {}),
     },
     { onConflict: "business_id", ignoreDuplicates: false }
   );

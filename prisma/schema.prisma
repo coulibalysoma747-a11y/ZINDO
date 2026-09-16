@@ -817,6 +817,19 @@ model OnlineStore {
   deliveryEnabled   Boolean   @default(false)
   deliveryFee       Float     @default(0)
   freeDeliveryAbove Float? // null = pas de seuil de livraison gratuite
+  coverPhotoUrl     String?
+  tagline           String?
+  whatsappNumber    String?
+  address           String?
+  city              String?
+  footerMessage     String?
+  deliveryNote      String?
+  pickupEnabled     Boolean   @default(false)
+  payOnDeliveryEnabled Boolean @default(true)
+  mobileMoneyEnabled   Boolean @default(false)
+  mobileMoneyNumber String?
+  minOrderAmount    Float     @default(0)
+  showOutOfStock    Boolean   @default(false)
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt
 
@@ -826,6 +839,7 @@ model OnlineStore {
 enum OnlineOrderStatus {
   EN_ATTENTE
   CONFIRMEE
+  PRETE
   LIVREE
   ANNULEE
 }

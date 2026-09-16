@@ -21,7 +21,9 @@ create type inventory_status as enum ('EN_COURS','VALIDE');
 create type notification_type as enum ('STOCK_FAIBLE','RUPTURE_STOCK','INVENTAIRE_NECESSAIRE','CREDIT_ECHU','INFO');
 create type super_admin_role as enum ('FOUNDER','ADMIN');
 create type support_ticket_status as enum ('OUVERT','EN_COURS','RESOLU');
-create type online_order_status as enum ('EN_ATTENTE','CONFIRMEE','LIVREE','ANNULEE');
+-- PRETE : commande préparée, prête à être livrée/retirée, avant l'étape
+-- finale LIVREE (comprendre : encaissée) — voir OrderStatusControls.
+create type online_order_status as enum ('EN_ATTENTE','CONFIRMEE','PRETE','LIVREE','ANNULEE');
 create type billing_cycle as enum ('MONTHLY','ANNUAL');
 create type subscription_status as enum ('ACTIVE','PAST_DUE');
 create type invoice_status as enum ('EN_ATTENTE','PAYEE','ANNULEE');
@@ -804,6 +806,26 @@ create table online_stores (
   delivery_enabled boolean not null default false,
   delivery_fee double precision not null default 0,
   free_delivery_above double precision,
+  -- Vitrine enrichie (façon FasoStock) : identité visuelle et informations
+  -- pratiques affichées au client sur /boutique/[slug], et options de
+  -- retrait/paiement configurées par le commerçant. Toutes facultatives —
+  -- une boutique minimale (nom + slug) reste utilisable sans elles.
+  cover_photo_url text,
+  tagline text,
+  whatsapp_number text,
+  address text,
+  city text,
+  footer_message text,
+  delivery_note text,
+  pickup_enabled boolean not null default false,
+  pay_on_delivery_enabled boolean not null default true,
+  mobile_money_enabled boolean not null default false,
+  mobile_money_number text,
+  min_order_amount double precision not null default 0,
+  -- Affiche aussi les produits en rupture (grisés, sans bouton d'ajout) au
+  -- lieu de les masquer — utile pour montrer tout le catalogue même
+  -- temporairement épuisé.
+  show_out_of_stock boolean not null default false,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );

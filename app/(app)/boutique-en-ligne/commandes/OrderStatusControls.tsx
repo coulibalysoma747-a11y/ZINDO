@@ -4,12 +4,13 @@ import { useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Select } from "@/components/ui/Input";
 import { updateOnlineOrderStatusAction } from "@/lib/actions/online-store";
-import type { OnlineOrderStatus } from "@prisma/client";
+import type { OnlineOrderStatus } from "@/lib/db-types";
 
 const STATUS_OPTIONS: { value: OnlineOrderStatus; label: string }[] = [
-  { value: "EN_ATTENTE", label: "En attente" },
+  { value: "EN_ATTENTE", label: "À traiter" },
   { value: "CONFIRMEE", label: "Confirmée" },
-  { value: "LIVREE", label: "Livrée" },
+  { value: "PRETE", label: "Prête" },
+  { value: "LIVREE", label: "Encaissée" },
   { value: "ANNULEE", label: "Annulée" },
 ];
 

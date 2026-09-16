@@ -36,7 +36,7 @@ export async function createOnlineOrderAction(
   const { data: store } = await supabase
     .from("online_stores")
     .select(
-      "id, businessId:business_id, published, locationId:location_id, deliveryEnabled:delivery_enabled, deliveryFee:delivery_fee, freeDeliveryAbove:free_delivery_above"
+      "id, businessId:business_id, published, locationId:location_id, deliveryEnabled:delivery_enabled, deliveryFee:delivery_fee, freeDeliveryAbove:free_delivery_above, minOrderAmount:min_order_amount"
     )
     .eq("slug", data.slug)
     .maybeSingle();
@@ -82,6 +82,11 @@ export async function createOnlineOrderAction(
     const total = product.salePrice * item.quantity;
     subtotal += total;
     orderItems.push({ product_id: item.productId, quantity: item.quantity, unit_price: product.salePrice, total });
+  }
+
+  const minOrderAmount = (store.minOrderAmount as number | null) ?? 0;
+  if (minOrderAmount > 0 && subtotal < minOrderAmount) {
+    return { success: false, error: `Commande minimum non atteinte (minimum : ${minOrderAmount})` };
   }
 
   let deliveryFee = 0;
