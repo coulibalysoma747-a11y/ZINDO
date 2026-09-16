@@ -334,3 +334,37 @@ export async function ensureProductBarcodeAction(productId: string): Promise<{ b
     return { error: "Impossible de générer le code-barres pour le moment" };
   }
 }
+
+/**
+ * Génère et enregistre un code-barres EAN-13 pour TOUS les produits actifs
+ * du commerce qui n'en ont pas encore — bouton "Enregistrer tous les codes
+ * manquants" de /produits/etiquettes. Renvoie les paires {id, barcode}
+ * générées pour que l'écran mette à jour sa liste sans recharger la page.
+ */
+export async function ensureAllProductBarcodesAction(): Promise<{ generated: { id: string; barcode: string }[] } | { error: string }> {
+  const user = await requirePermission(PERMISSIONS.PRODUCTS_MANAGE);
+
+  const { data: missing } = await supabase
+    .from("products")
+    .select("id")
+    .eq("business_id", user.businessId)
+    .eq("active", true)
+    .is("barcode", null);
+  if (!missing || missing.length === 0) return { generated: [] };
+
+  try {
+    const generated: { id: string; barcode: string }[] = [];
+    for (const p of missing) {
+      const barcode = await generateProductBarcode(user.businessId);
+      const { error } = await supabase.from("products").update({ barcode }).eq("id", p.id as string);
+      if (!error) generated.push({ id: p.id as string, barcode });
+    }
+
+    revalidatePath("/produits");
+    revalidatePath("/produits/etiquettes");
+    return { generated };
+  } catch (e) {
+    console.error("[ensureAllProductBarcodesAction] Échec de la génération :", e);
+    return { error: "Impossible de générer les codes-barres pour le moment" };
+  }
+}

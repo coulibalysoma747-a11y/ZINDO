@@ -28,6 +28,7 @@ export default async function ProductLabelPage({
         businessName: user.business.name,
         productName: product.name as string,
         code: (product.barcode as string | null) || (product.reference as string),
+        sku: product.reference as string,
         salePrice: product.salePrice as number,
         currency: user.business.currency,
       }}

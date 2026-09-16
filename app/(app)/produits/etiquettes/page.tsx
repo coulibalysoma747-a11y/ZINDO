@@ -9,18 +9,27 @@ export default async function BulkLabelsPage() {
 
   const { data: products } = await supabase
     .from("products")
-    .select("id, name, barcode, reference, salePrice:sale_price")
+    .select("id, name, barcode, reference, salePrice:sale_price, photoUrl:photo_url")
     .eq("business_id", user.businessId)
     .eq("active", true)
     .order("name", { ascending: true });
 
   if (!products || products.length === 0) {
-    return <EmptyState title="Aucun produit" description="Ajoutez des produits avant d'imprimer des codes-barres." />;
+    return <EmptyState title="Aucun produit" description="Ajoutez des produits avant d'imprimer des QR codes." />;
   }
 
   return (
     <BulkLabelPrintView
-      products={products as unknown as { id: string; name: string; barcode: string | null; reference: string; salePrice: number }[]}
+      products={
+        products as unknown as {
+          id: string;
+          name: string;
+          barcode: string | null;
+          reference: string;
+          salePrice: number;
+          photoUrl: string | null;
+        }[]
+      }
       businessName={user.business.name}
       currency={user.business.currency}
     />
