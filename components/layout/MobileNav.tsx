@@ -31,6 +31,7 @@ export function MobileNav({
     <div className="fixed inset-0 z-40 md:hidden">
       <div className="absolute inset-0 bg-black/40" onClick={onClose} />
       <div className="absolute left-0 top-0 flex h-full w-72 flex-col justify-between bg-slate-900 text-slate-300 shadow-xl">
+        <div className="zindo-flag-stripe h-1 w-full shrink-0" />
         <div className="min-h-0 flex-1 overflow-y-auto">
           <div className="flex items-center justify-between gap-2 border-b border-slate-800/80 p-4">
             <div className="flex min-w-0 items-center gap-3">
@@ -66,7 +67,7 @@ export function MobileNav({
                     <span
                       className={cn(
                         "rounded-md px-1.5 py-0.5 text-[10px] font-bold",
-                        active ? "bg-white/20 text-white" : "bg-zindo-green-500/20 text-zindo-green-400"
+                        active ? "bg-white/20 text-white" : "bg-zindo-gold-500/20 text-zindo-gold-400"
                       )}
                     >
                       {item.badge}

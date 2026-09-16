@@ -17,6 +17,7 @@ export function Sidebar({
 
   return (
     <aside className="sticky top-0 hidden h-screen w-64 shrink-0 flex-col justify-between border-r border-slate-800 bg-slate-900 text-slate-300 shadow-xl md:flex">
+      <div className="zindo-flag-stripe h-1 w-full shrink-0" />
       <div className="min-h-0 flex-1 overflow-y-auto">
         <div className="flex items-center gap-3 border-b border-slate-800/80 p-5">
           <ZindoLogo size={40} />

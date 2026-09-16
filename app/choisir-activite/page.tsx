@@ -26,9 +26,11 @@ export default async function ChooseActivityPage({
 
   return (
     <div className="theme-locked relative min-h-screen overflow-x-hidden bg-zindo-cream">
+      <div aria-hidden className="zindo-flag-stripe absolute inset-x-0 top-0 h-1" />
       <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
         <div className="absolute -right-24 -top-24 h-72 w-72 rounded-full bg-zindo-green-100/70 blur-3xl" />
-        <div className="absolute -bottom-32 -left-24 h-72 w-72 rounded-full bg-zindo-ink-50 blur-3xl" />
+        <div className="absolute top-1/3 -left-10 h-56 w-56 rounded-full bg-zindo-gold-100/50 blur-3xl" />
+        <div className="absolute -bottom-32 -left-24 h-72 w-72 rounded-full bg-zindo-red-100/40 blur-3xl" />
       </div>
 
       <div className="relative z-10 mx-auto flex min-h-screen w-full max-w-4xl flex-col items-center px-5 py-10 sm:px-6">

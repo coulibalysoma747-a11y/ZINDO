@@ -43,7 +43,7 @@ export function SidebarLink({ item }: { item: NavItem }) {
             "rounded-md px-1.5 py-0.5 text-[10px] font-bold transition-colors",
             active
               ? "bg-white/20 text-white"
-              : "bg-zindo-green-500/20 text-zindo-green-400 group-hover:bg-zindo-green-500 group-hover:text-white"
+              : "bg-zindo-gold-500/20 text-zindo-gold-400 group-hover:bg-zindo-gold-500 group-hover:text-white"
           )}
         >
           {item.badge}

@@ -20,6 +20,21 @@ import { getCurrentUser } from "@/lib/auth";
 import { ZindoLogo } from "@/components/auth/ZindoLogo";
 import { InstallAppButton } from "@/components/InstallAppButton";
 
+// Cycle tricolore (vert/or/rouge, drapeau du Burkina Faso et logo ZINDO)
+// appliqué aux puces d'icônes de la page publique pour une identité visuelle
+// tricolore, sans jamais réutiliser ces teintes pour un état sémantique
+// (danger/attention) ailleurs dans l'application.
+const ICON_TONES = [
+  { bg: "bg-zindo-green-50", text: "text-zindo-green-600" },
+  { bg: "bg-zindo-gold-100", text: "text-zindo-gold-600" },
+  { bg: "bg-zindo-red-50", text: "text-zindo-red-600" },
+];
+const ICON_TONES_DARK = [
+  { bg: "bg-white/10", text: "text-zindo-green-400" },
+  { bg: "bg-white/10", text: "text-zindo-gold-400" },
+  { bg: "bg-white/10", text: "text-zindo-red-400" },
+];
+
 const CHANGES = [
   {
     icon: Boxes,
@@ -168,8 +183,11 @@ export default async function RootPage() {
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(STRUCTURED_DATA) }} />
       <div aria-hidden className="pointer-events-none fixed inset-0 overflow-hidden">
         <div className="absolute -right-24 -top-24 h-96 w-96 rounded-full bg-zindo-green-100/70 blur-3xl" />
-        <div className="absolute -bottom-32 -left-24 h-96 w-96 rounded-full bg-zindo-ink-50 blur-3xl" />
+        <div className="absolute top-1/3 -left-16 h-72 w-72 rounded-full bg-zindo-gold-100/60 blur-3xl" />
+        <div className="absolute -bottom-32 -left-24 h-96 w-96 rounded-full bg-zindo-red-100/40 blur-3xl" />
       </div>
+
+      <div aria-hidden className="zindo-flag-stripe relative z-10 h-1 w-full" />
 
       {/* Barre supérieure */}
       <header className="relative z-10 mx-auto flex w-full max-w-6xl items-center justify-between px-5 py-6 sm:px-8">
@@ -238,18 +256,21 @@ export default async function RootPage() {
             </p>
           </div>
           <div className="mt-10 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-            {CHANGES.map((item) => (
+            {CHANGES.map((item, i) => {
+              const tone = ICON_TONES[i % ICON_TONES.length];
+              return (
               <div
                 key={item.title}
                 className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm transition hover:shadow-md"
               >
-                <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-zindo-green-50 text-zindo-green-600">
+                <div className={`flex h-11 w-11 items-center justify-center rounded-xl ${tone.bg} ${tone.text}`}>
                   <item.icon className="h-5 w-5" />
                 </div>
                 <h3 className="mt-4 font-bold text-zindo-ink-900">{item.title}</h3>
                 <p className="mt-1.5 text-sm leading-relaxed text-zinc-500">{item.text}</p>
               </div>
-            ))}
+              );
+            })}
           </div>
         </section>
 
@@ -262,9 +283,11 @@ export default async function RootPage() {
             <p className="mt-2 text-zindo-ink-200">Ce qui nous distingue d&apos;un simple tableur.</p>
           </div>
           <div className="mt-10 grid grid-cols-1 gap-6 sm:grid-cols-2">
-            {REASONS.map((item) => (
+            {REASONS.map((item, i) => {
+              const tone = ICON_TONES_DARK[i % ICON_TONES_DARK.length];
+              return (
               <div key={item.title} className="flex gap-4">
-                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white/10 text-zindo-green-400">
+                <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${tone.bg} ${tone.text}`}>
                   <item.icon className="h-5 w-5" />
                 </div>
                 <div>
@@ -272,7 +295,8 @@ export default async function RootPage() {
                   <p className="mt-1 text-sm leading-relaxed text-zindo-ink-200">{item.text}</p>
                 </div>
               </div>
-            ))}
+              );
+            })}
           </div>
         </section>
 
@@ -284,18 +308,21 @@ export default async function RootPage() {
             </h2>
           </div>
           <div className="mt-10 grid grid-cols-1 gap-8 sm:grid-cols-3">
-            {STEPS.map((step, i) => (
+            {STEPS.map((step, i) => {
+              const tone = ICON_TONES[i % ICON_TONES.length];
+              return (
               <div key={step.title} className="text-center">
                 <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-white shadow-md">
-                  <step.icon className="h-6 w-6 text-zindo-green-600" />
+                  <step.icon className={`h-6 w-6 ${tone.text}`} />
                 </div>
-                <p className="mt-4 text-xs font-bold uppercase tracking-wider text-zindo-green-600">
+                <p className={`mt-4 text-xs font-bold uppercase tracking-wider ${tone.text}`}>
                   Étape {i + 1}
                 </p>
                 <h3 className="mt-1 font-bold text-zindo-ink-900">{step.title}</h3>
                 <p className="mt-1.5 text-sm leading-relaxed text-zinc-500">{step.text}</p>
               </div>
-            ))}
+              );
+            })}
           </div>
         </section>
 

@@ -31,7 +31,8 @@ export function Topbar({
   const [pending, startTransition] = useTransition();
 
   return (
-    <header className="flex h-16 items-center justify-between border-b border-zinc-200 bg-white px-4 dark:border-slate-700 dark:bg-slate-900 md:px-6">
+    <header className="relative flex h-16 items-center justify-between border-b border-zinc-200 bg-white px-4 dark:border-slate-700 dark:bg-slate-900 md:px-6">
+      <div className="zindo-flag-stripe absolute inset-x-0 top-0 h-1" />
       <button
         className="rounded-lg p-2 text-zinc-500 hover:bg-zinc-100 md:hidden"
         onClick={() => setMobileNavOpen(true)}

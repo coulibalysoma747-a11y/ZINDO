@@ -20,10 +20,14 @@
      neutre quasi noire (titres/panneaux — plus de bleu marine, le logo n'en
      contient pas), blanc cassé chaleureux (surfaces), vert succès. Le vert
      "zindo-green-500" est échantillonné directement sur public/brand/
-     zindo-emblem.png ; le rouge et l'or du logo restent portés par les
-     classes Tailwind standard (red-*, amber-* / yellow-*) déjà utilisées
-     pour les états danger/attention. Utilisée sur les écrans d'authentification,
-     la page publique et la page Abonnement. */
+     zindo-emblem.png. Le rouge et l'or du logo (et du drapeau du Burkina
+     Faso) ont désormais leurs propres échelles ci-dessous — utilisées comme
+     accents de marque (liseré tricolore de la Sidebar/Topbar/MobileTabBar,
+     halos décoratifs des écrans d'authentification et de la page publique,
+     badges) EN PLUS du vert dominant. Les classes Tailwind standard
+     (red-*, amber-*) restent inchangées pour les états sémantiques
+     danger/attention (boutons de suppression, alertes) — jamais réutilisées
+     comme accent de marque, pour ne pas brouiller leur sens. */
   --color-zindo-green-50: #eefbf2;
   --color-zindo-green-100: #d3f3dc;
   --color-zindo-green-200: #a3e3b8;
@@ -33,6 +37,24 @@
   --color-zindo-green-600: #135b28;
   --color-zindo-green-700: #0f4a21;
   --color-zindo-green-800: #0b3a1a;
+  --color-zindo-red-50: #fdeeee;
+  --color-zindo-red-100: #fad3d3;
+  --color-zindo-red-200: #f3a3a3;
+  --color-zindo-red-300: #e86e6e;
+  --color-zindo-red-400: #dd4141;
+  --color-zindo-red-500: #c81e1e;
+  --color-zindo-red-600: #a81818;
+  --color-zindo-red-700: #8a1414;
+  --color-zindo-red-800: #6b0f0f;
+  --color-zindo-gold-50: #fef8e8;
+  --color-zindo-gold-100: #fbecc0;
+  --color-zindo-gold-200: #f6d787;
+  --color-zindo-gold-300: #eebd4c;
+  --color-zindo-gold-400: #e2a625;
+  --color-zindo-gold-500: #c8860a;
+  --color-zindo-gold-600: #a66d08;
+  --color-zindo-gold-700: #855707;
+  --color-zindo-gold-800: #664305;
   --color-zindo-ink-50: #f4f4f5;
   --color-zindo-ink-100: #e4e4e7;
   --color-zindo-ink-200: #d4d4d8;
@@ -118,6 +140,18 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+}
+
+/* Liseré tricolore de marque (rouge/or/vert, drapeau du Burkina Faso et
+   logo ZINDO) — utilisé comme fine bande d'accent en tête de la Sidebar, de
+   la Topbar et de la barre mobile basse (voir components/layout/*). */
+.zindo-flag-stripe {
+  background: linear-gradient(
+    90deg,
+    var(--color-zindo-red-500) 0%,
+    var(--color-zindo-gold-500) 50%,
+    var(--color-zindo-green-500) 100%
+  );
 }
 
 /* Le ticket de caisse (components/sales/Receipt.tsx) embarque son propre CSS

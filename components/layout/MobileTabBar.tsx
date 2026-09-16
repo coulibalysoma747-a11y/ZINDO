@@ -82,7 +82,8 @@ export function MobileTabBar({
         </div>
       )}
 
-      <nav className="fixed inset-x-0 bottom-0 z-30 border-t border-zinc-200 bg-white pb-[env(safe-area-inset-bottom)] sm:hidden print:hidden">
+      <nav className="fixed inset-x-0 bottom-0 z-30 bg-white pb-[env(safe-area-inset-bottom)] sm:hidden print:hidden">
+        <div className="zindo-flag-stripe h-[3px] w-full" />
         <div className="grid grid-cols-5 items-center">
           {leftTabs.map((t) => (
             <TabLink key={t.href} {...t} active={pathname === t.href || pathname.startsWith(`${t.href}/`)} />
@@ -93,7 +94,7 @@ export function MobileTabBar({
               type="button"
               onClick={() => (quickActions.length > 0 ? setSheetOpen(true) : undefined)}
               aria-label="Action rapide"
-              className="flex h-14 w-14 -translate-y-3 items-center justify-center rounded-full bg-zindo-green-500 text-white shadow-lg shadow-zindo-green-800/30 active:bg-zindo-green-600"
+              className="zindo-flag-stripe flex h-14 w-14 -translate-y-3 items-center justify-center rounded-full text-white shadow-lg shadow-zindo-ink-900/30"
             >
               <Plus className="h-6 w-6" />
             </button>

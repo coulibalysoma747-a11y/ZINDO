@@ -2,6 +2,7 @@ import { ZindoLogo } from "@/components/auth/ZindoLogo";
 import { LanguageSelector } from "@/components/auth/LanguageSelector";
 import { Package, ShoppingCart, Store, BarChart3 } from "lucide-react";
 
+const HIGHLIGHT_TONES = ["text-zindo-green-400", "text-zindo-gold-400", "text-zindo-red-400", "text-zindo-green-400"];
 const HIGHLIGHTS = [
   { icon: Package, text: "Stock en temps réel, sur toutes vos boutiques" },
   { icon: ShoppingCart, text: "Caisse rapide avec tickets et factures A4" },
@@ -11,11 +12,14 @@ const HIGHLIGHTS = [
 
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="theme-locked flex min-h-screen bg-zindo-cream">
+    <div className="theme-locked flex min-h-screen flex-col bg-zindo-cream">
+      <div aria-hidden className="zindo-flag-stripe h-1 w-full shrink-0" />
+      <div className="flex flex-1">
       <div className="relative hidden w-[42%] shrink-0 overflow-hidden bg-zindo-ink-900 lg:flex lg:flex-col lg:justify-between lg:p-12 xl:p-16">
         <div aria-hidden className="pointer-events-none absolute inset-0">
           <div className="absolute -right-32 -top-32 h-96 w-96 rounded-full bg-zindo-green-500/20 blur-3xl" />
-          <div className="absolute -bottom-24 -left-24 h-80 w-80 rounded-full bg-zindo-ink-700/60 blur-3xl" />
+          <div className="absolute top-1/3 -right-10 h-64 w-64 rounded-full bg-zindo-gold-500/15 blur-3xl" />
+          <div className="absolute -bottom-24 -left-24 h-80 w-80 rounded-full bg-zindo-red-500/10 blur-3xl" />
           <div
             aria-hidden
             className="absolute inset-0 opacity-[0.07]"
@@ -43,10 +47,10 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
           </p>
 
           <ul className="mt-8 space-y-4">
-            {HIGHLIGHTS.map((h) => (
+            {HIGHLIGHTS.map((h, i) => (
               <li key={h.text} className="flex items-center gap-3">
                 <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white/10">
-                  <h.icon className="h-4.5 w-4.5 text-zindo-green-400" />
+                  <h.icon className={`h-4.5 w-4.5 ${HIGHLIGHT_TONES[i % HIGHLIGHT_TONES.length]}`} />
                 </span>
                 <span className="text-sm text-zindo-ink-50">{h.text}</span>
               </li>
@@ -67,7 +71,8 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
       <div className="relative flex flex-1 flex-col overflow-x-hidden">
         <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden lg:hidden">
           <div className="absolute -right-24 -top-24 h-72 w-72 rounded-full bg-zindo-green-100/70 blur-3xl" />
-          <div className="absolute -bottom-32 -left-24 h-72 w-72 rounded-full bg-zindo-ink-50 blur-3xl" />
+          <div className="absolute top-1/3 -left-10 h-56 w-56 rounded-full bg-zindo-gold-100/50 blur-3xl" />
+          <div className="absolute -bottom-32 -left-24 h-72 w-72 rounded-full bg-zindo-red-100/40 blur-3xl" />
         </div>
 
         <header className="relative z-10 flex justify-end px-5 pt-5 sm:px-6 sm:pt-6">
@@ -88,6 +93,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
             {children}
           </div>
         </main>
+      </div>
       </div>
     </div>
   );

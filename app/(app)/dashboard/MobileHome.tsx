@@ -20,6 +20,7 @@ type DashboardData = Awaited<ReturnType<typeof getDashboardData>>;
 
 const TILE_TONES = {
   emerald: "bg-zindo-green-50 text-zindo-green-600",
+  gold: "bg-zindo-gold-100 text-zindo-gold-700",
   amber: "bg-amber-50 text-amber-600",
   blue: "bg-blue-50 text-blue-600",
   red: "bg-red-50 text-red-600",
@@ -77,9 +78,9 @@ export function MobileHome({
     { key: "vente", label: "Vente", href: "/ventes", icon: ShoppingCart, tone: "emerald", show: canSell },
     { key: "produits", label: "Produits", href: "/produits", icon: Package, tone: "amber", show: canViewProducts },
     { key: "stock", label: "Stock", href: "/stock", icon: Boxes, tone: "blue", show: canViewStock },
-    { key: "clients", label: "Clients", href: "/clients", icon: Users, tone: "emerald", show: canViewCustomers },
+    { key: "clients", label: "Clients", href: "/clients", icon: Users, tone: "gold", show: canViewCustomers },
     { key: "fournisseurs", label: "Fournisseurs", href: "/fournisseurs", icon: Truck, tone: "red", show: canViewSuppliers },
-    { key: "depenses", label: "Dépenses", href: "/depenses", icon: Receipt, tone: "emerald", show: canManageExpenses },
+    { key: "depenses", label: "Dépenses", href: "/depenses", icon: Receipt, tone: "gold", show: canManageExpenses },
     { key: "rapports", label: "Rapports", href: "/rapports", icon: BarChart3, tone: "emerald", show: canViewReports },
     { key: "profil", label: "Profil", href: "/profil", icon: UserCog, tone: "zinc", show: true },
   ];
