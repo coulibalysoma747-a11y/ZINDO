@@ -112,10 +112,6 @@ const DESCRIPTIONS: Record<string, { short: string; long: string }> = {
     short: "Créez des comptes pour vos employés et définissez ce que chacun peut faire.",
     long: "Créez un compte pour chacun de vos employés (vendeur, gestionnaire de stock...) et choisissez précisément ce que chacun a le droit de voir ou de faire dans ZINDO.",
   },
-  "/abonnement": {
-    short: "Consultez votre formule actuelle et les limites de votre compte, ou changez de palier.",
-    long: "Votre formule actuelle (gratuite ou payante), ce qu'elle inclut, et les limites de votre compte (nombre de produits, d'utilisateurs, de boutiques...). Vous pouvez aussi changer de palier depuis cette page.",
-  },
   "/parametres": {
     short: "Informations de votre commerce, logo, devise, format des tickets, imprimante...",
     long: "Les informations de votre commerce : nom, logo, téléphone, adresse, devise, format des tickets (58 mm, 80 mm ou A4), message de pied de ticket, et configuration de l'imprimante.",
@@ -147,7 +143,6 @@ export function ModulesGuide({ availability }: { availability: Record<string, Mo
               longDescription={long}
               available={moduleAvailability.allowed}
               unavailableMessage={moduleAvailability.reason ? UNAVAILABLE_MESSAGES[moduleAvailability.reason] : undefined}
-              showSubscriptionLink={moduleAvailability.reason === "plan"}
               badge={
                 <>
                   {item.badge && (

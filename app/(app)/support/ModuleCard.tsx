@@ -26,7 +26,6 @@ export function ModuleCard({
   longDescription,
   available,
   unavailableMessage,
-  showSubscriptionLink,
 }: {
   href: string;
   label: string;
@@ -36,7 +35,6 @@ export function ModuleCard({
   longDescription: string;
   available: boolean;
   unavailableMessage?: string;
-  showSubscriptionLink?: boolean;
 }) {
   const [open, setOpen] = useState(false);
 
@@ -84,14 +82,7 @@ export function ModuleCard({
           ) : (
             <div className="flex items-start gap-2 rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-800">
               <Lock className="mt-0.5 h-3.5 w-3.5 shrink-0" />
-              <div>
-                <p>{unavailableMessage}</p>
-                {showSubscriptionLink && (
-                  <Link href="/abonnement" className="font-medium underline hover:text-amber-900">
-                    Voir les formules d&apos;abonnement
-                  </Link>
-                )}
-              </div>
+              <p>{unavailableMessage}</p>
             </div>
           )}
         </div>

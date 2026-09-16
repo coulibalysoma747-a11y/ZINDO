@@ -43,15 +43,11 @@ export default function CguPage() {
         </p>
       </LegalSection>
 
-      <LegalSection title="4. Abonnement et tarifs">
+      <LegalSection title="4. Tarifs">
         <p>
-          ZINDO propose une formule gratuite avec des limites (nombre de produits, de ventes, d&apos;utilisateurs...)
-          ainsi que des formules payantes détaillées sur la page{" "}
-          <Link href="/abonnement" className="font-medium text-zindo-green-600 hover:underline">
-            Abonnement
-          </Link>
-          . Les tarifs peuvent évoluer ; toute modification substantielle vous sera communiquée avant application à
-          votre compte.
+          ZINDO est actuellement entièrement gratuit et sans limite (nombre de produits, de ventes,
+          d&apos;utilisateurs...) pour tous les commerces. Si cela devait évoluer, toute modification substantielle
+          vous serait communiquée avant application à votre compte.
         </p>
       </LegalSection>
 

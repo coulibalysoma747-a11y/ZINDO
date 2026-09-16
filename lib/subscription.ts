@@ -1,5 +1,4 @@
 import "server-only";
-import { supabase } from "@/lib/supabase";
 import { FEATURE_CATALOG } from "@/lib/subscription-features";
 
 export { FEATURE_CATALOG } from "@/lib/subscription-features";
@@ -25,36 +24,17 @@ const UNRESTRICTED: BusinessLimits = {
   features: FEATURE_CATALOG.map((f) => f.key),
 };
 
-function safeParseFeatures(json: string): string[] {
-  try {
-    const parsed = JSON.parse(json);
-    return Array.isArray(parsed) ? parsed : [];
-  } catch {
-    return [];
-  }
-}
-
-export async function getBusinessLimits(businessId: string): Promise<BusinessLimits> {
-  const { data: subscription } = await supabase
-    .from("business_subscriptions")
-    .select(
-      "plan:subscription_plans(key, label, maxProducts:max_products, maxUsers:max_users, maxLocations:max_locations, features)"
-    )
-    .eq("business_id", businessId)
-    .maybeSingle();
-  const plan = subscription?.plan as unknown as
-    | { key: string; label: string; maxProducts: number | null; maxUsers: number | null; maxLocations: number | null; features: string }
-    | null;
-  if (!plan) return UNRESTRICTED;
-
-  return {
-    planKey: plan.key,
-    planLabel: plan.label,
-    maxProducts: plan.maxProducts,
-    maxUsers: plan.maxUsers,
-    maxLocations: plan.maxLocations,
-    features: safeParseFeatures(plan.features),
-  };
+/**
+ * Paywall désactivé : ZINDO est entièrement gratuit et illimité pour tous
+ * les commerces, quel que soit le palier auquel ils sont rattachés en base
+ * — décision explicite du propriétaire de la plateforme. Les tables
+ * subscription_plans/business_subscriptions et la page /abonnement restent
+ * en place (facturation, historique) mais ne bloquent plus rien ; réactiver
+ * l'application des limites se ferait ici en restaurant la lecture du plan
+ * ci-dessous.
+ */
+export async function getBusinessLimits(_businessId: string): Promise<BusinessLimits> {
+  return UNRESTRICTED;
 }
 
 export async function hasPlanFeature(businessId: string, featureKey: string): Promise<boolean> {
@@ -63,21 +43,8 @@ export async function hasPlanFeature(businessId: string, featureKey: string): Pr
 }
 
 export async function checkLimit(
-  businessId: string,
-  kind: "products" | "users" | "locations"
+  _businessId: string,
+  _kind: "products" | "users" | "locations"
 ): Promise<{ ok: boolean; limit: number | null; current: number }> {
-  const limits = await getBusinessLimits(businessId);
-  const max = kind === "products" ? limits.maxProducts : kind === "users" ? limits.maxUsers : limits.maxLocations;
-
-  if (max === null) return { ok: true, limit: null, current: 0 };
-
-  const table = kind === "products" ? "products" : kind === "users" ? "users" : "locations";
-  const { count } = await supabase
-    .from(table)
-    .select("id", { count: "exact", head: true })
-    .eq("business_id", businessId)
-    .eq("active", true);
-  const current = count ?? 0;
-
-  return { ok: current < max, limit: max, current };
+  return { ok: true, limit: null, current: 0 };
 }

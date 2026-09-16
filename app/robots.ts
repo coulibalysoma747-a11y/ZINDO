@@ -29,7 +29,6 @@ export default function robots(): MetadataRoute.Robots {
         "/utilisateurs",
         "/parametres",
         "/profil",
-        "/abonnement",
         "/support",
         "/boutique-en-ligne",
         "/assistant",

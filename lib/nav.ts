@@ -28,7 +28,6 @@ export type NavItem = {
     | "invoices"
     | "support"
     | "online-store"
-    | "subscription"
     | "vehicle-sales"
     | "quotes"
     | "vehicle-registration";
@@ -84,7 +83,6 @@ export const NAV_ITEMS: NavItem[] = [
     planFeature: "boutique_en_ligne",
   },
   { label: "Utilisateurs", href: "/utilisateurs", icon: "users", permission: PERMISSIONS.USERS_MANAGE },
-  { label: "Abonnement", href: "/abonnement", icon: "subscription", permission: PERMISSIONS.SETTINGS_MANAGE },
   { label: "Aide & support", href: "/support", icon: "support" },
   { label: "Paramètres", href: "/parametres", icon: "settings", permission: PERMISSIONS.SETTINGS_MANAGE },
 ];
