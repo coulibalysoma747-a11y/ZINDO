@@ -189,27 +189,30 @@ export default async function RootPage() {
 
       <div aria-hidden className="zindo-flag-stripe relative z-10 h-1 w-full" />
 
-      {/* Barre supérieure */}
-      <header className="relative z-10 mx-auto flex w-full max-w-6xl items-center justify-between px-5 py-6 sm:px-8">
+      {/* Barre supérieure — flex-wrap sur les deux niveaux : si le groupe
+          d'actions ne tient pas à côté du logo sur un téléphone étroit, il
+          passe sous le logo (voire se scinde lui-même) plutôt que de
+          tronquer ou d'écraser un bouton sur plusieurs lignes illisibles. */}
+      <header className="relative z-10 mx-auto flex w-full max-w-6xl flex-wrap items-center justify-between gap-y-2 px-5 py-6 sm:px-8">
         <div className="flex items-center gap-3">
           <ZindoLogo size={40} />
           <span className="text-lg font-extrabold tracking-tight text-zindo-ink-900">ZINDO</span>
         </div>
-        <div className="flex items-center gap-2 sm:gap-3">
+        <div className="flex flex-wrap items-center justify-end gap-1.5 sm:gap-3">
           <LanguageSwitcher />
           <InstallAppButton
             iconOnly
-            className="flex items-center gap-1.5 rounded-xl border border-zinc-200 px-2.5 py-2 text-sm font-semibold text-zindo-ink-700 hover:border-zinc-300 sm:px-3"
+            className="hidden items-center gap-1.5 rounded-xl border border-zinc-200 px-2.5 py-2 text-sm font-semibold text-zindo-ink-700 hover:border-zinc-300 sm:flex sm:px-3"
           />
           <Link
             href="/login"
-            className="rounded-xl px-3 py-2 text-sm font-semibold text-zindo-ink-700 hover:text-zindo-green-600 sm:px-4"
+            className="whitespace-nowrap rounded-xl px-2 py-2 text-sm font-semibold text-zindo-ink-700 hover:text-zindo-green-600 sm:px-4"
           >
             Se connecter
           </Link>
           <Link
             href="/inscription"
-            className="rounded-xl bg-zindo-green-500 px-3 py-2 text-sm font-bold text-white shadow-md shadow-zindo-green-500/25 transition hover:bg-zindo-green-600 sm:px-5"
+            className="whitespace-nowrap rounded-xl bg-zindo-green-500 px-2.5 py-2 text-sm font-bold text-white shadow-md shadow-zindo-green-500/25 transition hover:bg-zindo-green-600 sm:px-5"
           >
             Créer un compte
           </Link>

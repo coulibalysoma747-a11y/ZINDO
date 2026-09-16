@@ -50,11 +50,12 @@ export function LanguageSwitcher() {
         onClick={() => setOpen((v) => !v)}
         aria-haspopup="listbox"
         aria-expanded={open}
-        className="flex items-center gap-1.5 rounded-full border border-zindo-ink-200 bg-white/90 px-3 py-1.5 text-sm font-medium text-zindo-ink-700 shadow-sm backdrop-blur transition hover:border-zindo-green-500 hover:text-zindo-green-600 active:scale-95"
+        className="flex items-center gap-1.5 whitespace-nowrap rounded-full border border-zindo-ink-200 bg-white/90 px-2.5 py-1.5 text-sm font-medium text-zindo-ink-700 shadow-sm backdrop-blur transition hover:border-zindo-green-500 hover:text-zindo-green-600 active:scale-95 sm:px-3"
       >
-        <Globe className="h-4 w-4" />
-        {currentOption.label}
-        <ChevronDown className={`h-3.5 w-3.5 transition-transform ${open ? "rotate-180" : ""}`} />
+        <Globe className="h-4 w-4 shrink-0" />
+        {/* Libellé masqué sur les très petits écrans (voir app/page.tsx) — sans ça, l'en-tête (logo + langue + Se connecter + Créer un compte) ne tient pas sur un téléphone étroit. */}
+        <span className="hidden sm:inline">{currentOption.label}</span>
+        <ChevronDown className={`h-3.5 w-3.5 shrink-0 transition-transform ${open ? "rotate-180" : ""}`} />
       </button>
       {open && (
         <div
