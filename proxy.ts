@@ -13,6 +13,10 @@ const PUBLIC_PATHS = [
   "/boutique",
   "/cgu",
   "/confidentialite",
+  // Version anglaise (voir app/en/) : "/en" couvre aussi tous ses
+  // sous-chemins (/en/login, /en/inscription, /en/cgu, /en/confidentialite)
+  // grâce au startsWith(`${p}/`) ci-dessous — pas besoin de les lister un par un.
+  "/en",
 ];
 // Chemins publics qui restent accessibles même à un utilisateur déjà connecté
 // (au lieu d'être redirigés vers /dashboard).
@@ -23,6 +27,8 @@ const PUBLIC_PATHS_ALLOWED_WHEN_LOGGED_IN = [
   "/boutique",
   "/cgu",
   "/confidentialite",
+  "/en/cgu",
+  "/en/confidentialite",
 ];
 
 export async function proxy(request: NextRequest) {
@@ -67,7 +73,13 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(new URL("/dashboard", request.url));
   }
 
-  return NextResponse.next();
+  // Transmis au layout racine (app/layout.tsx) via `headers()` pour poser le
+  // bon attribut `lang` sur <html> — la version anglaise (app/en/) vit sous
+  // le même layout racine que le reste de l'app, qui ne peut pas redéclarer
+  // <html> par route.
+  const requestHeaders = new Headers(request.headers);
+  requestHeaders.set("x-zindo-locale", pathname === "/en" || pathname.startsWith("/en/") ? "en" : "fr");
+  return NextResponse.next({ request: { headers: requestHeaders } });
 }
 
 export const config = {

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { headers } from "next/headers";
 import { Geist, Geist_Mono } from "next/font/google";
 import { getCurrentUser } from "@/lib/auth";
 import "./globals.css";
@@ -72,12 +73,13 @@ function ThemeInitScript({ theme }: { theme: string }) {
 }
 
 export default async function RootLayout({ children }: LayoutProps<"/">) {
-  const user = await getCurrentUser();
+  const [user, headerList] = await Promise.all([getCurrentUser(), headers()]);
   const theme = user?.theme ?? "SYSTEM";
+  const lang = headerList.get("x-zindo-locale") === "en" ? "en" : "fr";
 
   return (
     <html
-      lang="fr"
+      lang={lang}
       suppressHydrationWarning
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased${theme === "DARK" ? " dark" : ""}`}
     >

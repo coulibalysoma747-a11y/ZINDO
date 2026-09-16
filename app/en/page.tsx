@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import {
@@ -21,10 +22,16 @@ import { ZindoLogo } from "@/components/auth/ZindoLogo";
 import { InstallAppButton } from "@/components/InstallAppButton";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 
-// Cycle tricolore (vert/or/rouge, drapeau du Burkina Faso et logo ZINDO)
-// appliqué aux puces d'icônes de la page publique pour une identité visuelle
-// tricolore, sans jamais réutiliser ces teintes pour un état sémantique
-// (danger/attention) ailleurs dans l'application.
+export const metadata: Metadata = {
+  title: "ZINDO — Stock and point-of-sale management for Burkina Faso businesses",
+  description:
+    "ZINDO is the stock, checkout, and sales management app built for businesses in Burkina Faso: shops, hardware stores, spare parts dealers, motorcycle shops, grocers. Track your stock in real time, get paid, and know your profits — in FCFA.",
+  alternates: { canonical: "/en" },
+};
+
+// Même cycle tricolore que la page française (app/page.tsx) — voir ce
+// fichier pour le commentaire complet sur l'usage réservé à l'identité
+// visuelle publique.
 const ICON_TONES = [
   { bg: "bg-zindo-green-50", text: "text-zindo-green-600" },
   { bg: "bg-zindo-gold-100", text: "text-zindo-gold-600" },
@@ -39,106 +46,106 @@ const ICON_TONES_DARK = [
 const CHANGES = [
   {
     icon: Boxes,
-    title: "Un stock à jour en temps réel",
-    text: "Chaque vente, achat ou transfert met votre stock à jour instantanément, boutique par boutique — fini les comptages approximatifs.",
+    title: "Stock that's always up to date",
+    text: "Every sale, purchase, or transfer updates your stock instantly, shop by shop — no more rough counts.",
   },
   {
     icon: TrendingUp,
-    title: "Vos bénéfices enfin clairs",
-    text: "Chiffre d'affaires, marge et bénéfices calculés automatiquement à chaque vente — plus besoin de tout recalculer à la main en fin de journée.",
+    title: "Your profits, finally clear",
+    text: "Revenue, margin, and profit calculated automatically with every sale — no more recalculating everything by hand at the end of the day.",
   },
   {
     icon: AlertTriangle,
-    title: "Zéro rupture surprise",
-    text: "Une alerte dès qu'un produit atteint son stock minimum, avant que la rupture ne vous coûte une vente.",
+    title: "Zero surprise stock-outs",
+    text: "Get an alert as soon as a product hits its minimum stock, before a stock-out costs you a sale.",
   },
   {
     icon: ShoppingCart,
-    title: "Une caisse qui va plus vite",
-    text: "Encaissez en quelques secondes, imprimez un ticket ou une facture A4 détaillée avec signature et QR code de vérification.",
+    title: "A faster checkout",
+    text: "Get paid in seconds, print a receipt or a detailed A4 invoice with signature and a verification QR code.",
   },
   {
     icon: CreditCard,
-    title: "Vos crédits sous contrôle",
-    text: "Qui vous doit de l'argent, combien, depuis quand — suivi automatiquement, sans carnet à retrouver.",
+    title: "Credit sales under control",
+    text: "Who owes you money, how much, and since when — tracked automatically, no notebook to dig up.",
   },
   {
     icon: MapPin,
-    title: "Plusieurs boutiques, une seule vue",
-    text: "Gérez boutiques et dépôts séparément, transférez du stock entre eux, tout depuis le même compte.",
+    title: "Several shops, one single view",
+    text: "Manage shops and warehouses separately, transfer stock between them, all from the same account.",
   },
 ];
 
 const REASONS = [
   {
     icon: Store,
-    title: "Pensé pour les commerces d'ici",
-    text: "FCFA natif, activités locales (quincaillerie, alimentation, pièces détachées, restauration...) : ZINDO adapte son interface au métier que vous choisissez.",
+    title: "Built for local businesses",
+    text: "Native FCFA, local business types (hardware store, grocery, spare parts, restaurant...): ZINDO adapts its interface to the trade you choose.",
   },
   {
     icon: Users,
-    title: "Vos équipes, vos règles",
-    text: "Donnez à chaque employé exactement les droits dont il a besoin, module par module — un vendeur ne voit pas ce qui ne le regarde pas.",
+    title: "Your team, your rules",
+    text: "Give each employee exactly the rights they need, module by module — a cashier doesn't see what isn't their concern.",
   },
   {
     icon: Bot,
-    title: "Un assistant qui vous conseille",
-    text: "Un assistant intelligent intégré analyse vos ventes et répond à vos questions en langage naturel : « Quels sont mes produits les plus rentables ? »",
+    title: "An assistant that advises you",
+    text: "A built-in smart assistant analyzes your sales and answers your questions in plain language: “What are my most profitable products?”",
   },
   {
     icon: ShieldCheck,
-    title: "Vos données protégées",
-    text: "Rôles et permissions, historique de toutes les actions, confirmation avant toute suppression importante.",
+    title: "Your data, protected",
+    text: "Roles and permissions, a history of every action, and confirmation before any important deletion.",
   },
 ];
 
 const FAQS = [
   {
-    question: "Qu'est-ce que ZINDO ?",
+    question: "What is ZINDO?",
     answer:
-      "ZINDO est une application de gestion de stock, de caisse et de ventes conçue pour les commerces du Burkina Faso : boutiques, quincailleries, magasins de pièces détachées, boutiques de motos, alimentations et grossistes. Elle remplace les cahiers et les fichiers Excel.",
+      "ZINDO is a stock, checkout, and sales management app built for businesses in Burkina Faso: shops, hardware stores, spare parts dealers, motorcycle shops, grocers, and wholesalers. It replaces notebooks and spreadsheets.",
   },
   {
-    question: "ZINDO est-elle adaptée au FCFA et aux commerces burkinabè ?",
+    question: "Is ZINDO built for FCFA and Burkinabè businesses?",
     answer:
-      "Oui. ZINDO fonctionne nativement en FCFA et s'adapte à l'activité choisie à l'inscription (boutique générale, quincaillerie, pièces détachées, boutique de motos, alimentation...) pour proposer les bons champs et les bons modules.",
+      "Yes. ZINDO runs natively in FCFA and adapts to the business type you choose at sign-up (general store, hardware store, spare parts, motorcycle shop, grocery...) to show the right fields and modules.",
   },
   {
-    question: "Est-ce que ZINDO est gratuite ?",
-    answer: "Oui. ZINDO est actuellement entièrement gratuite et sans limite, pour tous les commerces.",
+    question: "Is ZINDO free?",
+    answer: "Yes. ZINDO is currently completely free and unlimited, for every business.",
   },
   {
-    question: "Est-ce que je peux utiliser ZINDO sans connexion Internet ?",
+    question: "Can I use ZINDO without an internet connection?",
     answer:
-      "L'écran de caisse (Vente) fonctionne en mode hors ligne : vous pouvez continuer à encaisser sans connexion, les ventes se synchronisent automatiquement dès que la connexion revient.",
+      "The checkout screen (Sales) works offline: you can keep taking payments without a connection, and sales sync automatically as soon as the connection comes back.",
   },
   {
-    question: "ZINDO peut-elle gérer la vente de motos et d'engins ?",
+    question: "Can ZINDO handle selling motorcycles and vehicles?",
     answer:
-      "Oui, avec un module dédié : suivi de chaque moto par numéro de châssis, numéro de moteur, couleur et disponibilité du CMC, ainsi que la vente à crédit avec échéancier de versements.",
+      "Yes, with a dedicated module: tracking each motorcycle by chassis number, engine number, color, and CMC availability, plus credit sales with an installment schedule.",
   },
   {
-    question: "Comment installer ZINDO sur mon téléphone ou mon ordinateur ?",
+    question: "How do I install ZINDO on my phone or computer?",
     answer:
-      "ZINDO s'installe directement depuis le navigateur (bouton « Installer l'application », en haut de cette page) sur Android, iOS et Windows, sans passer par un store — c'est gratuit et ne prend que quelques secondes.",
+      "ZINDO installs straight from the browser (the “Install app” button at the top of this page) on Android, iOS, and Windows, without going through a store — it's free and takes only a few seconds.",
   },
 ];
 
 const STEPS = [
   {
     icon: UserPlus,
-    title: "Créez votre compte",
-    text: "Renseignez votre commerce en quelques champs — aucune carte bancaire requise pour commencer.",
+    title: "Create your account",
+    text: "Enter a few details about your business — no card required to get started.",
   },
   {
     icon: ListChecks,
-    title: "Choisissez votre activité",
-    text: "ZINDO adapte automatiquement votre tableau de bord, vos produits et votre caisse à votre métier.",
+    title: "Choose your business type",
+    text: "ZINDO automatically adapts your dashboard, products, and checkout to your trade.",
   },
   {
     icon: PlayCircle,
-    title: "Vendez dès aujourd'hui",
-    text: "Ajoutez vos produits et commencez à encaisser — votre stock et vos bénéfices se suivent tout seuls.",
+    title: "Start selling today",
+    text: "Add your products and start taking payments — your stock and profits track themselves.",
   },
 ];
 
@@ -150,8 +157,8 @@ const STRUCTURED_DATA = [
     applicationCategory: "BusinessApplication",
     operatingSystem: "Web, Android, iOS, Windows",
     description:
-      "Application de gestion de stock, de caisse et de ventes pour les commerces du Burkina Faso (boutiques, quincailleries, pièces détachées, motos, alimentation).",
-    url: "https://zindo.vercel.app",
+      "Stock, checkout, and sales management app for businesses in Burkina Faso (shops, hardware stores, spare parts, motorcycles, groceries).",
+    url: "https://zindo.vercel.app/en",
     offers: {
       "@type": "Offer",
       price: "0",
@@ -173,7 +180,7 @@ const STRUCTURED_DATA = [
   },
 ];
 
-export default async function RootPage() {
+export default async function EnglishRootPage() {
   const user = await getCurrentUser();
   if (user) redirect("/dashboard");
 
@@ -189,7 +196,6 @@ export default async function RootPage() {
 
       <div aria-hidden className="zindo-flag-stripe relative z-10 h-1 w-full" />
 
-      {/* Barre supérieure */}
       <header className="relative z-10 mx-auto flex w-full max-w-6xl items-center justify-between px-5 py-6 sm:px-8">
         <div className="flex items-center gap-3">
           <ZindoLogo size={40} />
@@ -202,136 +208,124 @@ export default async function RootPage() {
             className="flex items-center gap-1.5 rounded-xl border border-zinc-200 px-2.5 py-2 text-sm font-semibold text-zindo-ink-700 hover:border-zinc-300 sm:px-3"
           />
           <Link
-            href="/login"
+            href="/en/login"
             className="rounded-xl px-3 py-2 text-sm font-semibold text-zindo-ink-700 hover:text-zindo-green-600 sm:px-4"
           >
-            Se connecter
+            Sign in
           </Link>
           <Link
-            href="/inscription"
+            href="/en/inscription"
             className="rounded-xl bg-zindo-green-500 px-3 py-2 text-sm font-bold text-white shadow-md shadow-zindo-green-500/25 transition hover:bg-zindo-green-600 sm:px-5"
           >
-            Créer un compte
+            Create an account
           </Link>
         </div>
       </header>
 
-      {/* Hero */}
       <main className="relative z-10 mx-auto w-full max-w-6xl px-5 pb-24 pt-8 sm:px-8">
         <section className="mx-auto max-w-3xl text-center">
           <p className="inline-block rounded-full bg-zindo-green-100 px-3 py-1 text-xs font-bold uppercase tracking-wider text-zindo-green-700">
-            Gestion de stock et de ventes
+            Stock and sales management
           </p>
           <h1 className="mt-4 text-3xl font-extrabold leading-tight tracking-tight text-zindo-ink-900 sm:text-5xl">
-            Remplacez vos cahiers et vos fichiers Excel par{" "}
-            <span className="text-zindo-green-600">ZINDO</span>
+            Replace your notebooks and spreadsheets with <span className="text-zindo-green-600">ZINDO</span>
           </h1>
           <p className="mx-auto mt-4 max-w-xl text-base text-zinc-600 sm:text-lg">
-            Suivez votre stock en temps réel, encaissez vos ventes et connaissez enfin vos bénéfices —
-            depuis une seule application pensée pour les commerces du Burkina Faso.
+            Track your stock in real time, take payments, and finally know your profits — from a single app built
+            for businesses in Burkina Faso.
           </p>
           <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
             <Link
-              href="/inscription"
+              href="/en/inscription"
               className="flex w-full items-center justify-center gap-2 rounded-2xl bg-zindo-green-500 px-6 py-3.5 text-base font-bold text-white shadow-lg shadow-zindo-green-500/30 transition hover:-translate-y-0.5 hover:bg-zindo-green-600 sm:w-auto"
             >
-              Commencer gratuitement <ArrowRight className="h-4 w-4" />
+              Get started for free <ArrowRight className="h-4 w-4" />
             </Link>
             <Link
-              href="/login"
+              href="/en/login"
               className="w-full rounded-2xl border border-zinc-200 bg-white px-6 py-3.5 text-center text-base font-semibold text-zindo-ink-700 transition hover:border-zinc-300 sm:w-auto"
             >
-              J&apos;ai déjà un compte
+              I already have an account
             </Link>
           </div>
         </section>
 
-        {/* Ce que ZINDO change */}
         <section className="mt-24">
           <div className="mx-auto max-w-2xl text-center">
             <h2 className="text-2xl font-extrabold tracking-tight text-zindo-ink-900 sm:text-3xl">
-              Ce que ZINDO change pour votre commerce
+              What ZINDO changes for your business
             </h2>
-            <p className="mt-2 text-zinc-500">
-              Des problèmes concrets du quotidien, réglés une fois pour toutes.
-            </p>
+            <p className="mt-2 text-zinc-500">Real everyday problems, solved for good.</p>
           </div>
           <div className="mt-10 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {CHANGES.map((item, i) => {
               const tone = ICON_TONES[i % ICON_TONES.length];
               return (
-              <div
-                key={item.title}
-                className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm transition hover:shadow-md"
-              >
-                <div className={`flex h-11 w-11 items-center justify-center rounded-xl ${tone.bg} ${tone.text}`}>
-                  <item.icon className="h-5 w-5" />
+                <div
+                  key={item.title}
+                  className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm transition hover:shadow-md"
+                >
+                  <div className={`flex h-11 w-11 items-center justify-center rounded-xl ${tone.bg} ${tone.text}`}>
+                    <item.icon className="h-5 w-5" />
+                  </div>
+                  <h3 className="mt-4 font-bold text-zindo-ink-900">{item.title}</h3>
+                  <p className="mt-1.5 text-sm leading-relaxed text-zinc-500">{item.text}</p>
                 </div>
-                <h3 className="mt-4 font-bold text-zindo-ink-900">{item.title}</h3>
-                <p className="mt-1.5 text-sm leading-relaxed text-zinc-500">{item.text}</p>
-              </div>
               );
             })}
           </div>
         </section>
 
-        {/* Pourquoi travailler avec ZINDO */}
         <section className="mt-24 rounded-3xl bg-zindo-ink-900 px-6 py-14 sm:px-12">
           <div className="mx-auto max-w-2xl text-center">
-            <h2 className="text-2xl font-extrabold tracking-tight text-white sm:text-3xl">
-              Pourquoi travailler avec ZINDO
-            </h2>
-            <p className="mt-2 text-zindo-ink-200">Ce qui nous distingue d&apos;un simple tableur.</p>
+            <h2 className="text-2xl font-extrabold tracking-tight text-white sm:text-3xl">Why work with ZINDO</h2>
+            <p className="mt-2 text-zindo-ink-200">What sets us apart from a simple spreadsheet.</p>
           </div>
           <div className="mt-10 grid grid-cols-1 gap-6 sm:grid-cols-2">
             {REASONS.map((item, i) => {
               const tone = ICON_TONES_DARK[i % ICON_TONES_DARK.length];
               return (
-              <div key={item.title} className="flex gap-4">
-                <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${tone.bg} ${tone.text}`}>
-                  <item.icon className="h-5 w-5" />
+                <div key={item.title} className="flex gap-4">
+                  <div
+                    className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${tone.bg} ${tone.text}`}
+                  >
+                    <item.icon className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-white">{item.title}</h3>
+                    <p className="mt-1 text-sm leading-relaxed text-zindo-ink-200">{item.text}</p>
+                  </div>
                 </div>
-                <div>
-                  <h3 className="font-bold text-white">{item.title}</h3>
-                  <p className="mt-1 text-sm leading-relaxed text-zindo-ink-200">{item.text}</p>
-                </div>
-              </div>
               );
             })}
           </div>
         </section>
 
-        {/* Comment ça marche */}
         <section className="mt-24">
           <div className="mx-auto max-w-2xl text-center">
-            <h2 className="text-2xl font-extrabold tracking-tight text-zindo-ink-900 sm:text-3xl">
-              Comment ça marche
-            </h2>
+            <h2 className="text-2xl font-extrabold tracking-tight text-zindo-ink-900 sm:text-3xl">How it works</h2>
           </div>
           <div className="mt-10 grid grid-cols-1 gap-8 sm:grid-cols-3">
             {STEPS.map((step, i) => {
               const tone = ICON_TONES[i % ICON_TONES.length];
               return (
-              <div key={step.title} className="text-center">
-                <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-white shadow-md">
-                  <step.icon className={`h-6 w-6 ${tone.text}`} />
+                <div key={step.title} className="text-center">
+                  <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-white shadow-md">
+                    <step.icon className={`h-6 w-6 ${tone.text}`} />
+                  </div>
+                  <p className={`mt-4 text-xs font-bold uppercase tracking-wider ${tone.text}`}>Step {i + 1}</p>
+                  <h3 className="mt-1 font-bold text-zindo-ink-900">{step.title}</h3>
+                  <p className="mt-1.5 text-sm leading-relaxed text-zinc-500">{step.text}</p>
                 </div>
-                <p className={`mt-4 text-xs font-bold uppercase tracking-wider ${tone.text}`}>
-                  Étape {i + 1}
-                </p>
-                <h3 className="mt-1 font-bold text-zindo-ink-900">{step.title}</h3>
-                <p className="mt-1.5 text-sm leading-relaxed text-zinc-500">{step.text}</p>
-              </div>
               );
             })}
           </div>
         </section>
 
-        {/* Questions fréquentes */}
         <section className="mt-24">
           <div className="mx-auto max-w-2xl text-center">
             <h2 className="text-2xl font-extrabold tracking-tight text-zindo-ink-900 sm:text-3xl">
-              Questions fréquentes
+              Frequently asked questions
             </h2>
           </div>
           <div className="mx-auto mt-10 max-w-2xl divide-y divide-zinc-200 overflow-hidden rounded-2xl border border-zinc-200 bg-white">
@@ -347,27 +341,24 @@ export default async function RootPage() {
           </div>
         </section>
 
-        {/* CTA final */}
         <section className="mt-24 rounded-3xl border border-zindo-green-100 bg-white px-6 py-14 text-center shadow-sm sm:px-12">
           <h2 className="text-2xl font-extrabold tracking-tight text-zindo-ink-900 sm:text-3xl">
-            Prêt à changer la façon dont vous gérez votre commerce ?
+            Ready to change the way you run your business?
           </h2>
-          <p className="mx-auto mt-2 max-w-md text-zinc-500">
-            Créez votre compte en quelques minutes, sans engagement.
-          </p>
+          <p className="mx-auto mt-2 max-w-md text-zinc-500">Create your account in a few minutes, no commitment.</p>
           <Link
-            href="/inscription"
+            href="/en/inscription"
             className="mt-6 inline-flex items-center gap-2 rounded-2xl bg-zindo-green-500 px-7 py-3.5 text-base font-bold text-white shadow-lg shadow-zindo-green-500/30 transition hover:-translate-y-0.5 hover:bg-zindo-green-600"
           >
-            Créer mon compte ZINDO <ArrowRight className="h-4 w-4" />
+            Create my ZINDO account <ArrowRight className="h-4 w-4" />
           </Link>
         </section>
       </main>
 
       <footer className="relative z-10 border-t border-zinc-200 py-8 text-center text-xs text-zinc-400">
-        <p>ZINDO — Gestion de stock et de ventes pour commerces du Burkina Faso.</p>
+        <p>ZINDO — Stock and sales management for businesses in Burkina Faso.</p>
         <p className="mt-1">
-          Support WhatsApp :{" "}
+          WhatsApp support:{" "}
           <a
             href="https://wa.me/22604059929"
             target="_blank"
@@ -378,16 +369,15 @@ export default async function RootPage() {
           </a>
         </p>
         <p className="mt-1">
-          Partenaire : <span className="font-medium text-zinc-500">Faso Stock</span> — Propriétaire Mohamed
-          Sare
+          Partner: <span className="font-medium text-zinc-500">Faso Stock</span> — Owner Mohamed Sare
         </p>
         <p className="mt-2">
-          <Link href="/cgu" className="hover:text-zindo-green-600">
-            Conditions générales d&apos;utilisation
+          <Link href="/en/cgu" className="hover:text-zindo-green-600">
+            Terms of Service
           </Link>
           {" · "}
-          <Link href="/confidentialite" className="hover:text-zindo-green-600">
-            Politique de confidentialité
+          <Link href="/en/confidentialite" className="hover:text-zindo-green-600">
+            Privacy Policy
           </Link>
         </p>
       </footer>
