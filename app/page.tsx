@@ -380,6 +380,15 @@ export default async function RootPage() {
           Partenaire : <span className="font-medium text-zinc-500">Faso Stock</span> — Propriétaire Mohamed
           Sare
         </p>
+        <p className="mt-2">
+          <Link href="/cgu" className="hover:text-zindo-green-600">
+            Conditions générales d&apos;utilisation
+          </Link>
+          {" · "}
+          <Link href="/confidentialite" className="hover:text-zindo-green-600">
+            Politique de confidentialité
+          </Link>
+        </p>
       </footer>
     </div>
   );

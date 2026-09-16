@@ -4,8 +4,9 @@ import { Package } from "lucide-react";
 import { formatMoney } from "@/lib/format";
 import { EmptyState } from "@/components/ui/Empty";
 import { ProductCardMenu } from "@/components/products/ProductCardMenu";
+import type { PackagingUnitOption } from "@/lib/actions/product-search";
 
-export type PackagingUnitOption = { id: string; productId: string; name: string; multiplier: number; salePrice: number; barcode: string | null };
+export type { PackagingUnitOption };
 
 export type PosProduct = {
   id: string;

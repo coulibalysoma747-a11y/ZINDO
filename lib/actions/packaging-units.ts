@@ -6,6 +6,7 @@ import { supabase } from "@/lib/supabase";
 import { requirePermission, requireUser } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
 import { generateProductBarcode } from "@/lib/reference";
+import { isFeatureEnabled, registerFeatureFlag } from "@/lib/feature-flags";
 
 export type PackagingUnit = {
   id: string;
@@ -16,9 +17,37 @@ export type PackagingUnit = {
   barcode: string | null;
 };
 
+/**
+ * Conditionnements : nouvelle fonctionnalité, désactivée par défaut tant
+ * qu'elle n'est pas explicitement activée depuis /admin/fonctionnalites —
+ * voir la règle du memory "Feature rollout rule".
+ */
+const PACKAGING_UNITS_FLAG = "conditionnements";
+
+export async function ensurePackagingUnitsFlagRegistered() {
+  await registerFeatureFlag(
+    PACKAGING_UNITS_FLAG,
+    "Conditionnements",
+    "Vente par colis/carton (multiplicateur d'unités) en plus de l'unité de base, avec code-barres dédié."
+  );
+}
+
+/**
+ * Enregistre le flag au passage (idempotent) avant de le vérifier, pour que
+ * les points d'entrée qui ne passent pas par une page produit (recherche
+ * caisse, scan de code-barres) ne considèrent jamais la fonctionnalité comme
+ * activée par défaut simplement parce qu'aucune page ne l'a encore enregistrée.
+ */
+export async function isPackagingUnitsModuleEnabled(businessId: string): Promise<boolean> {
+  await ensurePackagingUnitsFlagRegistered();
+  return isFeatureEnabled(PACKAGING_UNITS_FLAG, businessId);
+}
+
 /** Conditionnements de vente d'un produit (ex. "Carton de 12") — voir supabase/schema.sql::product_packaging_units. */
 export async function getPackagingUnitsAction(productId: string): Promise<PackagingUnit[]> {
   const user = await requireUser();
+  if (!(await isPackagingUnitsModuleEnabled(user.businessId))) return [];
+
   const { data } = await supabase
     .from("product_packaging_units")
     .select("id, productId:product_id, name, multiplier, salePrice:sale_price, barcode")
@@ -38,6 +67,7 @@ export type PackagingUnitActionResult = { error?: string; success?: string };
 
 export async function addPackagingUnitAction(productId: string, formData: FormData): Promise<PackagingUnitActionResult> {
   const user = await requirePermission(PERMISSIONS.PRODUCTS_MANAGE);
+  if (!(await isPackagingUnitsModuleEnabled(user.businessId))) return { error: "Fonctionnalité non disponible pour le moment" };
 
   const parsed = packagingSchema.safeParse({
     name: formData.get("name"),
@@ -48,11 +78,12 @@ export async function addPackagingUnitAction(productId: string, formData: FormDa
 
   const { data: product } = await supabase
     .from("products")
-    .select("id")
+    .select("id, trackUnits:track_units")
     .eq("id", productId)
     .eq("business_id", user.businessId)
     .maybeSingle();
   if (!product) return { error: "Produit introuvable" };
+  if (product.trackUnits) return { error: "Un produit à suivi individuel ne peut pas avoir de conditionnement" };
 
   const { error } = await supabase.from("product_packaging_units").insert({
     business_id: user.businessId,
@@ -72,6 +103,7 @@ export async function addPackagingUnitAction(productId: string, formData: FormDa
 
 export async function updatePackagingUnitAction(unitId: string, formData: FormData): Promise<PackagingUnitActionResult> {
   const user = await requirePermission(PERMISSIONS.PRODUCTS_MANAGE);
+  if (!(await isPackagingUnitsModuleEnabled(user.businessId))) return { error: "Fonctionnalité non disponible pour le moment" };
 
   const parsed = packagingSchema.safeParse({
     name: formData.get("name"),
@@ -103,6 +135,7 @@ export async function updatePackagingUnitAction(unitId: string, formData: FormDa
 
 export async function deletePackagingUnitAction(unitId: string): Promise<PackagingUnitActionResult> {
   const user = await requirePermission(PERMISSIONS.PRODUCTS_MANAGE);
+  if (!(await isPackagingUnitsModuleEnabled(user.businessId))) return { error: "Fonctionnalité non disponible pour le moment" };
 
   const { data: unit } = await supabase
     .from("product_packaging_units")
@@ -125,6 +158,7 @@ export async function deletePackagingUnitAction(unitId: string): Promise<Packagi
 /** Génère et enregistre un code-barres EAN-13 pour un conditionnement qui n'en a pas — même logique que pour un produit (voir lib/actions/products.ts::ensureProductBarcodeAction). */
 export async function ensurePackagingBarcodeAction(unitId: string): Promise<{ barcode: string } | { error: string }> {
   const user = await requirePermission(PERMISSIONS.PRODUCTS_MANAGE);
+  if (!(await isPackagingUnitsModuleEnabled(user.businessId))) return { error: "Fonctionnalité non disponible pour le moment" };
 
   const { data: unit } = await supabase
     .from("product_packaging_units")

@@ -93,6 +93,10 @@ export async function registerAction(
   _prevState: ActionState,
   formData: FormData
 ): Promise<ActionState> {
+  if (formData.get("acceptTerms") !== "on") {
+    return { error: "Vous devez accepter les CGU et la politique de confidentialité" };
+  }
+
   const parsed = registerSchema.safeParse({
     firstName: formData.get("firstName"),
     lastName: formData.get("lastName"),

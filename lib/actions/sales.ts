@@ -373,10 +373,14 @@ async function updateSaleImpl(input: UpdateSaleInput): Promise<CreateSaleResult>
     return { success: false, error: "Le panier est vide" };
   }
 
-  const { data: existingItems } = await supabase
-    .from("sale_items")
-    .select("productId:product_id, quantity, multiplier")
-    .eq("sale_id", sale.id);
+  const existingItemsRes = await supabase.from("sale_items").select("productId:product_id, quantity, multiplier").eq("sale_id", sale.id);
+  let existingItems: Array<{ productId: string; quantity: number; multiplier?: number | null }> | null = existingItemsRes.data;
+  if (existingItemsRes.error && /multiplier/.test(existingItemsRes.error.message)) {
+    // Même repli que insertSaleItems : la colonne multiplier peut ne pas
+    // encore exister en base pendant la fenêtre de déploiement de la
+    // migration conditionnements.
+    existingItems = (await supabase.from("sale_items").select("productId:product_id, quantity").eq("sale_id", sale.id)).data;
+  }
   // En unités de base (quantité de colis * multiplicateur), pour comparer
   // correctement à une nouvelle ligne qui ne serait plus vendue par le même
   // conditionnement — voir la même logique dans createSaleImpl.

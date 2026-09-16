@@ -3,10 +3,27 @@ import type { NextRequest } from "next/server";
 import { verifySessionToken, SESSION_COOKIE_NAME } from "@/lib/session";
 import { verifyAdminSessionToken, ADMIN_SESSION_COOKIE_NAME } from "@/lib/adminSession";
 
-const PUBLIC_PATHS = ["/", "/login", "/inscription", "/mot-de-passe-oublie", "/verifier", "/compte-suspendu", "/boutique"];
+const PUBLIC_PATHS = [
+  "/",
+  "/login",
+  "/inscription",
+  "/mot-de-passe-oublie",
+  "/verifier",
+  "/compte-suspendu",
+  "/boutique",
+  "/cgu",
+  "/confidentialite",
+];
 // Chemins publics qui restent accessibles même à un utilisateur déjà connecté
 // (au lieu d'être redirigés vers /dashboard).
-const PUBLIC_PATHS_ALLOWED_WHEN_LOGGED_IN = ["/mot-de-passe-oublie", "/verifier", "/compte-suspendu", "/boutique"];
+const PUBLIC_PATHS_ALLOWED_WHEN_LOGGED_IN = [
+  "/mot-de-passe-oublie",
+  "/verifier",
+  "/compte-suspendu",
+  "/boutique",
+  "/cgu",
+  "/confidentialite",
+];
 
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;

@@ -8,7 +8,7 @@ import { getActivityConfig } from "@/lib/activity-config";
 import { MOTO_ACTIVITY_KEY } from "@/lib/activities";
 import { getLocations, getCurrentLocation } from "@/lib/location";
 import { getVehicleUnitsAction } from "@/lib/actions/vehicle-units";
-import { getPackagingUnitsAction } from "@/lib/actions/packaging-units";
+import { getPackagingUnitsAction, isPackagingUnitsModuleEnabled } from "@/lib/actions/packaging-units";
 import { formatMoney, formatDateTime } from "@/lib/format";
 import { Card, CardBody, CardHeader } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
@@ -105,7 +105,7 @@ export default async function ProductDetailPage({
   const isMotoActivity = user.business.activityKey === MOTO_ACTIVITY_KEY;
   const showVehicleUnits = product.trackUnits && isMotoActivity;
 
-  const [canManageStock, canTransfer, canSell, activityConfig, vehicleUnits, locations, currentLocation, packagingUnits] =
+  const [canManageStock, canTransfer, canSell, activityConfig, vehicleUnits, locations, currentLocation, packagingUnits, packagingModuleEnabled] =
     await Promise.all([
       hasPermission(user.businessId, user.role, PERMISSIONS.STOCK_MANAGE, user.id),
       hasPermission(user.businessId, user.role, PERMISSIONS.TRANSFERS_MANAGE, user.id),
@@ -115,7 +115,12 @@ export default async function ProductDetailPage({
       getLocations(user.businessId),
       getCurrentLocation(user.businessId),
       getPackagingUnitsAction(id),
+      isPackagingUnitsModuleEnabled(user.businessId),
     ]);
+  // Un produit à suivi individuel (moto/engin) se vend à l'exemplaire, pas
+  // par colis — voir la caisse (ProductGrid/POS) qui n'a aucune notion de
+  // conditionnement pour ce cas.
+  const showPackaging = packagingModuleEnabled && !product.trackUnits;
 
   let customFieldValues: Record<string, string> = {};
   if (product.customFields) {
@@ -282,14 +287,16 @@ export default async function ProductDetailPage({
         </Card>
       )}
 
-      <Card>
-        <CardHeader>
-          <h2 className="font-semibold text-zinc-900">Conditionnements</h2>
-        </CardHeader>
-        <CardBody>
-          <PackagingUnitsPanel productId={product.id} units={packagingUnits} currency={currency} baseUnit={product.unit} />
-        </CardBody>
-      </Card>
+      {showPackaging && (
+        <Card>
+          <CardHeader>
+            <h2 className="font-semibold text-zinc-900">Conditionnements</h2>
+          </CardHeader>
+          <CardBody>
+            <PackagingUnitsPanel productId={product.id} units={packagingUnits} currency={currency} baseUnit={product.unit} />
+          </CardBody>
+        </Card>
+      )}
 
       <Card>
         <CardHeader>

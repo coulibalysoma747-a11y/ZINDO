@@ -12,6 +12,7 @@ import { saveProductPhoto, deleteUploadedImage } from "@/lib/photo-upload";
 import { getActivityConfig } from "@/lib/activity-config";
 import { checkLimit } from "@/lib/subscription";
 import { MOTO_ACTIVITY_KEY } from "@/lib/activities";
+import { isPackagingUnitsModuleEnabled } from "@/lib/actions/packaging-units";
 
 export type ActionState = { error?: string; success?: string } | undefined;
 
@@ -32,6 +33,36 @@ const productSchema = z.object({
   reference: z.string().optional(),
   trackUnits: z.coerce.boolean().default(false),
 });
+
+type PackagingRowInput = { name: string; multiplier: number; salePrice: number };
+
+/**
+ * Conditionnements saisis dans le formulaire "Nouveau produit" (voir
+ * ProductForm) : lignes répétées sous les mêmes noms de champ
+ * (packagingName/packagingMultiplier/packagingSalePrice), une ligne par
+ * position. Une ligne sans nom est ignorée (case ajoutée puis laissée vide).
+ */
+function parsePackagingRows(formData: FormData): { rows: PackagingRowInput[] } | { error: string } {
+  const names = formData.getAll("packagingName").map((v) => String(v).trim());
+  const multipliers = formData.getAll("packagingMultiplier");
+  const salePrices = formData.getAll("packagingSalePrice");
+
+  const rows: PackagingRowInput[] = [];
+  for (let i = 0; i < names.length; i++) {
+    const name = names[i];
+    if (!name) continue;
+    const multiplier = Number(multipliers[i]);
+    if (!Number.isFinite(multiplier) || multiplier <= 0) {
+      return { error: `Conditionnement "${name}" : nombre d'unités par colis invalide` };
+    }
+    const salePrice = Number(salePrices[i]);
+    if (!Number.isFinite(salePrice) || salePrice < 0) {
+      return { error: `Conditionnement "${name}" : prix de vente invalide` };
+    }
+    rows.push({ name, multiplier, salePrice });
+  }
+  return { rows };
+}
 
 function parseCustomFields(formData: FormData, defs: { key: string }[]): string | null {
   if (defs.length === 0) return null;
@@ -71,6 +102,15 @@ export async function createProductAction(
   const parsed = parseProductForm(formData);
   if (!parsed.success) return { error: parsed.error.issues[0]?.message };
   const data = parsed.data;
+
+  const packagingRows = parsePackagingRows(formData);
+  if ("error" in packagingRows) return { error: packagingRows.error };
+  // Réservé à l'activité "Boutique de motos" — même restriction que
+  // l'insertion de track_units plus bas.
+  const effectiveTrackUnits = data.trackUnits && user.business.activityKey === MOTO_ACTIVITY_KEY;
+  if (effectiveTrackUnits && packagingRows.rows.length > 0) {
+    return { error: "Un produit à suivi individuel ne peut pas avoir de conditionnement" };
+  }
 
   const limit = await checkLimit(user.businessId, "products");
   if (!limit.ok) {
@@ -135,7 +175,7 @@ export async function createProductAction(
       // Réservé à l'activité "Boutique de motos" (lib/activities.ts) — même si
       // le formulaire envoyait true par erreur/manipulation, on l'ignore pour
       // toute autre activité.
-      track_units: data.trackUnits && user.business.activityKey === MOTO_ACTIVITY_KEY,
+      track_units: effectiveTrackUnits,
     })
     .select("id")
     .single();
@@ -167,6 +207,21 @@ export async function createProductAction(
       if (movementError) {
         console.error("[createProductAction] Échec de l'écriture du mouvement de stock :", movementError.message);
       }
+    }
+  }
+
+  if (packagingRows.rows.length > 0 && (await isPackagingUnitsModuleEnabled(user.businessId))) {
+    const { error: packagingError } = await supabase.from("product_packaging_units").insert(
+      packagingRows.rows.map((r) => ({
+        business_id: user.businessId,
+        product_id: product.id,
+        name: r.name,
+        multiplier: r.multiplier,
+        sale_price: r.salePrice,
+      }))
+    );
+    if (packagingError) {
+      console.error("[createProductAction] Échec de la création des conditionnements :", packagingError.message);
     }
   }
 

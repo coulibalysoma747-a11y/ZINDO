@@ -1,13 +1,15 @@
+import Link from "next/link";
 import { ZindoLogo } from "@/components/auth/ZindoLogo";
 import { LanguageSelector } from "@/components/auth/LanguageSelector";
 import { Package, ShoppingCart, Store, BarChart3 } from "lucide-react";
 
 const HIGHLIGHT_TONES = ["text-zindo-green-400", "text-zindo-gold-400", "text-zindo-red-400", "text-zindo-green-400"];
+const HIGHLIGHT_TONES_LIGHT = ["text-zindo-green-600", "text-zindo-gold-600", "text-zindo-red-600", "text-zindo-green-600"];
 const HIGHLIGHTS = [
-  { icon: Package, text: "Stock en temps réel, sur toutes vos boutiques" },
-  { icon: ShoppingCart, text: "Caisse rapide avec tickets et factures A4" },
-  { icon: Store, text: "Multi-boutiques et dépôts centralisés" },
-  { icon: BarChart3, text: "Bénéfices et rapports calculés automatiquement" },
+  { icon: Package, short: "Stock en temps réel", text: "Stock en temps réel, sur toutes vos boutiques" },
+  { icon: ShoppingCart, short: "Caisse rapide", text: "Caisse rapide avec tickets et factures A4" },
+  { icon: Store, short: "Multi-boutiques", text: "Multi-boutiques et dépôts centralisés" },
+  { icon: BarChart3, short: "Bénéfices calculés", text: "Bénéfices et rapports calculés automatiquement" },
 ];
 
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
@@ -87,8 +89,27 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
                 ZINDO
               </h1>
               <p className="mt-1.5 text-[15px] text-zinc-500 sm:text-base">
-                Gérez votre <span className="font-semibold text-zindo-green-600">commerce</span> simplement
+                L&apos;application de gestion de{" "}
+                <span className="font-semibold text-zindo-green-600">stock, caisse et ventes</span> pour les
+                commerces du Burkina Faso
               </p>
+              <ul className="mt-4 flex flex-wrap items-center justify-center gap-2">
+                {HIGHLIGHTS.map((h, i) => (
+                  <li
+                    key={h.short}
+                    className="flex items-center gap-1.5 rounded-full bg-white px-3 py-1.5 text-xs font-medium text-zindo-ink-700 shadow-sm ring-1 ring-zinc-200"
+                  >
+                    <h.icon className={`h-3.5 w-3.5 ${HIGHLIGHT_TONES_LIGHT[i % HIGHLIGHT_TONES_LIGHT.length]}`} />
+                    {h.short}
+                  </li>
+                ))}
+              </ul>
+              <Link
+                href="/"
+                className="mt-3 text-xs font-semibold text-zindo-green-600 hover:text-zindo-green-700 hover:underline"
+              >
+                Découvrir ZINDO en détail →
+              </Link>
             </div>
             {children}
           </div>

@@ -31,6 +31,14 @@ export default async function ProductsPage({
   ]);
   const productsLabel = resolveTerm(activityConfig, "products");
 
+  // Le filtre par statut de stock ("rupture"/"stock-faible") se calcule après
+  // coup à partir de la quantité en stock (jointe séparément par emplacement),
+  // que la requête DB ne connaît pas — impossible d'y appliquer .range() sans
+  // fausser le total/la pagination : on charge alors tout le catalogue
+  // correspondant à la recherche/catégorie et on pagine nous-mêmes après
+  // filtrage.
+  const usesStockFilter = filtre === "stock-faible" || filtre === "rupture";
+
   let query = supabase
     .from("products")
     .select(
@@ -38,8 +46,8 @@ export default async function ProductsPage({
     )
     .eq("business_id", user.businessId)
     .eq("active", true)
-    .order("name", { ascending: true })
-    .range(offset, offset + PAGE_SIZE - 1);
+    .order("name", { ascending: true });
+  if (!usesStockFilter) query = query.range(offset, offset + PAGE_SIZE - 1);
 
   let countQuery = supabase
     .from("products")
@@ -58,7 +66,7 @@ export default async function ProductsPage({
     countQuery = countQuery.eq("category_id", categorie);
   }
 
-  const [{ data: products }, { count: totalCount }, { data: categories }, stocksRes] = await Promise.all([
+  const [{ data: products }, { count: rawCount }, { data: categories }, stocksRes] = await Promise.all([
     query,
     countQuery,
     supabase.from("categories").select("id, name").eq("business_id", user.businessId).order("name", { ascending: true }),
@@ -66,7 +74,6 @@ export default async function ProductsPage({
       ? supabase.from("product_stocks").select("productId:product_id, quantity").eq("location_id", currentLocation.id)
       : Promise.resolve({ data: [] as { productId: string; quantity: number }[] }),
   ]);
-  const totalPages = Math.max(1, Math.ceil((totalCount ?? 0) / PAGE_SIZE));
 
   const stockByProduct = new Map(
     ((stocksRes.data ?? []) as { productId: string; quantity: number }[]).map((s) => [s.productId, s.quantity])
@@ -77,12 +84,16 @@ export default async function ProductsPage({
     quantity: stockByProduct.get(p.id as string) ?? 0,
   }));
 
-  const filtered =
+  const stockFiltered =
     filtre === "stock-faible"
       ? withStock.filter((p) => p.quantity > 0 && p.quantity <= (p.minStock as number))
       : filtre === "rupture"
         ? withStock.filter((p) => p.quantity <= 0)
         : withStock;
+
+  const totalCount = usesStockFilter ? stockFiltered.length : rawCount ?? 0;
+  const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
+  const filtered = usesStockFilter ? stockFiltered.slice(offset, offset + PAGE_SIZE) : stockFiltered;
 
   const pageHref = (targetPage: number) => {
     const params = new URLSearchParams();

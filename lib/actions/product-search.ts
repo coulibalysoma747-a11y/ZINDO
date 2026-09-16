@@ -2,6 +2,7 @@
 
 import { supabase } from "@/lib/supabase";
 import { requireUser } from "@/lib/auth";
+import { isPackagingUnitsModuleEnabled } from "@/lib/actions/packaging-units";
 
 const PRODUCT_FIELDS =
   "id, businessId:business_id, reference, name, categoryId:category_id, brand, description, unit, purchasePrice:purchase_price, salePrice:sale_price, minStock:min_stock, shelfLocation:shelf_location, supplierId:supplier_id, photoUrl:photo_url, barcode, customFields:custom_fields, active, createdAt:created_at, updatedAt:updated_at, trackUnits:track_units";
@@ -35,6 +36,7 @@ export type PackagingUnitOption = { id: string; productId: string; name: string;
 async function fetchPackagingUnitsByProduct(businessId: string, productIds: string[]): Promise<Map<string, PackagingUnitOption[]>> {
   const map = new Map<string, PackagingUnitOption[]>();
   if (productIds.length === 0) return map;
+  if (!(await isPackagingUnitsModuleEnabled(businessId))) return map;
   const { data } = await supabase
     .from("product_packaging_units")
     .select("id, productId:product_id, name, multiplier, salePrice:sale_price, barcode")
@@ -135,7 +137,7 @@ export async function findProductByExactCodeAction(code: string, locationId: str
   // scanné est peut-être celui d'un conditionnement (ex. l'étiquette d'un
   // "Carton de 12") plutôt que du produit lui-même.
   let matchedPackaging: PackagingUnitOption | null = null;
-  if (!product) {
+  if (!product && (await isPackagingUnitsModuleEnabled(user.businessId))) {
     const { data: packaging } = await supabase
       .from("product_packaging_units")
       .select("id, productId:product_id, name, multiplier, salePrice:sale_price, barcode")
