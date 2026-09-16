@@ -1,6 +1,9 @@
-import { requireUser, hasPermission } from "@/lib/auth";
+import { headers } from "next/headers";
+import { redirect } from "next/navigation";
+import { requireUserForBilling, hasPermission } from "@/lib/auth";
 import { getVisibleNavItems } from "@/lib/nav-server";
 import { getLocations, getCurrentLocation } from "@/lib/location";
+import { isSubscriptionBlocked } from "@/lib/subscription";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { Topbar } from "@/components/layout/Topbar";
 import { AppFooter } from "@/components/layout/AppFooter";
@@ -8,7 +11,17 @@ import { MobileTabBar } from "@/components/layout/MobileTabBar";
 import { ROLE_LABELS, PERMISSIONS } from "@/lib/permissions";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
-  const user = await requireUser();
+  const user = await requireUserForBilling();
+
+  // /abonnement doit rester accessible même en cas de blocage (essai expiré,
+  // impayé) — sans quoi ce serait la seule page permettant de régler le
+  // problème qui se retrouverait elle-même redirigée vers elle-même.
+  const pathname = (await headers()).get("x-zindo-pathname") ?? "";
+  const isBillingPage = pathname === "/abonnement" || pathname.startsWith("/abonnement/");
+  if (!isBillingPage && (await isSubscriptionBlocked(user.businessId))) {
+    redirect("/abonnement");
+  }
+
   const [navItems, locations, currentLocation, canSell, canManageProducts, canManageStock, canManagePurchases] =
     await Promise.all([
       getVisibleNavItems(user.businessId, user.role, user.id, user.business.activityKey),

@@ -171,5 +171,8 @@ export async function registerAction(
 
 export async function logoutAction() {
   await destroySession();
-  redirect("/login");
+  // Redirige vers la page de tarifs plutôt que /login directement — la
+  // demande explicite du propriétaire est que le rappel des formules
+  // d'abonnement s'affiche systématiquement à la déconnexion.
+  redirect("/tarifs");
 }

@@ -104,8 +104,9 @@ const FAQS = [
       "Oui. ZINDO fonctionne nativement en FCFA et s'adapte à l'activité choisie à l'inscription (boutique générale, quincaillerie, pièces détachées, boutique de motos, alimentation...) pour proposer les bons champs et les bons modules.",
   },
   {
-    question: "Est-ce que ZINDO est gratuite ?",
-    answer: "Oui. ZINDO est actuellement entièrement gratuite et sans limite, pour tous les commerces.",
+    question: "Combien coûte ZINDO ?",
+    answer:
+      "ZINDO propose 7 jours d'essai gratuit, sans engagement. Ensuite, l'abonnement coûte 10 000 FCFA par mois, ou 100 000 FCFA par an (soit 20 000 FCFA d'économie par rapport au paiement mensuel).",
   },
   {
     question: "Est-ce que je peux utiliser ZINDO sans connexion Internet ?",
@@ -193,7 +194,11 @@ export default async function RootPage() {
           d'actions ne tient pas à côté du logo sur un téléphone étroit, il
           passe sous le logo (voire se scinde lui-même) plutôt que de
           tronquer ou d'écraser un bouton sur plusieurs lignes illisibles. */}
-      <header className="relative z-10 mx-auto flex w-full max-w-6xl flex-wrap items-center justify-between gap-y-2 px-5 py-6 sm:px-8">
+      {/* z-30 (au-dessus de <main>/<footer>, tous deux z-10) : sans ça, le
+          menu du sélecteur de langue — positionné en absolute sous ce bouton
+          — se fait passer devant par le contenu qui suit dans le DOM, et les
+          clics sur ses options n'atteignent jamais le bouton. */}
+      <header className="relative z-30 mx-auto flex w-full max-w-6xl flex-wrap items-center justify-between gap-y-2 px-5 py-6 sm:px-8">
         <div className="flex items-center gap-3">
           <ZindoLogo size={40} />
           <span className="text-lg font-extrabold tracking-tight text-zindo-ink-900">ZINDO</span>
@@ -238,7 +243,7 @@ export default async function RootPage() {
               href="/inscription"
               className="flex w-full items-center justify-center gap-2 rounded-2xl bg-zindo-green-500 px-6 py-3.5 text-base font-bold text-white shadow-lg shadow-zindo-green-500/30 transition hover:-translate-y-0.5 hover:bg-zindo-green-600 sm:w-auto"
             >
-              Commencer gratuitement <ArrowRight className="h-4 w-4" />
+              Essai gratuit de 7 jours <ArrowRight className="h-4 w-4" />
             </Link>
             <Link
               href="/login"

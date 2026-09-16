@@ -44,9 +44,11 @@ export default function EnglishCguPage() {
 
       <LegalSection title="4. Pricing">
         <p>
-          ZINDO is currently completely free and unlimited (number of products, sales, users...) for every
-          business. Should this change, any substantial modification would be communicated to you before it
-          applies to your account.
+          ZINDO offers a 7-day free trial, no commitment, when you create your account. After this period, using
+          ZINDO requires a paid subscription: 10,000 FCFA per month or 100,000 FCFA per year. Payment is made via
+          Mobile Money (Orange Money, Moov Money, Wave); the transaction reference must be entered on the
+          &ldquo;Subscription&rdquo; page for confirmation. Any substantial change to pricing would be communicated to you
+          before it applies to your account.
         </p>
       </LegalSection>
 

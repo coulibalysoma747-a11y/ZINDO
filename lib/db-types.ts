@@ -32,6 +32,6 @@ export type SuperAdminRole = "FOUNDER" | "ADMIN";
 export type SupportTicketStatus = "OUVERT" | "EN_COURS" | "RESOLU";
 export type OnlineOrderStatus = "EN_ATTENTE" | "CONFIRMEE" | "PRETE" | "LIVREE" | "ANNULEE";
 export type BillingCycle = "MONTHLY" | "ANNUAL";
-export type SubscriptionStatus = "ACTIVE" | "PAST_DUE";
+export type SubscriptionStatus = "ACTIVE" | "PAST_DUE" | "TRIAL" | "EXPIRED";
 export type InvoiceStatus = "EN_ATTENTE" | "PAYEE" | "ANNULEE";
 export type InvoicePaymentMethod = "MANUEL" | "CINETPAY";

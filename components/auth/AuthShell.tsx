@@ -121,7 +121,8 @@ export function AuthShell({ children, locale = "fr" }: { children: React.ReactNo
           <div className="absolute -bottom-32 -left-24 h-72 w-72 rounded-full bg-zindo-red-100/40 blur-3xl" />
         </div>
 
-        <header className="relative z-10 flex justify-end px-5 pt-5 sm:px-6 sm:pt-6">
+        {/* z-30 (au-dessus de <main>, z-10) : voir app/page.tsx pour le pourquoi — sinon le menu du sélecteur de langue est intercepté par le contenu en dessous. */}
+        <header className="relative z-30 flex justify-end px-5 pt-5 sm:px-6 sm:pt-6">
           <LanguageSwitcher />
         </header>
 

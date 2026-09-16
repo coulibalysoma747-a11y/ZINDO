@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Wallet, TrendingUp, Users, Receipt, Settings2 } from "lucide-react";
+import { Wallet, TrendingUp, Users, Receipt, Settings2, Clock, ShieldAlert } from "lucide-react";
 import { requireSuperAdmin } from "@/lib/superadmin-auth";
 import { supabase } from "@/lib/supabase";
 import { formatMoney, formatDateTime } from "@/lib/format";
@@ -9,17 +9,21 @@ import { ButtonLink } from "@/components/ui/Button";
 import { EmptyState } from "@/components/ui/Empty";
 import { InvoiceActions } from "./InvoiceActions";
 import { BusinessPlanSelect } from "./BusinessPlanSelect";
+import { ExtendTrialButton } from "./ExtendTrialButton";
 
 const CYCLE_LABELS = { MONTHLY: "Mensuel", ANNUAL: "Annuel" } as const;
 const INVOICE_STATUS_TONE = { EN_ATTENTE: "amber", PAYEE: "emerald", ANNULEE: "zinc" } as const;
 const INVOICE_STATUS_LABELS = { EN_ATTENTE: "En attente", PAYEE: "Payée", ANNULEE: "Annulée" } as const;
+const SUB_STATUS_TONE = { ACTIVE: "emerald", PAST_DUE: "amber", TRIAL: "blue", EXPIRED: "red" } as const;
+const SUB_STATUS_LABELS = { ACTIVE: "Actif", PAST_DUE: "Impayé", TRIAL: "Essai", EXPIRED: "Essai expiré" } as const;
 
 type PlanRow = { id: string; key: string; label: string; monthlyPrice: number; annualPrice: number };
 type SubscriptionRow = {
   id: string;
   businessId: string;
   billingCycle: "MONTHLY" | "ANNUAL";
-  status: "ACTIVE" | "PAST_DUE";
+  status: "ACTIVE" | "PAST_DUE" | "TRIAL" | "EXPIRED";
+  trialEndsAt: string | null;
   currentPeriodEnd: string | null;
   business: { name: string };
   plan: { key: string; label: string; monthlyPrice: number; annualPrice: number };
@@ -58,7 +62,7 @@ export default async function AdminSubscriptionsPage() {
     supabase
       .from("business_subscriptions")
       .select(
-        "id, businessId:business_id, billingCycle:billing_cycle, status, currentPeriodEnd:current_period_end, business:businesses(name), plan:subscription_plans(key, label, monthlyPrice:monthly_price, annualPrice:annual_price)"
+        "id, businessId:business_id, billingCycle:billing_cycle, status, trialEndsAt:trial_ends_at, currentPeriodEnd:current_period_end, business:businesses(name), plan:subscription_plans(key, label, monthlyPrice:monthly_price, annualPrice:annual_price)"
       )
       .order("updated_at", { ascending: false }),
     supabase
@@ -78,11 +82,19 @@ export default async function AdminSubscriptionsPage() {
   ]);
 
   const plans = (plansData ?? []) as unknown as PlanRow[];
-  const subscriptions = (subscriptionsData ?? []) as unknown as SubscriptionRow[];
+  const rawSubscriptions = (subscriptionsData ?? []) as unknown as SubscriptionRow[];
   const pendingInvoices = (pendingInvoicesData ?? []) as unknown as InvoiceRow[];
   const recentInvoices = (recentInvoicesData ?? []) as unknown as InvoiceRow[];
   const paidThisMonthAmount = ((paidThisMonthData ?? []) as Array<{ amount: number }>).reduce((s, i) => s + i.amount, 0);
   const businessesWithoutSub = (totalBusinesses ?? 0) - (subscribedBusinesses ?? 0);
+
+  const now = new Date();
+  const subscriptions = rawSubscriptions.map((s) => {
+    let status = s.status;
+    if (status === "TRIAL" && s.trialEndsAt && new Date(s.trialEndsAt) <= now) status = "EXPIRED";
+    if (status === "ACTIVE" && s.currentPeriodEnd && new Date(s.currentPeriodEnd) <= now) status = "PAST_DUE";
+    return { ...s, status };
+  });
 
   const mrr = subscriptions
     .filter((s) => s.status === "ACTIVE")
@@ -90,11 +102,15 @@ export default async function AdminSubscriptionsPage() {
       const price = s.billingCycle === "ANNUAL" ? s.plan.annualPrice / 12 : s.plan.monthlyPrice;
       return sum + price;
     }, 0);
+  const trialCount = subscriptions.filter((s) => s.status === "TRIAL").length;
+  const blockedCount = subscriptions.filter((s) => s.status === "EXPIRED" || s.status === "PAST_DUE").length;
 
   const currency = "XOF";
   const stats = [
     { label: "Revenu mensuel récurrent (MRR)", value: formatMoney(Math.round(mrr), currency), icon: TrendingUp, tone: "text-emerald-600 bg-emerald-50" },
     { label: "Encaissé ce mois-ci", value: formatMoney(paidThisMonthAmount, currency), icon: Wallet, tone: "text-zindo-green-600 bg-zindo-green-50" },
+    { label: "En essai gratuit", value: trialCount, icon: Clock, tone: "text-blue-600 bg-blue-50" },
+    { label: "Bloqués (essai expiré / impayé)", value: blockedCount, icon: ShieldAlert, tone: "text-red-600 bg-red-50" },
     { label: "Factures en attente", value: pendingInvoices.length, icon: Receipt, tone: "text-amber-600 bg-amber-50" },
     { label: "Commerces sans palier assigné", value: businessesWithoutSub, icon: Users, tone: "text-zinc-600 bg-zinc-100" },
   ];
@@ -105,8 +121,9 @@ export default async function AdminSubscriptionsPage() {
         <div>
           <h1 className="text-xl font-bold text-zinc-900">Abonnements &amp; revenus</h1>
           <p className="max-w-2xl text-sm text-zinc-500">
-            Un commerce sans palier assigné n&apos;a aucune restriction (comportement inchangé). Assignez un
-            palier ci-dessous pour commencer à appliquer les limites et fonctionnalités correspondantes.
+            Chaque commerce démarre avec 7 jours d&apos;essai gratuit, puis doit régler son abonnement (10 000
+            FCFA/mois ou 100 000 FCFA/an) pour continuer à utiliser ZINDO — l&apos;accès est bloqué automatiquement
+            à l&apos;expiration de l&apos;essai ou de la période payée.
           </p>
         </div>
         <ButtonLink href="/admin/abonnements/plans" variant="outline">
@@ -183,7 +200,8 @@ export default async function AdminSubscriptionsPage() {
                   <th className="px-4 py-3 font-medium">Palier</th>
                   <th className="px-4 py-3 font-medium">Cycle</th>
                   <th className="px-4 py-3 font-medium">Statut</th>
-                  <th className="px-4 py-3 font-medium">Fin de période</th>
+                  <th className="px-4 py-3 font-medium">Essai / fin de période</th>
+                  <th className="px-4 py-3 font-medium">Action</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-zinc-100">
@@ -199,12 +217,19 @@ export default async function AdminSubscriptionsPage() {
                     </td>
                     <td className="px-4 py-3 text-zinc-600">{CYCLE_LABELS[s.billingCycle]}</td>
                     <td className="px-4 py-3">
-                      <Badge tone={s.status === "ACTIVE" ? "emerald" : "amber"}>
-                        {s.status === "ACTIVE" ? "Actif" : "Impayé"}
-                      </Badge>
+                      <Badge tone={SUB_STATUS_TONE[s.status]}>{SUB_STATUS_LABELS[s.status]}</Badge>
                     </td>
                     <td className="px-4 py-3 text-zinc-600">
-                      {s.currentPeriodEnd ? formatDateTime(new Date(s.currentPeriodEnd)) : "—"}
+                      {s.status === "TRIAL" || s.status === "EXPIRED"
+                        ? s.trialEndsAt
+                          ? formatDateTime(new Date(s.trialEndsAt))
+                          : "—"
+                        : s.currentPeriodEnd
+                          ? formatDateTime(new Date(s.currentPeriodEnd))
+                          : "—"}
+                    </td>
+                    <td className="px-4 py-3">
+                      <ExtendTrialButton businessId={s.businessId} />
                     </td>
                   </tr>
                 ))}

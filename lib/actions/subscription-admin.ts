@@ -52,6 +52,41 @@ export async function cancelInvoiceAction(invoiceId: string) {
   return { success: "Facture annulée" };
 }
 
+/** Prolonge manuellement l'essai gratuit d'un commerce (support client). */
+export async function extendTrialAction(businessId: string, days: number) {
+  const admin = await requireSuperAdmin();
+  const { data: sub } = await supabase
+    .from("business_subscriptions")
+    .select("id, trialEndsAt:trial_ends_at")
+    .eq("business_id", businessId)
+    .maybeSingle();
+  if (!sub) return { error: "Commerce sans abonnement" };
+
+  const base = sub.trialEndsAt && new Date(sub.trialEndsAt as string) > new Date() ? new Date(sub.trialEndsAt as string) : new Date();
+  const newTrialEndsAt = new Date(base.getTime() + days * 24 * 60 * 60 * 1000);
+
+  const { error } = await supabase
+    .from("business_subscriptions")
+    .update({ status: "TRIAL", trial_ends_at: newTrialEndsAt.toISOString() })
+    .eq("business_id", businessId);
+  if (error) {
+    console.error("[extendTrialAction] Échec de la prolongation :", error.message);
+    return { error: "Impossible de prolonger l'essai" };
+  }
+
+  await logAdminAction({
+    superAdminId: admin.id,
+    actorName: admin.name,
+    action: "UPDATE",
+    entity: "BusinessSubscription",
+    entityId: businessId,
+    details: `Essai prolongé de ${days} jour(s)`,
+  });
+
+  revalidatePath("/admin/abonnements");
+  return { success: `Essai prolongé jusqu'au ${newTrialEndsAt.toLocaleDateString("fr-FR")}` };
+}
+
 export async function assignBusinessPlanAction(
   businessId: string,
   planKey: string,

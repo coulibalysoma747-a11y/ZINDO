@@ -31,7 +31,8 @@ export type NavItem = {
     | "online-store"
     | "vehicle-sales"
     | "quotes"
-    | "vehicle-registration";
+    | "vehicle-registration"
+    | "subscription";
   permission?: Permission;
   featureFlag?: string;
   planFeature?: string;
@@ -87,4 +88,7 @@ export const NAV_ITEMS: NavItem[] = [
   { label: "Utilisateurs", href: "/utilisateurs", icon: "users", permission: PERMISSIONS.USERS_MANAGE },
   { label: "Aide & support", href: "/support", icon: "support" },
   { label: "Paramètres", href: "/parametres", icon: "settings", permission: PERMISSIONS.SETTINGS_MANAGE },
+  // Pas de `permission` : accessible à tous les rôles, y compris pendant un
+  // blocage pour essai expiré (voir requireUser()/isSubscriptionBlocked).
+  { label: "Abonnement", href: "/abonnement", icon: "subscription" },
 ];

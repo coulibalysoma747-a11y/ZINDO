@@ -45,9 +45,11 @@ export default function CguPage() {
 
       <LegalSection title="4. Tarifs">
         <p>
-          ZINDO est actuellement entièrement gratuit et sans limite (nombre de produits, de ventes,
-          d&apos;utilisateurs...) pour tous les commerces. Si cela devait évoluer, toute modification substantielle
-          vous serait communiquée avant application à votre compte.
+          ZINDO propose 7 jours d&apos;essai gratuit, sans engagement, à la création du compte. À l&apos;issue de
+          cette période, l&apos;utilisation de ZINDO nécessite un abonnement payant : 10 000 FCFA par mois ou
+          100 000 FCFA par an. Le paiement s&apos;effectue par Mobile Money (Orange Money, Moov Money, Wave) ; la
+          référence de la transaction doit être renseignée sur la page « Abonnement » pour confirmation. Toute
+          modification substantielle des tarifs vous serait communiquée avant application à votre compte.
         </p>
       </LegalSection>
 

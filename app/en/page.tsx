@@ -111,8 +111,9 @@ const FAQS = [
       "Yes. ZINDO runs natively in FCFA and adapts to the business type you choose at sign-up (general store, hardware store, spare parts, motorcycle shop, grocery...) to show the right fields and modules.",
   },
   {
-    question: "Is ZINDO free?",
-    answer: "Yes. ZINDO is currently completely free and unlimited, for every business.",
+    question: "How much does ZINDO cost?",
+    answer:
+      "ZINDO offers a 7-day free trial, no commitment. Afterwards, the subscription costs 10,000 FCFA per month, or 100,000 FCFA per year (a 20,000 FCFA saving compared to paying monthly).",
   },
   {
     question: "Can I use ZINDO without an internet connection?",
@@ -239,7 +240,7 @@ export default async function EnglishRootPage() {
               href="/en/inscription"
               className="flex w-full items-center justify-center gap-2 rounded-2xl bg-zindo-green-500 px-6 py-3.5 text-base font-bold text-white shadow-lg shadow-zindo-green-500/30 transition hover:-translate-y-0.5 hover:bg-zindo-green-600 sm:w-auto"
             >
-              Get started for free <ArrowRight className="h-4 w-4" />
+              Start your 7-day free trial <ArrowRight className="h-4 w-4" />
             </Link>
             <Link
               href="/en/login"

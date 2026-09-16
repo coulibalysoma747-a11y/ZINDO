@@ -13,6 +13,7 @@ const PUBLIC_PATHS = [
   "/boutique",
   "/cgu",
   "/confidentialite",
+  "/tarifs",
   // Version anglaise (voir app/en/) : "/en" couvre aussi tous ses
   // sous-chemins (/en/login, /en/inscription, /en/cgu, /en/confidentialite)
   // grâce au startsWith(`${p}/`) ci-dessous — pas besoin de les lister un par un.
@@ -79,6 +80,10 @@ export async function proxy(request: NextRequest) {
   // <html> par route.
   const requestHeaders = new Headers(request.headers);
   requestHeaders.set("x-zindo-locale", pathname === "/en" || pathname.startsWith("/en/") ? "en" : "fr");
+  // Transmis à app/(app)/layout.tsx pour savoir si la route courante est
+  // /abonnement — seule page autorisée quand l'accès est bloqué (essai
+  // expiré/impayé), pour éviter une boucle de redirection sur elle-même.
+  requestHeaders.set("x-zindo-pathname", pathname);
   return NextResponse.next({ request: { headers: requestHeaders } });
 }
 

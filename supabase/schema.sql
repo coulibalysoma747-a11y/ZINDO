@@ -25,7 +25,10 @@ create type support_ticket_status as enum ('OUVERT','EN_COURS','RESOLU');
 -- finale LIVREE (comprendre : encaissée) — voir OrderStatusControls.
 create type online_order_status as enum ('EN_ATTENTE','CONFIRMEE','PRETE','LIVREE','ANNULEE');
 create type billing_cycle as enum ('MONTHLY','ANNUAL');
-create type subscription_status as enum ('ACTIVE','PAST_DUE');
+-- TRIAL : essai gratuit de 7 jours (nouveau commerce ou filet de sécurité) ;
+-- EXPIRE : essai ou période payée arrivée à échéance sans paiement confirmé
+-- (accès bloqué, voir lib/subscription.ts).
+create type subscription_status as enum ('ACTIVE','PAST_DUE','TRIAL','EXPIRED');
 create type invoice_status as enum ('EN_ATTENTE','PAYEE','ANNULEE');
 create type invoice_payment_method as enum ('MANUEL','CINETPAY');
 create type quote_status as enum ('BROUILLON','ENVOYE','ACCEPTE','REFUSE','EXPIRE','CONVERTI');
@@ -925,7 +928,8 @@ create table business_subscriptions (
   business_id text not null unique references businesses(id) on delete cascade,
   plan_id text not null references subscription_plans(id),
   billing_cycle billing_cycle not null default 'MONTHLY',
-  status subscription_status not null default 'ACTIVE',
+  status subscription_status not null default 'TRIAL',
+  trial_ends_at timestamptz,
   current_period_end timestamptz,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
@@ -1006,7 +1010,7 @@ returns table (user_id text, business_id text, role text) as $$
 declare
   v_business_id text;
   v_user_id text;
-  v_free_plan_id text;
+  v_standard_plan_id text;
 begin
   insert into businesses (name, city) values (p_business_name, p_city)
     returning id into v_business_id;
@@ -1026,10 +1030,12 @@ begin
   insert into locations (business_id, name, type, city, is_default)
     values (v_business_id, 'Boutique principale', 'BOUTIQUE', p_city, true);
 
-  select id into v_free_plan_id from subscription_plans where key = 'gratuit';
-  if v_free_plan_id is not null then
-    insert into business_subscriptions (business_id, plan_id, billing_cycle, status)
-      values (v_business_id, v_free_plan_id, 'MONTHLY', 'ACTIVE');
+  -- Essai gratuit de 7 jours puis abonnement payant obligatoire (10 000
+  -- FCFA/mois ou 100 000 FCFA/an) — voir lib/subscription.ts.
+  select id into v_standard_plan_id from subscription_plans where key = 'standard';
+  if v_standard_plan_id is not null then
+    insert into business_subscriptions (business_id, plan_id, billing_cycle, status, trial_ends_at)
+      values (v_business_id, v_standard_plan_id, 'MONTHLY', 'TRIAL', now() + interval '7 days');
   end if;
 
   return query select v_user_id, v_business_id, 'ADMIN'::text;

@@ -2,6 +2,7 @@ import "server-only";
 import { redirect } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { getSession } from "@/lib/session";
+import { isSubscriptionBlocked } from "@/lib/subscription";
 import {
   DEFAULT_ROLE_PERMISSIONS,
   type Permission,
@@ -96,6 +97,19 @@ export async function requireUserAllowingActivitySetup() {
  * "Quelle est votre activité ?" n'a encore jamais été complété.
  */
 export async function requireUser() {
+  const user = await requireUserAllowingActivitySetup();
+  if (!user.business.activityKey) redirect("/choisir-activite");
+  if (await isSubscriptionBlocked(user.businessId)) redirect("/abonnement");
+  return user;
+}
+
+/**
+ * Variante de requireUser() réservée à la page /abonnement elle-même : vérifie
+ * la connexion, la suspension et l'onboarding, mais SANS la redirection vers
+ * /abonnement en cas d'essai expiré — sans quoi la page qui doit justement
+ * permettre de payer serait elle-même bloquée (boucle de redirection).
+ */
+export async function requireUserForBilling() {
   const user = await requireUserAllowingActivitySetup();
   if (!user.business.activityKey) redirect("/choisir-activite");
   return user;
