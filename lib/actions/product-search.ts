@@ -29,6 +29,25 @@ type ProductRow = {
   trackUnits: boolean;
 };
 
+export type PackagingUnitOption = { id: string; productId: string; name: string; multiplier: number; salePrice: number; barcode: string | null };
+
+/** Conditionnements de vente (voir lib/actions/packaging-units.ts) pour un lot de produits, regroupés par produit. */
+async function fetchPackagingUnitsByProduct(businessId: string, productIds: string[]): Promise<Map<string, PackagingUnitOption[]>> {
+  const map = new Map<string, PackagingUnitOption[]>();
+  if (productIds.length === 0) return map;
+  const { data } = await supabase
+    .from("product_packaging_units")
+    .select("id, productId:product_id, name, multiplier, salePrice:sale_price, barcode")
+    .eq("business_id", businessId)
+    .in("product_id", productIds);
+  for (const row of (data ?? []) as unknown as PackagingUnitOption[]) {
+    const list = map.get(row.productId) ?? [];
+    list.push(row);
+    map.set(row.productId, list);
+  }
+  return map;
+}
+
 export async function searchProductsAction(query: string, locationId: string) {
   const user = await requireUser();
 
@@ -49,12 +68,15 @@ export async function searchProductsAction(query: string, locationId: string) {
   const { data } = await q;
   const products = (data ?? []) as unknown as ProductRow[];
   const ids = products.map((p) => p.id);
-  const { data: stocks } = ids.length
-    ? await supabase.from("product_stocks").select("productId:product_id, quantity").in("product_id", ids).eq("location_id", locationId)
-    : { data: [] as { productId: string; quantity: number }[] };
+  const [{ data: stocks }, packagingByProduct] = await Promise.all([
+    ids.length
+      ? supabase.from("product_stocks").select("productId:product_id, quantity").in("product_id", ids).eq("location_id", locationId)
+      : Promise.resolve({ data: [] as { productId: string; quantity: number }[] }),
+    fetchPackagingUnitsByProduct(user.businessId, ids),
+  ]);
 
   const stockMap = new Map((stocks ?? []).map((s) => [s.productId as string, s.quantity as number]));
-  return products.map((p) => ({ ...p, quantity: stockMap.get(p.id) ?? 0 }));
+  return products.map((p) => ({ ...p, quantity: stockMap.get(p.id) ?? 0, packagingUnits: packagingByProduct.get(p.id) ?? [] }));
 }
 
 /**
@@ -75,8 +97,12 @@ export async function getPosProductsAction(locationId: string) {
     .limit(300);
 
   const rows = (stocks ?? []) as unknown as Array<{ quantity: number; product: ProductRow }>;
+  const packagingByProduct = await fetchPackagingUnitsByProduct(
+    user.businessId,
+    rows.map((r) => r.product.id)
+  );
   return rows
-    .map((s) => ({ ...s.product, quantity: s.quantity }))
+    .map((s) => ({ ...s.product, quantity: s.quantity, packagingUnits: packagingByProduct.get(s.product.id) ?? [] }))
     .sort((a, b) => a.name.localeCompare(b.name));
 }
 
@@ -93,7 +119,7 @@ export async function findProductByExactCodeAction(code: string, locationId: str
     .eq("active", true)
     .eq("barcode", code)
     .maybeSingle();
-  const product =
+  let product =
     byBarcode ??
     (
       await supabase
@@ -104,6 +130,30 @@ export async function findProductByExactCodeAction(code: string, locationId: str
         .eq("reference", code)
         .maybeSingle()
     ).data;
+
+  // Ni le code-barres ni la référence d'un produit ne correspondent : le code
+  // scanné est peut-être celui d'un conditionnement (ex. l'étiquette d'un
+  // "Carton de 12") plutôt que du produit lui-même.
+  let matchedPackaging: PackagingUnitOption | null = null;
+  if (!product) {
+    const { data: packaging } = await supabase
+      .from("product_packaging_units")
+      .select("id, productId:product_id, name, multiplier, salePrice:sale_price, barcode")
+      .eq("business_id", user.businessId)
+      .eq("barcode", code)
+      .maybeSingle();
+    if (packaging) {
+      matchedPackaging = packaging as unknown as PackagingUnitOption;
+      const { data: parentProduct } = await supabase
+        .from("products")
+        .select(PRODUCT_FIELDS)
+        .eq("id", matchedPackaging.productId)
+        .eq("business_id", user.businessId)
+        .eq("active", true)
+        .maybeSingle();
+      product = parentProduct;
+    }
+  }
   if (!product) return null;
 
   const { data: stock } = await supabase
@@ -113,5 +163,5 @@ export async function findProductByExactCodeAction(code: string, locationId: str
     .eq("location_id", locationId)
     .maybeSingle();
 
-  return { ...product, quantity: (stock?.quantity as number | undefined) ?? 0 };
+  return { ...product, quantity: (stock?.quantity as number | undefined) ?? 0, matchedPackaging };
 }

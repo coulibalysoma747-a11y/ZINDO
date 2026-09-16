@@ -17,6 +17,17 @@ export type CartItemInput = {
   discount: number;
   /** Exemplaire précis vendu (produit à suivi unitaire — moto/engin), voir lib/actions/vehicle-units.ts. */
   vehicleUnitId?: string;
+  /**
+   * Vente par conditionnement (ex. "Carton de 12") plutôt qu'à l'unité —
+   * voir lib/actions/packaging-units.ts. `quantity` compte alors des colis,
+   * pas des unités de base : c'est `multiplier` qui donne le nombre réel
+   * d'unités de base à déduire de product_stocks (quantity * multiplier).
+   * Le prix total (unitPrice * quantity) reste correct sans aucun ajustement
+   * puisque unitPrice est déjà le prix du colis.
+   */
+  packagingUnitId?: string;
+  packagingLabel?: string;
+  multiplier?: number;
 };
 
 export type CreateSaleInput = {
@@ -38,6 +49,45 @@ export type CreateSaleInput = {
 };
 
 export type CreateSaleResult = { success: true; saleId: string } | { success: false; error: string };
+
+type SaleItemRow = {
+  sale_id: string;
+  product_id: string;
+  quantity: number;
+  unit_price: number;
+  unit_cost: number;
+  discount: number;
+  total: number;
+  packaging_unit_id: string | null;
+  multiplier: number;
+  unit_label: string | null;
+};
+
+/**
+ * Insère les lignes de vente. Si les colonnes de conditionnement
+ * (packaging_unit_id/multiplier/unit_label) n'existent pas encore en base
+ * (migration pas encore exécutée), retombe automatiquement sur un insert
+ * sans ces colonnes plutôt que de casser TOUTE vente — pas seulement celles
+ * qui utilisent un conditionnement — le temps que la migration soit faite.
+ */
+async function insertSaleItems(rows: SaleItemRow[]) {
+  const { error } = await supabase.from("sale_items").insert(rows);
+  if (!error) return { error: null };
+  if (!/packaging_unit_id|multiplier|unit_label/.test(error.message)) return { error };
+
+  console.error("[insertSaleItems] Colonnes de conditionnement absentes, repli sans ces champs :", error.message);
+  const legacyRows = rows.map((r) => ({
+    sale_id: r.sale_id,
+    product_id: r.product_id,
+    quantity: r.quantity,
+    unit_price: r.unit_price,
+    unit_cost: r.unit_cost,
+    discount: r.discount,
+    total: r.total,
+  }));
+  const { error: legacyError } = await supabase.from("sale_items").insert(legacyRows);
+  return { error: legacyError };
+}
 
 /**
  * Enregistre les mouvements de stock (sortie) pour chaque article vendu.
@@ -152,8 +202,9 @@ async function createSaleImpl(input: CreateSaleInput): Promise<CreateSaleResult>
     const product = productMap.get(item.productId);
     if (!product) return { success: false, error: "Un produit du panier est introuvable" };
     if (item.quantity <= 0) return { success: false, error: "Quantité invalide" };
+    const baseUnitsNeeded = item.quantity * (item.multiplier ?? 1);
     const available = stockMap.get(item.productId) ?? 0;
-    if (available < item.quantity) {
+    if (available < baseUnitsNeeded) {
       return {
         success: false,
         error: `Stock insuffisant pour "${product.name}" à ${location.name} (disponible : ${available})`,
@@ -223,17 +274,20 @@ async function createSaleImpl(input: CreateSaleInput): Promise<CreateSaleResult>
     return { success: false, error: "Impossible d'enregistrer la vente" };
   }
 
-  const { error: itemsError } = await supabase.from("sale_items").insert(
+  const { error: itemsError } = await insertSaleItems(
     input.items.map((i) => {
       const product = productMap.get(i.productId)!;
       return {
-        sale_id: sale.id,
+        sale_id: sale.id as string,
         product_id: i.productId,
         quantity: i.quantity,
         unit_price: i.unitPrice,
         unit_cost: product.purchasePrice,
         discount: i.discount,
         total: i.unitPrice * i.quantity - i.discount,
+        packaging_unit_id: i.packagingUnitId ?? null,
+        multiplier: i.multiplier ?? 1,
+        unit_label: i.packagingLabel ?? null,
       };
     })
   );
@@ -252,14 +306,17 @@ async function createSaleImpl(input: CreateSaleInput): Promise<CreateSaleResult>
     }
   }
 
-  await recordStockMovements(input.items, {
-    businessId: user.businessId,
-    locationId: input.locationId,
-    userId: user.id,
-    direction: "OUT",
-    reason: "VENTE",
-    note: `Vente ${number}`,
-  });
+  await recordStockMovements(
+    input.items.map((i) => ({ productId: i.productId, quantity: i.quantity * (i.multiplier ?? 1) })),
+    {
+      businessId: user.businessId,
+      locationId: input.locationId,
+      userId: user.id,
+      direction: "OUT",
+      reason: "VENTE",
+      note: `Vente ${number}`,
+    }
+  );
 
   await logAction({
     businessId: user.businessId,
@@ -318,9 +375,17 @@ async function updateSaleImpl(input: UpdateSaleInput): Promise<CreateSaleResult>
 
   const { data: existingItems } = await supabase
     .from("sale_items")
-    .select("productId:product_id, quantity")
+    .select("productId:product_id, quantity, multiplier")
     .eq("sale_id", sale.id);
-  const oldQtyMap = new Map(((existingItems ?? []) as Array<{ productId: string; quantity: number }>).map((i) => [i.productId, i.quantity]));
+  // En unités de base (quantité de colis * multiplicateur), pour comparer
+  // correctement à une nouvelle ligne qui ne serait plus vendue par le même
+  // conditionnement — voir la même logique dans createSaleImpl.
+  const oldQtyMap = new Map(
+    ((existingItems ?? []) as Array<{ productId: string; quantity: number; multiplier: number | null }>).map((i) => [
+      i.productId,
+      i.quantity * (i.multiplier ?? 1),
+    ])
+  );
   const productIds = Array.from(new Set([...oldQtyMap.keys(), ...input.items.map((i) => i.productId)]));
 
   const [{ data: products }, { data: stocks }] = await Promise.all([
@@ -338,7 +403,8 @@ async function updateSaleImpl(input: UpdateSaleInput): Promise<CreateSaleResult>
     if (item.quantity <= 0) return { success: false, error: "Quantité invalide" };
     // Le stock déjà réservé par l'ancienne version de cette vente reste disponible pour la nouvelle.
     const available = (currentStockMap.get(item.productId) ?? 0) + (oldQtyMap.get(item.productId) ?? 0);
-    if (available < item.quantity) {
+    const baseUnitsNeeded = item.quantity * (item.multiplier ?? 1);
+    if (available < baseUnitsNeeded) {
       return { success: false, error: `Stock insuffisant pour "${product.name}" (disponible : ${available})` };
     }
   }
@@ -353,7 +419,7 @@ async function updateSaleImpl(input: UpdateSaleInput): Promise<CreateSaleResult>
 
   const status = amountPaid >= total ? "PAYEE" : amountPaid > 0 ? "PARTIELLE" : "CREDIT";
 
-  const newQtyMap = new Map(input.items.map((i) => [i.productId, i.quantity]));
+  const newQtyMap = new Map(input.items.map((i) => [i.productId, i.quantity * (i.multiplier ?? 1)]));
   const changedProductIds = productIds.filter((productId) => {
     const oldQty = oldQtyMap.get(productId) ?? 0;
     const newQty = newQtyMap.get(productId) ?? 0;
@@ -396,17 +462,20 @@ async function updateSaleImpl(input: UpdateSaleInput): Promise<CreateSaleResult>
       note: input.note ?? null,
     })
     .eq("id", sale.id);
-  const { error: itemsError } = await supabase.from("sale_items").insert(
+  const { error: itemsError } = await insertSaleItems(
     input.items.map((i) => {
       const product = productMap.get(i.productId)!;
       return {
-        sale_id: sale.id,
+        sale_id: sale.id as string,
         product_id: i.productId,
         quantity: i.quantity,
         unit_price: i.unitPrice,
         unit_cost: product.purchasePrice,
         discount: i.discount,
         total: i.unitPrice * i.quantity - i.discount,
+        packaging_unit_id: i.packagingUnitId ?? null,
+        multiplier: i.multiplier ?? 1,
+        unit_label: i.packagingLabel ?? null,
       };
     })
   );

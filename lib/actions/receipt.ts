@@ -72,6 +72,7 @@ type SaleRow = {
     unitPrice: number;
     discount: number;
     total: number;
+    unitLabel: string | null;
     product: { reference: string; name: string; unit: string };
   }>;
   customer: { name: string; phone: string | null; address: string | null } | null;
@@ -103,16 +104,34 @@ export type SaleDocument =
 export async function getSaleDocumentAction(saleId: string): Promise<SaleDocument> {
   const user = await requirePermission(PERMISSIONS.SALES_VIEW);
 
-  const { data: saleRow } = await supabase
+  const SALE_SELECT_BASE =
+    "id, number, createdAt:created_at, subtotal, discount, total, amountPaid:amount_paid, paymentMethod:payment_method, status, documentType:document_type, " +
+    "customer:customers(name, phone, address), user:users(firstName:first_name, lastName:last_name), location:locations(name, address)";
+
+  // La colonne sale_items.unit_label (libellé de conditionnement, ex. "Carton
+  // de 12") peut ne pas encore exister si la migration n'a pas été exécutée —
+  // dans ce cas, repli sur une sélection sans elle plutôt que de faire
+  // échouer TOUT affichage/impression de reçu (pas seulement les ventes par
+  // conditionnement).
+  let { data: saleRow, error: saleError } = await supabase
     .from("sales")
     .select(
-      "id, number, createdAt:created_at, subtotal, discount, total, amountPaid:amount_paid, paymentMethod:payment_method, status, documentType:document_type, " +
-        "items:sale_items(quantity, unitPrice:unit_price, discount, total, product:products(reference, name, unit)), " +
-        "customer:customers(name, phone, address), user:users(firstName:first_name, lastName:last_name), location:locations(name, address)"
+      `${SALE_SELECT_BASE}, items:sale_items(quantity, unitPrice:unit_price, discount, total, unitLabel:unit_label, product:products(reference, name, unit))`
     )
     .eq("id", saleId)
     .eq("business_id", user.businessId)
     .maybeSingle();
+  if (saleError && /unit_label/.test(saleError.message)) {
+    const fallback = await supabase
+      .from("sales")
+      .select(`${SALE_SELECT_BASE}, items:sale_items(quantity, unitPrice:unit_price, discount, total, product:products(reference, name, unit))`)
+      .eq("id", saleId)
+      .eq("business_id", user.businessId)
+      .maybeSingle();
+    saleRow = fallback.data
+      ? ({ ...fallback.data, items: fallback.data.items.map((i) => ({ ...i, unitLabel: null })) } as unknown as typeof saleRow)
+      : null;
+  }
   if (!saleRow) return { success: false, error: "Vente introuvable" };
   const sale = saleRow as unknown as SaleRow;
 
@@ -220,8 +239,8 @@ export async function getSaleDocumentAction(saleId: string): Promise<SaleDocumen
       customerAddress: sale.customer?.address,
       items: sale.items.map((item) => ({
         reference: item.product.reference,
-        name: item.product.name,
-        unit: item.product.unit,
+        name: item.unitLabel ? `${item.product.name} (${item.unitLabel})` : item.product.name,
+        unit: item.unitLabel ?? item.product.unit,
         quantity: item.quantity,
         unitPrice: item.unitPrice,
         discount: item.discount,
@@ -258,7 +277,7 @@ export async function getSaleDocumentAction(saleId: string): Promise<SaleDocumen
     cashierName,
     customerName: sale.customer?.name,
     items: sale.items.map((item) => ({
-      name: item.product.name,
+      name: item.unitLabel ? `${item.product.name} (${item.unitLabel})` : item.product.name,
       quantity: item.quantity,
       unitPrice: item.unitPrice,
       total: item.total,

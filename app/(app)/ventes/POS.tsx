@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState, useTransition } from "react";
 import Link from "next/link";
 import { Trash2, Plus, Minus, UserPlus, Search, Loader2, Wallet, Lock, WifiOff, RefreshCw } from "lucide-react";
-import { ProductGrid, type PosProduct } from "@/components/products/ProductGrid";
+import { ProductGrid, type PosProduct, type PackagingUnitOption } from "@/components/products/ProductGrid";
 import { BarcodeScannerButton } from "@/components/products/BarcodeScannerButton";
 import { Card, CardBody, CardHeader } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
@@ -40,6 +40,10 @@ type CartLine = {
   /** Exemplaire précis (moto/engin à suivi unitaire) — jamais fusionné avec une autre ligne. */
   vehicleUnitId?: string;
   chassisNumber?: string;
+  /** Vente par conditionnement (ex. "Carton de 12") plutôt qu'à l'unité — quantity compte alors des colis, pas des unités de base. */
+  packagingUnitId?: string;
+  packagingLabel?: string;
+  multiplier?: number;
 };
 
 const PAYMENT_LABELS: Record<PaymentMethod, string> = {
@@ -203,22 +207,38 @@ export function POS({
   // simultanées — une par exemplaire choisi — jamais fusionnées entre elles,
   // donc identifiées par l'exemplaire précis plutôt que par le produit.
   function lineKey(line: CartLine) {
-    return line.vehicleUnitId ?? line.product.id;
+    return line.vehicleUnitId ?? (line.packagingUnitId ? `${line.product.id}:${line.packagingUnitId}` : line.product.id);
   }
 
-  function addProduct(product: PosProduct) {
+  /** Quantité maximale vendable pour cette ligne — en colis si conditionnement, sinon en unités de base. */
+  function lineMaxQty(line: CartLine) {
+    return Math.max(1, Math.floor(line.product.quantity / (line.multiplier ?? 1)));
+  }
+
+  function addProduct(product: PosProduct, packaging?: PackagingUnitOption) {
     if (product.trackUnits) {
       openUnitPicker(product);
       return;
     }
+    const multiplier = packaging?.multiplier ?? 1;
+    const maxQty = Math.max(1, Math.floor(product.quantity / multiplier));
     setCart((prev) => {
-      const existing = prev.find((l) => !l.vehicleUnitId && l.product.id === product.id);
+      const existing = prev.find((l) => !l.vehicleUnitId && l.product.id === product.id && l.packagingUnitId === packaging?.id);
       if (existing) {
-        return prev.map((l) =>
-          l === existing ? { ...l, quantity: Math.min(l.quantity + 1, product.quantity) } : l
-        );
+        return prev.map((l) => (l === existing ? { ...l, quantity: Math.min(l.quantity + 1, maxQty) } : l));
       }
-      return [...prev, { product, quantity: 1, unitPrice: product.salePrice, discount: 0 }];
+      return [
+        ...prev,
+        {
+          product,
+          quantity: 1,
+          unitPrice: packaging ? packaging.salePrice : product.salePrice,
+          discount: 0,
+          packagingUnitId: packaging?.id,
+          packagingLabel: packaging?.name,
+          multiplier,
+        },
+      ];
     });
   }
 
@@ -268,14 +288,22 @@ export function POS({
       addProduct(local);
       return;
     }
+    for (const p of products) {
+      const packaging = p.packagingUnits?.find((pu) => pu.barcode === code);
+      if (packaging) {
+        addProduct(p, packaging);
+        return;
+      }
+    }
     if (!isOnline) {
       setError(`Aucun produit trouvé pour le code "${code}"`);
       return;
     }
     try {
       const product = await findProductByExactCodeAction(code, locationId);
-      if (product) addProduct(product);
-      else setError(`Aucun produit trouvé pour le code "${code}"`);
+      if (product) {
+        addProduct(product, product.matchedPackaging ?? undefined);
+      } else setError(`Aucun produit trouvé pour le code "${code}"`);
     } catch {
       setError(`Aucun produit trouvé pour le code "${code}"`);
     }
@@ -298,11 +326,18 @@ export function POS({
       unitPrice: l.unitPrice,
       discount: l.discount,
       vehicleUnitId: l.vehicleUnitId,
+      packagingUnitId: l.packagingUnitId,
+      packagingLabel: l.packagingLabel,
+      multiplier: l.multiplier,
     }));
     const documentType: "TICKET" | "FACTURE" = isFacture ? "FACTURE" : "TICKET";
 
     if (cart.some((l) => l.vehicleUnitId) && !isOnline) {
       setError("La vente d'un engin à suivi unitaire nécessite une connexion. Réessayez une fois en ligne.");
+      return;
+    }
+    if (cart.some((l) => l.packagingUnitId) && !isOnline) {
+      setError("La vente par conditionnement nécessite une connexion. Réessayez une fois en ligne.");
       return;
     }
 
@@ -523,7 +558,14 @@ export function POS({
                       {cart.map((line) => (
                         <tr key={lineKey(line)}>
                           <td className="px-4 py-2">
-                            <p className="font-medium text-zinc-900">{line.product.name}</p>
+                            <p className="font-medium text-zinc-900">
+                              {line.product.name}
+                              {line.packagingLabel && (
+                                <span className="ml-1.5 rounded-md bg-zindo-green-50 px-1.5 py-0.5 text-[10px] font-semibold text-zindo-green-700">
+                                  {line.packagingLabel}
+                                </span>
+                              )}
+                            </p>
                             <p className="text-xs text-zinc-400">
                               {line.chassisNumber ? (
                                 <span className="font-mono font-semibold text-zinc-600">{line.chassisNumber}</span>
@@ -547,12 +589,12 @@ export function POS({
                                 <input
                                   type="number"
                                   min={1}
-                                  max={line.product.quantity}
+                                  max={lineMaxQty(line)}
                                   value={line.quantity}
                                   onChange={(e) =>
                                     updateLine(lineKey(line), {
                                       quantity: Math.min(
-                                        line.product.quantity,
+                                        lineMaxQty(line),
                                         Math.max(1, Number(e.target.value) || 1)
                                       ),
                                     })
@@ -563,7 +605,7 @@ export function POS({
                                   type="button"
                                   onClick={() =>
                                     updateLine(lineKey(line), {
-                                      quantity: Math.min(line.product.quantity, line.quantity + 1),
+                                      quantity: Math.min(lineMaxQty(line), line.quantity + 1),
                                     })
                                   }
                                   className="rounded p-1 text-zinc-500 hover:bg-zinc-100"
@@ -615,7 +657,14 @@ export function POS({
                     <li key={lineKey(line)} className="space-y-2.5 p-3">
                       <div className="flex items-start justify-between gap-2">
                         <div className="min-w-0">
-                          <p className="truncate font-medium text-zinc-900">{line.product.name}</p>
+                          <p className="truncate font-medium text-zinc-900">
+                            {line.product.name}
+                            {line.packagingLabel && (
+                              <span className="ml-1.5 rounded-md bg-zindo-green-50 px-1.5 py-0.5 text-[10px] font-semibold text-zindo-green-700">
+                                {line.packagingLabel}
+                              </span>
+                            )}
+                          </p>
                           <p className="text-xs text-zinc-400">
                             {line.chassisNumber ? (
                               <span className="font-mono font-semibold text-zinc-600">{line.chassisNumber}</span>
@@ -648,11 +697,11 @@ export function POS({
                             <input
                               type="number"
                               min={1}
-                              max={line.product.quantity}
+                              max={lineMaxQty(line)}
                               value={line.quantity}
                               onChange={(e) =>
                                 updateLine(lineKey(line), {
-                                  quantity: Math.min(line.product.quantity, Math.max(1, Number(e.target.value) || 1)),
+                                  quantity: Math.min(lineMaxQty(line), Math.max(1, Number(e.target.value) || 1)),
                                 })
                               }
                               className="h-9 w-16 rounded-lg border border-zinc-200 text-center text-sm"
@@ -661,7 +710,7 @@ export function POS({
                               type="button"
                               onClick={() =>
                                 updateLine(lineKey(line), {
-                                  quantity: Math.min(line.product.quantity, line.quantity + 1),
+                                  quantity: Math.min(lineMaxQty(line), line.quantity + 1),
                                 })
                               }
                               className="rounded-lg border border-zinc-200 p-2 text-zinc-500 hover:bg-zinc-100"

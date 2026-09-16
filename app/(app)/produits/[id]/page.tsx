@@ -8,12 +8,14 @@ import { getActivityConfig } from "@/lib/activity-config";
 import { MOTO_ACTIVITY_KEY } from "@/lib/activities";
 import { getLocations, getCurrentLocation } from "@/lib/location";
 import { getVehicleUnitsAction } from "@/lib/actions/vehicle-units";
+import { getPackagingUnitsAction } from "@/lib/actions/packaging-units";
 import { formatMoney, formatDateTime } from "@/lib/format";
 import { Card, CardBody, CardHeader } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { ButtonLink } from "@/components/ui/Button";
 import { ProductThumbnail } from "@/components/products/ProductThumbnail";
 import { VehicleUnitsPanel } from "@/components/products/VehicleUnitsPanel";
+import { PackagingUnitsPanel } from "@/components/products/PackagingUnitsPanel";
 import { ToggleActiveButton } from "./ToggleActiveButton";
 
 const REASON_LABELS: Record<string, string> = {
@@ -103,15 +105,17 @@ export default async function ProductDetailPage({
   const isMotoActivity = user.business.activityKey === MOTO_ACTIVITY_KEY;
   const showVehicleUnits = product.trackUnits && isMotoActivity;
 
-  const [canManageStock, canTransfer, canSell, activityConfig, vehicleUnits, locations, currentLocation] = await Promise.all([
-    hasPermission(user.businessId, user.role, PERMISSIONS.STOCK_MANAGE, user.id),
-    hasPermission(user.businessId, user.role, PERMISSIONS.TRANSFERS_MANAGE, user.id),
-    hasPermission(user.businessId, user.role, PERMISSIONS.SALES_CREATE, user.id),
-    getActivityConfig(user.business.activityKey),
-    showVehicleUnits ? getVehicleUnitsAction(id) : Promise.resolve([]),
-    getLocations(user.businessId),
-    getCurrentLocation(user.businessId),
-  ]);
+  const [canManageStock, canTransfer, canSell, activityConfig, vehicleUnits, locations, currentLocation, packagingUnits] =
+    await Promise.all([
+      hasPermission(user.businessId, user.role, PERMISSIONS.STOCK_MANAGE, user.id),
+      hasPermission(user.businessId, user.role, PERMISSIONS.TRANSFERS_MANAGE, user.id),
+      hasPermission(user.businessId, user.role, PERMISSIONS.SALES_CREATE, user.id),
+      getActivityConfig(user.business.activityKey),
+      showVehicleUnits ? getVehicleUnitsAction(id) : Promise.resolve([]),
+      getLocations(user.businessId),
+      getCurrentLocation(user.businessId),
+      getPackagingUnitsAction(id),
+    ]);
 
   let customFieldValues: Record<string, string> = {};
   if (product.customFields) {
@@ -277,6 +281,15 @@ export default async function ProductDetailPage({
           </CardBody>
         </Card>
       )}
+
+      <Card>
+        <CardHeader>
+          <h2 className="font-semibold text-zinc-900">Conditionnements</h2>
+        </CardHeader>
+        <CardBody>
+          <PackagingUnitsPanel productId={product.id} units={packagingUnits} currency={currency} baseUnit={product.unit} />
+        </CardBody>
+      </Card>
 
       <Card>
         <CardHeader>

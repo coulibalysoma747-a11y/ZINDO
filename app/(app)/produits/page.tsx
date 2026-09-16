@@ -14,13 +14,17 @@ import { ProductSearchBar } from "./ProductSearchBar";
 import { ProductThumbnail } from "@/components/products/ProductThumbnail";
 import { ProductRowMenu } from "@/components/products/ProductRowMenu";
 
+const PAGE_SIZE = 200;
+
 export default async function ProductsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; categorie?: string; filtre?: string }>;
+  searchParams: Promise<{ q?: string; categorie?: string; filtre?: string; page?: string }>;
 }) {
   const user = await requirePermission(PERMISSIONS.PRODUCTS_VIEW);
-  const { q, categorie, filtre } = await searchParams;
+  const { q, categorie, filtre, page } = await searchParams;
+  const currentPage = Math.max(1, parseInt(page ?? "1", 10) || 1);
+  const offset = (currentPage - 1) * PAGE_SIZE;
   const [currentLocation, activityConfig] = await Promise.all([
     getCurrentLocation(user.businessId),
     getActivityConfig(user.business.activityKey),
@@ -35,21 +39,34 @@ export default async function ProductsPage({
     .eq("business_id", user.businessId)
     .eq("active", true)
     .order("name", { ascending: true })
-    .limit(200);
+    .range(offset, offset + PAGE_SIZE - 1);
+
+  let countQuery = supabase
+    .from("products")
+    .select("id", { count: "exact", head: true })
+    .eq("business_id", user.businessId)
+    .eq("active", true);
 
   if (q) {
     const escaped = q.trim().replace(/[%_\\]/g, (m) => `\\${m}`);
-    query = query.or(`name.ilike.%${escaped}%,reference.ilike.%${escaped}%,barcode.ilike.%${escaped}%`);
+    const orFilter = `name.ilike.%${escaped}%,reference.ilike.%${escaped}%,barcode.ilike.%${escaped}%`;
+    query = query.or(orFilter);
+    countQuery = countQuery.or(orFilter);
   }
-  if (categorie) query = query.eq("category_id", categorie);
+  if (categorie) {
+    query = query.eq("category_id", categorie);
+    countQuery = countQuery.eq("category_id", categorie);
+  }
 
-  const [{ data: products }, { data: categories }, stocksRes] = await Promise.all([
+  const [{ data: products }, { count: totalCount }, { data: categories }, stocksRes] = await Promise.all([
     query,
+    countQuery,
     supabase.from("categories").select("id, name").eq("business_id", user.businessId).order("name", { ascending: true }),
     currentLocation
       ? supabase.from("product_stocks").select("productId:product_id, quantity").eq("location_id", currentLocation.id)
       : Promise.resolve({ data: [] as { productId: string; quantity: number }[] }),
   ]);
+  const totalPages = Math.max(1, Math.ceil((totalCount ?? 0) / PAGE_SIZE));
 
   const stockByProduct = new Map(
     ((stocksRes.data ?? []) as { productId: string; quantity: number }[]).map((s) => [s.productId, s.quantity])
@@ -67,13 +84,24 @@ export default async function ProductsPage({
         ? withStock.filter((p) => p.quantity <= 0)
         : withStock;
 
+  const pageHref = (targetPage: number) => {
+    const params = new URLSearchParams();
+    if (q) params.set("q", q);
+    if (categorie) params.set("categorie", categorie);
+    if (filtre) params.set("filtre", filtre);
+    if (targetPage > 1) params.set("page", String(targetPage));
+    const qs = params.toString();
+    return qs ? `/produits?${qs}` : "/produits";
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-xl font-bold text-zinc-900">{productsLabel}</h1>
           <p className="text-sm text-zinc-500">
-            {filtered.length} produit(s) · Stock affiché pour {currentLocation?.name ?? "—"}
+            {totalCount ?? 0} produit(s){totalPages > 1 ? ` · page ${currentPage}/${totalPages}` : ""} · Stock affiché
+            pour {currentLocation?.name ?? "—"}
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -199,6 +227,28 @@ export default async function ProductsPage({
               </Card>
             ))}
           </div>
+
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between gap-3">
+              {currentPage > 1 ? (
+                <ButtonLink href={pageHref(currentPage - 1)} variant="outline" size="sm">
+                  Précédent
+                </ButtonLink>
+              ) : (
+                <span />
+              )}
+              <span className="text-sm text-zinc-500">
+                Page {currentPage} / {totalPages}
+              </span>
+              {currentPage < totalPages ? (
+                <ButtonLink href={pageHref(currentPage + 1)} variant="outline" size="sm">
+                  Suivant
+                </ButtonLink>
+              ) : (
+                <span />
+              )}
+            </div>
+          )}
         </>
       )}
     </div>

@@ -222,6 +222,27 @@ create index if not exists products_name_trgm_idx on products using gin (name gi
 create index if not exists products_reference_trgm_idx on products using gin (reference gin_trgm_ops);
 create index if not exists products_barcode_trgm_idx on products using gin (barcode gin_trgm_ops);
 
+-- Conditionnements de vente d'un produit (ex. "Carton de 12", "Carton de
+-- 24") en plus de l'unité de base déjà suivie par product_stocks — chacun a
+-- son propre prix de vente et peut avoir son propre code-barres/QR
+-- scannable à la caisse (voir lib/actions/packaging-units.ts). multiplier
+-- est le nombre d'unités de base que représente un seul colis ; c'est ce
+-- nombre qui est réellement déduit de product_stocks à la vente (voir
+-- sale_items.multiplier et lib/actions/sales.ts).
+create table product_packaging_units (
+  id text primary key default gen_random_uuid()::text,
+  business_id text not null references businesses(id) on delete cascade,
+  product_id text not null references products(id) on delete cascade,
+  name text not null,
+  multiplier double precision not null,
+  sale_price double precision not null,
+  barcode text,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  unique (business_id, barcode)
+);
+create index on product_packaging_units (business_id, product_id);
+
 -- Exemplaires individuels d'un produit à suivi unitaire (motos/engins) : un
 -- exemplaire = une ligne, avec son propre numéro de châssis (identifiant
 -- réel du véhicule) et moteur. "EN_STOCK" tant qu'il n'a pas été vendu ;
@@ -329,7 +350,17 @@ create table sale_items (
   unit_price double precision not null,
   unit_cost double precision not null default 0,
   discount double precision not null default 0,
-  total double precision not null
+  total double precision not null,
+  -- Vente par conditionnement (ex. "Carton de 12") plutôt qu'à l'unité — voir
+  -- product_packaging_units ci-dessous. quantity reste le nombre de colis
+  -- vendus (le prix total est donc déjà correct sans y toucher) ; multiplier
+  -- est ce qui permet de déduire le bon nombre d'unités de base du stock
+  -- (product_stocks) au moment de la vente. unit_label est dénormalisé pour
+  -- que le ticket/la facture affiche toujours le bon libellé même si le
+  -- conditionnement est renommé ou supprimé ensuite.
+  packaging_unit_id text references product_packaging_units(id),
+  multiplier double precision not null default 1,
+  unit_label text
 );
 create index on sale_items (sale_id);
 create index on sale_items (product_id);

@@ -5,6 +5,8 @@ import { formatMoney } from "@/lib/format";
 import { EmptyState } from "@/components/ui/Empty";
 import { ProductCardMenu } from "@/components/products/ProductCardMenu";
 
+export type PackagingUnitOption = { id: string; productId: string; name: string; multiplier: number; salePrice: number; barcode: string | null };
+
 export type PosProduct = {
   id: string;
   name: string;
@@ -16,6 +18,7 @@ export type PosProduct = {
   quantity: number;
   unit: string;
   trackUnits: boolean;
+  packagingUnits?: PackagingUnitOption[];
 };
 
 export function ProductGrid({
@@ -25,7 +28,7 @@ export function ProductGrid({
   canEditProducts = false,
 }: {
   products: PosProduct[];
-  onSelect: (product: PosProduct) => void;
+  onSelect: (product: PosProduct, packaging?: PackagingUnitOption) => void;
   currency?: string;
   canEditProducts?: boolean;
 }) {
@@ -72,6 +75,20 @@ export function ProductGrid({
             <p className="mt-auto pt-1 text-sm font-bold text-emerald-600">
               {formatMoney(product.salePrice, currency)}
             </p>
+            {product.packagingUnits && product.packagingUnits.length > 0 && (
+              <div className="pointer-events-auto relative z-10 -mx-0.5 mt-1 flex flex-wrap gap-1">
+                {product.packagingUnits.map((pu) => (
+                  <button
+                    key={pu.id}
+                    type="button"
+                    onClick={() => onSelect(product, pu)}
+                    className="rounded-md border border-zindo-green-200 bg-zindo-green-50 px-1.5 py-0.5 text-[10px] font-medium text-zindo-green-700 hover:bg-zindo-green-100"
+                  >
+                    {pu.name}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       ))}
