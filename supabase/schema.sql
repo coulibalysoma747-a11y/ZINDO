@@ -208,6 +208,19 @@ create index on products (business_id);
 create index on products (business_id, barcode);
 create index on products (business_id, name);
 
+-- Recherche "contient" (ILIKE '%terme%', utilisée par la recherche produit à
+-- la caisse, dans les Achats/Devis/Vente Engin et le catalogue Produits) :
+-- un index B-tree classique (ci-dessus) ne peut PAS accélérer un motif avec
+-- un joker au début — Postgres doit alors filtrer ligne par ligne sur tout
+-- le catalogue du commerce, ce qui devient lent (plusieurs secondes) dès que
+-- ce catalogue grossit (import PDF, synchronisation FasoStock...). Un index
+-- GIN à trigrammes (extension pg_trgm) rend ce même ILIKE '%terme%'
+-- réellement indexé, quelle que soit la position du terme recherché.
+create extension if not exists pg_trgm;
+create index if not exists products_name_trgm_idx on products using gin (name gin_trgm_ops);
+create index if not exists products_reference_trgm_idx on products using gin (reference gin_trgm_ops);
+create index if not exists products_barcode_trgm_idx on products using gin (barcode gin_trgm_ops);
+
 -- Exemplaires individuels d'un produit à suivi unitaire (motos/engins) : un
 -- exemplaire = une ligne, avec son propre numéro de châssis (identifiant
 -- réel du véhicule) et moteur. "EN_STOCK" tant qu'il n'a pas été vendu ;
