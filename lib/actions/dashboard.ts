@@ -13,7 +13,7 @@ export async function getDashboardData(businessId: string, locationId: string) {
   // sur les mêmes lignes.
   const recentStart = sevenDaysAgo < monthStart ? sevenDaysAgo : monthStart;
 
-  const [salesRes, stocksRes] = await Promise.all([
+  const [salesRes, stockSummaryRes] = await Promise.all([
     supabase
       .from("sales")
       .select("id, total, createdAt:created_at")
@@ -21,12 +21,15 @@ export async function getDashboardData(businessId: string, locationId: string) {
       .eq("location_id", locationId)
       .neq("status", "ANNULEE")
       .gte("created_at", recentStart.toISOString()),
-    supabase
-      .from("product_stocks")
-      .select("quantity, product:products!inner(id, name, purchasePrice:purchase_price, minStock:min_stock, businessId:business_id, active)")
-      .eq("location_id", locationId)
-      .eq("products.business_id", businessId)
-      .eq("products.active", true),
+    // Agrégé côté base (voir supabase/schema.sql::get_dashboard_stock_summary)
+    // plutôt que de rapatrier tout le stock du commerce à chaque chargement du
+    // tableau de bord — le volume transféré ne dépend plus de la taille du
+    // catalogue.
+    supabase.rpc("get_dashboard_stock_summary", {
+      p_business_id: businessId,
+      p_location_id: locationId,
+      p_low_stock_limit: 6,
+    }),
   ]);
 
   const recentSales = salesRes.data ?? [];
@@ -49,16 +52,25 @@ export async function getDashboardData(businessId: string, locationId: string) {
     if (diffDays === 1) salesYesterday += s.total as number;
   }
 
-  const stocks = (stocksRes.data ?? []) as unknown as Array<{
-    quantity: number;
-    product: { id: string; name: string; purchasePrice: number; minStock: number };
-  }>;
-  const stockValue = stocks.reduce((sum, s) => sum + s.quantity * s.product.purchasePrice, 0);
-  const productCount = stocks.filter((s) => s.quantity > 0).length;
-  const lowStockProducts = stocks
-    .filter((s) => s.quantity > 0 && s.quantity <= s.product.minStock)
-    .map((s) => ({ id: s.product.id, name: s.product.name, quantity: s.quantity, minStock: s.product.minStock }));
-  const outOfStockCount = stocks.filter((s) => s.quantity <= 0).length;
+  const stockSummary = (stockSummaryRes.data ?? {}) as {
+    stockValue?: number;
+    productCount?: number;
+    outOfStockCount?: number;
+    lowStockCount?: number;
+    lowStockProducts?: Array<{ product_id: string; name: string; quantity: number; min_stock: number }>;
+  };
+  const stockValue = stockSummary.stockValue ?? 0;
+  const productCount = stockSummary.productCount ?? 0;
+  const outOfStockCount = stockSummary.outOfStockCount ?? 0;
+  // lowStockProducts reste borné (6, pour l'affichage) — lowStockCount porte
+  // le vrai total, à utiliser pour tout badge/compteur.
+  const lowStockCount = stockSummary.lowStockCount ?? 0;
+  const lowStockProducts = (stockSummary.lowStockProducts ?? []).map((p) => ({
+    id: p.product_id,
+    name: p.name,
+    quantity: p.quantity,
+    minStock: p.min_stock,
+  }));
 
   const todaySaleIds = todaySales.map((s) => s.id as string);
   let profitToday = 0;
@@ -85,81 +97,47 @@ export async function getDashboardData(businessId: string, locationId: string) {
     salesCountToday,
     soldQtyToday,
     lowStockProducts,
+    lowStockCount,
     outOfStockCount,
   };
 }
 
+/** Produits les plus vendus du mois — agrégé côté base (supabase/schema.sql::get_top_products). */
 export async function getTopProducts(businessId: string, locationId: string, limit = 5) {
   const monthStart = startOfMonth();
 
-  const { data: sales } = await supabase
-    .from("sales")
-    .select("id")
-    .eq("business_id", businessId)
-    .eq("location_id", locationId)
-    .neq("status", "ANNULEE")
-    .gte("created_at", monthStart.toISOString());
-  const saleIds = (sales ?? []).map((s) => s.id as string);
-  if (saleIds.length === 0) return [];
+  const { data } = await supabase.rpc("get_top_products", {
+    p_business_id: businessId,
+    p_location_id: locationId,
+    p_month_start: monthStart.toISOString(),
+    p_limit: limit,
+  });
 
-  const { data: items } = await supabase
-    .from("sale_items")
-    .select("productId:product_id, quantity, total")
-    .in("sale_id", saleIds);
-
-  const byProduct = new Map<string, { quantity: number; total: number }>();
-  for (const i of items ?? []) {
-    const key = i.productId as string;
-    const acc = byProduct.get(key) ?? { quantity: 0, total: 0 };
-    acc.quantity += i.quantity as number;
-    acc.total += i.total as number;
-    byProduct.set(key, acc);
-  }
-
-  const top = [...byProduct.entries()]
-    .sort((a, b) => b[1].quantity - a[1].quantity)
-    .slice(0, limit);
-  if (top.length === 0) return [];
-
-  const { data: products } = await supabase
-    .from("products")
-    .select("id, name")
-    .in("id", top.map(([id]) => id));
-  const nameMap = new Map((products ?? []).map((p) => [p.id as string, p.name as string]));
-
-  return top.map(([productId, agg]) => ({
-    productId,
-    name: nameMap.get(productId) ?? "Produit supprimé",
-    quantity: agg.quantity,
-    total: agg.total,
+  return ((data ?? []) as Array<{ product_id: string; name: string; quantity: number; total: number }>).map((row) => ({
+    productId: row.product_id,
+    name: row.name,
+    quantity: row.quantity,
+    total: row.total,
   }));
 }
 
-/** Valeur du stock pour chaque boutique/dépôt du commerce — vue d'ensemble multi-boutiques. */
+/** Valeur du stock pour chaque boutique/dépôt du commerce — agrégé côté base (supabase/schema.sql::get_locations_stock_overview). */
 export async function getLocationsStockOverview(businessId: string) {
-  const { data: locations } = await supabase
-    .from("locations")
-    .select("id, name, type, isDefault:is_default")
-    .eq("business_id", businessId)
-    .eq("active", true)
-    .order("is_default", { ascending: false })
-    .order("name", { ascending: true });
+  const [{ data: locations }, { data: stockByLocation }] = await Promise.all([
+    supabase
+      .from("locations")
+      .select("id, name, type, isDefault:is_default")
+      .eq("business_id", businessId)
+      .eq("active", true)
+      .order("is_default", { ascending: false })
+      .order("name", { ascending: true }),
+    supabase.rpc("get_locations_stock_overview", { p_business_id: businessId }),
+  ]);
   if (!locations || locations.length === 0) return [];
 
-  const { data: stocks } = await supabase
-    .from("product_stocks")
-    .select("locationId:location_id, quantity, product:products(purchasePrice:purchase_price)")
-    .in("location_id", locations.map((l) => l.id as string));
-
-  const valueByLocation = new Map<string, number>();
-  for (const s of (stocks ?? []) as unknown as Array<{
-    locationId: string;
-    quantity: number;
-    product: { purchasePrice: number } | null;
-  }>) {
-    const value = s.quantity * (s.product?.purchasePrice ?? 0);
-    valueByLocation.set(s.locationId, (valueByLocation.get(s.locationId) ?? 0) + value);
-  }
+  const valueByLocation = new Map(
+    ((stockByLocation ?? []) as Array<{ location_id: string; stock_value: number }>).map((s) => [s.location_id, s.stock_value])
+  );
 
   return locations.map((l) => ({
     id: l.id as string,

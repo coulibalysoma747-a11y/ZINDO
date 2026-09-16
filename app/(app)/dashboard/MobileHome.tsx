@@ -59,7 +59,7 @@ export function MobileHome({
   canManageExpenses: boolean;
   canViewReports: boolean;
 }) {
-  const hasAlerts = data.outOfStockCount > 0 || data.lowStockProducts.length > 0;
+  const hasAlerts = data.outOfStockCount > 0 || data.lowStockCount > 0;
 
   const trendPct =
     data.salesYesterday > 0 ? Math.round(((data.salesToday - data.salesYesterday) / data.salesYesterday) * 100) : null;
@@ -153,14 +153,14 @@ export function MobileHome({
           <p className="rounded-2xl bg-white px-4 py-3 text-sm text-zinc-500 shadow-sm">Aucune alerte pour le moment.</p>
         ) : (
           <div className="divide-y divide-zinc-100 rounded-2xl bg-white shadow-sm sm:grid sm:grid-cols-2 sm:divide-x sm:divide-y-0">
-            {data.lowStockProducts.length > 0 && (
+            {data.lowStockCount > 0 && (
               <Link href="/produits?filtre=stock-faible" className="flex items-center gap-3 px-4 py-3">
                 <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-amber-50 text-amber-500">
                   <AlertTriangle className="h-4.5 w-4.5" />
                 </span>
                 <span className="min-w-0 flex-1">
                   <span className="block text-sm font-medium text-zinc-900">Stock faible</span>
-                  <span className="block text-xs text-zinc-500">{data.lowStockProducts.length} produit(s)</span>
+                  <span className="block text-xs text-zinc-500">{data.lowStockCount} produit(s)</span>
                 </span>
                 <ChevronRight className="h-4 w-4 shrink-0 text-zinc-300" />
               </Link>

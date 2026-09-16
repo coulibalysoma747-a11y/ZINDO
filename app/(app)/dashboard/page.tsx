@@ -217,7 +217,13 @@ export default async function DashboardPage() {
                     <Badge tone="red">{data.outOfStockCount}</Badge>
                   </div>
                 )}
-                {data.lowStockProducts.length === 0 && data.outOfStockCount === 0 ? (
+                {data.lowStockCount > 0 && (
+                  <div className="flex items-center justify-between rounded-lg bg-amber-50 px-3 py-2">
+                    <span className="text-sm text-amber-700">Produits en stock faible</span>
+                    <Badge tone="amber">{data.lowStockCount}</Badge>
+                  </div>
+                )}
+                {data.lowStockCount === 0 && data.outOfStockCount === 0 ? (
                   <p className="text-sm text-zinc-500">Aucune alerte pour le moment.</p>
                 ) : (
                   <ul className="space-y-2">
