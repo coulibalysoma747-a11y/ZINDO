@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Plus, FileUp, Barcode } from "lucide-react";
+import { Plus, FileUp, QrCode } from "lucide-react";
 import { requirePermission } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
 import { supabase } from "@/lib/supabase";
@@ -78,7 +78,7 @@ export default async function ProductsPage({
         </div>
         <div className="flex flex-wrap gap-2">
           <ButtonLink href="/produits/etiquettes" variant="outline">
-            <Barcode className="h-4 w-4" /> Codes-barres
+            <QrCode className="h-4 w-4" /> QR codes
           </ButtonLink>
           <ButtonLink href="/produits/importer" variant="outline">
             <FileUp className="h-4 w-4" /> Importer un catalogue

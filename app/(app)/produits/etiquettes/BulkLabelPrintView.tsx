@@ -8,7 +8,7 @@ import { Card } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
 import { EmptyState } from "@/components/ui/Empty";
 import { formatMoney } from "@/lib/format";
-import { BarcodeLabel, LABEL_DIMENSIONS, type LabelSize } from "@/components/products/BarcodeLabel";
+import { ProductQrLabel, LABEL_DIMENSIONS, type LabelSize } from "@/components/products/ProductQrLabel";
 import { ensureProductBarcodeAction } from "@/lib/actions/products";
 
 type Product = { id: string; name: string; barcode: string | null; reference: string; salePrice: number };
@@ -20,12 +20,13 @@ const SIZE_OPTIONS: { value: LabelSize; label: string }[] = [
 ];
 
 /**
- * Impression groupée de codes-barres — pensée pour les produits qui n'en
- * ont pas encore. ZINDO génère lui-même un vrai code-barres EAN-13 (jamais
- * la référence/SKU du produit, illisible pour un scanner de caisse standard)
- * pour chaque produit sélectionné qui n'en a pas, l'enregistre sur le
- * produit, puis l'imprime — voir lib/reference.ts::generateProductBarcode
- * et lib/actions/products.ts::ensureProductBarcodeAction.
+ * Impression groupée de QR codes — pensée pour les produits qui n'en ont pas
+ * encore. ZINDO génère lui-même un vrai code-barres EAN-13 (jamais la
+ * référence/SKU du produit) pour chaque produit sélectionné qui n'en a pas,
+ * l'enregistre sur le produit, puis encode ce code dans un QR (scannable au
+ * téléphone comme à la caisse, sans douchette dédiée) — voir
+ * lib/reference.ts::generateProductBarcode et
+ * lib/actions/products.ts::ensureProductBarcodeAction.
  */
 export function BulkLabelPrintView({
   products: initialProducts,
@@ -111,7 +112,7 @@ export function BulkLabelPrintView({
             position: absolute; top: 0; left: 0; margin: 0;
             display: flex; flex-wrap: wrap; gap: 3mm; align-content: flex-start;
           }
-          .barcode-label { border: 1px dashed #bbb !important; break-inside: avoid; page-break-inside: avoid; }
+          .qr-label { border: 1px dashed #bbb !important; break-inside: avoid; page-break-inside: avoid; }
           `
               : `
           @page { size: ${width}mm ${height}mm; margin: 0; }
@@ -119,8 +120,8 @@ export function BulkLabelPrintView({
           body * { visibility: hidden; }
           #zindo-bulk-labels, #zindo-bulk-labels * { visibility: visible; }
           #zindo-bulk-labels { position: absolute; top: 0; left: 0; margin: 0; }
-          .barcode-label { border: none !important; }
-          .barcode-label:not(:last-child) { page-break-after: always; break-after: page; }
+          .qr-label { border: none !important; }
+          .qr-label:not(:last-child) { page-break-after: always; break-after: page; }
           `
           }
         }
@@ -131,9 +132,9 @@ export function BulkLabelPrintView({
           <Link href="/produits" className="flex items-center gap-1 text-sm text-zinc-500 hover:text-zinc-700">
             <ArrowLeft className="h-4 w-4" /> Retour aux produits
           </Link>
-          <h1 className="mt-2 text-xl font-bold text-zinc-900">Imprimer des codes-barres</h1>
+          <h1 className="mt-2 text-xl font-bold text-zinc-900">Imprimer des QR codes</h1>
           <p className="text-sm text-zinc-500">
-            Un code-barres scannable est généré à partir de la référence pour chaque produit qui n&apos;en a pas.
+            Un QR code scannable au téléphone comme à la caisse est généré pour chaque produit qui n&apos;en a pas.
           </p>
         </div>
       </div>
@@ -148,7 +149,7 @@ export function BulkLabelPrintView({
                 onlyMissing ? "bg-zindo-green-600 text-white" : "bg-zinc-100 text-zinc-600 hover:bg-zinc-200"
               }`}
             >
-              Sans code-barres uniquement
+              Sans QR code uniquement
             </button>
             <button
               type="button"
@@ -168,7 +169,7 @@ export function BulkLabelPrintView({
 
         {visible.length === 0 ? (
           <EmptyState
-            title={onlyMissing ? "Tous vos produits ont déjà un code-barres" : "Aucun produit trouvé"}
+            title={onlyMissing ? "Tous vos produits ont déjà un QR code" : "Aucun produit trouvé"}
             description={onlyMissing ? "Rien à imprimer ici." : undefined}
           />
         ) : (
@@ -194,7 +195,7 @@ export function BulkLabelPrintView({
                     />
                     <span className="min-w-0 flex-1 truncate text-zinc-900">{p.name}</span>
                     <span className="shrink-0 font-mono text-xs text-zinc-400">{p.barcode || p.reference}</span>
-                    {!p.barcode && <span className="shrink-0 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold text-amber-700">Sans code-barres</span>}
+                    {!p.barcode && <span className="shrink-0 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold text-amber-700">Sans QR code</span>}
                   </label>
                 </li>
               ))}
@@ -271,7 +272,7 @@ export function BulkLabelPrintView({
           <Button disabled={selectedProducts.length === 0 || generating} onClick={handlePrint}>
             <Printer className="h-4 w-4" />
             {generating
-              ? "Génération des codes-barres..."
+              ? "Génération des QR codes..."
               : `Imprimer ${selectedProducts.length > 0 ? `(${selectedProducts.length * quantityPerProduct})` : ""}`}
           </Button>
         </div>
@@ -285,7 +286,7 @@ export function BulkLabelPrintView({
       <div id="zindo-bulk-labels" className="flex flex-wrap justify-center gap-3">
         {selectedProducts.flatMap((p) =>
           Array.from({ length: quantityPerProduct }).map((_, i) => (
-            <BarcodeLabel
+            <ProductQrLabel
               key={`${p.id}-${i}`}
               size={size}
               data={{

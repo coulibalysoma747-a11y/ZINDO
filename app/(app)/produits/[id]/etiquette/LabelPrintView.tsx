@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { ArrowLeft, Printer, Minus, Plus } from "lucide-react";
 import { Button } from "@/components/ui/Button";
-import { BarcodeLabel, LABEL_DIMENSIONS, type LabelData, type LabelSize } from "@/components/products/BarcodeLabel";
+import { ProductQrLabel, LABEL_DIMENSIONS, type LabelData, type LabelSize } from "@/components/products/ProductQrLabel";
 import { ensureProductBarcodeAction } from "@/lib/actions/products";
 
 const SIZE_OPTIONS: { value: LabelSize; label: string }[] = [
@@ -57,7 +57,7 @@ export function LabelPrintView({
             position: absolute; top: 0; left: 0; margin: 0;
             display: flex; flex-wrap: wrap; gap: 3mm; align-content: flex-start;
           }
-          .barcode-label { border: 1px dashed #bbb !important; break-inside: avoid; page-break-inside: avoid; }
+          .qr-label { border: 1px dashed #bbb !important; break-inside: avoid; page-break-inside: avoid; }
           `
               : `
           @page { size: ${width}mm ${height}mm; margin: 0; }
@@ -65,8 +65,8 @@ export function LabelPrintView({
           body * { visibility: hidden; }
           #zindo-labels, #zindo-labels * { visibility: visible; }
           #zindo-labels { position: absolute; top: 0; left: 0; margin: 0; }
-          .barcode-label { border: none !important; }
-          .barcode-label:not(:last-child) { page-break-after: always; break-after: page; }
+          .qr-label { border: none !important; }
+          .qr-label:not(:last-child) { page-break-after: always; break-after: page; }
           `
           }
         }
@@ -149,7 +149,7 @@ export function LabelPrintView({
 
       <div id="zindo-labels" className="flex flex-wrap justify-center gap-3">
         {Array.from({ length: quantity }).map((_, i) => (
-          <BarcodeLabel key={i} data={data} size={size} />
+          <ProductQrLabel key={i} data={data} size={size} />
         ))}
       </div>
     </div>
