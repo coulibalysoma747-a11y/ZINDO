@@ -11,11 +11,19 @@ const PERIODS = [
   { value: "mois", label: "Ce mois" },
 ];
 
-export function HistoryFilters({ paramName }: { paramName: string }) {
+export function HistoryFilters({
+  paramName,
+  periods = PERIODS,
+  defaultValue = "",
+}: {
+  paramName: string;
+  periods?: { value: string; label: string }[];
+  defaultValue?: string;
+}) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const current = searchParams.get(paramName) ?? "";
+  const current = searchParams.get(paramName) ?? defaultValue;
 
   function select(value: string) {
     const params = new URLSearchParams(searchParams.toString());
@@ -26,7 +34,7 @@ export function HistoryFilters({ paramName }: { paramName: string }) {
 
   return (
     <div className="flex flex-wrap gap-1 rounded-lg border border-zinc-200 bg-white p-1 dark:border-slate-700 dark:bg-slate-900">
-      {PERIODS.map((p) => (
+      {periods.map((p) => (
         <button
           key={p.value}
           onClick={() => select(p.value)}

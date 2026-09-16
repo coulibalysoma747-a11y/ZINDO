@@ -7,12 +7,15 @@ export function StatCard({
   icon: Icon,
   tone = "emerald",
   hint,
+  /** % de variation vs une période de référence (ex. période précédente) — null quand aucune comparaison n'est disponible. */
+  delta,
 }: {
   label: string;
   value: string;
   icon: LucideIcon;
   tone?: "emerald" | "amber" | "red" | "blue";
   hint?: string;
+  delta?: number | null;
 }) {
   const toneClasses = {
     emerald: "bg-emerald-50 text-emerald-600",
@@ -28,6 +31,11 @@ export function StatCard({
           <p className="text-sm text-zinc-500">{label}</p>
           <p className="mt-1 text-2xl font-bold text-zinc-900">{value}</p>
           {hint && <p className="mt-1 text-xs text-zinc-400">{hint}</p>}
+          {delta !== undefined && delta !== null && (
+            <p className={cn("mt-1 text-xs font-medium", delta >= 0 ? "text-emerald-600" : "text-red-500")}>
+              {delta >= 0 ? "↗" : "↘"} {Math.abs(delta).toFixed(1)}% vs période précédente
+            </p>
+          )}
         </div>
         <div className={cn("flex h-10 w-10 items-center justify-center rounded-lg", toneClasses)}>
           <Icon className="h-5 w-5" />
