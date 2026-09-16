@@ -2,7 +2,7 @@ import { requirePermission } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
 import { getCurrentLocation } from "@/lib/location";
 import { getBusinessInsights } from "@/lib/actions/insights";
-import { isAssistantConfigured } from "@/lib/ai/client";
+import { isAssistantConfigured } from "@/lib/ai/deepseek";
 import { Card, CardBody, CardHeader } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/Empty";
 import { ButtonLink } from "@/components/ui/Button";
