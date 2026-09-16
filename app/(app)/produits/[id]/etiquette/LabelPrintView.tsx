@@ -5,6 +5,7 @@ import Link from "next/link";
 import { ArrowLeft, Printer, Minus, Plus } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { BarcodeLabel, LABEL_DIMENSIONS, type LabelData, type LabelSize } from "@/components/products/BarcodeLabel";
+import { ensureProductBarcodeAction } from "@/lib/actions/products";
 
 const SIZE_OPTIONS: { value: LabelSize; label: string }[] = [
   { value: "40mm", label: "Petit" },
@@ -12,11 +13,31 @@ const SIZE_OPTIONS: { value: LabelSize; label: string }[] = [
   { value: "60mm", label: "Grand" },
 ];
 
-export function LabelPrintView({ data, productId }: { data: LabelData; productId: string }) {
+export function LabelPrintView({
+  data: initialData,
+  productId,
+  hasBarcode,
+}: {
+  data: LabelData;
+  productId: string;
+  hasBarcode: boolean;
+}) {
+  const [data, setData] = useState(initialData);
   const [size, setSize] = useState<LabelSize>("50mm");
   const [quantity, setQuantity] = useState(1);
   const [printMode, setPrintMode] = useState<"labels" | "a4">("labels");
+  const [generating, setGenerating] = useState(false);
   const { width, height } = LABEL_DIMENSIONS[size];
+
+  async function handlePrint() {
+    if (!hasBarcode) {
+      setGenerating(true);
+      const result = await ensureProductBarcodeAction(productId);
+      if ("barcode" in result) setData((d) => ({ ...d, code: result.barcode }));
+      setGenerating(false);
+    }
+    requestAnimationFrame(() => window.print());
+  }
 
   return (
     <div className="space-y-4">
@@ -120,8 +141,8 @@ export function LabelPrintView({ data, productId }: { data: LabelData; productId
               <Plus className="h-3.5 w-3.5" />
             </button>
           </div>
-          <Button onClick={() => window.print()}>
-            <Printer className="h-4 w-4" /> Imprimer
+          <Button onClick={handlePrint} disabled={generating}>
+            <Printer className="h-4 w-4" /> {generating ? "Génération du code-barres..." : "Imprimer"}
           </Button>
         </div>
       </div>

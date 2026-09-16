@@ -57,6 +57,7 @@ create table businesses (
   next_online_order_seq int not null default 1,
   next_invoice_seq int not null default 1,
   next_quote_seq int not null default 1,
+  next_barcode_seq int not null default 1,
   -- Intégration FasoStock (lib/integrations/faso-stock.ts) : synchronisation
   -- à sens unique FasoStock → ZINDO (leur API est en lecture seule). La clé
   -- n'est jamais renvoyée au navigateur, uniquement lue côté serveur.

@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/Input";
 import { EmptyState } from "@/components/ui/Empty";
 import { formatMoney } from "@/lib/format";
 import { BarcodeLabel, LABEL_DIMENSIONS, type LabelSize } from "@/components/products/BarcodeLabel";
+import { ensureProductBarcodeAction } from "@/lib/actions/products";
 
 type Product = { id: string; name: string; barcode: string | null; reference: string; salePrice: number };
 
@@ -20,15 +21,14 @@ const SIZE_OPTIONS: { value: LabelSize; label: string }[] = [
 
 /**
  * Impression groupée de codes-barres — pensée pour les produits qui n'en
- * ont pas encore : utilise leur référence ZND-xxxxxx (déjà unique, déjà
- * acceptée à la recherche/scan à la caisse — voir findProductByExactCodeAction)
- * comme code scannable, imprimée en CODE128 prête à coller sur le produit.
- * Aucune écriture en base : c'est la même logique que l'étiquette d'un seul
- * produit (components/products/BarcodeLabel.tsx), juste étendue à une
- * sélection de plusieurs produits à la fois.
+ * ont pas encore. ZINDO génère lui-même un vrai code-barres EAN-13 (jamais
+ * la référence/SKU du produit, illisible pour un scanner de caisse standard)
+ * pour chaque produit sélectionné qui n'en a pas, l'enregistre sur le
+ * produit, puis l'imprime — voir lib/reference.ts::generateProductBarcode
+ * et lib/actions/products.ts::ensureProductBarcodeAction.
  */
 export function BulkLabelPrintView({
-  products,
+  products: initialProducts,
   businessName,
   currency,
 }: {
@@ -36,12 +36,14 @@ export function BulkLabelPrintView({
   businessName: string;
   currency: string;
 }) {
+  const [products, setProducts] = useState(initialProducts);
   const [onlyMissing, setOnlyMissing] = useState(true);
   const [search, setSearch] = useState("");
-  const [selected, setSelected] = useState<Set<string>>(new Set(products.filter((p) => !p.barcode).map((p) => p.id)));
+  const [selected, setSelected] = useState<Set<string>>(new Set(initialProducts.filter((p) => !p.barcode).map((p) => p.id)));
   const [size, setSize] = useState<LabelSize>("50mm");
   const [quantityPerProduct, setQuantityPerProduct] = useState(1);
   const [printMode, setPrintMode] = useState<"labels" | "a4">("labels");
+  const [generating, setGenerating] = useState(false);
   const { width, height } = LABEL_DIMENSIONS[size];
 
   const visible = useMemo(() => {
@@ -72,6 +74,23 @@ export function BulkLabelPrintView({
       }
       return next;
     });
+  }
+
+  async function handlePrint() {
+    const missing = products.filter((p) => selected.has(p.id) && !p.barcode);
+    if (missing.length > 0) {
+      setGenerating(true);
+      const results = await Promise.all(missing.map((p) => ensureProductBarcodeAction(p.id).then((r) => [p.id, r] as const)));
+      setProducts((prev) =>
+        prev.map((p) => {
+          const found = results.find(([id]) => id === p.id);
+          return found && "barcode" in found[1] ? { ...p, barcode: found[1].barcode } : p;
+        })
+      );
+      setGenerating(false);
+    }
+    // Laisse React repeindre les nouveaux codes-barres avant d'ouvrir la boîte d'impression.
+    requestAnimationFrame(() => window.print());
   }
 
   return (
@@ -249,8 +268,11 @@ export function BulkLabelPrintView({
             <span className="text-xs text-zinc-500">étiquette(s) par produit</span>
           </div>
 
-          <Button disabled={selectedProducts.length === 0} onClick={() => window.print()}>
-            <Printer className="h-4 w-4" /> Imprimer {selectedProducts.length > 0 ? `(${selectedProducts.length * quantityPerProduct})` : ""}
+          <Button disabled={selectedProducts.length === 0 || generating} onClick={handlePrint}>
+            <Printer className="h-4 w-4" />
+            {generating
+              ? "Génération des codes-barres..."
+              : `Imprimer ${selectedProducts.length > 0 ? `(${selectedProducts.length * quantityPerProduct})` : ""}`}
           </Button>
         </div>
         {printMode === "a4" && (

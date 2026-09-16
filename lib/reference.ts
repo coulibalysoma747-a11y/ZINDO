@@ -14,6 +14,7 @@ async function nextSeq(
     | "next_online_order_seq"
     | "next_invoice_seq"
     | "next_quote_seq"
+    | "next_barcode_seq"
 ) {
   const { data, error } = await supabase.rpc("increment_business_seq", {
     p_business_id: businessId,
@@ -60,6 +61,29 @@ export async function generateSubscriptionInvoiceNumber(businessId: string) {
 export async function generateQuoteNumber(businessId: string) {
   const seq = await nextSeq(businessId, "next_quote_seq");
   return `ZND-D-${pad(seq)}`;
+}
+
+/** Chiffre de contrôle EAN-13 standard (modulo 10, poids 1/3 alternés). */
+function ean13CheckDigit(body12: string) {
+  let sum = 0;
+  for (let i = 0; i < 12; i++) {
+    sum += Number(body12[i]) * (i % 2 === 0 ? 1 : 3);
+  }
+  return (10 - (sum % 10)) % 10;
+}
+
+/**
+ * Génère un vrai code-barres EAN-13 pour un produit qui n'en a pas — jamais
+ * la référence/SKU du produit (illisible pour la plupart des scanners de
+ * caisse standards, qui attendent un format numérique EAN/UPC). Préfixe "2" :
+ * plage explicitement réservée par GS1 à la numérotation interne/en boutique
+ * ("restricted circulation numbers"), donc jamais en conflit avec le vrai
+ * code-barres d'un produit du commerce.
+ */
+export async function generateProductBarcode(businessId: string) {
+  const seq = await nextSeq(businessId, "next_barcode_seq");
+  const body = `2${String(seq).padStart(11, "0")}`;
+  return `${body}${ean13CheckDigit(body)}`;
 }
 
 export function generateInventoryReference() {

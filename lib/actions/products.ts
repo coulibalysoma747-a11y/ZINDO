@@ -7,7 +7,7 @@ import { supabase } from "@/lib/supabase";
 import { requirePermission } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
 import { logAction } from "@/lib/audit";
-import { generateProductReference } from "@/lib/reference";
+import { generateProductReference, generateProductBarcode } from "@/lib/reference";
 import { saveProductPhoto, deleteUploadedImage } from "@/lib/photo-upload";
 import { getActivityConfig } from "@/lib/activity-config";
 import { checkLimit } from "@/lib/subscription";
@@ -295,4 +295,42 @@ export async function toggleProductActiveAction(id: string, active: boolean) {
   revalidatePath("/produits");
   revalidatePath(`/produits/${id}`);
   return { success: active ? "Produit réactivé" : "Produit archivé" };
+}
+
+/**
+ * Génère et enregistre un vrai code-barres EAN-13 pour un produit qui n'en a
+ * pas encore (jamais sa référence/SKU — voir generateProductBarcode) —
+ * appelé juste avant l'impression d'étiquettes (voir /produits/etiquettes et
+ * /produits/[id]/etiquette). Idempotent : si le produit a déjà un
+ * code-barres, il est simplement renvoyé tel quel plutôt que remplacé.
+ */
+export async function ensureProductBarcodeAction(productId: string): Promise<{ barcode: string } | { error: string }> {
+  const user = await requirePermission(PERMISSIONS.PRODUCTS_MANAGE);
+
+  const { data: product } = await supabase
+    .from("products")
+    .select("id, barcode")
+    .eq("id", productId)
+    .eq("business_id", user.businessId)
+    .maybeSingle();
+  if (!product) return { error: "Produit introuvable" };
+  if (product.barcode) return { barcode: product.barcode as string };
+
+  try {
+    const barcode = await generateProductBarcode(user.businessId);
+    const { error } = await supabase.from("products").update({ barcode }).eq("id", productId);
+    if (error) {
+      console.error("[ensureProductBarcodeAction] Échec de l'enregistrement :", error.message);
+      return { error: "Impossible de générer le code-barres" };
+    }
+
+    revalidatePath(`/produits/${productId}`);
+    revalidatePath("/produits");
+    return { barcode };
+  } catch (e) {
+    // La colonne next_barcode_seq peut ne pas encore exister si la migration
+    // n'a pas été exécutée — ne jamais casser l'impression pour autant.
+    console.error("[ensureProductBarcodeAction] Échec de la génération :", e);
+    return { error: "Impossible de générer le code-barres pour le moment" };
+  }
 }

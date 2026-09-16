@@ -23,6 +23,7 @@ export default async function ProductLabelPage({
   return (
     <LabelPrintView
       productId={product.id as string}
+      hasBarcode={!!product.barcode}
       data={{
         businessName: user.business.name,
         productName: product.name as string,

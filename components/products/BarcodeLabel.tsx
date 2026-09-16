@@ -21,9 +21,10 @@ export type LabelData = {
 };
 
 /**
- * Étiquette produit avec code-barres scannable (CODE128 — accepte aussi bien un
- * vrai code-barres que la référence ZND-xxxxxx générée automatiquement, puisque
- * tous les produits ne sont pas obligés d'avoir un code-barres).
+ * Étiquette produit avec code-barres scannable (CODE128, qui encode aussi
+ * bien des chiffres que des lettres — accepte donc le vrai code-barres EAN-13
+ * généré par ZINDO comme la référence ZND-xxxxxx affichée en aperçu avant
+ * qu'il ne soit généré — voir LabelPrintView/BulkLabelPrintView).
  */
 export function BarcodeLabel({ data, size = "50mm" }: { data: LabelData; size?: LabelSize }) {
   const svgRef = useRef<SVGSVGElement>(null);
