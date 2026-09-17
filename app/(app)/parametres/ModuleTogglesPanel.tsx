@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import Link from "next/link";
-import { ChevronRight, Bell, Calculator, BellRing, PackagePlus, Images, FileSignature, Truck, Send, Package2 } from "lucide-react";
+import { ChevronRight, Bell, Calculator, BellRing, PackagePlus, Images, FileSignature, Truck, Send, Package2, Users } from "lucide-react";
 import { updateBusinessSettingsAction } from "@/lib/actions/business-settings";
 import type { BusinessSettings } from "@/lib/business-settings";
 
@@ -87,6 +87,15 @@ const MODULES: {
     description: "Devis avant facture, convertible en vente d'un bouton une fois accepté.",
     href: "/devis",
     hrefLabel: "Ouvrir les devis",
+  },
+  {
+    key: "cashierQueue",
+    icon: Users,
+    title: "Caisse à deux",
+    description:
+      "Sépare le rôle en deux : un vendeur prépare le panier et l'envoie à la caisse (module Vente), un caissier récupère le panier et finalise le paiement (nouveau module Caisse). Accordez la permission « Encaisser depuis la file d'attente » à qui doit encaisser, dans Rôles et permissions.",
+    href: "/caisse",
+    hrefLabel: "Ouvrir la caisse",
   },
 ];
 

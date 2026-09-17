@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState, useTransition } from "react";
 import Link from "next/link";
-import { Trash2, Plus, Minus, UserPlus, Search, Loader2, Wallet, Lock, WifiOff, RefreshCw, Sparkles, Users } from "lucide-react";
+import { Trash2, Plus, Minus, UserPlus, Search, Loader2, Wallet, Lock, WifiOff, RefreshCw, Sparkles } from "lucide-react";
 import { ProductGrid, type PosProduct, type PackagingUnitOption } from "@/components/products/ProductGrid";
 import { BarcodeScannerButton } from "@/components/products/BarcodeScannerButton";
 import { Card, CardBody, CardHeader } from "@/components/ui/Card";
@@ -12,12 +12,11 @@ import { formatMoney, formatDateTime } from "@/lib/format";
 import { createSaleAction } from "@/lib/actions/sales";
 import { getSaleDocumentAction, type SaleDocument } from "@/lib/actions/receipt";
 import { getPosProductsAction, findProductByExactCodeAction } from "@/lib/actions/product-search";
-import { sendCartToQueueAction, type ClaimedCart } from "@/lib/actions/cashier-queue";
+import { sendCartToQueueAction } from "@/lib/actions/cashier-queue";
 import { ClientFormModal } from "@/app/(app)/clients/ClientFormModal";
 import { Modal } from "@/components/ui/Modal";
 import { PosSettingsButton } from "./PosSettingsButton";
 import { AiCartModal } from "./AiCartModal";
-import { CashierQueueModal } from "./CashierQueueModal";
 import { PrinterSettingsButton } from "./PrinterSettingsButton";
 import { ReceiptPrintPanel } from "./ReceiptPrintPanel";
 import type { PaymentMethod } from "@/lib/db-types";
@@ -199,7 +198,6 @@ export function POS({
   const [mobilePortionInput, setMobilePortionInput] = useState<string>("");
   const [newClientOpen, setNewClientOpen] = useState(false);
   const [aiCartOpen, setAiCartOpen] = useState(false);
-  const [queueOpen, setQueueOpen] = useState(false);
   const [sendingToQueue, setSendingToQueue] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
@@ -215,6 +213,11 @@ export function POS({
         (p.barcode ?? "").toLowerCase().includes(q)
     );
   }, [products, search]);
+
+  // "Caisse à deux" : sur le module Vente, on ne finalise plus jamais le
+  // paiement directement — on envoie à la caisse (module Caisse dédié).
+  // La facture A4 reste toujours en encaissement direct, quel que soit ce réglage.
+  const queueOnlyMode = cashierQueueEnabled && !isFacture;
 
   const subtotal = useMemo(
     () => cart.reduce((s, line) => s + line.unitPrice * line.quantity - line.discount, 0),
@@ -381,28 +384,6 @@ export function POS({
         setDiscount(0);
       })
       .finally(() => setSendingToQueue(false));
-  }
-
-  function handleClaimedCart(claimed: ClaimedCart) {
-    const lines: CartLine[] = [];
-    for (const item of claimed.items) {
-      const product = products.find((p) => p.id === item.productId);
-      if (!product) continue;
-      lines.push({
-        product,
-        quantity: item.quantity,
-        unitPrice: item.unitPrice,
-        discount: item.discount,
-        vehicleUnitId: item.vehicleUnitId ?? undefined,
-        packagingUnitId: item.packagingUnitId ?? undefined,
-        packagingLabel: item.unitLabel ?? undefined,
-        multiplier: item.multiplier,
-      });
-    }
-    setCart(lines);
-    setCustomerId(claimed.customerId ?? "");
-    setDiscount(claimed.discount);
-    setQueueOpen(false);
   }
 
   function handleSubmit() {
@@ -631,22 +612,7 @@ export function POS({
               <Sparkles className="h-4 w-4" /> Panier IA
             </Button>
           )}
-          {cashierQueueEnabled && (
-            <Button type="button" variant="outline" onClick={() => setQueueOpen(true)}>
-              <Users className="h-4 w-4" /> File d&apos;attente
-            </Button>
-          )}
         </div>
-
-        {cashierQueueEnabled && (
-          <CashierQueueModal
-            open={queueOpen}
-            onClose={() => setQueueOpen(false)}
-            locationId={locationId}
-            currency={currency}
-            onClaim={handleClaimedCart}
-          />
-        )}
 
         {aiCartEnabled && (
           <AiCartModal
@@ -946,7 +912,7 @@ export function POS({
 
         <Card>
           <CardHeader>
-            <h2 className="font-semibold text-zinc-900">Paiement</h2>
+            <h2 className="font-semibold text-zinc-900">{queueOnlyMode ? "Panier" : "Paiement"}</h2>
           </CardHeader>
           <CardBody className="space-y-3">
             <Field label="Remise globale" htmlFor="discount">
@@ -958,73 +924,78 @@ export function POS({
                 onChange={(e) => setDiscount(Number(e.target.value) || 0)}
               />
             </Field>
-            <Field label="Moyen de paiement" htmlFor="paymentMethod">
-              <Select
-                id="paymentMethod"
-                value={paymentMethod}
-                onChange={(e) => setPaymentMethod(e.target.value as PaymentMethod)}
-              >
-                {paymentMethods.map((m) => (
-                  <option key={m.method} value={m.method}>
-                    {m.label || PAYMENT_LABELS[m.method]}
-                  </option>
-                ))}
-                {allowMixedPayment && <option value="MIXTE">{PAYMENT_LABELS.MIXTE}</option>}
-              </Select>
-            </Field>
 
-            {paymentMethod === "MOBILE_MONEY" && mobileMoneyOperators.length > 1 && (
-              <Field label="Opérateur mobile money" htmlFor="mobileMoneyOperator">
-                <Select
-                  id="mobileMoneyOperator"
-                  value={mobileMoneyOperator}
-                  onChange={(e) => setMobileMoneyOperator(e.target.value as "ORANGE" | "MOOV" | "WAVE")}
-                >
-                  {mobileMoneyOperators.map((op) => (
-                    <option key={op} value={op}>
-                      {MOBILE_MONEY_OPERATOR_LABELS[op]}
-                    </option>
-                  ))}
-                </Select>
-              </Field>
-            )}
+            {!queueOnlyMode && (
+              <>
+                <Field label="Moyen de paiement" htmlFor="paymentMethod">
+                  <Select
+                    id="paymentMethod"
+                    value={paymentMethod}
+                    onChange={(e) => setPaymentMethod(e.target.value as PaymentMethod)}
+                  >
+                    {paymentMethods.map((m) => (
+                      <option key={m.method} value={m.method}>
+                        {m.label || PAYMENT_LABELS[m.method]}
+                      </option>
+                    ))}
+                    {allowMixedPayment && <option value="MIXTE">{PAYMENT_LABELS.MIXTE}</option>}
+                  </Select>
+                </Field>
 
-            {isMixed ? (
-              <div className="grid grid-cols-2 gap-3">
-                <Field label="Part espèces" htmlFor="cashPortion">
-                  <Input
-                    id="cashPortion"
-                    type="number"
-                    min={0}
-                    value={cashPortionInput}
-                    onChange={(e) => setCashPortionInput(e.target.value)}
-                  />
-                </Field>
-                <Field label="Part mobile money" htmlFor="mobilePortion">
-                  <Input
-                    id="mobilePortion"
-                    type="number"
-                    min={0}
-                    value={mobilePortionInput}
-                    onChange={(e) => setMobilePortionInput(e.target.value)}
-                  />
-                </Field>
-              </div>
-            ) : (
-              <Field
-                label="Montant reçu"
-                htmlFor="amountPaid"
-                hint={isCreditOnly ? "Laissez à 0 pour un crédit total" : "Laissez vide pour un paiement exact"}
-              >
-                <Input
-                  id="amountPaid"
-                  type="number"
-                  min={0}
-                  value={amountPaidInput}
-                  onChange={(e) => setAmountPaidInput(e.target.value)}
-                  placeholder={String(total)}
-                />
-              </Field>
+                {paymentMethod === "MOBILE_MONEY" && mobileMoneyOperators.length > 1 && (
+                  <Field label="Opérateur mobile money" htmlFor="mobileMoneyOperator">
+                    <Select
+                      id="mobileMoneyOperator"
+                      value={mobileMoneyOperator}
+                      onChange={(e) => setMobileMoneyOperator(e.target.value as "ORANGE" | "MOOV" | "WAVE")}
+                    >
+                      {mobileMoneyOperators.map((op) => (
+                        <option key={op} value={op}>
+                          {MOBILE_MONEY_OPERATOR_LABELS[op]}
+                        </option>
+                      ))}
+                    </Select>
+                  </Field>
+                )}
+
+                {isMixed ? (
+                  <div className="grid grid-cols-2 gap-3">
+                    <Field label="Part espèces" htmlFor="cashPortion">
+                      <Input
+                        id="cashPortion"
+                        type="number"
+                        min={0}
+                        value={cashPortionInput}
+                        onChange={(e) => setCashPortionInput(e.target.value)}
+                      />
+                    </Field>
+                    <Field label="Part mobile money" htmlFor="mobilePortion">
+                      <Input
+                        id="mobilePortion"
+                        type="number"
+                        min={0}
+                        value={mobilePortionInput}
+                        onChange={(e) => setMobilePortionInput(e.target.value)}
+                      />
+                    </Field>
+                  </div>
+                ) : (
+                  <Field
+                    label="Montant reçu"
+                    htmlFor="amountPaid"
+                    hint={isCreditOnly ? "Laissez à 0 pour un crédit total" : "Laissez vide pour un paiement exact"}
+                  >
+                    <Input
+                      id="amountPaid"
+                      type="number"
+                      min={0}
+                      value={amountPaidInput}
+                      onChange={(e) => setAmountPaidInput(e.target.value)}
+                      placeholder={String(total)}
+                    />
+                  </Field>
+                )}
+              </>
             )}
 
             <div className="space-y-1 border-t border-zinc-100 pt-3 text-sm">
@@ -1036,13 +1007,13 @@ export function POS({
                 <span>Total</span>
                 <span>{formatMoney(total, currency)}</span>
               </div>
-              {change > 0 && (
+              {!queueOnlyMode && change > 0 && (
                 <div className="flex justify-between text-emerald-600">
                   <span>Monnaie à rendre</span>
                   <span>{formatMoney(change, currency)}</span>
                 </div>
               )}
-              {remaining > 0 && (
+              {!queueOnlyMode && remaining > 0 && (
                 <div className="flex justify-between text-red-600">
                   <span>Reste à payer (crédit)</span>
                   <span>{formatMoney(remaining, currency)}</span>
@@ -1052,21 +1023,15 @@ export function POS({
 
             {error && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
 
-            <div className="flex gap-2">
-              {cashierQueueEnabled && !isFacture && (
-                <Button
-                  variant="outline"
-                  size="lg"
-                  disabled={sendingToQueue || pending}
-                  onClick={handleSendToQueue}
-                >
-                  {sendingToQueue ? "Envoi..." : "Envoyer à la caisse"}
-                </Button>
-              )}
-              <Button className="flex-1" size="lg" disabled={pending} onClick={handleSubmit}>
+            {queueOnlyMode ? (
+              <Button className="w-full" size="lg" disabled={sendingToQueue} onClick={handleSendToQueue}>
+                {sendingToQueue ? "Envoi..." : "Envoyer à la caisse"}
+              </Button>
+            ) : (
+              <Button className="w-full" size="lg" disabled={pending} onClick={handleSubmit}>
                 {pending ? "Enregistrement..." : isFacture ? "Générer la facture" : "Valider la vente"}
               </Button>
-            </div>
+            )}
           </CardBody>
         </Card>
       </div>

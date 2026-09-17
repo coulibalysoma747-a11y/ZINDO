@@ -41,13 +41,24 @@ export type NavItem = {
     | "rentals"
     | "quick-supply"
     | "pickups"
-    | "shipments";
+    | "shipments"
+    | "cashier";
   permission?: Permission;
   featureFlag?: string;
   planFeature?: string;
   badge?: string;
   /** Module que le commerçant peut lui-même masquer depuis Paramètres (lib/business-settings.ts `modulesEnabled`). */
-  moduleToggle?: "devis" | "prixDeRevient" | "photosProduits" | "rappelsCredit" | "reassort" | "notifications" | "quickSupply" | "pickups" | "shipments";
+  moduleToggle?:
+    | "devis"
+    | "prixDeRevient"
+    | "photosProduits"
+    | "rappelsCredit"
+    | "reassort"
+    | "notifications"
+    | "quickSupply"
+    | "pickups"
+    | "shipments"
+    | "cashierQueue";
   /** N'apparaît que pour ce type d'activité précis (lib/activities.ts) — voir lib/nav-server.ts. */
   requireActivity?: string;
 };
@@ -56,7 +67,14 @@ export const NAV_ITEMS: NavItem[] = [
   { label: "Tableau de bord", href: "/dashboard", icon: "dashboard" },
   { label: "Notifications", href: "/notifications", icon: "notifications", permission: PERMISSIONS.STOCK_VIEW, moduleToggle: "notifications" },
   { label: "Assistant IA", href: "/assistant", icon: "assistant", permission: PERMISSIONS.ASSISTANT_USE, planFeature: "assistant_ia", badge: "IA" },
-  { label: "Vente / Caisse", href: "/ventes", icon: "sales", permission: PERMISSIONS.SALES_CREATE },
+  { label: "Vente", href: "/ventes", icon: "sales", permission: PERMISSIONS.SALES_CREATE },
+  {
+    label: "Caisse",
+    href: "/caisse",
+    icon: "cashier",
+    permission: PERMISSIONS.CASHIER_QUEUE_MANAGE,
+    moduleToggle: "cashierQueue",
+  },
   {
     label: "Vente Engin",
     href: "/vente-engin",

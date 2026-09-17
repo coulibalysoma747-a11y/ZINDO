@@ -27,7 +27,6 @@ import { QuantityInputModePanel } from "./QuantityInputModePanel";
 import { DangerZonePanel } from "./DangerZonePanel";
 import { MobileMoneyPanel } from "./MobileMoneyPanel";
 import { AiCartPanel } from "./AiCartPanel";
-import { CaisseADeuxPanel } from "./CaisseADeuxPanel";
 import { ApiKeysPanel } from "./ApiKeysPanel";
 import type { PaymentMethod, Role } from "@/lib/db-types";
 
@@ -191,7 +190,6 @@ export default async function SettingsPage() {
           <QuantityInputModePanel settings={businessSettings} />
           <MobileMoneyPanel settings={businessSettings} />
           <AiCartPanel settings={businessSettings} />
-          <CaisseADeuxPanel settings={businessSettings} />
           <ApiKeysPanel />
         </CardBody>
       </Card>

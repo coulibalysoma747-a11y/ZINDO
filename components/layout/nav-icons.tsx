@@ -37,6 +37,7 @@ import {
   Zap,
   Send,
   Package2,
+  Banknote,
 } from "lucide-react";
 
 // Module simple (sans "use client") pour que cette table icône-par-module
@@ -83,4 +84,5 @@ export const NAV_ICONS: Record<NavItem["icon"], React.ComponentType<{ className?
   "quick-supply": Zap,
   pickups: Send,
   shipments: Package2,
+  cashier: Banknote,
 };

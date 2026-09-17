@@ -73,7 +73,7 @@ export type PendingCartSummary = {
 };
 
 export async function getPendingCartsAction(locationId: string): Promise<PendingCartSummary[]> {
-  const user = await requirePermission(PERMISSIONS.SALES_CREATE);
+  const user = await requirePermission(PERMISSIONS.CASHIER_QUEUE_MANAGE);
   const { data } = await supabase
     .from("pending_carts")
     .select(
@@ -101,9 +101,11 @@ export async function getPendingCartsAction(locationId: string): Promise<Pending
 
 export type ClaimedCart = {
   customerId: string | null;
+  customerName: string | null;
   discount: number;
   items: Array<{
     productId: string;
+    productName: string;
     quantity: number;
     unitPrice: number;
     discount: number;
@@ -121,11 +123,11 @@ export type ClaimPendingCartResult = { error: string } | { cart: ClaimedCart };
  * qu'il ne puisse pas être récupéré deux fois par deux caissiers différents.
  */
 export async function claimPendingCartAction(id: string): Promise<ClaimPendingCartResult> {
-  const user = await requirePermission(PERMISSIONS.SALES_CREATE);
+  const user = await requirePermission(PERMISSIONS.CASHIER_QUEUE_MANAGE);
 
   const { data: cartRow } = await supabase
     .from("pending_carts")
-    .select("id, customerId:customer_id, discount")
+    .select("id, customerId:customer_id, discount, customer:customers(name)")
     .eq("id", id)
     .eq("business_id", user.businessId)
     .maybeSingle();
@@ -134,7 +136,7 @@ export async function claimPendingCartAction(id: string): Promise<ClaimPendingCa
   const { data: items } = await supabase
     .from("pending_cart_items")
     .select(
-      "productId:product_id, quantity, unitPrice:unit_price, discount, packagingUnitId:packaging_unit_id, unitLabel:unit_label, multiplier, vehicleUnitId:vehicle_unit_id"
+      "productId:product_id, quantity, unitPrice:unit_price, discount, packagingUnitId:packaging_unit_id, unitLabel:unit_label, multiplier, vehicleUnitId:vehicle_unit_id, product:products(name)"
     )
     .eq("pending_cart_id", id);
 
@@ -147,12 +149,15 @@ export async function claimPendingCartAction(id: string): Promise<ClaimPendingCa
     return { error: "Ce panier vient d'être récupéré par un autre caissier" };
   }
 
+  const rawItems = (items ?? []) as unknown as Array<ClaimedCart["items"][number] & { product: { name: string } | null }>;
+
   revalidatePath("/ventes");
   return {
     cart: {
       customerId: cartRow.customerId as string | null,
+      customerName: (cartRow.customer as unknown as { name: string } | null)?.name ?? null,
       discount: cartRow.discount as number,
-      items: (items ?? []) as unknown as ClaimedCart["items"],
+      items: rawItems.map(({ product, ...item }) => ({ ...item, productName: product?.name ?? "Produit supprimé" })),
     },
   };
 }

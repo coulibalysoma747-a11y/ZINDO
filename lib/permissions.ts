@@ -22,6 +22,8 @@ export const PERMISSIONS = {
   ASSISTANT_USE: "assistant.utiliser",
   EXPENSES_MANAGE: "depenses.gerer",
   CASH_SESSIONS_MANAGE: "caisse.gerer",
+  /** "Caisse à deux" (lib/business-settings.ts `modulesEnabled.cashierQueue`) : récupérer un panier de la file d'attente et finaliser le paiement — distinct de SALES_CREATE (préparer/envoyer un panier). */
+  CASHIER_QUEUE_MANAGE: "caisse.encaisser",
 } as const;
 
 export type Permission = (typeof PERMISSIONS)[keyof typeof PERMISSIONS];
@@ -38,6 +40,9 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<Role, Permission[]> = {
     PERMISSIONS.CUSTOMERS_VIEW,
     PERMISSIONS.CUSTOMERS_MANAGE,
     PERMISSIONS.CASH_SESSIONS_MANAGE,
+    // Pas de CASHIER_QUEUE_MANAGE par défaut : le commerçant l'accorde
+    // explicitement à qui doit encaisser depuis la file d'attente, une fois
+    // "Caisse à deux" activé — voir Paramètres > Modules > Rôles et permissions.
   ],
   GESTIONNAIRE_STOCK: [
     PERMISSIONS.PRODUCTS_VIEW,
@@ -79,4 +84,5 @@ export const PERMISSION_LABELS: Record<string, string> = {
   [PERMISSIONS.ASSISTANT_USE]: "Utiliser l'assistant IA",
   [PERMISSIONS.EXPENSES_MANAGE]: "Gérer les dépenses",
   [PERMISSIONS.CASH_SESSIONS_MANAGE]: "Ouvrir / fermer la caisse",
+  [PERMISSIONS.CASHIER_QUEUE_MANAGE]: "Encaisser depuis la file d'attente (Caisse à deux)",
 };

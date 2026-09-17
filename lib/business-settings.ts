@@ -30,8 +30,6 @@ export type BusinessSettings = {
   allowMixedPayment: boolean;
   /** "Panier IA" — lit une commande dictée/tapée/photographiée en caisse pour proposer les lignes de panier, à confirmer avant tout ajout réel. Coûte un appel IA par analyse : désactivé par défaut. */
   aiCartEnabled: boolean;
-  /** "Caisse à deux" — un vendeur prépare un panier et l'envoie dans une file d'attente ("Envoyer à la caisse") sans encaisser ; un caissier le récupère ensuite et finalise le paiement. Le stock n'est déduit qu'au paiement. Désactivé par défaut. */
-  cashierQueueEnabled: boolean;
   /** Modules que le commerçant peut masquer/afficher lui-même dans son propre menu (voir lib/nav.ts `moduleToggle`). */
   modulesEnabled: {
     devis: boolean;
@@ -46,6 +44,8 @@ export type BusinessSettings = {
     pickups: boolean;
     /** "Expéditions" — suivi des colis envoyés par transporteur pour la vente en gros à distance. */
     shipments: boolean;
+    /** "Caisse à deux" — ajoute la page /caisse (permission CASHIER_QUEUE_MANAGE) : un vendeur envoie un panier à la file d'attente sans encaisser, un caissier le récupère et finalise le paiement. Le stock n'est déduit qu'au paiement. Désactivé par défaut. */
+    cashierQueue: boolean;
   };
 };
 
@@ -68,7 +68,6 @@ const DEFAULTS: BusinessSettings = {
   mobileMoneyOperators: ["ORANGE", "MOOV", "WAVE"],
   allowMixedPayment: false,
   aiCartEnabled: false,
-  cashierQueueEnabled: false,
   modulesEnabled: {
     devis: true,
     prixDeRevient: true,
@@ -79,6 +78,7 @@ const DEFAULTS: BusinessSettings = {
     quickSupply: true,
     pickups: true,
     shipments: true,
+    cashierQueue: false,
   },
 };
 

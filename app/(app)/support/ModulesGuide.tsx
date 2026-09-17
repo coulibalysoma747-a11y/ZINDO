@@ -157,6 +157,10 @@ const DESCRIPTIONS: Record<string, { short: string; long: string }> = {
     short: "Suivez un colis envoyé par transporteur pour une vente en gros à distance, avec ses frais de transport.",
     long: "Pour une vente à un client éloigné livrée par transporteur (gare routière...) : suivez le transporteur, le numéro de bordereau, le statut (envoyé, arrivé, retiré) et surtout les frais de transport avancés — trop petits pour qu'on y pense un par un, mais qui s'accumulent vite. Ne touche jamais au stock, déjà sorti par la facture liée. Un message de suivi WhatsApp est prêt à partir si un numéro de destinataire est renseigné.",
   },
+  "/caisse": {
+    short: "Récupérez un panier envoyé par un vendeur (module Vente) et finalisez le paiement.",
+    long: "Avec « Caisse à deux » activé (Paramètres > Modules), un vendeur prépare un panier sur Vente et clique « Envoyer à la caisse » sans encaisser. Ici, récupérez ce panier dans la file d'attente (retiré dès qu'il est récupéré, pour ne jamais être pris deux fois) et finalisez le paiement — c'est seulement à ce moment que le stock est déduit. Nécessite la permission « Encaisser depuis la file d'attente », à accorder dans Rôles et permissions.",
+  },
 };
 
 export function ModulesGuide({ availability }: { availability: Record<string, ModuleAvailability> }) {
