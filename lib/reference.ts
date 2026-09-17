@@ -15,6 +15,7 @@ async function nextSeq(
     | "next_invoice_seq"
     | "next_quote_seq"
     | "next_barcode_seq"
+    | "next_rental_seq"
 ) {
   const { data, error } = await supabase.rpc("increment_business_seq", {
     p_business_id: businessId,
@@ -61,6 +62,11 @@ export async function generateSubscriptionInvoiceNumber(businessId: string) {
 export async function generateQuoteNumber(businessId: string) {
   const seq = await nextSeq(businessId, "next_quote_seq");
   return `ZND-D-${pad(seq)}`;
+}
+
+export async function generateRentalNumber(businessId: string) {
+  const seq = await nextSeq(businessId, "next_rental_seq");
+  return `ZND-LOC-${pad(seq)}`;
 }
 
 /** Chiffre de contrôle EAN-13 standard (modulo 10, poids 1/3 alternés). */

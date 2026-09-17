@@ -32,6 +32,7 @@ create type subscription_status as enum ('ACTIVE','PAST_DUE','TRIAL','EXPIRED');
 create type invoice_status as enum ('EN_ATTENTE','PAYEE','ANNULEE');
 create type invoice_payment_method as enum ('MANUEL','CINETPAY');
 create type quote_status as enum ('BROUILLON','ENVOYE','ACCEPTE','REFUSE','EXPIRE','CONVERTI');
+create type rental_status as enum ('EN_COURS','RETOURNEE','ANNULEE');
 
 -- ---------------------------------------------------------------------------
 -- Commerce / compte
@@ -63,6 +64,7 @@ create table businesses (
   next_invoice_seq int not null default 1,
   next_quote_seq int not null default 1,
   next_barcode_seq int not null default 1,
+  next_rental_seq int not null default 1,
   -- Intégration FasoStock (lib/integrations/faso-stock.ts) : synchronisation
   -- à sens unique FasoStock → ZINDO (leur API est en lecture seule). La clé
   -- n'est jamais renvoyée au navigateur, uniquement lue côté serveur.
@@ -688,6 +690,33 @@ create table stock_transfer_items (
 );
 create index on stock_transfer_items (transfer_id);
 create index on stock_transfer_items (product_id);
+
+-- ---------------------------------------------------------------------------
+-- Location de matériel (module "Location" façon FasoStock) — un produit
+-- loué plutôt que vendu ; V1 volontairement simple : pas de réservation de
+-- stock automatique, juste le suivi du prêt et de son retour.
+-- ---------------------------------------------------------------------------
+create table rentals (
+  id text primary key default gen_random_uuid()::text,
+  business_id text not null references businesses(id) on delete cascade,
+  location_id text not null references locations(id),
+  number text not null,
+  product_id text not null references products(id),
+  customer_id text references customers(id),
+  quantity int not null default 1,
+  daily_rate double precision not null,
+  deposit double precision not null default 0,
+  start_date date not null,
+  expected_return_date date not null,
+  returned_at timestamptz,
+  status rental_status not null default 'EN_COURS',
+  note text,
+  user_id text not null references users(id),
+  created_at timestamptz not null default now(),
+  unique (business_id, number)
+);
+create index on rentals (business_id, created_at);
+create index on rentals (status);
 
 -- ---------------------------------------------------------------------------
 -- Dépenses, notifications, journal, paramètres
