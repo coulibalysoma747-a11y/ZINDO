@@ -26,6 +26,7 @@ import { InstallAppButton } from "@/components/InstallAppButton";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { FacebookIcon } from "@/components/icons/FacebookIcon";
 import { TikTokIcon } from "@/components/icons/TikTokIcon";
+import { PublicHelpChat } from "@/components/PublicHelpChat";
 
 // Cycle tricolore (vert/or/rouge, drapeau du Burkina Faso et logo ZINDO)
 // appliqué aux puces d'icônes de la page publique pour une identité visuelle
@@ -374,6 +375,19 @@ export default async function RootPage() {
               un store.
             </p>
             <InstallAppButton className="inline-flex shrink-0 items-center gap-1.5 rounded-xl bg-zindo-green-600 px-4 py-2 text-sm font-semibold text-white hover:bg-zindo-green-700" />
+          </div>
+        </section>
+
+        {/* Assistant d'aide public */}
+        <section className="mt-16">
+          <div className="mx-auto max-w-2xl text-center">
+            <h2 className="text-2xl font-extrabold tracking-tight text-zindo-ink-900 sm:text-3xl">
+              Une question avant de vous inscrire ?
+            </h2>
+            <p className="mt-2 text-zinc-500">Notre assistant répond directement, pas besoin de créer un compte.</p>
+          </div>
+          <div className="mx-auto mt-8 max-w-2xl">
+            <PublicHelpChat />
           </div>
         </section>
 

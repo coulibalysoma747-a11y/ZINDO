@@ -1038,6 +1038,16 @@ create table support_tickets (
 create index on support_tickets (business_id, created_at);
 create index on support_tickets (status);
 
+-- Limite anti-abus pour l'assistant d'aide public (page d'accueil, sans
+-- connexion) — voir lib/actions/help-assistant.ts askPublicHelpAssistantAction.
+-- Une ligne par question posée ; ip_hash est un sha256, jamais l'IP en clair.
+create table public_help_requests (
+  id text primary key default gen_random_uuid()::text,
+  ip_hash text not null,
+  created_at timestamptz not null default now()
+);
+create index on public_help_requests (ip_hash, created_at);
+
 -- ---------------------------------------------------------------------------
 -- Déploiement progressif des fonctionnalités
 -- ---------------------------------------------------------------------------
