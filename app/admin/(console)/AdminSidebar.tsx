@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, Store, Users, KeyRound, UserCog, LogOut, ShieldCheck, Shield, Crown, LifeBuoy, FlaskConical, Palette, Wallet } from "lucide-react";
+import { LayoutDashboard, Store, Users, KeyRound, UserCog, LogOut, ShieldCheck, Shield, Crown, LifeBuoy, FlaskConical, Palette, Wallet, Settings2 } from "lucide-react";
 import { superAdminLogoutAction } from "@/lib/actions/admin-auth";
 import type { SuperAdminRole } from "@prisma/client";
 
@@ -17,6 +17,7 @@ const NAV_ITEMS = [
   { label: "Administrateurs", href: "/admin/administrateurs", icon: ShieldCheck, founderOnly: true },
   { label: "Support", href: "/admin/support", icon: LifeBuoy, founderOnly: false },
   { label: "Fonctionnalités", href: "/admin/fonctionnalites", icon: FlaskConical, founderOnly: false },
+  { label: "Plateforme", href: "/admin/plateforme", icon: Settings2, founderOnly: true },
   { label: "Mon profil", href: "/admin/profil", icon: UserCog, founderOnly: false },
 ];
 

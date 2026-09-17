@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
+import { getCurrentSuperAdmin } from "@/lib/superadmin-auth";
 import { supabase } from "@/lib/supabase";
 import { formatDateTime, formatMoney } from "@/lib/format";
 import { Card, CardBody, CardHeader } from "@/components/ui/Card";
@@ -8,6 +9,7 @@ import { Badge } from "@/components/ui/Badge";
 import { SuspendToggle } from "./SuspendToggle";
 import { BusinessPlanSelect } from "../../abonnements/BusinessPlanSelect";
 import { ResetPasswordButton } from "./ResetPasswordButton";
+import { ImpersonateButton } from "./ImpersonateButton";
 import { UserActiveToggle } from "../../utilisateurs/UserActiveToggle";
 import { UserRoleSelect } from "../../utilisateurs/UserRoleSelect";
 
@@ -40,6 +42,8 @@ export default async function AdminBusinessDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
+  const admin = await getCurrentSuperAdmin();
+  const isFounder = admin?.role === "FOUNDER";
 
   const { data: businessData } = await supabase
     .from("businesses")
@@ -197,6 +201,9 @@ export default async function AdminBusinessDetailPage({
                           Modules
                         </Link>
                         <ResetPasswordButton userId={u.id} userName={`${u.firstName} ${u.lastName}`} />
+                        {isFounder && u.active && (
+                          <ImpersonateButton userId={u.id} userName={`${u.firstName} ${u.lastName}`} />
+                        )}
                         <UserActiveToggle userId={u.id} active={u.active} />
                       </div>
                     </td>

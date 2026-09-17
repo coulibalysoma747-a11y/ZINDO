@@ -1,6 +1,8 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { ShieldCheck, CheckCircle2 } from "lucide-react";
 import { AuthCard } from "@/components/auth/AuthCard";
+import { getPlatformConfig } from "@/lib/platform-config";
 import { LoginForm } from "./login-form";
 
 const GOOGLE_ERROR_MESSAGES: Record<string, string> = {
@@ -18,6 +20,8 @@ export default async function LoginPage({
 }) {
   const { error, reinitialisation } = await searchParams;
   const googleError = error ? GOOGLE_ERROR_MESSAGES[error] : undefined;
+
+  if ((await getPlatformConfig()).maintenanceMode) redirect("/maintenance");
 
   return (
     <div className="space-y-5 sm:space-y-6">

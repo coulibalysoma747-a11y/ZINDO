@@ -1,8 +1,12 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { Card, CardBody } from "@/components/ui/Card";
+import { getPlatformConfig } from "@/lib/platform-config";
 import { RegisterForm } from "./register-form";
 
-export default function RegisterPage() {
+export default async function RegisterPage() {
+  if ((await getPlatformConfig()).maintenanceMode) redirect("/maintenance");
+
   return (
     <Card>
       <CardBody className="space-y-5">

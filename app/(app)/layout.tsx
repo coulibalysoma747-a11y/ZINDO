@@ -4,23 +4,38 @@ import { requireUserForBilling, hasPermission } from "@/lib/auth";
 import { getVisibleNavItems } from "@/lib/nav-server";
 import { getLocations, getCurrentLocation } from "@/lib/location";
 import { isSubscriptionBlocked } from "@/lib/subscription";
+import { getAdminSession } from "@/lib/adminSession";
+import { getPlatformConfig } from "@/lib/platform-config";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { Topbar } from "@/components/layout/Topbar";
 import { AppFooter } from "@/components/layout/AppFooter";
 import { MobileTabBar } from "@/components/layout/MobileTabBar";
+import { ImpersonationBanner } from "@/components/layout/ImpersonationBanner";
+import { AnnouncementBanner } from "@/components/layout/AnnouncementBanner";
 import { ROLE_LABELS, PERMISSIONS } from "@/lib/permissions";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const user = await requireUserForBilling();
 
+  // Un Fondateur "en tant que" ce commerçant (voir lib/actions/impersonation.ts)
+  // garde son cookie admin en plus du cookie commerçant — sa présence indique
+  // une usurpation active, qui doit pouvoir contourner le mode maintenance et
+  // le blocage d'abonnement (c'est justement pour déboguer ces cas-là).
+  const isImpersonating = !!(await getAdminSession());
+
+  const [platformConfig, subscriptionBlocked] = await Promise.all([
+    getPlatformConfig(),
+    isImpersonating ? Promise.resolve(false) : isSubscriptionBlocked(user.businessId),
+  ]);
+
+  const pathname = (await headers()).get("x-zindo-pathname") ?? "";
+  const isBillingPage = pathname === "/abonnement" || pathname.startsWith("/abonnement/");
+
+  if (!isImpersonating && platformConfig.maintenanceMode) redirect("/maintenance");
   // /abonnement doit rester accessible même en cas de blocage (essai expiré,
   // impayé) — sans quoi ce serait la seule page permettant de régler le
   // problème qui se retrouverait elle-même redirigée vers elle-même.
-  const pathname = (await headers()).get("x-zindo-pathname") ?? "";
-  const isBillingPage = pathname === "/abonnement" || pathname.startsWith("/abonnement/");
-  if (!isBillingPage && (await isSubscriptionBlocked(user.businessId))) {
-    redirect("/abonnement");
-  }
+  if (!isBillingPage && subscriptionBlocked) redirect("/abonnement");
 
   const [navItems, locations, currentLocation, canSell, canManageProducts, canManageStock, canManagePurchases] =
     await Promise.all([
@@ -40,6 +55,12 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       </div>
       <div className="flex min-w-0 flex-1 flex-col print:block">
         <div className="print:hidden">
+          {isImpersonating && (
+            <ImpersonationBanner businessName={user.business.name} userName={`${user.firstName} ${user.lastName}`} />
+          )}
+          {platformConfig.announcementActive && platformConfig.announcementMessage && (
+            <AnnouncementBanner message={platformConfig.announcementMessage} tone={platformConfig.announcementTone} />
+          )}
           <Topbar
             userName={`${user.firstName} ${user.lastName}`}
             role={ROLE_LABELS[user.role]}

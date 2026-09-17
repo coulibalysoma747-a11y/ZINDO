@@ -776,6 +776,22 @@ create table super_admin_login_events (
 );
 create index on super_admin_login_events (created_at);
 
+-- Réglages globaux de la plateforme (ligne unique, id=1) : mode maintenance
+-- et bannière d'annonce, pilotés depuis /admin/plateforme (fondateur
+-- uniquement) — voir lib/platform-config.ts.
+create table platform_config (
+  id int primary key default 1,
+  maintenance_mode boolean not null default false,
+  maintenance_message text,
+  announcement_active boolean not null default false,
+  announcement_message text,
+  announcement_tone text not null default 'info',
+  updated_at timestamptz not null default now(),
+  constraint platform_config_singleton check (id = 1),
+  constraint platform_config_tone check (announcement_tone in ('info', 'warning'))
+);
+insert into platform_config (id) values (1) on conflict (id) do nothing;
+
 create table global_role_permissions (
   id text primary key default gen_random_uuid()::text,
   role role not null,
