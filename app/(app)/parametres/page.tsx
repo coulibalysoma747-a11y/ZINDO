@@ -14,6 +14,7 @@ import { PaymentMethodsPanel } from "./PaymentMethodsPanel";
 import { PermissionsPanel } from "./PermissionsPanel";
 import { FasoStockPanel } from "./FasoStockPanel";
 import { BusinessRulesPanel } from "./BusinessRulesPanel";
+import { SalesLeaderboardPanel } from "./SalesLeaderboardPanel";
 import type { PaymentMethod, Role } from "@/lib/db-types";
 
 // La synchronisation FasoStock déclenchée depuis cette page peut porter sur
@@ -163,8 +164,9 @@ export default async function SettingsPage() {
         <CardHeader>
           <h2 className="font-semibold text-zinc-900">Règles de vente</h2>
         </CardHeader>
-        <CardBody>
+        <CardBody className="space-y-4">
           <BusinessRulesPanel settings={businessSettings} />
+          <SalesLeaderboardPanel settings={businessSettings} />
         </CardBody>
       </Card>
 

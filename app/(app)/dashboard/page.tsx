@@ -3,6 +3,7 @@ import { requireUser, hasPermission } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
 import { getDashboardData, getDashboardOverview, getLocationsStockOverview } from "@/lib/actions/dashboard";
 import { getCurrentLocation } from "@/lib/location";
+import { getBusinessSettings } from "@/lib/business-settings";
 import { formatMoney } from "@/lib/format";
 import { StatCard } from "@/components/ui/StatCard";
 import { Card, CardBody, CardHeader } from "@/components/ui/Card";
@@ -72,6 +73,7 @@ export default async function DashboardPage({
     canViewSuppliers,
     canManageExpenses,
     canViewReports,
+    businessSettings,
   ] = await Promise.all([
     getDashboardData(user.businessId, currentLocation.id),
     getDashboardOverview(user.businessId, currentLocation.id, period),
@@ -85,9 +87,20 @@ export default async function DashboardPage({
     hasPermission(user.businessId, user.role, PERMISSIONS.SUPPLIERS_MANAGE, user.id),
     hasPermission(user.businessId, user.role, PERMISSIONS.EXPENSES_MANAGE, user.id),
     hasPermission(user.businessId, user.role, PERMISSIONS.REPORTS_VIEW, user.id),
+    getBusinessSettings(user.businessId),
   ]);
 
   const totalStockValue = locationsOverview.reduce((s, l) => s + l.stockValue, 0);
+
+  // "Montrer mes chiffres de vente à mes employés" (Paramètres) : un non-admin
+  // ne voit le classement des vendeurs que si le réglage l'autorise, et
+  // seulement sur la journée en cours — jamais sur la période choisie ni tout
+  // l'historique — même si le classement reste ouvert à l'écran.
+  const canSeeLeaderboard = user.role === "ADMIN" || businessSettings.showSalesLeaderboardToEmployees;
+  const leaderboardOverview =
+    canSeeLeaderboard && user.role !== "ADMIN" && period !== "aujourdhui"
+      ? await getDashboardOverview(user.businessId, currentLocation.id, "aujourdhui")
+      : overview;
 
   return (
     <div className="space-y-6">
@@ -223,11 +236,16 @@ export default async function DashboardPage({
               </div>
             </div>
 
-            {overview.vendorBreakdown.length > 0 && (
+            {canSeeLeaderboard && leaderboardOverview.vendorBreakdown.length > 0 && (
               <div>
-                <p className="mb-2 text-sm font-medium text-zinc-700">Part de chaque vendeur</p>
+                <p className="mb-2 text-sm font-medium text-zinc-700">
+                  Part de chaque vendeur
+                  {user.role !== "ADMIN" && period !== "aujourdhui" && (
+                    <span className="ml-1 font-normal text-zinc-400">(aujourd&apos;hui)</span>
+                  )}
+                </p>
                 <ul className="space-y-2">
-                  {overview.vendorBreakdown.map((v) => (
+                  {leaderboardOverview.vendorBreakdown.map((v) => (
                     <li key={v.userId} className="text-sm">
                       <div className="flex items-center justify-between">
                         <span className="text-zinc-700">
@@ -238,7 +256,7 @@ export default async function DashboardPage({
                       <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-zinc-100">
                         <div
                           className="h-full bg-zindo-green-500"
-                          style={{ width: `${(v.total / overview.current.cashedIn) * 100}%` }}
+                          style={{ width: `${(v.total / leaderboardOverview.current.cashedIn) * 100}%` }}
                         />
                       </div>
                     </li>
