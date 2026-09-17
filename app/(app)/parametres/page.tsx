@@ -23,6 +23,7 @@ import { PackagingPriceModePanel } from "./PackagingPriceModePanel";
 import { BulkStockFillPanel } from "./BulkStockFillPanel";
 import { HideCustomerPanel } from "./HideCustomerPanel";
 import { DualFormatPrintingPanel } from "./DualFormatPrintingPanel";
+import { QuantityInputModePanel } from "./QuantityInputModePanel";
 import type { PaymentMethod, Role } from "@/lib/db-types";
 
 // La synchronisation FasoStock déclenchée depuis cette page peut porter sur
@@ -182,6 +183,7 @@ export default async function SettingsPage() {
           <BulkStockFillPanel settings={businessSettings} />
           <HideCustomerPanel settings={businessSettings} />
           <DualFormatPrintingPanel settings={businessSettings} />
+          <QuantityInputModePanel settings={businessSettings} />
         </CardBody>
       </Card>
 

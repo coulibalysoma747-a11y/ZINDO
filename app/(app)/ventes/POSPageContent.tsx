@@ -64,6 +64,7 @@ export async function POSPageContent({ mode }: { mode: "pos" | "facture" }) {
       locationName={currentLocation.name}
       canEditProducts={canEditProducts}
       hideCustomerInPos={businessSettings.hideCustomerInPos}
+      quantityInputMode={businessSettings.posQuantityInputMode}
       autoPrintReceipt={user.autoPrintReceipt}
       printerTicketWidth={user.printerTicketWidth}
       session={{

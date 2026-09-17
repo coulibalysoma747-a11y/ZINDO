@@ -22,6 +22,8 @@ export type BusinessSettings = {
   hideCustomerInPos: boolean;
   /** "Imprimer en A4 ou en thermique au choix" — un bouton propose l'autre format d'impression sur chaque vente, sans rien dupliquer en base. */
   dualFormatPrintingEnabled: boolean;
+  /** "Champ de saisie pour la quantité" (input) vs "Boutons (-) et (+)" (buttons) — "both" = comportement actuel (les deux affichés), les deux autres n'affichent que l'un ou l'autre. */
+  posQuantityInputMode: "both" | "input" | "buttons";
   /** Modules que le commerçant peut masquer/afficher lui-même dans son propre menu (voir lib/nav.ts `moduleToggle`). */
   modulesEnabled: {
     devis: boolean;
@@ -48,6 +50,7 @@ const DEFAULTS: BusinessSettings = {
   bulkStockFillEnabled: true,
   hideCustomerInPos: false,
   dualFormatPrintingEnabled: true,
+  posQuantityInputMode: "both",
   modulesEnabled: {
     devis: true,
     prixDeRevient: true,

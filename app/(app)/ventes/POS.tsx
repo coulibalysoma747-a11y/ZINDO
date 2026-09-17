@@ -74,6 +74,7 @@ export function POS({
   session,
   businessInfo,
   hideCustomerInPos = false,
+  quantityInputMode = "both",
 }: {
   mode?: "pos" | "facture";
   customers: { id: string; name: string; phone: string | null }[];
@@ -87,6 +88,7 @@ export function POS({
   session: SessionInfo;
   businessInfo: CachedBusinessInfo;
   hideCustomerInPos?: boolean;
+  quantityInputMode?: "both" | "input" | "buttons";
 }) {
   const isFacture = mode === "facture";
   const [cart, setCart] = useState<CartLine[]>([]);
@@ -581,39 +583,48 @@ export function POS({
                               <span className="text-zinc-500">1 {line.product.unit}</span>
                             ) : (
                               <div className="flex items-center gap-1">
-                                <button
-                                  type="button"
-                                  onClick={() => updateLine(lineKey(line), { quantity: Math.max(1, line.quantity - 1) })}
-                                  className="rounded p-1 text-zinc-500 hover:bg-zinc-100"
-                                >
-                                  <Minus className="h-3.5 w-3.5" />
-                                </button>
-                                <input
-                                  type="number"
-                                  min={1}
-                                  max={lineMaxQty(line)}
-                                  value={line.quantity}
-                                  onChange={(e) =>
-                                    updateLine(lineKey(line), {
-                                      quantity: Math.min(
-                                        lineMaxQty(line),
-                                        Math.max(1, Number(e.target.value) || 1)
-                                      ),
-                                    })
-                                  }
-                                  className="h-7 w-14 rounded border border-zinc-200 text-center text-sm"
-                                />
-                                <button
-                                  type="button"
-                                  onClick={() =>
-                                    updateLine(lineKey(line), {
-                                      quantity: Math.min(lineMaxQty(line), line.quantity + 1),
-                                    })
-                                  }
-                                  className="rounded p-1 text-zinc-500 hover:bg-zinc-100"
-                                >
-                                  <Plus className="h-3.5 w-3.5" />
-                                </button>
+                                {quantityInputMode !== "input" && (
+                                  <button
+                                    type="button"
+                                    onClick={() => updateLine(lineKey(line), { quantity: Math.max(1, line.quantity - 1) })}
+                                    className="rounded p-1 text-zinc-500 hover:bg-zinc-100"
+                                  >
+                                    <Minus className="h-3.5 w-3.5" />
+                                  </button>
+                                )}
+                                {quantityInputMode !== "buttons" && (
+                                  <input
+                                    type="number"
+                                    min={1}
+                                    max={lineMaxQty(line)}
+                                    value={line.quantity}
+                                    onChange={(e) =>
+                                      updateLine(lineKey(line), {
+                                        quantity: Math.min(
+                                          lineMaxQty(line),
+                                          Math.max(1, Number(e.target.value) || 1)
+                                        ),
+                                      })
+                                    }
+                                    className="h-7 w-14 rounded border border-zinc-200 text-center text-sm"
+                                  />
+                                )}
+                                {quantityInputMode === "buttons" && (
+                                  <span className="w-6 text-center text-sm text-zinc-700">{line.quantity}</span>
+                                )}
+                                {quantityInputMode !== "input" && (
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      updateLine(lineKey(line), {
+                                        quantity: Math.min(lineMaxQty(line), line.quantity + 1),
+                                      })
+                                    }
+                                    className="rounded p-1 text-zinc-500 hover:bg-zinc-100"
+                                  >
+                                    <Plus className="h-3.5 w-3.5" />
+                                  </button>
+                                )}
                               </div>
                             )}
                           </td>
@@ -689,36 +700,45 @@ export function POS({
                           <span className="text-sm text-zinc-500">1 {line.product.unit}</span>
                         ) : (
                           <>
-                            <button
-                              type="button"
-                              onClick={() => updateLine(lineKey(line), { quantity: Math.max(1, line.quantity - 1) })}
-                              className="rounded-lg border border-zinc-200 p-2 text-zinc-500 hover:bg-zinc-100"
-                            >
-                              <Minus className="h-4 w-4" />
-                            </button>
-                            <input
-                              type="number"
-                              min={1}
-                              max={lineMaxQty(line)}
-                              value={line.quantity}
-                              onChange={(e) =>
-                                updateLine(lineKey(line), {
-                                  quantity: Math.min(lineMaxQty(line), Math.max(1, Number(e.target.value) || 1)),
-                                })
-                              }
-                              className="h-9 w-16 rounded-lg border border-zinc-200 text-center text-sm"
-                            />
-                            <button
-                              type="button"
-                              onClick={() =>
-                                updateLine(lineKey(line), {
-                                  quantity: Math.min(lineMaxQty(line), line.quantity + 1),
-                                })
-                              }
-                              className="rounded-lg border border-zinc-200 p-2 text-zinc-500 hover:bg-zinc-100"
-                            >
-                              <Plus className="h-4 w-4" />
-                            </button>
+                            {quantityInputMode !== "input" && (
+                              <button
+                                type="button"
+                                onClick={() => updateLine(lineKey(line), { quantity: Math.max(1, line.quantity - 1) })}
+                                className="rounded-lg border border-zinc-200 p-2 text-zinc-500 hover:bg-zinc-100"
+                              >
+                                <Minus className="h-4 w-4" />
+                              </button>
+                            )}
+                            {quantityInputMode !== "buttons" && (
+                              <input
+                                type="number"
+                                min={1}
+                                max={lineMaxQty(line)}
+                                value={line.quantity}
+                                onChange={(e) =>
+                                  updateLine(lineKey(line), {
+                                    quantity: Math.min(lineMaxQty(line), Math.max(1, Number(e.target.value) || 1)),
+                                  })
+                                }
+                                className="h-9 w-16 rounded-lg border border-zinc-200 text-center text-sm"
+                              />
+                            )}
+                            {quantityInputMode === "buttons" && (
+                              <span className="w-8 text-center text-sm text-zinc-700">{line.quantity}</span>
+                            )}
+                            {quantityInputMode !== "input" && (
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  updateLine(lineKey(line), {
+                                    quantity: Math.min(lineMaxQty(line), line.quantity + 1),
+                                  })
+                                }
+                                className="rounded-lg border border-zinc-200 p-2 text-zinc-500 hover:bg-zinc-100"
+                              >
+                                <Plus className="h-4 w-4" />
+                              </button>
+                            )}
                           </>
                         )}
                         <span className="ml-auto text-right font-semibold text-zinc-900">
