@@ -6,12 +6,14 @@ import { supabase } from "@/lib/supabase";
 import { findActivity } from "@/lib/activities";
 import { getLocations } from "@/lib/location";
 import { getInvoiceCustomization } from "@/lib/invoice-customization";
+import { getBusinessSettings } from "@/lib/business-settings";
 import { listFasoStockStores, type FasoStockStore } from "@/lib/integrations/faso-stock";
 import { Card, CardBody, CardHeader } from "@/components/ui/Card";
 import { BusinessSettingsForm } from "./BusinessSettingsForm";
 import { PaymentMethodsPanel } from "./PaymentMethodsPanel";
 import { PermissionsPanel } from "./PermissionsPanel";
 import { FasoStockPanel } from "./FasoStockPanel";
+import { BusinessRulesPanel } from "./BusinessRulesPanel";
 import type { PaymentMethod, Role } from "@/lib/db-types";
 
 // La synchronisation FasoStock déclenchée depuis cette page peut porter sur
@@ -30,19 +32,21 @@ const ALL_METHODS: { method: PaymentMethod; defaultLabel: string }[] = [
 export default async function SettingsPage() {
   const user = await requirePermission(PERMISSIONS.SETTINGS_MANAGE);
 
-  const [{ data: configs }, { data: overrides }, { data: businessRow }, locations, invoiceCustomization] = await Promise.all([
-    supabase.from("payment_method_configs").select("method, label, enabled").eq("business_id", user.businessId),
-    supabase.from("role_permissions").select("role, permission, allowed").eq("business_id", user.businessId),
-    supabase
-      .from("businesses")
-      .select(
-        "fasoStockApiKey:faso_stock_api_key, fasoStockStoreMapping:faso_stock_store_mapping, fasoStockLastSyncAt:faso_stock_last_sync_at, fasoStockLastSyncStatus:faso_stock_last_sync_status, fasoStockLastSyncError:faso_stock_last_sync_error"
-      )
-      .eq("id", user.businessId)
-      .maybeSingle(),
-    getLocations(user.businessId),
-    getInvoiceCustomization(user.businessId),
-  ]);
+  const [{ data: configs }, { data: overrides }, { data: businessRow }, locations, invoiceCustomization, businessSettings] =
+    await Promise.all([
+      supabase.from("payment_method_configs").select("method, label, enabled").eq("business_id", user.businessId),
+      supabase.from("role_permissions").select("role, permission, allowed").eq("business_id", user.businessId),
+      supabase
+        .from("businesses")
+        .select(
+          "fasoStockApiKey:faso_stock_api_key, fasoStockStoreMapping:faso_stock_store_mapping, fasoStockLastSyncAt:faso_stock_last_sync_at, fasoStockLastSyncStatus:faso_stock_last_sync_status, fasoStockLastSyncError:faso_stock_last_sync_error"
+        )
+        .eq("id", user.businessId)
+        .maybeSingle(),
+      getLocations(user.businessId),
+      getInvoiceCustomization(user.businessId),
+      getBusinessSettings(user.businessId),
+    ]);
 
   const configMap = new Map((configs ?? []).map((c) => [c.method as string, c]));
   const paymentMethods = ALL_METHODS.map(({ method, defaultLabel }) => ({
@@ -134,6 +138,33 @@ export default async function SettingsPage() {
             lastSyncStatus={(businessRow?.fasoStockLastSyncStatus as string | null) ?? null}
             lastSyncError={(businessRow?.fasoStockLastSyncError as string | null) ?? null}
           />
+        </CardBody>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <h2 className="font-semibold text-zinc-900">Devise</h2>
+        </CardHeader>
+        <CardBody>
+          <p className="text-sm text-zinc-500">
+            La monnaie utilisée dans toute l&apos;application : caisse, factures, reçus, rapports.
+          </p>
+          <p className="mt-2 text-sm font-medium text-zinc-900">
+            Devise actuelle : {user.business.currency === "XOF" ? "Franc CFA (UEMOA) (FCFA)" : user.business.currency}
+          </p>
+          <p className="mt-1 text-xs text-zinc-400">
+            Une fois des ventes enregistrées, la devise ne peut plus être modifiée sans fausser l&apos;historique.
+            Contactez le support si un changement est réellement nécessaire.
+          </p>
+        </CardBody>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <h2 className="font-semibold text-zinc-900">Règles de vente</h2>
+        </CardHeader>
+        <CardBody>
+          <BusinessRulesPanel settings={businessSettings} />
         </CardBody>
       </Card>
 

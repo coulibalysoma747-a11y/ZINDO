@@ -8,6 +8,7 @@ import { logAction } from "@/lib/audit";
 import { generateSaleNumber } from "@/lib/reference";
 import { adjustStock } from "@/lib/stock";
 import { rethrowIfNavigationSignal } from "@/lib/action-errors";
+import { getBusinessSettings } from "@/lib/business-settings";
 import type { PaymentMethod } from "@/lib/db-types";
 
 export type CartItemInput = {
@@ -169,6 +170,11 @@ async function createSaleImpl(input: CreateSaleInput): Promise<CreateSaleResult>
     return { success: false, error: "Le panier est vide" };
   }
 
+  const businessSettings = await getBusinessSettings(user.businessId);
+  if (businessSettings.requireCustomerOnSale && !input.customerId) {
+    return { success: false, error: "Sélectionnez un client — réglage activé dans Paramètres" };
+  }
+
   const { data: location } = await supabase
     .from("locations")
     .select("id, name")
@@ -244,6 +250,22 @@ async function createSaleImpl(input: CreateSaleInput): Promise<CreateSaleResult>
 
   if (amountPaid < total && !input.customerId) {
     return { success: false, error: "Sélectionnez un client pour une vente à crédit ou partielle" };
+  }
+
+  if (businessSettings.blockSaleIfCustomerDebt && input.customerId) {
+    const { data: pastSales } = await supabase
+      .from("sales")
+      .select("total, amountPaid:amount_paid")
+      .eq("business_id", user.businessId)
+      .eq("customer_id", input.customerId)
+      .in("status", ["CREDIT", "PARTIELLE"]);
+    const debt = ((pastSales ?? []) as Array<{ total: number; amountPaid: number }>).reduce(
+      (sum, s) => sum + Math.max(0, s.total - s.amountPaid),
+      0
+    );
+    if (debt > 0) {
+      return { success: false, error: "Ce client a une dette en cours — réglez-la avant une nouvelle vente (réglage activé dans Paramètres)" };
+    }
   }
 
   const status = amountPaid >= total ? "PAYEE" : amountPaid > 0 ? "PARTIELLE" : "CREDIT";

@@ -79,6 +79,10 @@ create table businesses (
   mobile_money_info text,
   invoice_signer_name text,
   invoice_return_policy text,
+  -- Réglages de comportement façon FasoStock (lib/business-settings.ts) :
+  -- JSON libre plutôt qu'une colonne par réglage, pour ajouter de nouveaux
+  -- interrupteurs sans migration à chaque fois — voir BusinessSettings.
+  settings text,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
