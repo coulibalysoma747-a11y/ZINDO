@@ -870,6 +870,21 @@ create table notifications (
 );
 create index on notifications (business_id, read);
 
+-- Abonnements push navigateur (Web Push/VAPID) — un par appareil/navigateur
+-- où l'utilisateur a activé les notifications depuis /profil. Voir
+-- lib/push.ts et public/sw.js. endpoint est unique : un même appareil qui se
+-- réabonne remplace son ancien abonnement plutôt que d'en créer un doublon.
+create table push_subscriptions (
+  id text primary key default gen_random_uuid()::text,
+  business_id text not null references businesses(id) on delete cascade,
+  user_id text not null references users(id) on delete cascade,
+  endpoint text not null unique,
+  p256dh text not null,
+  auth text not null,
+  created_at timestamptz not null default now()
+);
+create index on push_subscriptions (business_id);
+
 create table audit_logs (
   id text primary key default gen_random_uuid()::text,
   business_id text not null references businesses(id) on delete cascade,

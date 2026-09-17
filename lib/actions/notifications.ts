@@ -4,7 +4,13 @@ import { revalidatePath } from "next/cache";
 import { requirePermission } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
 import { supabase } from "@/lib/supabase";
+import { sendPushToBusiness } from "@/lib/push";
 import type { NotificationType } from "@/lib/db-types";
+
+// Types poussés en notification sur l'appareil, en plus de la liste en
+// application — voir Paramètres. "Inventaire recommandé" reste uniquement
+// dans la liste in-app (non demandé par le commerçant pour le push).
+const PUSH_NOTIFICATION_TYPES: NotificationType[] = ["STOCK_FAIBLE", "RUPTURE_STOCK", "CREDIT_ECHU"];
 
 export type NotificationRow = {
   id: string;
@@ -132,7 +138,15 @@ async function syncNotifications(businessId: string) {
 
   if (toInsert.length > 0) {
     const { error } = await supabase.from("notifications").insert(toInsert);
-    if (error) console.error("[syncNotifications] Échec de l'insertion :", error.message);
+    if (error) {
+      console.error("[syncNotifications] Échec de l'insertion :", error.message);
+    } else {
+      await Promise.all(
+        toInsert
+          .filter((n) => PUSH_NOTIFICATION_TYPES.includes(n.type))
+          .map((n) => sendPushToBusiness(businessId, { title: n.title, body: n.message, link: n.link ?? undefined }))
+      );
+    }
   }
 }
 

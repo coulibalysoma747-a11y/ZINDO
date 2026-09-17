@@ -9,6 +9,8 @@ import { generateSaleNumber } from "@/lib/reference";
 import { adjustStock } from "@/lib/stock";
 import { rethrowIfNavigationSignal } from "@/lib/action-errors";
 import { getBusinessSettings } from "@/lib/business-settings";
+import { sendPushToBusiness } from "@/lib/push";
+import { formatMoney } from "@/lib/format";
 import type { PaymentMethod } from "@/lib/db-types";
 
 export type CartItemInput = {
@@ -373,6 +375,12 @@ async function createSaleImpl(input: CreateSaleInput): Promise<CreateSaleResult>
   revalidatePath("/produits");
   revalidatePath("/dashboard");
   if (input.customerId) revalidatePath(`/clients/${input.customerId}`);
+
+  await sendPushToBusiness(user.businessId, {
+    title: "Nouvelle vente",
+    body: `Vente ${number} — ${formatMoney(total, user.business.currency)}`,
+    link: `/ventes/${sale.id}`,
+  });
 
   return { success: true, saleId: sale.id as string };
 }

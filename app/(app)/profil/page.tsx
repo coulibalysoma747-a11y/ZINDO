@@ -5,6 +5,7 @@ import { ProfileForm } from "./ProfileForm";
 import { PasswordForm } from "./PasswordForm";
 import { ThemeSelector } from "./ThemeSelector";
 import { TwoFactorPanel } from "./TwoFactorPanel";
+import { PushNotificationsPanel } from "./PushNotificationsPanel";
 import type { ThemePreference } from "@/lib/actions/preferences";
 
 export default async function ProfilePage() {
@@ -37,6 +38,15 @@ export default async function ProfilePage() {
         <CardBody>
           <p className="mb-3 text-sm text-zinc-500">Choisissez le thème de l&apos;application.</p>
           <ThemeSelector current={user.theme as ThemePreference} />
+        </CardBody>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <h2 className="font-semibold text-zinc-900">Notifications</h2>
+        </CardHeader>
+        <CardBody>
+          <PushNotificationsPanel />
         </CardBody>
       </Card>
 
