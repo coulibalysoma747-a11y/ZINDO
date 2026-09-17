@@ -18,6 +18,8 @@ export type BusinessSettings = {
   packagingUnitPriceMode: "lot" | "piece";
   /** "Remplir le stock en un clic" — cases à cocher + quantité groupée sur /stock/remplissage. */
   bulkStockFillEnabled: boolean;
+  /** "Masquer le client en caisse rapide" — le sélecteur de client disparaît de la caisse (sauf vente à crédit, où il reste requis). */
+  hideCustomerInPos: boolean;
   /** Modules que le commerçant peut masquer/afficher lui-même dans son propre menu (voir lib/nav.ts `moduleToggle`). */
   modulesEnabled: {
     devis: boolean;
@@ -42,6 +44,7 @@ const DEFAULTS: BusinessSettings = {
   expenseCategories: ["Loyer", "Marketing", "Télécom", "Carburant", "Salaires", "Électricité/eau", "Transport", "Autre"],
   packagingUnitPriceMode: "lot",
   bulkStockFillEnabled: true,
+  hideCustomerInPos: false,
   modulesEnabled: {
     devis: true,
     prixDeRevient: true,

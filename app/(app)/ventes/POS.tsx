@@ -73,6 +73,7 @@ export function POS({
   printerTicketWidth: initialPrinterWidth,
   session,
   businessInfo,
+  hideCustomerInPos = false,
 }: {
   mode?: "pos" | "facture";
   customers: { id: string; name: string; phone: string | null }[];
@@ -85,6 +86,7 @@ export function POS({
   printerTicketWidth: string | null;
   session: SessionInfo;
   businessInfo: CachedBusinessInfo;
+  hideCustomerInPos?: boolean;
 }) {
   const isFacture = mode === "facture";
   const [cart, setCart] = useState<CartLine[]>([]);
@@ -758,24 +760,26 @@ export function POS({
       </div>
 
       <div className="space-y-4">
-        <Card>
-          <CardHeader>
-            <h2 className="font-semibold text-zinc-900">Client</h2>
-          </CardHeader>
-          <CardBody className="flex gap-2">
-            <Select value={customerId} onChange={(e) => setCustomerId(e.target.value)} className="flex-1">
-              <option value="">Client de passage</option>
-              {customers.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.name} {c.phone ? `(${c.phone})` : ""}
-                </option>
-              ))}
-            </Select>
-            <Button type="button" variant="outline" onClick={() => setNewClientOpen(true)}>
-              <UserPlus className="h-4 w-4" />
-            </Button>
-          </CardBody>
-        </Card>
+        {(!hideCustomerInPos || isCreditOnly) && (
+          <Card>
+            <CardHeader>
+              <h2 className="font-semibold text-zinc-900">Client</h2>
+            </CardHeader>
+            <CardBody className="flex gap-2">
+              <Select value={customerId} onChange={(e) => setCustomerId(e.target.value)} className="flex-1">
+                <option value="">Client de passage</option>
+                {customers.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.name} {c.phone ? `(${c.phone})` : ""}
+                  </option>
+                ))}
+              </Select>
+              <Button type="button" variant="outline" onClick={() => setNewClientOpen(true)}>
+                <UserPlus className="h-4 w-4" />
+              </Button>
+            </CardBody>
+          </Card>
+        )}
 
         <Card>
           <CardHeader>
