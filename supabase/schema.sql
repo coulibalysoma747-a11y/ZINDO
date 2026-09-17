@@ -892,6 +892,23 @@ create table payment_method_configs (
 );
 create index on payment_method_configs (business_id);
 
+-- Clés d'API (Paramètres > "Intégrations API") : lecture seule pour un outil
+-- externe (produits, stock, ventes, clients) — voir app/api/v1/*. Seul
+-- key_hash (sha256) est conservé, la clé en clair n'est montrée qu'une seule
+-- fois à la création (même logique que les codes de secours 2FA).
+create table api_keys (
+  id text primary key default gen_random_uuid()::text,
+  business_id text not null references businesses(id) on delete cascade,
+  name text not null,
+  key_prefix text not null,
+  key_hash text not null unique,
+  created_at timestamptz not null default now(),
+  last_used_at timestamptz,
+  revoked_at timestamptz
+);
+create index on api_keys (business_id);
+create index on api_keys (key_hash);
+
 -- ---------------------------------------------------------------------------
 -- Administration de la plateforme
 -- ---------------------------------------------------------------------------

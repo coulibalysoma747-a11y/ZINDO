@@ -28,6 +28,7 @@ import { DangerZonePanel } from "./DangerZonePanel";
 import { MobileMoneyPanel } from "./MobileMoneyPanel";
 import { AiCartPanel } from "./AiCartPanel";
 import { CaisseADeuxPanel } from "./CaisseADeuxPanel";
+import { ApiKeysPanel } from "./ApiKeysPanel";
 import type { PaymentMethod, Role } from "@/lib/db-types";
 
 // La synchronisation FasoStock déclenchée depuis cette page peut porter sur
@@ -191,6 +192,7 @@ export default async function SettingsPage() {
           <MobileMoneyPanel settings={businessSettings} />
           <AiCartPanel settings={businessSettings} />
           <CaisseADeuxPanel settings={businessSettings} />
+          <ApiKeysPanel />
         </CardBody>
       </Card>
 
