@@ -8,6 +8,15 @@ export type BusinessSettings = {
   blockSaleIfCustomerDebt: boolean;
   /** "Montrer mes chiffres de vente à mes employés" — sinon le classement des vendeurs reste réservé à l'administrateur. */
   showSalesLeaderboardToEmployees: boolean;
+  /** Modules que le commerçant peut masquer/afficher lui-même dans son propre menu (voir lib/nav.ts `moduleToggle`). */
+  modulesEnabled: {
+    devis: boolean;
+    prixDeRevient: boolean;
+    photosProduits: boolean;
+    rappelsCredit: boolean;
+    reassort: boolean;
+    notifications: boolean;
+  };
 };
 
 // Comportement par défaut si la colonne n'est pas encore migrée ou vide :
@@ -18,22 +27,44 @@ const DEFAULTS: BusinessSettings = {
   requireCustomerOnSale: false,
   blockSaleIfCustomerDebt: false,
   showSalesLeaderboardToEmployees: true,
+  modulesEnabled: {
+    devis: true,
+    prixDeRevient: true,
+    photosProduits: true,
+    rappelsCredit: true,
+    reassort: true,
+    notifications: true,
+  },
 };
+
+export type BusinessSettingsPatch = Partial<Omit<BusinessSettings, "modulesEnabled">> & {
+  modulesEnabled?: Partial<BusinessSettings["modulesEnabled"]>;
+};
+
+function merge(base: BusinessSettings, patch: BusinessSettingsPatch): BusinessSettings {
+  return {
+    ...base,
+    ...patch,
+    // Fusion en profondeur uniquement pour ce sous-objet imbriqué — sans ça,
+    // activer/désactiver UN module effacerait le réglage des autres.
+    modulesEnabled: { ...base.modulesEnabled, ...(patch.modulesEnabled ?? {}) },
+  };
+}
 
 export async function getBusinessSettings(businessId: string): Promise<BusinessSettings> {
   const { data } = await supabase.from("businesses").select("settings").eq("id", businessId).maybeSingle();
   const raw = data?.settings as string | null | undefined;
   if (!raw) return DEFAULTS;
   try {
-    return { ...DEFAULTS, ...JSON.parse(raw) };
+    return merge(DEFAULTS, JSON.parse(raw));
   } catch {
     return DEFAULTS;
   }
 }
 
-export async function updateBusinessSettings(businessId: string, patch: Partial<BusinessSettings>) {
+export async function updateBusinessSettings(businessId: string, patch: BusinessSettingsPatch) {
   const current = await getBusinessSettings(businessId);
-  const next = { ...current, ...patch };
+  const next = merge(current, patch);
   const { error } = await supabase.from("businesses").update({ settings: JSON.stringify(next) }).eq("id", businessId);
   return { error, settings: next };
 }

@@ -3,9 +3,9 @@
 import { revalidatePath } from "next/cache";
 import { requirePermission } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
-import { updateBusinessSettings, type BusinessSettings } from "@/lib/business-settings";
+import { updateBusinessSettings, type BusinessSettingsPatch } from "@/lib/business-settings";
 
-export async function updateBusinessSettingsAction(patch: Partial<BusinessSettings>) {
+export async function updateBusinessSettingsAction(patch: BusinessSettingsPatch) {
   const user = await requirePermission(PERMISSIONS.SETTINGS_MANAGE);
   const { error } = await updateBusinessSettings(user.businessId, patch);
   if (error) {

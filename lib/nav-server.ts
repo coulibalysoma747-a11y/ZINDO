@@ -4,13 +4,14 @@ import { hasPermission } from "@/lib/auth";
 import { isFeatureEnabled } from "@/lib/feature-flags";
 import { getActivityConfig, resolveTerm, TERM_NAV_HREF, type TermKey } from "@/lib/activity-config";
 import { getBusinessLimits } from "@/lib/subscription";
+import { getBusinessSettings } from "@/lib/business-settings";
 import type { Role } from "@/lib/db-types";
 
 const HREF_TO_TERM: Record<string, TermKey> = Object.fromEntries(
   Object.entries(TERM_NAV_HREF).map(([term, href]) => [href, term as TermKey])
 );
 
-export type ModuleUnavailableReason = "permission" | "feature" | "plan" | "activity";
+export type ModuleUnavailableReason = "permission" | "feature" | "plan" | "activity" | "module";
 export type ModuleAvailability = { allowed: boolean; reason: ModuleUnavailableReason | null };
 
 /**
@@ -26,9 +27,10 @@ export async function getNavItemsAvailability(
   userId: string,
   activityKey?: string | null
 ): Promise<Record<string, ModuleAvailability>> {
-  const [activityConfig, planLimits] = await Promise.all([
+  const [activityConfig, planLimits, businessSettings] = await Promise.all([
     getActivityConfig(activityKey),
     getBusinessLimits(businessId),
+    getBusinessSettings(businessId),
   ]);
 
   const entries = await Promise.all(
@@ -38,6 +40,7 @@ export async function getNavItemsAvailability(
         item.featureFlag ? isFeatureEnabled(item.featureFlag, businessId) : true,
       ]);
       const planOk = item.planFeature ? planLimits.features.includes(item.planFeature) : true;
+      const moduleOk = item.moduleToggle ? businessSettings.modulesEnabled[item.moduleToggle] : true;
       const hiddenByActivity =
         activityConfig.hiddenNavHrefs.includes(item.href) || (!!item.requireActivity && item.requireActivity !== activityKey);
 
@@ -45,6 +48,7 @@ export async function getNavItemsAvailability(
       if (!permissionOk) reason = "permission";
       else if (!featureOk) reason = "feature";
       else if (!planOk) reason = "plan";
+      else if (!moduleOk) reason = "module";
       else if (hiddenByActivity) reason = "activity";
 
       return [item.href, { allowed: reason === null, reason }] as const;
@@ -60,9 +64,10 @@ export async function getVisibleNavItems(
   userId: string,
   activityKey?: string | null
 ): Promise<NavItem[]> {
-  const [activityConfig, planLimits] = await Promise.all([
+  const [activityConfig, planLimits, businessSettings] = await Promise.all([
     getActivityConfig(activityKey),
     getBusinessLimits(businessId),
+    getBusinessSettings(businessId),
   ]);
 
   const checked = await Promise.all(
@@ -72,9 +77,10 @@ export async function getVisibleNavItems(
         item.featureFlag ? isFeatureEnabled(item.featureFlag, businessId) : true,
       ]);
       const planOk = item.planFeature ? planLimits.features.includes(item.planFeature) : true;
+      const moduleOk = item.moduleToggle ? businessSettings.modulesEnabled[item.moduleToggle] : true;
       const hiddenByActivity =
         activityConfig.hiddenNavHrefs.includes(item.href) || (!!item.requireActivity && item.requireActivity !== activityKey);
-      return { item, allowed: permissionOk && featureOk && planOk && !hiddenByActivity };
+      return { item, allowed: permissionOk && featureOk && planOk && moduleOk && !hiddenByActivity };
     })
   );
 

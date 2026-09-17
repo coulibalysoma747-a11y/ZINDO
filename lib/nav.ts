@@ -43,13 +43,15 @@ export type NavItem = {
   featureFlag?: string;
   planFeature?: string;
   badge?: string;
+  /** Module que le commerçant peut lui-même masquer depuis Paramètres (lib/business-settings.ts `modulesEnabled`). */
+  moduleToggle?: "devis" | "prixDeRevient" | "photosProduits" | "rappelsCredit" | "reassort" | "notifications";
   /** N'apparaît que pour ce type d'activité précis (lib/activities.ts) — voir lib/nav-server.ts. */
   requireActivity?: string;
 };
 
 export const NAV_ITEMS: NavItem[] = [
   { label: "Tableau de bord", href: "/dashboard", icon: "dashboard" },
-  { label: "Notifications", href: "/notifications", icon: "notifications", permission: PERMISSIONS.STOCK_VIEW },
+  { label: "Notifications", href: "/notifications", icon: "notifications", permission: PERMISSIONS.STOCK_VIEW, moduleToggle: "notifications" },
   { label: "Assistant IA", href: "/assistant", icon: "assistant", permission: PERMISSIONS.ASSISTANT_USE, planFeature: "assistant_ia", badge: "IA" },
   { label: "Vente / Caisse", href: "/ventes", icon: "sales", permission: PERMISSIONS.SALES_CREATE },
   {
@@ -67,23 +69,23 @@ export const NAV_ITEMS: NavItem[] = [
     requireActivity: MOTO_ACTIVITY_KEY,
   },
   { label: "Facture A4", href: "/factures", icon: "invoices", permission: PERMISSIONS.SALES_CREATE },
-  { label: "Devis", href: "/devis", icon: "quotes", permission: PERMISSIONS.SALES_CREATE, featureFlag: "devis" },
+  { label: "Devis", href: "/devis", icon: "quotes", permission: PERMISSIONS.SALES_CREATE, featureFlag: "devis", moduleToggle: "devis" },
   { label: "Location", href: "/location", icon: "rentals", permission: PERMISSIONS.SALES_VIEW },
   { label: "Historique des ventes", href: "/ventes/historique", icon: "history", permission: PERMISSIONS.SALES_VIEW },
   { label: "Sessions de caisse", href: "/ventes/sessions", icon: "cash-sessions", permission: PERMISSIONS.CASH_SESSIONS_MANAGE },
   { label: "Produits", href: "/produits", icon: "products", permission: PERMISSIONS.PRODUCTS_VIEW },
-  { label: "Prix de revient", href: "/prix-de-revient", icon: "cost-price", permission: PERMISSIONS.PRODUCTS_MANAGE },
-  { label: "Photos produits", href: "/photos-produits", icon: "product-photos", permission: PERMISSIONS.PRODUCTS_MANAGE },
+  { label: "Prix de revient", href: "/prix-de-revient", icon: "cost-price", permission: PERMISSIONS.PRODUCTS_MANAGE, moduleToggle: "prixDeRevient" },
+  { label: "Photos produits", href: "/photos-produits", icon: "product-photos", permission: PERMISSIONS.PRODUCTS_MANAGE, moduleToggle: "photosProduits" },
   { label: "Catégories", href: "/categories", icon: "categories", permission: PERMISSIONS.CATEGORIES_MANAGE },
   { label: "Marques", href: "/marques", icon: "brands", permission: PERMISSIONS.CATEGORIES_MANAGE },
   { label: "Stock", href: "/stock", icon: "stock", permission: PERMISSIONS.STOCK_VIEW },
-  { label: "Réassort", href: "/reassort", icon: "restock", permission: PERMISSIONS.STOCK_VIEW },
+  { label: "Réassort", href: "/reassort", icon: "restock", permission: PERMISSIONS.STOCK_VIEW, moduleToggle: "reassort" },
   { label: "Transferts", href: "/transferts", icon: "transfers", permission: PERMISSIONS.TRANSFERS_MANAGE, planFeature: "advanced_stock" },
   { label: "Achats", href: "/achats", icon: "purchases", permission: PERMISSIONS.PURCHASES_MANAGE },
   { label: "Dépenses", href: "/depenses", icon: "expenses", permission: PERMISSIONS.EXPENSES_MANAGE, planFeature: "expenses" },
   { label: "Clients", href: "/clients", icon: "customers", permission: PERMISSIONS.CUSTOMERS_VIEW },
   { label: "Crédits", href: "/credits", icon: "credits", permission: PERMISSIONS.CUSTOMERS_VIEW, planFeature: "credits" },
-  { label: "Rappels crédit", href: "/rappels-credit", icon: "credit-reminders", permission: PERMISSIONS.CUSTOMERS_VIEW, planFeature: "credits" },
+  { label: "Rappels crédit", href: "/rappels-credit", icon: "credit-reminders", permission: PERMISSIONS.CUSTOMERS_VIEW, planFeature: "credits", moduleToggle: "rappelsCredit" },
   { label: "Fournisseurs", href: "/fournisseurs", icon: "suppliers", permission: PERMISSIONS.SUPPLIERS_MANAGE },
   { label: "Inventaire", href: "/inventaire", icon: "inventory", permission: PERMISSIONS.INVENTORY_MANAGE, planFeature: "inventory" },
   { label: "Historique global", href: "/historique", icon: "history-global", permission: PERMISSIONS.REPORTS_VIEW, planFeature: "advanced_reports" },

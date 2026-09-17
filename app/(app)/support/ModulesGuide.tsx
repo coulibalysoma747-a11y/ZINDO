@@ -9,6 +9,7 @@ const UNAVAILABLE_MESSAGES: Record<ModuleUnavailableReason, string> = {
   feature: "Cette fonctionnalité n'est pas encore activée pour votre compte.",
   plan: "Non inclus dans votre formule d'abonnement actuelle.",
   activity: "Ce module ne s'applique pas à votre type d'activité.",
+  module: "Masqué depuis Paramètres — réactivez-le dans la section Modules.",
 };
 
 // Une description courte et une explication détaillée par module, dans
