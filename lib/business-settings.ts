@@ -10,6 +10,8 @@ export type BusinessSettings = {
   showSalesLeaderboardToEmployees: boolean;
   /** "Suivre les marchandises à retirer" — permet de marquer une vente payée mais pas encore emportée. */
   trackUnclaimedGoods: boolean;
+  /** "Afficher le détail des encaissements" — volet repliable sous les chiffres du tableau de bord. */
+  dashboardShowPaymentBreakdown: boolean;
   /** Modules que le commerçant peut masquer/afficher lui-même dans son propre menu (voir lib/nav.ts `moduleToggle`). */
   modulesEnabled: {
     devis: boolean;
@@ -30,6 +32,7 @@ const DEFAULTS: BusinessSettings = {
   blockSaleIfCustomerDebt: false,
   showSalesLeaderboardToEmployees: true,
   trackUnclaimedGoods: true,
+  dashboardShowPaymentBreakdown: true,
   modulesEnabled: {
     devis: true,
     prixDeRevient: true,

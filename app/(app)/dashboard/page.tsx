@@ -12,6 +12,7 @@ import { EmptyState } from "@/components/ui/Empty";
 import { ButtonLink } from "@/components/ui/Button";
 import { HistoryFilters } from "@/components/history/HistoryFilters";
 import { RevenueTrendChart } from "@/components/dashboard/RevenueTrendChart";
+import { PaymentBreakdownDetail } from "@/components/dashboard/PaymentBreakdownDetail";
 import { MobileHome } from "./MobileHome";
 import {
   Wallet,
@@ -206,35 +207,16 @@ export default async function DashboardPage({
         </div>
       )}
 
-      {canSell && overview.current.cashedIn > 0 && (
+      {canSell && overview.current.cashedIn > 0 && (businessSettings.dashboardShowPaymentBreakdown || canSeeLeaderboard) && (
         <Card>
           <CardHeader>
             <h2 className="font-semibold text-zinc-900">Détail des encaissements</h2>
             <span className="text-sm font-medium text-zinc-500">{formatMoney(overview.current.cashedIn, currency)}</span>
           </CardHeader>
           <CardBody className="space-y-5">
-            <div>
-              <div className="flex h-2 overflow-hidden rounded-full bg-zinc-100">
-                <div
-                  className="bg-emerald-500"
-                  style={{ width: `${(overview.current.especes / overview.current.cashedIn) * 100}%` }}
-                />
-                <div
-                  className="bg-violet-400"
-                  style={{ width: `${(overview.current.autres / overview.current.cashedIn) * 100}%` }}
-                />
-              </div>
-              <div className="mt-2 flex flex-wrap gap-6 text-sm">
-                <span className="flex items-center gap-1.5 text-zinc-600">
-                  <span className="h-2 w-2 rounded-full bg-emerald-500" /> Espèces —{" "}
-                  <span className="font-medium text-zinc-900">{formatMoney(overview.current.especes, currency)}</span>
-                </span>
-                <span className="flex items-center gap-1.5 text-zinc-600">
-                  <span className="h-2 w-2 rounded-full bg-violet-400" /> Mobile money / carte —{" "}
-                  <span className="font-medium text-zinc-900">{formatMoney(overview.current.autres, currency)}</span>
-                </span>
-              </div>
-            </div>
+            {businessSettings.dashboardShowPaymentBreakdown && (
+              <PaymentBreakdownDetail cashedIn={overview.current.cashedIn} byMethod={overview.current.byMethod} currency={currency} />
+            )}
 
             {canSeeLeaderboard && leaderboardOverview.vendorBreakdown.length > 0 && (
               <div>

@@ -228,6 +228,20 @@ async function summarize(sales: SaleAgg[], payments: PaymentAgg[], expenses: num
     sales.filter((s) => s.paymentMethod === "ESPECES").reduce((s, sale) => s + sale.amountPaid, 0) +
     payments.filter((p) => p.method === "ESPECES").reduce((s, p) => s + p.amount, 0);
 
+  // Détail des encaissements par moyen de paiement (montant + nombre de
+  // règlements) — voir Paramètres > "Détail des encaissements" au tableau de
+  // bord. Les remboursements de crédit (customer_payments) comptent aussi
+  // dans le moyen de paiement utilisé pour rembourser, pas seulement les ventes.
+  const byMethod: Record<string, { amount: number; count: number }> = {};
+  const addToMethod = (method: string, amount: number) => {
+    const m = byMethod[method] ?? { amount: 0, count: 0 };
+    m.amount += amount;
+    m.count += 1;
+    byMethod[method] = m;
+  };
+  for (const sale of sales) addToMethod(sale.paymentMethod, sale.amountPaid);
+  for (const p of payments) addToMethod(p.method, p.amount);
+
   return {
     cashedIn,
     creditRepayments: paymentsCashedIn,
@@ -240,6 +254,7 @@ async function summarize(sales: SaleAgg[], payments: PaymentAgg[], expenses: num
     avgTicket: sales.length > 0 ? cashedIn / sales.length : 0,
     especes,
     autres: cashedIn - especes,
+    byMethod,
   };
 }
 
