@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { ZindoLogo } from "@/components/auth/ZindoLogo";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { Package, ShoppingCart, Store, BarChart3 } from "lucide-react";
@@ -16,6 +17,8 @@ const TEXT = {
     subhead:
       "Des milliers de commerçants au Burkina Faso utilisent ZINDO pour suivre leur stock, leurs ventes et leurs bénéfices, chaque jour.",
     createdBy: "Créé par Coulibaly Soma",
+    founderName: "Coulibaly Soma",
+    founderTagline: "Fondateur ZINDO — à vos côtés à chaque étape.",
     partner: "En partenariat avec",
     mobileTagline: (
       <>
@@ -42,6 +45,8 @@ const TEXT = {
     subhead:
       "Thousands of merchants in Burkina Faso use ZINDO every day to track their stock, sales, and profits.",
     createdBy: "Created by Coulibaly Soma",
+    founderName: "Coulibaly Soma",
+    founderTagline: "ZINDO Founder — with you every step of the way.",
     partner: "In partnership with",
     mobileTagline: (
       <>
@@ -102,6 +107,20 @@ export function AuthShell({ children, locale = "fr" }: { children: React.ReactNo
               </li>
             ))}
           </ul>
+
+          <div className="mt-8 flex items-center gap-3 rounded-2xl border border-white/10 bg-white/5 p-3">
+            <Image
+              src="/brand/founder-coulibaly-soma.jpg"
+              alt={t.founderName}
+              width={48}
+              height={48}
+              className="h-12 w-12 shrink-0 rounded-full object-cover ring-2 ring-white/20"
+            />
+            <div>
+              <p className="text-sm font-semibold text-white">{t.founderName}</p>
+              <p className="text-xs text-slate-300">{t.founderTagline}</p>
+            </div>
+          </div>
         </div>
 
         <div className="relative z-10 flex flex-wrap items-center justify-between gap-3">

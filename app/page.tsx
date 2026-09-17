@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import {
   Boxes,
   TrendingUp,
@@ -15,11 +16,16 @@ import {
   ListChecks,
   PlayCircle,
   ArrowRight,
+  CheckCircle2,
+  Zap,
+  Headphones,
 } from "lucide-react";
 import { getCurrentUser } from "@/lib/auth";
 import { ZindoLogo } from "@/components/auth/ZindoLogo";
 import { InstallAppButton } from "@/components/InstallAppButton";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
+import { FacebookIcon } from "@/components/icons/FacebookIcon";
+import { TikTokIcon } from "@/components/icons/TikTokIcon";
 
 // Cycle tricolore (vert/or/rouge, drapeau du Burkina Faso et logo ZINDO)
 // appliqué aux puces d'icônes de la page publique pour une identité visuelle
@@ -123,6 +129,17 @@ const FAQS = [
     answer:
       "ZINDO s'installe directement depuis le navigateur (bouton « Installer l'application », en haut de cette page) sur Android, iOS et Windows, sans passer par un store — c'est gratuit et ne prend que quelques secondes.",
   },
+];
+
+const TRUST_BADGES = [
+  { icon: ShieldCheck, title: "Sécurisé", text: "Vos données sont protégées" },
+  { icon: Zap, title: "Rapide", text: "Gérez votre activité en quelques clics" },
+  { icon: Headphones, title: "Support réactif", text: "Une équipe disponible pour vous accompagner" },
+];
+
+const SOCIAL_LINKS = [
+  { icon: FacebookIcon, label: "Facebook", href: "https://www.facebook.com/profile.php?id=61594056733577&mibextid=ZbWKwL" },
+  { icon: TikTokIcon, label: "TikTok", href: "https://www.tiktok.com/@zindo390?_r=1&_t=ZN-99o7lktR2Ws" },
 ];
 
 const STEPS = [
@@ -309,6 +326,57 @@ export default async function RootPage() {
           </div>
         </section>
 
+        {/* Fondateur */}
+        <section className="mt-24">
+          <div className="mx-auto max-w-2xl text-center">
+            <h2 className="text-2xl font-extrabold tracking-tight text-zindo-ink-900 sm:text-3xl">
+              Le fondateur derrière ZINDO
+            </h2>
+          </div>
+          <div className="mx-auto mt-10 flex max-w-3xl flex-col overflow-hidden rounded-3xl border border-zinc-200 bg-white shadow-sm sm:flex-row sm:items-center">
+            <div className="relative h-64 w-full shrink-0 sm:h-auto sm:w-56 sm:self-stretch">
+              <Image
+                src="/brand/founder-coulibaly-soma.jpg"
+                alt="Coulibaly Soma, fondateur de ZINDO"
+                fill
+                className="object-cover"
+              />
+            </div>
+            <div className="p-6 sm:p-8">
+              <p className="text-xs font-bold uppercase tracking-wider text-zindo-green-600">Fondateur ZINDO</p>
+              <h3 className="mt-1 text-xl font-extrabold text-zindo-ink-900">Coulibaly Soma</h3>
+              <p className="mt-2 text-sm leading-relaxed text-zinc-500">
+                Développeur d&apos;une solution complète pour gérer votre activité en toute simplicité.
+              </p>
+              <p className="mt-3 flex items-center gap-2 text-sm font-semibold text-zindo-green-700">
+                <CheckCircle2 className="h-4 w-4 shrink-0" /> À vos côtés à chaque étape
+              </p>
+            </div>
+          </div>
+
+          <div className="mx-auto mt-8 grid max-w-3xl grid-cols-1 gap-4 sm:grid-cols-3">
+            {TRUST_BADGES.map((badge) => (
+              <div key={badge.title} className="flex items-start gap-3 rounded-2xl border border-zinc-200 bg-white p-4">
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-zindo-green-50 text-zindo-green-600">
+                  <badge.icon className="h-4.5 w-4.5" />
+                </span>
+                <div>
+                  <p className="font-bold text-zindo-ink-900">{badge.title}</p>
+                  <p className="mt-0.5 text-xs leading-relaxed text-zinc-500">{badge.text}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="mx-auto mt-6 flex max-w-3xl flex-col items-center justify-between gap-3 rounded-2xl bg-zindo-green-50 px-5 py-4 text-center sm:flex-row sm:text-left">
+            <p className="text-sm text-zindo-green-800">
+              Installable directement depuis votre navigateur, sur téléphone comme sur ordinateur — sans passer par
+              un store.
+            </p>
+            <InstallAppButton className="inline-flex shrink-0 items-center gap-1.5 rounded-xl bg-zindo-green-600 px-4 py-2 text-sm font-semibold text-white hover:bg-zindo-green-700" />
+          </div>
+        </section>
+
         {/* Comment ça marche */}
         <section className="mt-24">
           <div className="mx-auto max-w-2xl text-center">
@@ -389,6 +457,20 @@ export default async function RootPage() {
           Partenaire : <span className="font-medium text-zinc-500">Faso Stock</span> — Propriétaire Mohamed
           Sare
         </p>
+        <div className="mt-3 flex items-center justify-center gap-4">
+          {SOCIAL_LINKS.map((social) => (
+            <a
+              key={social.label}
+              href={social.href}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label={social.label}
+              className="text-zinc-400 hover:text-zindo-green-600"
+            >
+              <social.icon className="h-5 w-5" />
+            </a>
+          ))}
+        </div>
         <p className="mt-2">
           <Link href="/cgu" className="hover:text-zindo-green-600">
             Conditions générales d&apos;utilisation
