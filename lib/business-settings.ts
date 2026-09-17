@@ -12,6 +12,8 @@ export type BusinessSettings = {
   trackUnclaimedGoods: boolean;
   /** "Afficher le détail des encaissements" — volet repliable sous les chiffres du tableau de bord. */
   dashboardShowPaymentBreakdown: boolean;
+  /** "Personnaliser mes dépenses" — catégories proposées à la saisie d'une dépense. */
+  expenseCategories: string[];
   /** Modules que le commerçant peut masquer/afficher lui-même dans son propre menu (voir lib/nav.ts `moduleToggle`). */
   modulesEnabled: {
     devis: boolean;
@@ -33,6 +35,7 @@ const DEFAULTS: BusinessSettings = {
   showSalesLeaderboardToEmployees: true,
   trackUnclaimedGoods: true,
   dashboardShowPaymentBreakdown: true,
+  expenseCategories: ["Loyer", "Marketing", "Télécom", "Carburant", "Salaires", "Électricité/eau", "Transport", "Autre"],
   modulesEnabled: {
     devis: true,
     prixDeRevient: true,

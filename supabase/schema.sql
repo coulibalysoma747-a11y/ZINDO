@@ -737,6 +737,11 @@ create table expenses (
   label text not null,
   amount double precision not null,
   note text,
+  -- Catégorie libre choisie parmi lib/business-settings.ts `expenseCategories`
+  -- (personnalisable par commerce) et moyen de règlement — voir Paramètres >
+  -- "Personnaliser mes dépenses".
+  category text,
+  payment_method payment_method not null default 'ESPECES',
   user_id text not null references users(id),
   date timestamptz not null default now()
 );

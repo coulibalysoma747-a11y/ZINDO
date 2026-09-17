@@ -18,6 +18,7 @@ import { SalesLeaderboardPanel } from "./SalesLeaderboardPanel";
 import { ModuleTogglesPanel } from "./ModuleTogglesPanel";
 import { UnclaimedGoodsPanel } from "./UnclaimedGoodsPanel";
 import { PaymentBreakdownPanel } from "./PaymentBreakdownPanel";
+import { ExpenseCategoriesPanel } from "./ExpenseCategoriesPanel";
 import type { PaymentMethod, Role } from "@/lib/db-types";
 
 // La synchronisation FasoStock déclenchée depuis cette page peut porter sur
@@ -172,6 +173,7 @@ export default async function SettingsPage() {
           <SalesLeaderboardPanel settings={businessSettings} />
           <UnclaimedGoodsPanel settings={businessSettings} />
           <PaymentBreakdownPanel settings={businessSettings} />
+          <ExpenseCategoriesPanel categories={businessSettings.expenseCategories} />
         </CardBody>
       </Card>
 

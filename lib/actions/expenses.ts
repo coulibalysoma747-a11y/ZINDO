@@ -7,12 +7,16 @@ import { requirePermission } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
 import { getCurrentLocation } from "@/lib/location";
 import { logAction } from "@/lib/audit";
+import type { PaymentMethod } from "@/lib/db-types";
 
 export type ActionState = { error?: string; success?: string } | undefined;
 
 const expenseSchema = z.object({
   label: z.string().min(1, "Le libellé est requis"),
   amount: z.coerce.number().positive("Le montant doit être supérieur à 0"),
+  category: z.string().optional(),
+  paymentMethod: z.enum(["ESPECES", "MOBILE_MONEY", "CARTE", "CREDIT", "AUTRE"]).optional(),
+  date: z.string().optional(),
   note: z.string().optional(),
 });
 
@@ -24,6 +28,9 @@ export async function createExpenseAction(
   const parsed = expenseSchema.safeParse({
     label: formData.get("label"),
     amount: formData.get("amount"),
+    category: formData.get("category") || undefined,
+    paymentMethod: formData.get("paymentMethod") || undefined,
+    date: formData.get("date") || undefined,
     note: formData.get("note") || undefined,
   });
   if (!parsed.success) return { error: parsed.error.issues[0]?.message };
@@ -38,6 +45,9 @@ export async function createExpenseAction(
       location_id: currentLocation.id,
       label: parsed.data.label,
       amount: parsed.data.amount,
+      category: parsed.data.category ?? null,
+      payment_method: (parsed.data.paymentMethod ?? "ESPECES") as PaymentMethod,
+      date: parsed.data.date ? new Date(parsed.data.date).toISOString() : new Date().toISOString(),
       note: parsed.data.note ?? null,
       user_id: user.id,
     })

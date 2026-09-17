@@ -3,18 +3,24 @@ import { PERMISSIONS } from "@/lib/permissions";
 import { supabase } from "@/lib/supabase";
 import { getCurrentLocation } from "@/lib/location";
 import { formatMoney, formatDateTime, startOfToday, startOfYesterday, startOfWeek, startOfMonth } from "@/lib/format";
+import { getBusinessSettings } from "@/lib/business-settings";
 import { Card, CardBody } from "@/components/ui/Card";
+import { Badge } from "@/components/ui/Badge";
 import { EmptyState } from "@/components/ui/Empty";
 import { ButtonLink } from "@/components/ui/Button";
 import { HistoryFilters } from "@/components/history/HistoryFilters";
 import { ExpenseManager } from "./ExpenseManager";
 import { DeleteExpenseButton } from "./DeleteExpenseButton";
 
+const PAYMENT_LABELS: Record<string, string> = { ESPECES: "Espèces", MOBILE_MONEY: "Mobile Money" };
+
 type ExpenseRow = {
   id: string;
   date: string;
   label: string;
   note: string | null;
+  category: string | null;
+  paymentMethod: string;
   amount: number;
   user: { firstName: string; lastName: string };
 };
@@ -26,7 +32,10 @@ export default async function ExpensesPage({
 }) {
   const user = await requirePermission(PERMISSIONS.EXPENSES_MANAGE);
   const { periode } = await searchParams;
-  const currentLocation = await getCurrentLocation(user.businessId);
+  const [currentLocation, businessSettings] = await Promise.all([
+    getCurrentLocation(user.businessId),
+    getBusinessSettings(user.businessId),
+  ]);
 
   if (!currentLocation) {
     return (
@@ -40,7 +49,9 @@ export default async function ExpensesPage({
 
   let query = supabase
     .from("expenses")
-    .select("id, date, label, note, amount, user:users(firstName:first_name, lastName:last_name)")
+    .select(
+      "id, date, label, note, category, paymentMethod:payment_method, amount, user:users(firstName:first_name, lastName:last_name)"
+    )
     .eq("business_id", user.businessId)
     .eq("location_id", currentLocation.id)
     .order("date", { ascending: false })
@@ -65,7 +76,7 @@ export default async function ExpensesPage({
           <h1 className="text-xl font-bold text-zinc-900">Dépenses</h1>
           <p className="text-sm text-zinc-500">{currentLocation.name}</p>
         </div>
-        <ExpenseManager />
+        <ExpenseManager categories={businessSettings.expenseCategories} />
       </div>
 
       <Card>
@@ -86,6 +97,8 @@ export default async function ExpensesPage({
               <tr>
                 <th className="px-4 py-3 font-medium">Date</th>
                 <th className="px-4 py-3 font-medium">Libellé</th>
+                <th className="px-4 py-3 font-medium">Catégorie</th>
+                <th className="px-4 py-3 font-medium">Règlement</th>
                 <th className="px-4 py-3 font-medium">Enregistré par</th>
                 <th className="px-4 py-3 text-right font-medium">Montant</th>
                 <th className="px-4 py-3" />
@@ -99,6 +112,8 @@ export default async function ExpensesPage({
                     <p className="font-medium text-zinc-900">{e.label}</p>
                     {e.note && <p className="text-xs text-zinc-400">{e.note}</p>}
                   </td>
+                  <td className="px-4 py-3">{e.category ? <Badge tone="zinc">{e.category}</Badge> : "—"}</td>
+                  <td className="px-4 py-3 text-zinc-600">{PAYMENT_LABELS[e.paymentMethod] ?? e.paymentMethod}</td>
                   <td className="px-4 py-3 text-zinc-600">
                     {e.user.firstName} {e.user.lastName}
                   </td>
