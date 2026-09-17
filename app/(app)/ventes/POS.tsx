@@ -33,6 +33,7 @@ import {
 import { syncPendingSales } from "@/lib/offline/sync";
 import { buildOfflineDocument } from "@/lib/offline/build-document";
 import { getAvailableVehicleUnitsAction } from "@/lib/actions/vehicle-units";
+import { playAddToCartSound } from "@/lib/sound";
 
 type CartLine = {
   product: PosProduct;
@@ -258,6 +259,7 @@ export function POS({
       openUnitPicker(product);
       return;
     }
+    playAddToCartSound();
     const multiplier = packaging?.multiplier ?? 1;
     const maxQty = Math.max(1, Math.floor(product.quantity / multiplier));
     setCart((prev) => {
@@ -304,6 +306,7 @@ export function POS({
   }
 
   function addTrackedUnit(product: PosProduct, unit: { id: string; chassisNumber: string }) {
+    playAddToCartSound();
     setCart((prev) => [
       ...prev,
       {
