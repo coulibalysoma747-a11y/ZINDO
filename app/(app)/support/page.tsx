@@ -3,11 +3,13 @@ import { requireUser } from "@/lib/auth";
 import { supabase } from "@/lib/supabase";
 import { formatDateTime } from "@/lib/format";
 import { getNavItemsAvailability } from "@/lib/nav-server";
+import { isAssistantConfigured } from "@/lib/ai/deepseek";
 import { Card, CardBody, CardHeader } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { EmptyState } from "@/components/ui/Empty";
 import { SupportForm } from "./SupportForm";
 import { ModulesGuide } from "./ModulesGuide";
+import { HelpChat } from "./HelpChat";
 
 const SUPPORT_WHATSAPP_DISPLAY = "+226 04 05 99 29";
 const SUPPORT_WHATSAPP_LINK = "https://wa.me/22604059929";
@@ -81,6 +83,15 @@ export default async function SupportPage() {
           >
             {SUPPORT_WHATSAPP_DISPLAY}
           </a>
+        </CardBody>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <h2 className="font-semibold text-zinc-900">Assistant d&apos;aide</h2>
+        </CardHeader>
+        <CardBody>
+          <HelpChat configured={isAssistantConfigured()} />
         </CardBody>
       </Card>
 

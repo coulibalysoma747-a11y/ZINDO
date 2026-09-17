@@ -16,7 +16,7 @@ const UNAVAILABLE_MESSAGES: Record<ModuleUnavailableReason, string> = {
 // l'ordre du menu (lib/nav.ts) — sert de guide de référence sur la page
 // Aide. Tenu à jour manuellement : si un module est ajouté/retiré du menu,
 // l'ajouter/le retirer ici aussi.
-const DESCRIPTIONS: Record<string, { short: string; long: string }> = {
+export const DESCRIPTIONS: Record<string, { short: string; long: string }> = {
   "/dashboard": {
     short: "Vue d'ensemble de votre activité : ventes du jour, alertes de stock, raccourcis vers l'essentiel.",
     long: "Votre écran d'accueil. Vous y voyez en un coup d'œil les ventes du jour, la variation par rapport à hier, vos raccourcis vers les actions les plus fréquentes et vos alertes de stock (ruptures, stock faible). Sur ordinateur, des statistiques plus détaillées (bénéfice du jour, chiffre d'affaires du mois, produits les plus vendus, stock par boutique) s'affichent en plus, en dessous.",
