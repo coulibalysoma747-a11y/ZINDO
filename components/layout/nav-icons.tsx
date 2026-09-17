@@ -28,6 +28,12 @@ import {
   IdCard,
   Award,
   Crown,
+  Bell,
+  BellRing,
+  PackagePlus,
+  Calculator,
+  Images,
+  CalendarClock,
 } from "lucide-react";
 
 // Module simple (sans "use client") pour que cette table icône-par-module
@@ -65,4 +71,10 @@ export const NAV_ICONS: Record<NavItem["icon"], React.ComponentType<{ className?
   quotes: FileSignature,
   "vehicle-registration": IdCard,
   subscription: Crown,
+  notifications: Bell,
+  "credit-reminders": BellRing,
+  restock: PackagePlus,
+  "cost-price": Calculator,
+  "product-photos": Images,
+  rentals: CalendarClock,
 };

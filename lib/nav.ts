@@ -32,7 +32,13 @@ export type NavItem = {
     | "vehicle-sales"
     | "quotes"
     | "vehicle-registration"
-    | "subscription";
+    | "subscription"
+    | "notifications"
+    | "credit-reminders"
+    | "restock"
+    | "cost-price"
+    | "product-photos"
+    | "rentals";
   permission?: Permission;
   featureFlag?: string;
   planFeature?: string;
@@ -43,6 +49,7 @@ export type NavItem = {
 
 export const NAV_ITEMS: NavItem[] = [
   { label: "Tableau de bord", href: "/dashboard", icon: "dashboard" },
+  { label: "Notifications", href: "/notifications", icon: "notifications", permission: PERMISSIONS.STOCK_VIEW },
   { label: "Assistant IA", href: "/assistant", icon: "assistant", permission: PERMISSIONS.ASSISTANT_USE, planFeature: "assistant_ia", badge: "IA" },
   { label: "Vente / Caisse", href: "/ventes", icon: "sales", permission: PERMISSIONS.SALES_CREATE },
   {
@@ -67,11 +74,13 @@ export const NAV_ITEMS: NavItem[] = [
   { label: "Catégories", href: "/categories", icon: "categories", permission: PERMISSIONS.CATEGORIES_MANAGE },
   { label: "Marques", href: "/marques", icon: "brands", permission: PERMISSIONS.CATEGORIES_MANAGE },
   { label: "Stock", href: "/stock", icon: "stock", permission: PERMISSIONS.STOCK_VIEW },
+  { label: "Réassort", href: "/reassort", icon: "restock", permission: PERMISSIONS.STOCK_VIEW },
   { label: "Transferts", href: "/transferts", icon: "transfers", permission: PERMISSIONS.TRANSFERS_MANAGE, planFeature: "advanced_stock" },
   { label: "Achats", href: "/achats", icon: "purchases", permission: PERMISSIONS.PURCHASES_MANAGE },
   { label: "Dépenses", href: "/depenses", icon: "expenses", permission: PERMISSIONS.EXPENSES_MANAGE, planFeature: "expenses" },
   { label: "Clients", href: "/clients", icon: "customers", permission: PERMISSIONS.CUSTOMERS_VIEW },
   { label: "Crédits", href: "/credits", icon: "credits", permission: PERMISSIONS.CUSTOMERS_VIEW, planFeature: "credits" },
+  { label: "Rappels crédit", href: "/rappels-credit", icon: "credit-reminders", permission: PERMISSIONS.CUSTOMERS_VIEW, planFeature: "credits" },
   { label: "Fournisseurs", href: "/fournisseurs", icon: "suppliers", permission: PERMISSIONS.SUPPLIERS_MANAGE },
   { label: "Inventaire", href: "/inventaire", icon: "inventory", permission: PERMISSIONS.INVENTORY_MANAGE, planFeature: "inventory" },
   { label: "Historique global", href: "/historique", icon: "history-global", permission: PERMISSIONS.REPORTS_VIEW, planFeature: "advanced_reports" },
