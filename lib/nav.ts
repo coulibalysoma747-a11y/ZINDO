@@ -40,7 +40,8 @@ export type NavItem = {
     | "product-photos"
     | "rentals"
     | "quick-supply"
-    | "pickups";
+    | "pickups"
+    | "shipments";
   permission?: Permission;
   featureFlag?: string;
   planFeature?: string;
@@ -85,6 +86,7 @@ export const NAV_ITEMS: NavItem[] = [
   { label: "Transferts", href: "/transferts", icon: "transfers", permission: PERMISSIONS.TRANSFERS_MANAGE, planFeature: "advanced_stock" },
   { label: "Approvisionnement rapide", href: "/approvisionnement", icon: "quick-supply", permission: PERMISSIONS.STOCK_MANAGE, moduleToggle: "quickSupply" },
   { label: "Enlèvements partenaires", href: "/enlevements", icon: "pickups", permission: PERMISSIONS.STOCK_MANAGE, moduleToggle: "pickups" },
+  { label: "Expéditions", href: "/expeditions", icon: "shipments", permission: PERMISSIONS.SALES_VIEW, moduleToggle: "shipments" },
   { label: "Achats", href: "/achats", icon: "purchases", permission: PERMISSIONS.PURCHASES_MANAGE },
   { label: "Dépenses", href: "/depenses", icon: "expenses", permission: PERMISSIONS.EXPENSES_MANAGE, planFeature: "expenses" },
   { label: "Clients", href: "/clients", icon: "customers", permission: PERMISSIONS.CUSTOMERS_VIEW },

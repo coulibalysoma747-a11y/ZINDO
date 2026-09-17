@@ -35,6 +35,7 @@ create type subscription_status as enum ('ACTIVE','PAST_DUE','TRIAL','EXPIRED');
 create type invoice_status as enum ('EN_ATTENTE','PAYEE','ANNULEE');
 create type invoice_payment_method as enum ('MANUEL','CINETPAY');
 create type quote_status as enum ('BROUILLON','ENVOYE','ACCEPTE','REFUSE','EXPIRE','CONVERTI');
+create type shipment_status as enum ('ENVOYE','ARRIVE','RETIRE');
 create type rental_status as enum ('EN_COURS','RETOURNEE','ANNULEE');
 
 -- ---------------------------------------------------------------------------
@@ -69,6 +70,7 @@ create table businesses (
   next_barcode_seq int not null default 1,
   next_rental_seq int not null default 1,
   next_pickup_seq int not null default 1,
+  next_shipment_seq int not null default 1,
   -- Intégration FasoStock (lib/integrations/faso-stock.ts) : synchronisation
   -- à sens unique FasoStock → ZINDO (leur API est en lecture seule). La clé
   -- n'est jamais renvoyée au navigateur, uniquement lue côté serveur.
@@ -694,6 +696,32 @@ create table pickup_payments (
   created_at timestamptz not null default now()
 );
 create index on pickup_payments (pickup_id);
+
+-- Expéditions : suivi d'un colis envoyé par transporteur pour une vente en
+-- gros à un client éloigné — ne touche jamais au stock (déjà sorti par la
+-- facture liée), sert surtout à ne pas perdre de vue les frais de transport
+-- avancés (trop petits pour qu'on y pense un par un, mais nombreux).
+create table shipments (
+  id text primary key default gen_random_uuid()::text,
+  business_id text not null references businesses(id) on delete cascade,
+  location_id text not null references locations(id),
+  number text not null,
+  sale_id text references sales(id),
+  carrier_name text not null,
+  waybill_number text,
+  destination text,
+  recipient_name text,
+  recipient_phone text,
+  cost double precision not null default 0,
+  status shipment_status not null default 'ENVOYE',
+  note text,
+  user_id text not null references users(id),
+  created_at timestamptz not null default now(),
+  arrived_at timestamptz,
+  picked_up_at timestamptz,
+  unique (business_id, number)
+);
+create index on shipments (business_id, created_at);
 
 create table supplier_payments (
   id text primary key default gen_random_uuid()::text,

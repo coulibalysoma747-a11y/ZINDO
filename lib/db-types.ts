@@ -35,5 +35,6 @@ export type OnlineOrderStatus = "EN_ATTENTE" | "CONFIRMEE" | "PRETE" | "LIVREE" 
 export type BillingCycle = "MONTHLY" | "ANNUAL";
 export type SubscriptionStatus = "ACTIVE" | "PAST_DUE" | "TRIAL" | "EXPIRED";
 export type RentalStatus = "EN_COURS" | "RETOURNEE" | "ANNULEE";
+export type ShipmentStatus = "ENVOYE" | "ARRIVE" | "RETIRE";
 export type InvoiceStatus = "EN_ATTENTE" | "PAYEE" | "ANNULEE";
 export type InvoicePaymentMethod = "MANUEL" | "CINETPAY";

@@ -153,6 +153,10 @@ const DESCRIPTIONS: Record<string, { short: string; long: string }> = {
     short: "Un confrère prend de la marchandise chez vous : suivi du solde dû, sans toucher votre chiffre d'affaires.",
     long: "L'inverse de l'approvisionnement rapide : quand un confrère vient prendre de la marchandise chez vous, enregistrez-le ici avec ce qu'il a laissé et ce qui reste dû. Le stock sort immédiatement, mais ce montant n'entre jamais dans votre chiffre d'affaires (ce n'est pas une vente). Relancez le solde par WhatsApp en un clic si un numéro est renseigné.",
   },
+  "/expeditions": {
+    short: "Suivez un colis envoyé par transporteur pour une vente en gros à distance, avec ses frais de transport.",
+    long: "Pour une vente à un client éloigné livrée par transporteur (gare routière...) : suivez le transporteur, le numéro de bordereau, le statut (envoyé, arrivé, retiré) et surtout les frais de transport avancés — trop petits pour qu'on y pense un par un, mais qui s'accumulent vite. Ne touche jamais au stock, déjà sorti par la facture liée. Un message de suivi WhatsApp est prêt à partir si un numéro de destinataire est renseigné.",
+  },
 };
 
 export function ModulesGuide({ availability }: { availability: Record<string, ModuleAvailability> }) {

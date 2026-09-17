@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import Link from "next/link";
-import { ChevronRight, Bell, Calculator, BellRing, PackagePlus, Images, FileSignature, Truck, Send } from "lucide-react";
+import { ChevronRight, Bell, Calculator, BellRing, PackagePlus, Images, FileSignature, Truck, Send, Package2 } from "lucide-react";
 import { updateBusinessSettingsAction } from "@/lib/actions/business-settings";
 import type { BusinessSettings } from "@/lib/business-settings";
 
@@ -71,6 +71,14 @@ const MODULES: {
     description: "Un confrère prend de la marchandise chez vous, sans jamais entrer dans votre chiffre d'affaires.",
     href: "/enlevements",
     hrefLabel: "Ouvrir les enlèvements",
+  },
+  {
+    key: "shipments",
+    icon: Package2,
+    title: "Expéditions",
+    description: "Suivi des colis envoyés par transporteur — frais de transport, statut, jamais un mouvement de stock.",
+    href: "/expeditions",
+    hrefLabel: "Ouvrir les expéditions",
   },
   {
     key: "devis",
