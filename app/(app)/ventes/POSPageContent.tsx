@@ -29,16 +29,34 @@ export async function POSPageContent({ mode }: { mode: "pos" | "facture" }) {
     );
   }
 
-  const { data: activeSession } = await supabase
+  const businessSettings = await getBusinessSettings(user.businessId);
+
+  let sessionQuery = supabase
     .from("cash_sessions")
     .select("id, number, openedAt:opened_at, user:users(firstName:first_name, lastName:last_name)")
     .eq("business_id", user.businessId)
     .eq("location_id", currentLocation.id)
-    .eq("status", "OUVERTE")
-    .maybeSingle();
+    .eq("status", "OUVERTE");
+  // "Caisse à deux" : deux sessions peuvent être ouvertes en même temps sur la
+  // même boutique — chacun ne doit voir/utiliser QUE la session qu'il a lui
+  // même ouverte, pas celle d'un autre caissier.
+  if (businessSettings.allowTwoCashiers) sessionQuery = sessionQuery.eq("user_id", user.id);
+  const { data: activeSession } = await sessionQuery.maybeSingle();
 
   if (!activeSession) {
-    return <OpenSessionForm locationName={currentLocation.name} />;
+    let otherCashiers: string[] = [];
+    if (businessSettings.allowTwoCashiers) {
+      const { data: others } = await supabase
+        .from("cash_sessions")
+        .select("user:users(firstName:first_name, lastName:last_name)")
+        .eq("business_id", user.businessId)
+        .eq("location_id", currentLocation.id)
+        .eq("status", "OUVERTE");
+      otherCashiers = ((others ?? []) as unknown as Array<{ user: { firstName: string; lastName: string } }>).map(
+        (o) => `${o.user.firstName} ${o.user.lastName}`
+      );
+    }
+    return <OpenSessionForm locationName={currentLocation.name} otherCashiers={otherCashiers} />;
   }
   const session = activeSession as unknown as {
     id: string;
@@ -47,11 +65,10 @@ export async function POSPageContent({ mode }: { mode: "pos" | "facture" }) {
     user: { firstName: string; lastName: string };
   };
 
-  const [{ data: customers }, paymentMethods, canEditProducts, businessSettings] = await Promise.all([
+  const [{ data: customers }, paymentMethods, canEditProducts] = await Promise.all([
     supabase.from("customers").select("id, name, phone").eq("business_id", user.businessId).order("name", { ascending: true }),
     getEnabledPaymentMethods(),
     hasPermission(user.businessId, user.role, PERMISSIONS.PRODUCTS_MANAGE, user.id),
-    getBusinessSettings(user.businessId),
   ]);
 
   return (

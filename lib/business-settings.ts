@@ -30,6 +30,8 @@ export type BusinessSettings = {
   allowMixedPayment: boolean;
   /** "Panier IA" — lit une commande dictée/tapée/photographiée en caisse pour proposer les lignes de panier, à confirmer avant tout ajout réel. Coûte un appel IA par analyse : désactivé par défaut. */
   aiCartEnabled: boolean;
+  /** "Caisse à deux" — autorise deux sessions de caisse ouvertes simultanément sur la même boutique (deux caissiers, chacun sa propre session). Désactivé par défaut : une seule session partagée, comme aujourd'hui. */
+  allowTwoCashiers: boolean;
   /** Modules que le commerçant peut masquer/afficher lui-même dans son propre menu (voir lib/nav.ts `moduleToggle`). */
   modulesEnabled: {
     devis: boolean;
@@ -66,6 +68,7 @@ const DEFAULTS: BusinessSettings = {
   mobileMoneyOperators: ["ORANGE", "MOOV", "WAVE"],
   allowMixedPayment: false,
   aiCartEnabled: false,
+  allowTwoCashiers: false,
   modulesEnabled: {
     devis: true,
     prixDeRevient: true,

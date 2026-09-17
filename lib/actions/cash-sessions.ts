@@ -8,6 +8,7 @@ import { PERMISSIONS } from "@/lib/permissions";
 import { getCurrentLocation } from "@/lib/location";
 import { generateSessionNumber } from "@/lib/reference";
 import { computeSessionStats } from "@/lib/cash-sessions";
+import { getBusinessSettings } from "@/lib/business-settings";
 import { logAction } from "@/lib/audit";
 
 export type ActionState = { error?: string; success?: string } | undefined;
@@ -27,14 +28,27 @@ export async function openSessionAction(
   const currentLocation = await getCurrentLocation(user.businessId);
   if (!currentLocation) return { error: "Configurez d'abord une boutique" };
 
-  const { data: existing } = await supabase
+  const businessSettings = await getBusinessSettings(user.businessId);
+
+  const { data: openSessions } = await supabase
     .from("cash_sessions")
-    .select("id")
+    .select("id, userId:user_id")
     .eq("business_id", user.businessId)
     .eq("location_id", currentLocation.id)
-    .eq("status", "OUVERTE")
-    .maybeSingle();
-  if (existing) return { error: "Une session de caisse est déjà ouverte pour cette boutique" };
+    .eq("status", "OUVERTE");
+
+  if (businessSettings.allowTwoCashiers) {
+    // "Caisse à deux" : chaque caissier a sa propre session, jusqu'à deux
+    // sessions ouvertes en même temps sur la même boutique.
+    if ((openSessions ?? []).some((s) => s.userId === user.id)) {
+      return { error: "Vous avez déjà une session de caisse ouverte sur cette boutique" };
+    }
+    if ((openSessions ?? []).length >= 2) {
+      return { error: "Deux sessions de caisse sont déjà ouvertes pour cette boutique" };
+    }
+  } else if ((openSessions ?? []).length > 0) {
+    return { error: "Une session de caisse est déjà ouverte pour cette boutique" };
+  }
 
   const number = await generateSessionNumber(user.businessId);
   const { data: session, error } = await supabase
@@ -93,6 +107,7 @@ export async function closeSessionAction(input: CloseSessionInput): Promise<Clos
   const stats = await computeSessionStats({
     businessId: session.businessId as string,
     locationId: session.locationId as string,
+    sessionId: session.id as string,
     openingAmount: session.openingAmount as number,
     openedAt: new Date(session.openedAt as string),
     closedAt,

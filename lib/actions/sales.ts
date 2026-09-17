@@ -188,13 +188,16 @@ async function createSaleImpl(input: CreateSaleInput): Promise<CreateSaleResult>
     .maybeSingle();
   if (!location) return { success: false, error: "Boutique introuvable" };
 
-  const { data: activeSession } = await supabase
+  let sessionQuery = supabase
     .from("cash_sessions")
     .select("id")
     .eq("business_id", user.businessId)
     .eq("location_id", input.locationId)
-    .eq("status", "OUVERTE")
-    .maybeSingle();
+    .eq("status", "OUVERTE");
+  // "Caisse à deux" : deux sessions peuvent être ouvertes en même temps sur la
+  // même boutique — chaque caissier n'encaisse que sur SA propre session.
+  if (businessSettings.allowTwoCashiers) sessionQuery = sessionQuery.eq("user_id", user.id);
+  const { data: activeSession } = await sessionQuery.maybeSingle();
   if (!activeSession) {
     return { success: false, error: "Ouvrez une session de caisse avant d'encaisser une vente" };
   }
@@ -303,6 +306,7 @@ async function createSaleImpl(input: CreateSaleInput): Promise<CreateSaleResult>
       mobile_money_operator: input.paymentMethod === "MOBILE_MONEY" ? input.mobileMoneyOperator ?? null : null,
       cash_portion: input.paymentMethod === "MIXTE" ? input.cashPortion ?? null : null,
       mobile_portion: input.paymentMethod === "MIXTE" ? input.mobilePortion ?? null : null,
+      session_id: activeSession.id,
     })
     .select("id")
     .single();

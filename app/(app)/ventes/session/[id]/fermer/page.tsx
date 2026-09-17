@@ -40,6 +40,7 @@ export default async function CloseSessionPage({
   const stats = await computeSessionStats({
     businessId: session.businessId,
     locationId: session.locationId,
+    sessionId: session.id,
     openingAmount: session.openingAmount,
     openedAt: new Date(session.openedAt),
     closedAt: null,

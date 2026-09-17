@@ -25,13 +25,14 @@ export type SessionStats = {
 export async function computeSessionStats(session: {
   businessId: string;
   locationId: string;
+  sessionId: string;
   openingAmount: number;
   openedAt: Date;
   closedAt: Date | null;
 }): Promise<SessionStats> {
   const endDate = session.closedAt ?? new Date();
 
-  const [{ data: sales }, { data: expenses }] = await Promise.all([
+  const salesQuery = () =>
     supabase
       .from("sales")
       .select("total, amountPaid:amount_paid, paymentMethod:payment_method, items:sale_items(unitCost:unit_cost, quantity)")
@@ -39,15 +40,33 @@ export async function computeSessionStats(session: {
       .eq("location_id", session.locationId)
       .neq("status", "ANNULEE")
       .gte("created_at", session.openedAt.toISOString())
-      .lte("created_at", endDate.toISOString()),
+      .lte("created_at", endDate.toISOString());
+  const expensesQuery = () =>
     supabase
       .from("expenses")
       .select("amount")
       .eq("business_id", session.businessId)
       .eq("location_id", session.locationId)
       .gte("date", session.openedAt.toISOString())
-      .lte("date", endDate.toISOString()),
-  ]);
+      .lte("date", endDate.toISOString());
+
+  // "Caisse à deux" : deux sessions peuvent être ouvertes en même temps sur la
+  // même boutique — chacune ne doit compter que SES propres ventes/dépenses
+  // (session_id), sinon les deux caisses afficheraient deux fois le même
+  // chiffre. session_id est nul sur les ventes/dépenses enregistrées avant
+  // cette fonctionnalité, elles restent comptées (comportement historique).
+  // Repli si la colonne n'est pas encore migrée côté base : ancien calcul par
+  // simple fenêtre de temps.
+  let salesResult = await salesQuery().or(`session_id.eq.${session.sessionId},session_id.is.null`);
+  if (salesResult.error && /session_id/.test(salesResult.error.message)) {
+    salesResult = await salesQuery();
+  }
+  let expensesResult = await expensesQuery().or(`session_id.eq.${session.sessionId},session_id.is.null`);
+  if (expensesResult.error && /session_id/.test(expensesResult.error.message)) {
+    expensesResult = await expensesQuery();
+  }
+  const sales = salesResult.data;
+  const expenses = expensesResult.data;
 
   const salesRows = (sales ?? []) as unknown as Array<{
     total: number;

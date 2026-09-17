@@ -358,6 +358,38 @@ create table customers (
 );
 create index on customers (business_id);
 
+-- Placée ici (avant sales) pour que sales.session_id puisse la référencer —
+-- déplacée depuis sa position d'origine (après vehicle_registrations), pas de
+-- changement de contenu.
+create table cash_sessions (
+  id text primary key default gen_random_uuid()::text,
+  business_id text not null references businesses(id) on delete cascade,
+  location_id text not null references locations(id),
+  number text not null,
+  user_id text not null references users(id),
+  status cash_session_status not null default 'OUVERTE',
+  opening_amount double precision not null,
+  opened_at timestamptz not null default now(),
+  closed_at timestamptz,
+  counted_cash double precision,
+  note text,
+  sales_count int,
+  total_revenue double precision,
+  cash_collected double precision,
+  mobile_collected double precision,
+  card_collected double precision,
+  other_collected double precision,
+  credit_collected double precision,
+  gross_margin double precision,
+  expenses_total double precision,
+  net_margin double precision,
+  margin_rate double precision,
+  expected_cash double precision,
+  variance double precision,
+  unique (business_id, number)
+);
+create index on cash_sessions (business_id, location_id, status);
+
 create table sales (
   id text primary key default gen_random_uuid()::text,
   business_id text not null references businesses(id) on delete cascade,
@@ -390,6 +422,11 @@ create table sales (
   mobile_money_operator text,
   cash_portion double precision,
   mobile_portion double precision,
+  -- Session de caisse qui a encaissé cette vente — voir "Caisse à deux"
+  -- (lib/business-settings.ts `allowTwoCashiers`) : permet de séparer les
+  -- ventes de deux sessions ouvertes en même temps sur la même boutique.
+  -- NULL pour les ventes créées avant cette fonctionnalité.
+  session_id text references cash_sessions(id),
   created_at timestamptz not null default now(),
   unique (business_id, number),
   unique (business_id, client_ref)
@@ -541,35 +578,6 @@ create table vehicle_registrations (
   unique (sale_id)
 );
 create index on vehicle_registrations (business_id, created_at);
-
-create table cash_sessions (
-  id text primary key default gen_random_uuid()::text,
-  business_id text not null references businesses(id) on delete cascade,
-  location_id text not null references locations(id),
-  number text not null,
-  user_id text not null references users(id),
-  status cash_session_status not null default 'OUVERTE',
-  opening_amount double precision not null,
-  opened_at timestamptz not null default now(),
-  closed_at timestamptz,
-  counted_cash double precision,
-  note text,
-  sales_count int,
-  total_revenue double precision,
-  cash_collected double precision,
-  mobile_collected double precision,
-  card_collected double precision,
-  other_collected double precision,
-  credit_collected double precision,
-  gross_margin double precision,
-  expenses_total double precision,
-  net_margin double precision,
-  margin_rate double precision,
-  expected_cash double precision,
-  variance double precision,
-  unique (business_id, number)
-);
-create index on cash_sessions (business_id, location_id, status);
 
 create table customer_payments (
   id text primary key default gen_random_uuid()::text,
@@ -834,6 +842,11 @@ create table expenses (
   category text,
   payment_method payment_method not null default 'ESPECES',
   user_id text not null references users(id),
+  -- Session de caisse ouverte par ce même utilisateur au moment de la saisie
+  -- — voir "Caisse à deux" (lib/business-settings.ts `allowTwoCashiers`).
+  -- NULL si aucune session n'était ouverte, ou pour les dépenses créées avant
+  -- cette fonctionnalité.
+  session_id text references cash_sessions(id),
   date timestamptz not null default now()
 );
 create index on expenses (business_id, date);

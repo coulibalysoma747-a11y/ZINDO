@@ -8,7 +8,13 @@ import { Field, Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { openSessionAction, type ActionState } from "@/lib/actions/cash-sessions";
 
-export function OpenSessionForm({ locationName }: { locationName: string }) {
+export function OpenSessionForm({
+  locationName,
+  otherCashiers = [],
+}: {
+  locationName: string;
+  otherCashiers?: string[];
+}) {
   const router = useRouter();
   const [state, formAction, pending] = useActionState<ActionState, FormData>(openSessionAction, undefined);
 
@@ -31,6 +37,11 @@ export function OpenSessionForm({ locationName }: { locationName: string }) {
           </div>
         </CardHeader>
         <CardBody>
+          {otherCashiers.length > 0 && (
+            <p className="mb-4 rounded-lg bg-orange-50 p-3 text-xs text-orange-700">
+              Session déjà ouverte par {otherCashiers.join(", ")} — vous pouvez ouvrir la vôtre à côté (Caisse à deux).
+            </p>
+          )}
           <form action={formAction} className="space-y-4">
             <Field
               label="Montant d'ouverture (fond de caisse)"
