@@ -69,6 +69,7 @@ export type SubscriptionState = {
   trialEndsAt: string | null;
   currentPeriodEnd: string | null;
   trialDaysLeft: number | null;
+  periodDaysLeft: number | null;
   /** true = l'accès à l'application doit être bloqué (essai ou période payée expirés sans paiement confirmé). */
   blocked: boolean;
 };
@@ -142,6 +143,7 @@ export async function getSubscriptionState(businessId: string): Promise<Subscrip
       trialEndsAt: null,
       currentPeriodEnd: null,
       trialDaysLeft: null,
+      periodDaysLeft: null,
       blocked: false,
     };
   }
@@ -155,6 +157,10 @@ export async function getSubscriptionState(businessId: string): Promise<Subscrip
     row.status === "TRIAL" && row.trialEndsAt
       ? Math.max(0, Math.ceil((new Date(row.trialEndsAt).getTime() - now) / (24 * 60 * 60 * 1000)))
       : null;
+  const periodDaysLeft =
+    status === "ACTIVE" && row.currentPeriodEnd
+      ? Math.max(0, Math.ceil((new Date(row.currentPeriodEnd).getTime() - now) / (24 * 60 * 60 * 1000)))
+      : null;
 
   return {
     status,
@@ -164,6 +170,7 @@ export async function getSubscriptionState(businessId: string): Promise<Subscrip
     trialEndsAt: row.trialEndsAt,
     currentPeriodEnd: row.currentPeriodEnd,
     trialDaysLeft,
+    periodDaysLeft,
     blocked: status === "EXPIRED" || status === "PAST_DUE",
   };
 }

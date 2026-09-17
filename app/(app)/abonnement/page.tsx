@@ -1,15 +1,17 @@
-import { Crown, Sparkles, ShieldAlert, Clock } from "lucide-react";
+import Link from "next/link";
+import { Award, Gift, ShieldAlert, RefreshCw, FileText } from "lucide-react";
 import { requireUserForBilling } from "@/lib/auth";
 import { getSubscriptionState } from "@/lib/subscription";
 import { supabase } from "@/lib/supabase";
-import { formatMoney, formatDateTime } from "@/lib/format";
+import { formatMoney, formatLongDate } from "@/lib/format";
 import { Card, CardBody, CardHeader } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
-import { CycleChoice } from "./CycleChoice";
+import { ButtonLink } from "@/components/ui/Button";
+import { FormulaChoice, MONTHLY_PRICE, ANNUAL_PRICE } from "./FormulaChoice";
 import { PaymentProofForm } from "./PaymentProofForm";
 import { PaymentMethodModules } from "./PaymentMethodModules";
 
-const CYCLE_LABELS = { MONTHLY: "Mensuel", ANNUAL: "Annuel" } as const;
+const CYCLE_LABELS = { MONTHLY: "mensuel", ANNUAL: "annuel" } as const;
 const INVOICE_STATUS_TONE = { EN_ATTENTE: "amber", PAYEE: "emerald", ANNULEE: "zinc" } as const;
 const INVOICE_STATUS_LABELS = { EN_ATTENTE: "En attente", PAYEE: "Payée", ANNULEE: "Annulée" } as const;
 
@@ -45,7 +47,6 @@ export default async function SubscriptionPage() {
         "id, number, planLabel:plan_label, billingCycle:billing_cycle, amount, status, paymentReference:payment_reference, createdAt:created_at"
       )
       .eq("business_id", user.businessId)
-      .neq("status", "EN_ATTENTE")
       .order("created_at", { ascending: false })
       .limit(20),
   ]);
@@ -54,61 +55,92 @@ export default async function SubscriptionPage() {
   const invoiceHistory = (invoiceHistoryData ?? []) as unknown as InvoiceRow[];
 
   return (
-    <div className="max-w-3xl space-y-6">
+    <div className="max-w-2xl space-y-6">
       <div>
-        <div className="flex items-center gap-2">
-          <Crown className="h-5 w-5 text-amber-500" />
-          <h1 className="text-xl font-bold text-zinc-900">Abonnement</h1>
-        </div>
+        <h1 className="text-xl font-bold text-zinc-900">Abonnement</h1>
         <p className="text-sm text-zinc-500">
-          ZINDO est payant : 7 jours d&apos;essai gratuit, puis 10 000 FCFA/mois ou 100 000 FCFA/an.
+          Consultez votre formule, sa date de renouvellement, et souscrivez en quelques étapes.
         </p>
       </div>
 
-      {state.status === "TRIAL" && (
-        <Card className="border-blue-200 bg-blue-50">
-          <CardBody className="flex items-center gap-3">
-            <Clock className="h-5 w-5 shrink-0 text-blue-600" />
-            <div>
-              <p className="text-sm font-medium text-zinc-900">
-                Essai gratuit — {state.trialDaysLeft === 0 ? "se termine aujourd'hui" : `${state.trialDaysLeft} jour(s) restant(s)`}
-              </p>
-              <p className="text-xs text-zinc-500">
-                Réglez votre abonnement avant la fin de l&apos;essai pour ne pas perdre l&apos;accès à ZINDO.
-              </p>
+      <Card>
+        <CardBody className="space-y-4">
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <div
+                className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${
+                  state.status === "ACTIVE"
+                    ? "bg-zindo-green-50 text-zindo-green-600"
+                    : state.status === "TRIAL"
+                      ? "bg-blue-50 text-blue-600"
+                      : "bg-red-50 text-red-600"
+                }`}
+              >
+                {state.status === "ACTIVE" ? (
+                  <Award className="h-5 w-5" />
+                ) : state.status === "TRIAL" ? (
+                  <Gift className="h-5 w-5" />
+                ) : (
+                  <ShieldAlert className="h-5 w-5" />
+                )}
+              </div>
+              <div>
+                <p className="font-bold text-zinc-900">
+                  {state.status === "ACTIVE"
+                    ? `${state.planLabel} (${CYCLE_LABELS[state.billingCycle ?? "MONTHLY"]})`
+                    : state.status === "TRIAL"
+                      ? "Essai gratuit"
+                      : "Aucun abonnement actif"}
+                </p>
+                <p className="text-sm text-zinc-500">
+                  {state.status === "ACTIVE"
+                    ? `${formatMoney(state.billingCycle === "ANNUAL" ? ANNUAL_PRICE : MONTHLY_PRICE, currency)} / ${state.billingCycle === "ANNUAL" ? "an" : "mois"}`
+                    : state.status === "TRIAL"
+                      ? "0 FCFA pendant 7 jours"
+                      : "Accès bloqué jusqu'au paiement"}
+                </p>
+              </div>
             </div>
-          </CardBody>
-        </Card>
-      )}
+            <Badge tone={state.status === "ACTIVE" ? "emerald" : state.status === "TRIAL" ? "blue" : "red"}>
+              {state.status === "ACTIVE" ? "Actif" : state.status === "TRIAL" ? "Essai" : "Bloqué"}
+            </Badge>
+          </div>
 
-      {(state.status === "EXPIRED" || state.status === "PAST_DUE") && (
-        <Card className="border-red-200 bg-red-50">
-          <CardBody className="flex items-center gap-3">
-            <ShieldAlert className="h-5 w-5 shrink-0 text-red-600" />
-            <div>
-              <p className="text-sm font-medium text-zinc-900">
-                {state.status === "EXPIRED" ? "Votre essai gratuit est terminé" : "Votre paiement n'est plus à jour"}
-              </p>
-              <p className="text-xs text-zinc-600">
-                L&apos;accès à ZINDO est bloqué pour toute l&apos;équipe jusqu&apos;au règlement de l&apos;abonnement.
-              </p>
+          {(state.status === "ACTIVE" || state.status === "TRIAL") && (
+            <div className="grid grid-cols-2 gap-4 border-t border-zinc-100 pt-4">
+              <div>
+                <p className="text-xs uppercase tracking-wide text-zinc-400">
+                  {state.status === "TRIAL" ? "Fin d'essai" : "Renouvellement"}
+                </p>
+                <p className="mt-0.5 text-sm font-semibold text-zinc-900">
+                  {(() => {
+                    const date = state.status === "TRIAL" ? state.trialEndsAt : state.currentPeriodEnd;
+                    return date ? formatLongDate(date) : "—";
+                  })()}
+                </p>
+              </div>
+              <div>
+                <p className="text-xs uppercase tracking-wide text-zinc-400">Temps restant</p>
+                <p className="mt-0.5 text-sm font-semibold text-zinc-900">
+                  {(() => {
+                    const days = state.status === "TRIAL" ? state.trialDaysLeft : state.periodDaysLeft;
+                    return days === null ? "—" : `${days} jour(s)`;
+                  })()}
+                </p>
+              </div>
             </div>
-          </CardBody>
-        </Card>
-      )}
+          )}
 
-      {state.status === "ACTIVE" && (
-        <Card className="border-emerald-200 bg-emerald-50">
-          <CardBody className="flex items-center gap-3">
-            <Badge tone="emerald">Abonnement actif</Badge>
-            {state.currentPeriodEnd && (
-              <p className="text-sm text-zinc-700">
-                Renouvellement le {formatDateTime(new Date(state.currentPeriodEnd))}
-              </p>
-            )}
-          </CardBody>
-        </Card>
-      )}
+          {!pendingInvoice && (
+            <a
+              href="#formules"
+              className="flex w-full items-center justify-center gap-2 rounded-xl bg-zindo-green-500 px-4 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-zindo-green-600"
+            >
+              <RefreshCw className="h-4 w-4" /> Souscrire / Renouveler
+            </a>
+          )}
+        </CardBody>
+      </Card>
 
       {pendingInvoice && (
         <Card className="border-amber-200 bg-amber-50">
@@ -141,63 +173,55 @@ export default async function SubscriptionPage() {
         </Card>
       )}
 
-      <Card className="border-zindo-ink-900/10 bg-zindo-ink-900">
-        <CardBody className="flex flex-wrap items-start gap-3 sm:items-center">
-          <Sparkles className="h-5 w-5 shrink-0 text-zindo-green-400" />
-          <div>
-            <p className="text-sm font-medium text-white">Pourquoi ZINDO ?</p>
-            <p className="mt-0.5 text-xs text-slate-300">
-              ZINDO remplace vos cahiers et fichiers Excel : stock en temps réel, ventes enregistrées
-              automatiquement, bénéfices calculés pour vous — plus besoin de tout recompter à la main.
-            </p>
-          </div>
+      <Card id="formules">
+        <CardHeader>
+          <h2 className="font-semibold text-zinc-900">Nos formules</h2>
+        </CardHeader>
+        <CardBody>
+          <FormulaChoice disabled={!!pendingInvoice} />
         </CardBody>
       </Card>
-
-      {!pendingInvoice && state.status !== "ACTIVE" && (
-        <Card>
-          <CardHeader>
-            <h2 className="font-semibold text-zinc-900">Choisir votre formule</h2>
-          </CardHeader>
-          <CardBody>
-            <CycleChoice />
-          </CardBody>
-        </Card>
-      )}
 
       {invoiceHistory.length > 0 && (
         <Card>
           <CardHeader>
-            <h2 className="font-semibold text-zinc-900">Historique des factures</h2>
+            <h2 className="font-semibold text-zinc-900">Mes factures</h2>
           </CardHeader>
-          <CardBody className="overflow-x-auto p-0">
-            <table className="w-full min-w-[500px] text-sm">
-              <thead className="bg-zinc-50 text-left text-zinc-500">
-                <tr>
-                  <th className="px-4 py-2 font-medium">N°</th>
-                  <th className="px-4 py-2 font-medium">Palier</th>
-                  <th className="px-4 py-2 font-medium">Montant</th>
-                  <th className="px-4 py-2 font-medium">Statut</th>
-                  <th className="px-4 py-2 font-medium">Date</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-zinc-100">
-                {invoiceHistory.map((inv) => (
-                  <tr key={inv.id}>
-                    <td className="px-4 py-2 font-mono text-xs text-zinc-500">{inv.number}</td>
-                    <td className="px-4 py-2 text-zinc-700">{inv.planLabel}</td>
-                    <td className="px-4 py-2 text-zinc-700">{formatMoney(inv.amount, currency)}</td>
-                    <td className="px-4 py-2">
-                      <Badge tone={INVOICE_STATUS_TONE[inv.status]}>{INVOICE_STATUS_LABELS[inv.status]}</Badge>
-                    </td>
-                    <td className="px-4 py-2 text-zinc-500">{formatDateTime(new Date(inv.createdAt))}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          <CardBody className="space-y-2">
+            {invoiceHistory.map((inv) => (
+              <div key={inv.id} className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-zinc-100 p-3">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-red-50 text-red-500">
+                    <FileText className="h-4 w-4" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-zinc-900">
+                      Abonnement {CYCLE_LABELS[inv.billingCycle]} — {inv.number}
+                    </p>
+                    <p className="text-xs text-zinc-500">
+                      {formatLongDate(inv.createdAt)} · {formatMoney(inv.amount, currency)}
+                    </p>
+                  </div>
+                </div>
+                <div className="ml-auto flex items-center gap-2">
+                  <Badge tone={INVOICE_STATUS_TONE[inv.status]}>{INVOICE_STATUS_LABELS[inv.status]}</Badge>
+                  <ButtonLink href={`/abonnement/factures/${inv.id}`} variant="outline" size="sm">
+                    Voir / Télécharger
+                  </ButtonLink>
+                </div>
+              </div>
+            ))}
           </CardBody>
         </Card>
       )}
+
+      <p className="text-center text-xs text-zinc-400">
+        Besoin d&apos;aide avec votre abonnement ?{" "}
+        <Link href="/support" className="font-medium text-zindo-green-600 hover:underline">
+          Contactez le support
+        </Link>
+        .
+      </p>
     </div>
   );
 }
