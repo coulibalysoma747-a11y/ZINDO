@@ -120,6 +120,12 @@ create table users (
   theme text not null default 'SYSTEM',
   auto_print_receipt boolean not null default false,
   printer_ticket_width text,
+  -- Double authentification (2FA) — voir lib/totp.ts. Réservée au rôle ADMIN
+  -- côté UI (lib/actions/two-factor.ts), secret TOTP en clair (comme
+  -- faso_stock_api_key) et codes de secours hachés (bcrypt, JSON).
+  totp_secret text,
+  totp_enabled boolean not null default false,
+  totp_backup_codes text,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
   unique (business_id, phone)
@@ -895,6 +901,11 @@ create table super_admins (
   password_hash text not null,
   name text not null,
   role super_admin_role not null default 'ADMIN',
+  -- Double authentification (2FA) — réservée au compte Fondateur côté UI
+  -- (lib/actions/admin-two-factor.ts), même mécanisme que users ci-dessus.
+  totp_secret text,
+  totp_enabled boolean not null default false,
+  totp_backup_codes text,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );

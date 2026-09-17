@@ -62,3 +62,44 @@ export async function verifyAdminSessionToken(token: string): Promise<AdminSessi
 }
 
 export const ADMIN_SESSION_COOKIE_NAME = ADMIN_SESSION_COOKIE;
+
+// Équivalent admin de lib/session.ts `createPending2FASession` — voir
+// lib/totp.ts et lib/actions/auth.ts `verify2FAAction`.
+const ADMIN_PENDING_2FA_COOKIE = "zindo_admin_2fa_pending";
+const ADMIN_PENDING_2FA_DURATION_SECONDS = 60 * 5;
+
+export type AdminPending2FAPayload = AdminSessionPayload & { attempts: number };
+
+export async function createAdminPending2FASession(payload: AdminPending2FAPayload) {
+  const token = await new SignJWT(payload)
+    .setProtectedHeader({ alg: "HS256" })
+    .setIssuedAt()
+    .setExpirationTime(`${ADMIN_PENDING_2FA_DURATION_SECONDS}s`)
+    .sign(getSecret());
+
+  const cookieStore = await cookies();
+  cookieStore.set(ADMIN_PENDING_2FA_COOKIE, token, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    path: "/",
+    maxAge: ADMIN_PENDING_2FA_DURATION_SECONDS,
+  });
+}
+
+export async function getAdminPending2FASession(): Promise<AdminPending2FAPayload | null> {
+  const cookieStore = await cookies();
+  const token = cookieStore.get(ADMIN_PENDING_2FA_COOKIE)?.value;
+  if (!token) return null;
+  try {
+    const { payload } = await jwtVerify(token, getSecret());
+    return payload as unknown as AdminPending2FAPayload;
+  } catch {
+    return null;
+  }
+}
+
+export async function destroyAdminPending2FASession() {
+  const cookieStore = await cookies();
+  cookieStore.delete(ADMIN_PENDING_2FA_COOKIE);
+}

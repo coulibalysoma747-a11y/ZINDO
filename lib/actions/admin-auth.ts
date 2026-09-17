@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import { headers } from "next/headers";
 import bcrypt from "bcryptjs";
 import { supabase } from "@/lib/supabase";
-import { createAdminSession, destroyAdminSession } from "@/lib/adminSession";
+import { createAdminSession, destroyAdminSession, createAdminPending2FASession } from "@/lib/adminSession";
 import { requireSuperAdmin } from "@/lib/superadmin-auth";
 
 async function logLoginEvent(params: {
@@ -45,11 +45,22 @@ export async function superAdminLoginAction(
   if (!parsed.success) return { error: parsed.error.issues[0]?.message };
 
   const email = parsed.data.email.toLowerCase();
-  const { data: admin } = await supabase
+  const initialQuery = await supabase
     .from("super_admins")
-    .select("id, email, passwordHash:password_hash, name, role")
+    .select("id, email, passwordHash:password_hash, name, role, totpEnabled:totp_enabled")
     .eq("email", email)
     .maybeSingle();
+  let admin = initialQuery.data;
+  // Repli si totp_enabled n'est pas encore migré côté base — voir
+  // lib/auth.ts getCurrentUser pour la même logique défensive.
+  if (initialQuery.error && /totp/.test(initialQuery.error.message)) {
+    const fallback = await supabase
+      .from("super_admins")
+      .select("id, email, passwordHash:password_hash, name, role")
+      .eq("email", email)
+      .maybeSingle();
+    admin = fallback.data ? { ...fallback.data, totpEnabled: false } : null;
+  }
   if (!admin) {
     await logLoginEvent({ email, success: false });
     return { error: "Identifiants incorrects" };
@@ -62,6 +73,10 @@ export async function superAdminLoginAction(
   }
 
   await logLoginEvent({ email, success: true, superAdminId: admin.id as string, actorName: admin.name as string });
+  if (admin.totpEnabled) {
+    await createAdminPending2FASession({ adminId: admin.id as string, attempts: 0 });
+    redirect("/verifier-2fa");
+  }
   await createAdminSession({ adminId: admin.id as string });
   redirect("/admin");
 }

@@ -2,6 +2,7 @@ import { Crown } from "lucide-react";
 import { requireSuperAdmin } from "@/lib/superadmin-auth";
 import { Card, CardBody, CardHeader } from "@/components/ui/Card";
 import { ProfileForm } from "./ProfileForm";
+import { TwoFactorPanel } from "./TwoFactorPanel";
 
 export default async function AdminProfilePage() {
   const admin = await requireSuperAdmin();
@@ -39,6 +40,17 @@ export default async function AdminProfilePage() {
           <ProfileForm name={admin.name} email={admin.email} />
         </CardBody>
       </Card>
+
+      {isFounder && (
+        <Card>
+          <CardHeader>
+            <h2 className="font-semibold text-zinc-900">Double authentification (2FA)</h2>
+          </CardHeader>
+          <CardBody>
+            <TwoFactorPanel enabled={admin.totpEnabled} />
+          </CardBody>
+        </Card>
+      )}
     </div>
   );
 }

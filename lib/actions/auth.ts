@@ -4,8 +4,20 @@ import { z } from "zod";
 import bcrypt from "bcryptjs";
 import { redirect } from "next/navigation";
 import { supabase } from "@/lib/supabase";
-import { createSession, destroySession } from "@/lib/session";
-import { createAdminSession } from "@/lib/adminSession";
+import {
+  createSession,
+  destroySession,
+  createPending2FASession,
+  getPending2FASession,
+  destroyPending2FASession,
+} from "@/lib/session";
+import {
+  createAdminSession,
+  createAdminPending2FASession,
+  getAdminPending2FASession,
+  destroyAdminPending2FASession,
+} from "@/lib/adminSession";
+import { verifyTotp, consumeBackupCode } from "@/lib/totp";
 import type { Role } from "@/lib/db-types";
 
 export type ActionState = { error?: string } | undefined;
@@ -63,11 +75,24 @@ export async function loginAction(
   // comme des jokers ILIKE.
   const emailPattern = trimmedIdentifier.replace(/[%_\\]/g, (m) => `\\${m}`);
 
-  const { data: user, error } = await supabase
+  const initialUserQuery = await supabase
     .from("users")
-    .select("id, businessId:business_id, role, active, passwordHash:password_hash")
+    .select("id, businessId:business_id, role, active, passwordHash:password_hash, totpEnabled:totp_enabled")
     .or(`phone.eq.${trimmedIdentifier},email.ilike.${emailPattern}`)
     .maybeSingle();
+  let user = initialUserQuery.data;
+  let error = initialUserQuery.error;
+  // Repli si totp_enabled n'est pas encore migré côté base — voir
+  // lib/auth.ts getCurrentUser pour la même logique défensive.
+  if (error && /totp/.test(error.message)) {
+    const fallback = await supabase
+      .from("users")
+      .select("id, businessId:business_id, role, active, passwordHash:password_hash")
+      .or(`phone.eq.${trimmedIdentifier},email.ilike.${emailPattern}`)
+      .maybeSingle();
+    user = fallback.data ? { ...fallback.data, totpEnabled: false } : null;
+    error = fallback.error;
+  }
 
   if (error) {
     // Erreur backend (config Supabase, réseau...) distincte d'un simple
@@ -79,6 +104,15 @@ export async function loginAction(
   if (user && user.active) {
     const valid = await bcrypt.compare(password, user.passwordHash as string);
     if (valid) {
+      if (user.totpEnabled) {
+        await createPending2FASession({
+          userId: user.id as string,
+          businessId: user.businessId as string,
+          role: user.role as string,
+          attempts: 0,
+        });
+        redirect("/verifier-2fa");
+      }
       await createSession({
         userId: user.id as string,
         businessId: user.businessId as string,
@@ -91,21 +125,130 @@ export async function loginAction(
   // Aucun compte commerçant correspondant (ou mot de passe invalide) : on
   // tente le compte propriétaire de la plateforme, pour que le créateur
   // puisse se connecter depuis ce même formulaire sans passer par /admin/login.
-  const { data: admin } = await supabase
+  const initialAdminQuery = await supabase
     .from("super_admins")
-    .select("id, passwordHash:password_hash")
+    .select("id, passwordHash:password_hash, totpEnabled:totp_enabled")
     .ilike("email", emailPattern)
     .maybeSingle();
+  let admin = initialAdminQuery.data;
+  if (initialAdminQuery.error && /totp/.test(initialAdminQuery.error.message)) {
+    const fallback = await supabase
+      .from("super_admins")
+      .select("id, passwordHash:password_hash")
+      .ilike("email", emailPattern)
+      .maybeSingle();
+    admin = fallback.data ? { ...fallback.data, totpEnabled: false } : null;
+  }
 
   if (admin) {
     const validAdmin = await bcrypt.compare(password, admin.passwordHash as string);
     if (validAdmin) {
+      if (admin.totpEnabled) {
+        await createAdminPending2FASession({ adminId: admin.id as string, attempts: 0 });
+        redirect("/verifier-2fa");
+      }
       await createAdminSession({ adminId: admin.id as string });
       redirect("/admin");
     }
   }
 
   return { error: t.wrongCredentials };
+}
+
+const MAX_2FA_ATTEMPTS = 5;
+
+export async function verify2FAAction(
+  _prevState: ActionState,
+  formData: FormData
+): Promise<ActionState> {
+  const code = String(formData.get("code") ?? "").trim();
+  if (!code) return { error: "Code requis" };
+
+  const tooManyAttemptsError = "Trop de tentatives — reconnectez-vous.";
+
+  const userPending = await getPending2FASession();
+  if (userPending) {
+    if (userPending.attempts >= MAX_2FA_ATTEMPTS) {
+      await destroyPending2FASession();
+      return { error: tooManyAttemptsError };
+    }
+    const { data: u } = await supabase
+      .from("users")
+      .select("totpSecret:totp_secret, totpBackupCodes:totp_backup_codes")
+      .eq("id", userPending.userId)
+      .maybeSingle();
+    if (!u) {
+      await destroyPending2FASession();
+      return { error: "Session expirée — reconnectez-vous." };
+    }
+
+    let ok = u.totpSecret ? verifyTotp(u.totpSecret as string, code) : false;
+    let newBackupCodes: string | null | undefined;
+    if (!ok) {
+      const consumed = await consumeBackupCode(u.totpBackupCodes as string | null, code);
+      if (consumed.ok) {
+        ok = true;
+        newBackupCodes = consumed.remaining;
+      }
+    }
+
+    if (!ok) {
+      await createPending2FASession({ ...userPending, attempts: userPending.attempts + 1 });
+      return { error: "Code invalide" };
+    }
+
+    if (newBackupCodes !== undefined) {
+      await supabase.from("users").update({ totp_backup_codes: newBackupCodes }).eq("id", userPending.userId);
+    }
+    await destroyPending2FASession();
+    await createSession({
+      userId: userPending.userId,
+      businessId: userPending.businessId,
+      role: userPending.role,
+    });
+    redirect("/dashboard");
+  }
+
+  const adminPending = await getAdminPending2FASession();
+  if (adminPending) {
+    if (adminPending.attempts >= MAX_2FA_ATTEMPTS) {
+      await destroyAdminPending2FASession();
+      return { error: tooManyAttemptsError };
+    }
+    const { data: a } = await supabase
+      .from("super_admins")
+      .select("totpSecret:totp_secret, totpBackupCodes:totp_backup_codes")
+      .eq("id", adminPending.adminId)
+      .maybeSingle();
+    if (!a) {
+      await destroyAdminPending2FASession();
+      return { error: "Session expirée — reconnectez-vous." };
+    }
+
+    let ok = a.totpSecret ? verifyTotp(a.totpSecret as string, code) : false;
+    let newBackupCodes: string | null | undefined;
+    if (!ok) {
+      const consumed = await consumeBackupCode(a.totpBackupCodes as string | null, code);
+      if (consumed.ok) {
+        ok = true;
+        newBackupCodes = consumed.remaining;
+      }
+    }
+
+    if (!ok) {
+      await createAdminPending2FASession({ ...adminPending, attempts: adminPending.attempts + 1 });
+      return { error: "Code invalide" };
+    }
+
+    if (newBackupCodes !== undefined) {
+      await supabase.from("super_admins").update({ totp_backup_codes: newBackupCodes }).eq("id", adminPending.adminId);
+    }
+    await destroyAdminPending2FASession();
+    await createAdminSession({ adminId: adminPending.adminId });
+    redirect("/admin");
+  }
+
+  return { error: "Session expirée — reconnectez-vous." };
 }
 
 const registerSchema = z.object({

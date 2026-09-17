@@ -4,6 +4,7 @@ import { Card, CardBody, CardHeader } from "@/components/ui/Card";
 import { ProfileForm } from "./ProfileForm";
 import { PasswordForm } from "./PasswordForm";
 import { ThemeSelector } from "./ThemeSelector";
+import { TwoFactorPanel } from "./TwoFactorPanel";
 import type { ThemePreference } from "@/lib/actions/preferences";
 
 export default async function ProfilePage() {
@@ -43,8 +44,14 @@ export default async function ProfilePage() {
         <CardHeader>
           <h2 className="font-semibold text-zinc-900">Sécurité</h2>
         </CardHeader>
-        <CardBody>
+        <CardBody className="space-y-6">
           <PasswordForm />
+          {user.role === "ADMIN" && (
+            <div className="border-t border-zinc-100 pt-6">
+              <h3 className="mb-3 font-medium text-zinc-900">Double authentification (2FA)</h3>
+              <TwoFactorPanel enabled={user.totpEnabled} />
+            </div>
+          )}
         </CardBody>
       </Card>
     </div>

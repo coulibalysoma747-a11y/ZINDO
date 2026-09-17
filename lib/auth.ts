@@ -9,19 +9,29 @@ import {
 } from "@/lib/permissions";
 import type { Role } from "@/lib/db-types";
 
-const USER_SELECT =
-  "id, businessId:business_id, firstName:first_name, lastName:last_name, phone, email, passwordHash:password_hash, role, active, theme, autoPrintReceipt:auto_print_receipt, printerTicketWidth:printer_ticket_width, createdAt:created_at, updatedAt:updated_at, " +
+const BUSINESS_SELECT =
   "business:businesses(id, name, activity, activityKey:activity_key, logoUrl:logo_url, phone, email, address, city, country, currency, ticketWidth:ticket_width, ticketFooter:ticket_footer, qrCodeSize:qr_code_size, defaultMinStock:default_min_stock, plan, suspended, nextProductSeq:next_product_seq, nextSaleSeq:next_sale_seq, nextPurchaseSeq:next_purchase_seq, nextTransferSeq:next_transfer_seq, nextSessionSeq:next_session_seq, nextOnlineOrderSeq:next_online_order_seq, nextInvoiceSeq:next_invoice_seq, createdAt:created_at, updatedAt:updated_at)";
+const USER_SELECT =
+  "id, businessId:business_id, firstName:first_name, lastName:last_name, phone, email, passwordHash:password_hash, role, active, theme, autoPrintReceipt:auto_print_receipt, printerTicketWidth:printer_ticket_width, totpEnabled:totp_enabled, createdAt:created_at, updatedAt:updated_at, " +
+  BUSINESS_SELECT;
+// Repli si totp_enabled n'est pas encore migré côté base — même logique
+// défensive qu'ailleurs dans le code pour une colonne pas encore appliquée,
+// critique ici puisque cette requête tourne sur CHAQUE page authentifiée.
+const USER_SELECT_FALLBACK =
+  "id, businessId:business_id, firstName:first_name, lastName:last_name, phone, email, passwordHash:password_hash, role, active, theme, autoPrintReceipt:auto_print_receipt, printerTicketWidth:printer_ticket_width, createdAt:created_at, updatedAt:updated_at, " +
+  BUSINESS_SELECT;
 
 export async function getCurrentUser() {
   const session = await getSession();
   if (!session) return null;
 
-  const { data } = await supabase
-    .from("users")
-    .select(USER_SELECT)
-    .eq("id", session.userId)
-    .maybeSingle();
+  const initial = await supabase.from("users").select(USER_SELECT).eq("id", session.userId).maybeSingle();
+  let data: unknown = initial.data;
+  if (initial.error && /totp/.test(initial.error.message)) {
+    const fallback = await supabase.from("users").select(USER_SELECT_FALLBACK).eq("id", session.userId).maybeSingle();
+    const row = fallback.data as Record<string, unknown> | null;
+    data = row ? { ...row, totpEnabled: false } : null;
+  }
 
   const user = data as unknown as Awaited<ReturnType<typeof loadUserType>> | null;
   if (!user || !user.active) return null;
@@ -43,6 +53,7 @@ async function loadUserType() {
     theme: string;
     autoPrintReceipt: boolean;
     printerTicketWidth: string | null;
+    totpEnabled: boolean;
     createdAt: string;
     updatedAt: string;
     business: {
