@@ -464,6 +464,38 @@ create table sale_items (
 create index on sale_items (sale_id);
 create index on sale_items (product_id);
 
+-- "Caisse à deux" (lib/business-settings.ts `cashierQueueEnabled`) : un
+-- vendeur prépare un panier et l'envoie ici sans encaisser ; un caissier le
+-- récupère ensuite (suppression de la ligne dès qu'un caissier la récupère —
+-- voir lib/actions/cashier-queue.ts) et finalise via le circuit de vente
+-- normal (createSaleAction). Le stock n'est donc jamais touché tant qu'un
+-- panier reste dans cette file.
+create table pending_carts (
+  id text primary key default gen_random_uuid()::text,
+  business_id text not null references businesses(id) on delete cascade,
+  location_id text not null references locations(id),
+  created_by text not null references users(id),
+  customer_id text references customers(id),
+  discount double precision not null default 0,
+  note text,
+  created_at timestamptz not null default now()
+);
+create index on pending_carts (business_id, location_id, created_at);
+
+create table pending_cart_items (
+  id text primary key default gen_random_uuid()::text,
+  pending_cart_id text not null references pending_carts(id) on delete cascade,
+  product_id text not null references products(id),
+  quantity int not null,
+  unit_price double precision not null,
+  discount double precision not null default 0,
+  packaging_unit_id text references product_packaging_units(id),
+  multiplier double precision not null default 1,
+  unit_label text,
+  vehicle_unit_id text references vehicle_units(id)
+);
+create index on pending_cart_items (pending_cart_id);
+
 -- Devis : proposition commerciale envoyée à un client avant la vente, sans
 -- impact sur le stock. Convertible en vente réelle (table sales) une fois
 -- accepté — voir lib/actions/quotes.ts::convertQuoteToSaleAction, qui

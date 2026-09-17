@@ -6,7 +6,6 @@ import { supabase } from "@/lib/supabase";
 import { requirePermission } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
 import { getCurrentLocation } from "@/lib/location";
-import { getBusinessSettings } from "@/lib/business-settings";
 import { logAction } from "@/lib/audit";
 import type { PaymentMethod } from "@/lib/db-types";
 
@@ -39,17 +38,13 @@ export async function createExpenseAction(
   const currentLocation = await getCurrentLocation(user.businessId);
   if (!currentLocation) return { error: "Configurez d'abord une boutique" };
 
-  const businessSettings = await getBusinessSettings(user.businessId);
-  let sessionQuery = supabase
+  const { data: activeSession } = await supabase
     .from("cash_sessions")
     .select("id")
     .eq("business_id", user.businessId)
     .eq("location_id", currentLocation.id)
-    .eq("status", "OUVERTE");
-  // "Caisse à deux" : rattache la dépense à la session de CE caissier, pour
-  // qu'elle ne soit déduite que de sa propre caisse à la clôture.
-  if (businessSettings.allowTwoCashiers) sessionQuery = sessionQuery.eq("user_id", user.id);
-  const { data: activeSession } = await sessionQuery.maybeSingle();
+    .eq("status", "OUVERTE")
+    .maybeSingle();
 
   const { data: expense, error } = await supabase
     .from("expenses")

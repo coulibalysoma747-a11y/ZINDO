@@ -31,32 +31,16 @@ export async function POSPageContent({ mode }: { mode: "pos" | "facture" }) {
 
   const businessSettings = await getBusinessSettings(user.businessId);
 
-  let sessionQuery = supabase
+  const { data: activeSession } = await supabase
     .from("cash_sessions")
     .select("id, number, openedAt:opened_at, user:users(firstName:first_name, lastName:last_name)")
     .eq("business_id", user.businessId)
     .eq("location_id", currentLocation.id)
-    .eq("status", "OUVERTE");
-  // "Caisse à deux" : deux sessions peuvent être ouvertes en même temps sur la
-  // même boutique — chacun ne doit voir/utiliser QUE la session qu'il a lui
-  // même ouverte, pas celle d'un autre caissier.
-  if (businessSettings.allowTwoCashiers) sessionQuery = sessionQuery.eq("user_id", user.id);
-  const { data: activeSession } = await sessionQuery.maybeSingle();
+    .eq("status", "OUVERTE")
+    .maybeSingle();
 
   if (!activeSession) {
-    let otherCashiers: string[] = [];
-    if (businessSettings.allowTwoCashiers) {
-      const { data: others } = await supabase
-        .from("cash_sessions")
-        .select("user:users(firstName:first_name, lastName:last_name)")
-        .eq("business_id", user.businessId)
-        .eq("location_id", currentLocation.id)
-        .eq("status", "OUVERTE");
-      otherCashiers = ((others ?? []) as unknown as Array<{ user: { firstName: string; lastName: string } }>).map(
-        (o) => `${o.user.firstName} ${o.user.lastName}`
-      );
-    }
-    return <OpenSessionForm locationName={currentLocation.name} otherCashiers={otherCashiers} />;
+    return <OpenSessionForm locationName={currentLocation.name} />;
   }
   const session = activeSession as unknown as {
     id: string;
@@ -85,6 +69,7 @@ export async function POSPageContent({ mode }: { mode: "pos" | "facture" }) {
       mobileMoneyOperators={businessSettings.mobileMoneyOperators}
       allowMixedPayment={businessSettings.allowMixedPayment}
       aiCartEnabled={businessSettings.aiCartEnabled}
+      cashierQueueEnabled={businessSettings.cashierQueueEnabled}
       autoPrintReceipt={user.autoPrintReceipt}
       printerTicketWidth={user.printerTicketWidth}
       session={{

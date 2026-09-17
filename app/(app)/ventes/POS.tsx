@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState, useTransition } from "react";
 import Link from "next/link";
-import { Trash2, Plus, Minus, UserPlus, Search, Loader2, Wallet, Lock, WifiOff, RefreshCw, Sparkles } from "lucide-react";
+import { Trash2, Plus, Minus, UserPlus, Search, Loader2, Wallet, Lock, WifiOff, RefreshCw, Sparkles, Users } from "lucide-react";
 import { ProductGrid, type PosProduct, type PackagingUnitOption } from "@/components/products/ProductGrid";
 import { BarcodeScannerButton } from "@/components/products/BarcodeScannerButton";
 import { Card, CardBody, CardHeader } from "@/components/ui/Card";
@@ -12,10 +12,12 @@ import { formatMoney, formatDateTime } from "@/lib/format";
 import { createSaleAction } from "@/lib/actions/sales";
 import { getSaleDocumentAction, type SaleDocument } from "@/lib/actions/receipt";
 import { getPosProductsAction, findProductByExactCodeAction } from "@/lib/actions/product-search";
+import { sendCartToQueueAction, type ClaimedCart } from "@/lib/actions/cashier-queue";
 import { ClientFormModal } from "@/app/(app)/clients/ClientFormModal";
 import { Modal } from "@/components/ui/Modal";
 import { PosSettingsButton } from "./PosSettingsButton";
 import { AiCartModal } from "./AiCartModal";
+import { CashierQueueModal } from "./CashierQueueModal";
 import { PrinterSettingsButton } from "./PrinterSettingsButton";
 import { ReceiptPrintPanel } from "./ReceiptPrintPanel";
 import type { PaymentMethod } from "@/lib/db-types";
@@ -86,6 +88,7 @@ export function POS({
   mobileMoneyOperators = ["ORANGE", "MOOV", "WAVE"],
   allowMixedPayment = false,
   aiCartEnabled = false,
+  cashierQueueEnabled = false,
 }: {
   mode?: "pos" | "facture";
   customers: { id: string; name: string; phone: string | null }[];
@@ -103,6 +106,7 @@ export function POS({
   mobileMoneyOperators?: ("ORANGE" | "MOOV" | "WAVE")[];
   allowMixedPayment?: boolean;
   aiCartEnabled?: boolean;
+  cashierQueueEnabled?: boolean;
 }) {
   const isFacture = mode === "facture";
   const [cart, setCart] = useState<CartLine[]>([]);
@@ -195,6 +199,8 @@ export function POS({
   const [mobilePortionInput, setMobilePortionInput] = useState<string>("");
   const [newClientOpen, setNewClientOpen] = useState(false);
   const [aiCartOpen, setAiCartOpen] = useState(false);
+  const [queueOpen, setQueueOpen] = useState(false);
+  const [sendingToQueue, setSendingToQueue] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
   const [receiptDoc, setReceiptDoc] = useState<Extract<SaleDocument, { success: true }> | null>(null);
@@ -336,6 +342,67 @@ export function POS({
     } catch {
       setError(`Aucun produit trouvé pour le code "${code}"`);
     }
+  }
+
+  /** "Caisse à deux" : envoie le panier à un caissier sans encaisser, le stock n'est pas touché. */
+  function handleSendToQueue() {
+    setError(null);
+    if (cart.length === 0) {
+      setError("Ajoutez au moins un produit au panier");
+      return;
+    }
+    if (cart.some((l) => l.vehicleUnitId) && !isOnline) {
+      setError("La vente d'un engin à suivi unitaire nécessite une connexion. Réessayez une fois en ligne.");
+      return;
+    }
+    setSendingToQueue(true);
+    sendCartToQueueAction({
+      locationId,
+      items: cart.map((l) => ({
+        productId: l.product.id,
+        quantity: l.quantity,
+        unitPrice: l.unitPrice,
+        discount: l.discount,
+        vehicleUnitId: l.vehicleUnitId,
+        packagingUnitId: l.packagingUnitId,
+        packagingLabel: l.packagingLabel,
+        multiplier: l.multiplier,
+      })),
+      customerId: customerId || undefined,
+      discount,
+    })
+      .then((result) => {
+        if (result.error) {
+          setError(result.error);
+          return;
+        }
+        setCart([]);
+        setCustomerId("");
+        setDiscount(0);
+      })
+      .finally(() => setSendingToQueue(false));
+  }
+
+  function handleClaimedCart(claimed: ClaimedCart) {
+    const lines: CartLine[] = [];
+    for (const item of claimed.items) {
+      const product = products.find((p) => p.id === item.productId);
+      if (!product) continue;
+      lines.push({
+        product,
+        quantity: item.quantity,
+        unitPrice: item.unitPrice,
+        discount: item.discount,
+        vehicleUnitId: item.vehicleUnitId ?? undefined,
+        packagingUnitId: item.packagingUnitId ?? undefined,
+        packagingLabel: item.unitLabel ?? undefined,
+        multiplier: item.multiplier,
+      });
+    }
+    setCart(lines);
+    setCustomerId(claimed.customerId ?? "");
+    setDiscount(claimed.discount);
+    setQueueOpen(false);
   }
 
   function handleSubmit() {
@@ -564,7 +631,22 @@ export function POS({
               <Sparkles className="h-4 w-4" /> Panier IA
             </Button>
           )}
+          {cashierQueueEnabled && (
+            <Button type="button" variant="outline" onClick={() => setQueueOpen(true)}>
+              <Users className="h-4 w-4" /> File d&apos;attente
+            </Button>
+          )}
         </div>
+
+        {cashierQueueEnabled && (
+          <CashierQueueModal
+            open={queueOpen}
+            onClose={() => setQueueOpen(false)}
+            locationId={locationId}
+            currency={currency}
+            onClaim={handleClaimedCart}
+          />
+        )}
 
         {aiCartEnabled && (
           <AiCartModal
@@ -970,9 +1052,21 @@ export function POS({
 
             {error && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
 
-            <Button className="w-full" size="lg" disabled={pending} onClick={handleSubmit}>
-              {pending ? "Enregistrement..." : isFacture ? "Générer la facture" : "Valider la vente"}
-            </Button>
+            <div className="flex gap-2">
+              {cashierQueueEnabled && !isFacture && (
+                <Button
+                  variant="outline"
+                  size="lg"
+                  disabled={sendingToQueue || pending}
+                  onClick={handleSendToQueue}
+                >
+                  {sendingToQueue ? "Envoi..." : "Envoyer à la caisse"}
+                </Button>
+              )}
+              <Button className="flex-1" size="lg" disabled={pending} onClick={handleSubmit}>
+                {pending ? "Enregistrement..." : isFacture ? "Générer la facture" : "Valider la vente"}
+              </Button>
+            </div>
           </CardBody>
         </Card>
       </div>

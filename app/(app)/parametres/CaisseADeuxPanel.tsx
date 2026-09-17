@@ -6,7 +6,7 @@ import { updateBusinessSettingsAction } from "@/lib/actions/business-settings";
 import type { BusinessSettings } from "@/lib/business-settings";
 
 export function CaisseADeuxPanel({ settings }: { settings: BusinessSettings }) {
-  const [enabled, setEnabled] = useState(settings.allowTwoCashiers);
+  const [enabled, setEnabled] = useState(settings.cashierQueueEnabled);
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
 
@@ -17,16 +17,19 @@ export function CaisseADeuxPanel({ settings }: { settings: BusinessSettings }) {
         <div>
           <p className="font-bold text-zinc-900">Caisse à deux</p>
           <p className="mt-1 text-sm text-zinc-500">
-            Deux caissiers peuvent ouvrir chacun leur propre session de caisse en même temps sur la même boutique.
-            Chacun n&apos;encaisse et ne clôture que ses propres ventes.
+            Un vendeur prépare le panier d&apos;un client et l&apos;envoie dans une file d&apos;attente («&nbsp;Envoyer
+            à la caisse&nbsp;») sans encaisser. Un caissier récupère ensuite le panier depuis cette file et finalise
+            le paiement. Le stock n&apos;est déduit qu&apos;au moment du paiement.
           </p>
         </div>
       </div>
 
       <div className="mt-3 flex items-center justify-between gap-3 rounded-lg border border-zinc-100 p-3">
         <div>
-          <p className="text-sm font-medium text-zinc-900">Autoriser deux sessions de caisse ouvertes en même temps</p>
-          <p className="text-xs text-zinc-500">Sinon, une seule session partagée à la fois (comportement actuel).</p>
+          <p className="text-sm font-medium text-zinc-900">Activer la file d&apos;attente caisse</p>
+          <p className="text-xs text-zinc-500">
+            Ajoute les boutons « Envoyer à la caisse » et « File d&apos;attente » sur l&apos;écran de vente.
+          </p>
         </div>
         <input
           type="checkbox"
@@ -37,7 +40,7 @@ export function CaisseADeuxPanel({ settings }: { settings: BusinessSettings }) {
             setEnabled(v);
             setError(null);
             startTransition(async () => {
-              const result = await updateBusinessSettingsAction({ allowTwoCashiers: v });
+              const result = await updateBusinessSettingsAction({ cashierQueueEnabled: v });
               if (result.error) setError(result.error);
             });
           }}
