@@ -26,12 +26,14 @@ export function PackagingUnitsPanel({
   currency,
   baseUnit,
   basePrice,
+  priceMode = "lot",
 }: {
   productId: string;
   units: PackagingUnit[];
   currency: string;
   baseUnit: string;
   basePrice: number;
+  priceMode?: "lot" | "piece";
 }) {
   const [formOpen, setFormOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -39,11 +41,17 @@ export function PackagingUnitsPanel({
   const [pending, startTransition] = useTransition();
   const [multiplier, setMultiplier] = useState("");
 
+  const isPieceMode = priceMode === "piece";
   const suggestedPrice = Number(multiplier) > 0 ? Math.round(Number(multiplier) * basePrice) : null;
+  const suggestedPieceOrLotPrice = isPieceMode ? basePrice || null : suggestedPrice;
 
   function handleAdd(formData: FormData) {
     if (!formData.get("salePrice") && suggestedPrice != null) {
       formData.set("salePrice", String(suggestedPrice));
+    } else if (isPieceMode && formData.get("salePrice")) {
+      // La saisie est le prix d'une pièce du lot — on enregistre toujours le
+      // prix du lot entier en base (comportement serveur inchangé).
+      formData.set("salePrice", String(Math.round(Number(formData.get("salePrice")) * Number(multiplier))));
     }
     setError(null);
     startTransition(async () => {
@@ -58,6 +66,10 @@ export function PackagingUnitsPanel({
   }
 
   function handleUpdate(unitId: string, formData: FormData) {
+    if (isPieceMode) {
+      const enteredMultiplier = Number(formData.get("multiplier")) || 1;
+      formData.set("salePrice", String(Math.round(Number(formData.get("salePrice")) * enteredMultiplier)));
+    }
     setError(null);
     startTransition(async () => {
       const result = await updatePackagingUnitAction(unitId, formData);
@@ -112,16 +124,20 @@ export function PackagingUnitsPanel({
               />
             </Field>
             <Field
-              label="Prix du lot entier"
+              label={isPieceMode ? "Prix d'une pièce du lot" : "Prix du lot entier"}
               htmlFor="salePrice"
-              hint="Vide = calculé automatiquement à partir du prix de vente unitaire"
+              hint={
+                isPieceMode
+                  ? "Multiplié automatiquement par le nombre de pièces pour obtenir le prix du lot"
+                  : "Vide = calculé automatiquement à partir du prix de vente unitaire"
+              }
             >
               <Input
                 id="salePrice"
                 name="salePrice"
                 type="number"
                 min={0}
-                placeholder={suggestedPrice != null ? String(suggestedPrice) : "auto"}
+                placeholder={suggestedPieceOrLotPrice != null ? String(suggestedPieceOrLotPrice) : "auto"}
               />
             </Field>
           </div>
@@ -130,8 +146,8 @@ export function PackagingUnitsPanel({
           </Field>
           {suggestedPrice != null && (
             <p className="rounded-lg bg-zinc-50 px-3 py-2 text-xs text-zinc-500">
-              1 colis = {multiplier} {baseUnit} — soit {formatMoney(suggestedPrice, currency)} si le prix est laissé
-              vide.
+              1 colis = {multiplier} {baseUnit} — soit {formatMoney(suggestedPrice, currency)}
+              {isPieceMode ? "" : " si le prix est laissé vide"}.
             </p>
           )}
           <Button type="submit" disabled={pending} className="w-full">
@@ -155,7 +171,13 @@ export function PackagingUnitsPanel({
                 >
                   <Input name="name" defaultValue={u.name} required />
                   <Input name="multiplier" type="number" min={1} step="any" defaultValue={u.multiplier} required />
-                  <Input name="salePrice" type="number" min={0} defaultValue={u.salePrice} required />
+                  <Input
+                    name="salePrice"
+                    type="number"
+                    min={0}
+                    defaultValue={isPieceMode ? Math.round(u.salePrice / u.multiplier) : u.salePrice}
+                    required
+                  />
                   <div className="flex gap-2">
                     <Button type="submit" size="sm" disabled={pending}>
                       <Check className="h-3.5 w-3.5" />

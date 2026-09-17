@@ -14,6 +14,8 @@ export type BusinessSettings = {
   dashboardShowPaymentBreakdown: boolean;
   /** "Personnaliser mes dépenses" — catégories proposées à la saisie d'une dépense. */
   expenseCategories: string[];
+  /** "Prix du conditionnement à la pièce" — la saisie demande le prix d'une pièce du lot plutôt que le prix du lot entier (stocké tel quel en base dans les deux cas). */
+  packagingUnitPriceMode: "lot" | "piece";
   /** Modules que le commerçant peut masquer/afficher lui-même dans son propre menu (voir lib/nav.ts `moduleToggle`). */
   modulesEnabled: {
     devis: boolean;
@@ -36,6 +38,7 @@ const DEFAULTS: BusinessSettings = {
   trackUnclaimedGoods: true,
   dashboardShowPaymentBreakdown: true,
   expenseCategories: ["Loyer", "Marketing", "Télécom", "Carburant", "Salaires", "Électricité/eau", "Transport", "Autre"],
+  packagingUnitPriceMode: "lot",
   modulesEnabled: {
     devis: true,
     prixDeRevient: true,

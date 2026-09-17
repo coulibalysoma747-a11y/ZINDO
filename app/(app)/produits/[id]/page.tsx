@@ -9,6 +9,7 @@ import { MOTO_ACTIVITY_KEY } from "@/lib/activities";
 import { getLocations, getCurrentLocation } from "@/lib/location";
 import { getVehicleUnitsAction } from "@/lib/actions/vehicle-units";
 import { getPackagingUnitsAction, isPackagingUnitsModuleEnabled } from "@/lib/actions/packaging-units";
+import { getBusinessSettings } from "@/lib/business-settings";
 import { formatMoney, formatDateTime } from "@/lib/format";
 import { Card, CardBody, CardHeader } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
@@ -105,7 +106,7 @@ export default async function ProductDetailPage({
   const isMotoActivity = user.business.activityKey === MOTO_ACTIVITY_KEY;
   const showVehicleUnits = product.trackUnits && isMotoActivity;
 
-  const [canManageStock, canTransfer, canSell, activityConfig, vehicleUnits, locations, currentLocation, packagingUnits, packagingModuleEnabled] =
+  const [canManageStock, canTransfer, canSell, activityConfig, vehicleUnits, locations, currentLocation, packagingUnits, packagingModuleEnabled, businessSettings] =
     await Promise.all([
       hasPermission(user.businessId, user.role, PERMISSIONS.STOCK_MANAGE, user.id),
       hasPermission(user.businessId, user.role, PERMISSIONS.TRANSFERS_MANAGE, user.id),
@@ -116,6 +117,7 @@ export default async function ProductDetailPage({
       getCurrentLocation(user.businessId),
       getPackagingUnitsAction(id),
       isPackagingUnitsModuleEnabled(user.businessId),
+      getBusinessSettings(user.businessId),
     ]);
   // Un produit à suivi individuel (moto/engin) se vend à l'exemplaire, pas
   // par colis — voir la caisse (ProductGrid/POS) qui n'a aucune notion de
@@ -299,6 +301,7 @@ export default async function ProductDetailPage({
               currency={currency}
               baseUnit={product.unit}
               basePrice={product.salePrice}
+              priceMode={businessSettings.packagingUnitPriceMode}
             />
           </CardBody>
         </Card>
