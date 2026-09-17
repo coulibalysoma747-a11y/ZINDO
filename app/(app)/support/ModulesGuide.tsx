@@ -149,6 +149,10 @@ const DESCRIPTIONS: Record<string, { short: string; long: string }> = {
     short: "Faites entrer de la marchandise en stock en 30 secondes, sans fournisseur ni bon de commande.",
     long: "Pour une livraison reçue sans fournisseur enregistré (achat de dépannage, marché...) : indiquez le produit (ou créez-le à la volée s'il n'existe pas encore), la quantité et le prix payé, et le stock est mis à jour immédiatement. Pour un achat organisé avec un vrai fournisseur, utilisez plutôt le module Achats.",
   },
+  "/enlevements": {
+    short: "Un confrère prend de la marchandise chez vous : suivi du solde dû, sans toucher votre chiffre d'affaires.",
+    long: "L'inverse de l'approvisionnement rapide : quand un confrère vient prendre de la marchandise chez vous, enregistrez-le ici avec ce qu'il a laissé et ce qui reste dû. Le stock sort immédiatement, mais ce montant n'entre jamais dans votre chiffre d'affaires (ce n'est pas une vente). Relancez le solde par WhatsApp en un clic si un numéro est renseigné.",
+  },
 };
 
 export function ModulesGuide({ availability }: { availability: Record<string, ModuleAvailability> }) {

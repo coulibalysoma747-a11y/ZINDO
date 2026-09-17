@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import Link from "next/link";
-import { ChevronRight, Bell, Calculator, BellRing, PackagePlus, Images, FileSignature, Truck } from "lucide-react";
+import { ChevronRight, Bell, Calculator, BellRing, PackagePlus, Images, FileSignature, Truck, Send } from "lucide-react";
 import { updateBusinessSettingsAction } from "@/lib/actions/business-settings";
 import type { BusinessSettings } from "@/lib/business-settings";
 
@@ -63,6 +63,14 @@ const MODULES: {
     description: "Faire entrer de la marchandise en 30 secondes, sans fournisseur ni bon de commande.",
     href: "/approvisionnement",
     hrefLabel: "Ouvrir l'approvisionnement rapide",
+  },
+  {
+    key: "pickups",
+    icon: Send,
+    title: "Enlèvements partenaires",
+    description: "Un confrère prend de la marchandise chez vous, sans jamais entrer dans votre chiffre d'affaires.",
+    href: "/enlevements",
+    hrefLabel: "Ouvrir les enlèvements",
   },
   {
     key: "devis",

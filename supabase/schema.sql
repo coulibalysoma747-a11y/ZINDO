@@ -12,7 +12,7 @@ create extension if not exists pgcrypto;
 create type location_type as enum ('BOUTIQUE', 'DEPOT');
 create type role as enum ('ADMIN', 'VENDEUR', 'GESTIONNAIRE_STOCK');
 create type movement_direction as enum ('IN', 'OUT');
-create type movement_reason as enum ('ACHAT','RETOUR_CLIENT','CORRECTION','INVENTAIRE','VENTE','PRODUIT_ENDOMMAGE','PERTE','RETOUR_FOURNISSEUR','TRANSFERT','AUTRE');
+create type movement_reason as enum ('ACHAT','RETOUR_CLIENT','CORRECTION','INVENTAIRE','VENTE','PRODUIT_ENDOMMAGE','PERTE','RETOUR_FOURNISSEUR','TRANSFERT','AUTRE','ENLEVEMENT');
 -- MIXTE : paiement scindé entre espèces et mobile money sur la même vente
 -- (voir sales.cash_portion/mobile_portion) — Paramètres > "Autoriser le
 -- paiement mixte".
@@ -68,6 +68,7 @@ create table businesses (
   next_quote_seq int not null default 1,
   next_barcode_seq int not null default 1,
   next_rental_seq int not null default 1,
+  next_pickup_seq int not null default 1,
   -- Intégration FasoStock (lib/integrations/faso-stock.ts) : synchronisation
   -- à sens unique FasoStock → ZINDO (leur API est en lecture seule). La clé
   -- n'est jamais renvoyée au navigateur, uniquement lue côté serveur.
@@ -659,6 +660,40 @@ create table quick_supplies (
   created_at timestamptz not null default now()
 );
 create index on quick_supplies (business_id, created_at);
+
+-- Enlèvements partenaires : l'inverse de quick_supplies — un confrère
+-- vient prendre de la marchandise chez vous. N'entre jamais dans le chiffre
+-- d'affaires (table séparée de sales), suit le solde dû séparément des
+-- crédits clients habituels.
+create table pickups (
+  id text primary key default gen_random_uuid()::text,
+  business_id text not null references businesses(id) on delete cascade,
+  location_id text not null references locations(id),
+  number text not null,
+  partner_name text not null,
+  partner_phone text,
+  product_id text not null references products(id),
+  quantity int not null,
+  unit_price double precision not null,
+  total double precision not null,
+  amount_paid double precision not null default 0,
+  note text,
+  user_id text not null references users(id),
+  created_at timestamptz not null default now(),
+  unique (business_id, number)
+);
+create index on pickups (business_id, created_at);
+
+create table pickup_payments (
+  id text primary key default gen_random_uuid()::text,
+  pickup_id text not null references pickups(id) on delete cascade,
+  amount double precision not null,
+  method payment_method not null default 'ESPECES',
+  note text,
+  user_id text not null references users(id),
+  created_at timestamptz not null default now()
+);
+create index on pickup_payments (pickup_id);
 
 create table supplier_payments (
   id text primary key default gen_random_uuid()::text,

@@ -22,6 +22,7 @@ const REASON_LABELS: Record<string, string> = {
   RETOUR_FOURNISSEUR: "Retour fournisseur",
   TRANSFERT: "Transfert",
   AUTRE: "Autre",
+  ENLEVEMENT: "Enlèvement partenaire",
 };
 
 export default async function StockPage({
