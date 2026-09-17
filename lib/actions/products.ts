@@ -455,3 +455,37 @@ export async function ensureAllProductBarcodesAction(): Promise<{ generated: { i
     return { error: "Impossible de générer les codes-barres pour le moment" };
   }
 }
+
+/**
+ * Mise à jour de la seule photo d'un produit — pour /photos-produits, où
+ * l'on ne veut pas repasser par la validation complète de updateProductAction
+ * (nom, prix, unité...) juste pour changer une image.
+ */
+export async function updateProductPhotoAction(productId: string, formData: FormData): Promise<{ url?: string; error?: string }> {
+  const user = await requirePermission(PERMISSIONS.PRODUCTS_MANAGE);
+
+  const { data: product } = await supabase
+    .from("products")
+    .select("id, photoUrl:photo_url")
+    .eq("id", productId)
+    .eq("business_id", user.businessId)
+    .maybeSingle();
+  if (!product) return { error: "Produit introuvable" };
+
+  const photoFile = formData.get("photo");
+  if (!(photoFile instanceof File) || photoFile.size === 0) return { error: "Aucune image reçue" };
+
+  const result = await saveProductPhoto(photoFile);
+  if ("error" in result) return { error: result.error };
+
+  const { error } = await supabase.from("products").update({ photo_url: result.url }).eq("id", productId);
+  if (error) {
+    console.error("[updateProductPhotoAction] Échec de la mise à jour :", error.message);
+    return { error: "Impossible d'enregistrer la photo" };
+  }
+  await deleteUploadedImage(product.photoUrl as string | null);
+
+  revalidatePath("/photos-produits");
+  revalidatePath("/produits");
+  return { url: result.url };
+}

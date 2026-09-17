@@ -72,6 +72,7 @@ export const NAV_ITEMS: NavItem[] = [
   { label: "Sessions de caisse", href: "/ventes/sessions", icon: "cash-sessions", permission: PERMISSIONS.CASH_SESSIONS_MANAGE },
   { label: "Produits", href: "/produits", icon: "products", permission: PERMISSIONS.PRODUCTS_VIEW },
   { label: "Prix de revient", href: "/prix-de-revient", icon: "cost-price", permission: PERMISSIONS.PRODUCTS_MANAGE },
+  { label: "Photos produits", href: "/photos-produits", icon: "product-photos", permission: PERMISSIONS.PRODUCTS_MANAGE },
   { label: "Catégories", href: "/categories", icon: "categories", permission: PERMISSIONS.CATEGORIES_MANAGE },
   { label: "Marques", href: "/marques", icon: "brands", permission: PERMISSIONS.CATEGORIES_MANAGE },
   { label: "Stock", href: "/stock", icon: "stock", permission: PERMISSIONS.STOCK_VIEW },
