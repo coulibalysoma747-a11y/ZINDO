@@ -28,6 +28,8 @@ export type BusinessSettings = {
   mobileMoneyOperators: ("ORANGE" | "MOOV" | "WAVE")[];
   /** "Autoriser le paiement mixte (espèces + mobile money)" — ajoute un moyen de paiement MIXTE qui répartit le total entre les deux. */
   allowMixedPayment: boolean;
+  /** "Panier IA" — lit une commande dictée/tapée/photographiée en caisse pour proposer les lignes de panier, à confirmer avant tout ajout réel. Coûte un appel IA par analyse : désactivé par défaut. */
+  aiCartEnabled: boolean;
   /** Modules que le commerçant peut masquer/afficher lui-même dans son propre menu (voir lib/nav.ts `moduleToggle`). */
   modulesEnabled: {
     devis: boolean;
@@ -63,6 +65,7 @@ const DEFAULTS: BusinessSettings = {
   posQuantityInputMode: "both",
   mobileMoneyOperators: ["ORANGE", "MOOV", "WAVE"],
   allowMixedPayment: false,
+  aiCartEnabled: false,
   modulesEnabled: {
     devis: true,
     prixDeRevient: true,

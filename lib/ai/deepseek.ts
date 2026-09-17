@@ -23,8 +23,14 @@ export type DeepSeekTool = {
 
 export type DeepSeekToolCall = { id: string; type: "function"; function: { name: string; arguments: string } };
 
+// Contenu multi-parties (texte + image) pour un message "user" — voir
+// Panier IA (lib/actions/ai-cart.ts), qui envoie la photo d'une commande
+// écrite à la main. DeepSeek ne lit pas nativement les PDF (contrairement à
+// Claude, voir lib/ai/client.ts) : seules les images sont supportées ici.
+export type DeepSeekUserContentPart = { type: "text"; text: string } | { type: "image_url"; image_url: { url: string } };
+
 export type DeepSeekMessage =
-  | { role: "system" | "user"; content: string }
+  | { role: "system" | "user"; content: string | DeepSeekUserContentPart[] }
   | { role: "assistant"; content: string | null; tool_calls?: DeepSeekToolCall[] }
   | { role: "tool"; tool_call_id: string; content: string };
 

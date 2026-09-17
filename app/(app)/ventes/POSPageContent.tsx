@@ -67,6 +67,7 @@ export async function POSPageContent({ mode }: { mode: "pos" | "facture" }) {
       quantityInputMode={businessSettings.posQuantityInputMode}
       mobileMoneyOperators={businessSettings.mobileMoneyOperators}
       allowMixedPayment={businessSettings.allowMixedPayment}
+      aiCartEnabled={businessSettings.aiCartEnabled}
       autoPrintReceipt={user.autoPrintReceipt}
       printerTicketWidth={user.printerTicketWidth}
       session={{

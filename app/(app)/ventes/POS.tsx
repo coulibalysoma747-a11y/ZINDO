@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState, useTransition } from "react";
 import Link from "next/link";
-import { Trash2, Plus, Minus, UserPlus, Search, Loader2, Wallet, Lock, WifiOff, RefreshCw } from "lucide-react";
+import { Trash2, Plus, Minus, UserPlus, Search, Loader2, Wallet, Lock, WifiOff, RefreshCw, Sparkles } from "lucide-react";
 import { ProductGrid, type PosProduct, type PackagingUnitOption } from "@/components/products/ProductGrid";
 import { BarcodeScannerButton } from "@/components/products/BarcodeScannerButton";
 import { Card, CardBody, CardHeader } from "@/components/ui/Card";
@@ -15,6 +15,7 @@ import { getPosProductsAction, findProductByExactCodeAction } from "@/lib/action
 import { ClientFormModal } from "@/app/(app)/clients/ClientFormModal";
 import { Modal } from "@/components/ui/Modal";
 import { PosSettingsButton } from "./PosSettingsButton";
+import { AiCartModal } from "./AiCartModal";
 import { PrinterSettingsButton } from "./PrinterSettingsButton";
 import { ReceiptPrintPanel } from "./ReceiptPrintPanel";
 import type { PaymentMethod } from "@/lib/db-types";
@@ -84,6 +85,7 @@ export function POS({
   quantityInputMode = "both",
   mobileMoneyOperators = ["ORANGE", "MOOV", "WAVE"],
   allowMixedPayment = false,
+  aiCartEnabled = false,
 }: {
   mode?: "pos" | "facture";
   customers: { id: string; name: string; phone: string | null }[];
@@ -100,6 +102,7 @@ export function POS({
   quantityInputMode?: "both" | "input" | "buttons";
   mobileMoneyOperators?: ("ORANGE" | "MOOV" | "WAVE")[];
   allowMixedPayment?: boolean;
+  aiCartEnabled?: boolean;
 }) {
   const isFacture = mode === "facture";
   const [cart, setCart] = useState<CartLine[]>([]);
@@ -191,6 +194,7 @@ export function POS({
   const [cashPortionInput, setCashPortionInput] = useState<string>("");
   const [mobilePortionInput, setMobilePortionInput] = useState<string>("");
   const [newClientOpen, setNewClientOpen] = useState(false);
+  const [aiCartOpen, setAiCartOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
   const [receiptDoc, setReceiptDoc] = useState<Extract<SaleDocument, { success: true }> | null>(null);
@@ -555,7 +559,28 @@ export function POS({
             />
           </div>
           <BarcodeScannerButton onDetected={handleScan} />
+          {aiCartEnabled && (
+            <Button type="button" variant="outline" onClick={() => setAiCartOpen(true)}>
+              <Sparkles className="h-4 w-4" /> Panier IA
+            </Button>
+          )}
         </div>
+
+        {aiCartEnabled && (
+          <AiCartModal
+            open={aiCartOpen}
+            onClose={() => setAiCartOpen(false)}
+            locationId={locationId}
+            currency={currency}
+            onAddLines={(lines) => {
+              for (const line of lines) {
+                const product = products.find((p) => p.id === line.productId);
+                if (!product) continue;
+                for (let i = 0; i < line.quantity; i++) addProduct(product);
+              }
+            }}
+          />
+        )}
 
         <div className="max-h-[420px] overflow-y-auto rounded-xl">
           {loadingProducts ? (
