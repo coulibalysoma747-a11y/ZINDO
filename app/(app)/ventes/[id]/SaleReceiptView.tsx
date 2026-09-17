@@ -25,6 +25,8 @@ export function SaleReceiptView({
   canEdit,
   canOfferInstallments,
   installmentPlan,
+  otherFormatHref,
+  otherFormatLabel,
 }: {
   data: ReceiptData;
   defaultWidth: ReceiptWidth;
@@ -33,6 +35,8 @@ export function SaleReceiptView({
   canEdit: boolean;
   canOfferInstallments: boolean;
   installmentPlan: InstallmentPlan | null;
+  otherFormatHref?: string | null;
+  otherFormatLabel?: string;
 }) {
   const [width, setWidth] = useState<ReceiptWidth>(defaultWidth);
   const searchParams = useSearchParams();
@@ -75,7 +79,7 @@ export function SaleReceiptView({
             </Link>
           )}
           {!isCancelled && <CancelSaleButton saleId={saleId} />}
-          <ReceiptActions saleNumber={data.ticketNumber} />
+          <ReceiptActions saleNumber={data.ticketNumber} otherFormatHref={otherFormatHref} otherFormatLabel={otherFormatLabel} />
         </div>
       </div>
 

@@ -18,6 +18,8 @@ export function FactureView({
   canEdit,
   canOfferInstallments,
   installmentPlan,
+  otherFormatHref,
+  otherFormatLabel,
 }: {
   data: FactureData;
   saleId: string;
@@ -25,6 +27,8 @@ export function FactureView({
   canEdit: boolean;
   canOfferInstallments: boolean;
   installmentPlan: InstallmentPlan | null;
+  otherFormatHref?: string | null;
+  otherFormatLabel?: string;
 }) {
   const searchParams = useSearchParams();
 
@@ -52,7 +56,7 @@ export function FactureView({
             </Link>
           )}
           {!isCancelled && <CancelSaleButton saleId={saleId} />}
-          <ReceiptActions saleNumber={data.invoiceNumber} />
+          <ReceiptActions saleNumber={data.invoiceNumber} otherFormatHref={otherFormatHref} otherFormatLabel={otherFormatLabel} />
         </div>
       </div>
 

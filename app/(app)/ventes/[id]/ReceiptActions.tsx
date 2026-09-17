@@ -1,9 +1,18 @@
 "use client";
 
-import { Printer, Share2 } from "lucide-react";
+import Link from "next/link";
+import { Printer, Share2, Files } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 
-export function ReceiptActions({ saleNumber }: { saleNumber: string }) {
+export function ReceiptActions({
+  saleNumber,
+  otherFormatHref,
+  otherFormatLabel,
+}: {
+  saleNumber: string;
+  otherFormatHref?: string | null;
+  otherFormatLabel?: string;
+}) {
   async function handleShare() {
     if (navigator.share) {
       try {
@@ -22,13 +31,21 @@ export function ReceiptActions({ saleNumber }: { saleNumber: string }) {
   }
 
   return (
-    <div className="flex gap-2">
+    <div className="flex flex-wrap gap-2">
       <Button variant="outline" onClick={handleShare}>
         <Share2 className="h-4 w-4" /> Partager
       </Button>
       <Button onClick={() => window.print()}>
         <Printer className="h-4 w-4" /> Imprimer / PDF
       </Button>
+      {otherFormatHref && (
+        <Link
+          href={otherFormatHref}
+          className="inline-flex items-center gap-2 rounded-lg border border-zinc-200 px-4 py-2 text-sm font-medium text-zinc-600 hover:border-zindo-green-300 hover:bg-zindo-green-50 hover:text-zindo-green-700"
+        >
+          <Files className="h-4 w-4" /> {otherFormatLabel}
+        </Link>
+      )}
     </div>
   );
 }

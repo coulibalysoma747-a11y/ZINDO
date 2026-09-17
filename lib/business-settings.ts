@@ -20,6 +20,8 @@ export type BusinessSettings = {
   bulkStockFillEnabled: boolean;
   /** "Masquer le client en caisse rapide" — le sélecteur de client disparaît de la caisse (sauf vente à crédit, où il reste requis). */
   hideCustomerInPos: boolean;
+  /** "Imprimer en A4 ou en thermique au choix" — un bouton propose l'autre format d'impression sur chaque vente, sans rien dupliquer en base. */
+  dualFormatPrintingEnabled: boolean;
   /** Modules que le commerçant peut masquer/afficher lui-même dans son propre menu (voir lib/nav.ts `moduleToggle`). */
   modulesEnabled: {
     devis: boolean;
@@ -45,6 +47,7 @@ const DEFAULTS: BusinessSettings = {
   packagingUnitPriceMode: "lot",
   bulkStockFillEnabled: true,
   hideCustomerInPos: false,
+  dualFormatPrintingEnabled: true,
   modulesEnabled: {
     devis: true,
     prixDeRevient: true,

@@ -101,7 +101,7 @@ export type SaleDocument =
  * directement sur l'écran de caisse juste après avoir encaissé (voir POS.tsx),
  * pour ne jamais avoir à quitter la page Vente.
  */
-export async function getSaleDocumentAction(saleId: string): Promise<SaleDocument> {
+export async function getSaleDocumentAction(saleId: string, formatOverride?: "TICKET" | "FACTURE"): Promise<SaleDocument> {
   const user = await requirePermission(PERMISSIONS.SALES_VIEW);
 
   const SALE_SELECT_BASE =
@@ -146,7 +146,12 @@ export async function getSaleDocumentAction(saleId: string): Promise<SaleDocumen
   const cashierName = `${sale.user.firstName} ${sale.user.lastName}`;
   const isCancelled = sale.status === "ANNULEE";
 
-  if (sale.documentType === "FACTURE") {
+  // "Choisir le format d'impression" (Paramètres) : formatOverride permet
+  // d'imprimer la même vente dans l'autre format sans jamais changer le
+  // documentType enregistré — voir app/(app)/ventes/[id]/page.tsx.
+  const effectiveType = formatOverride ?? sale.documentType;
+
+  if (effectiveType === "FACTURE") {
     const customization = await getInvoiceCustomization(user.businessId);
 
     // Une vente d'engin (module Vente Engin) porte toujours une ligne
