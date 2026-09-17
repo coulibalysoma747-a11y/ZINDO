@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import Link from "next/link";
-import { ChevronRight, Bell, Calculator, BellRing, PackagePlus, Images, FileSignature } from "lucide-react";
+import { ChevronRight, Bell, Calculator, BellRing, PackagePlus, Images, FileSignature, Truck } from "lucide-react";
 import { updateBusinessSettingsAction } from "@/lib/actions/business-settings";
 import type { BusinessSettings } from "@/lib/business-settings";
 
@@ -55,6 +55,14 @@ const MODULES: {
     description: "Grille de tous les produits pour ajouter/remplacer une photo en un clic.",
     href: "/photos-produits",
     hrefLabel: "Ouvrir les photos produits",
+  },
+  {
+    key: "quickSupply",
+    icon: Truck,
+    title: "Approvisionnement rapide",
+    description: "Faire entrer de la marchandise en 30 secondes, sans fournisseur ni bon de commande.",
+    href: "/approvisionnement",
+    hrefLabel: "Ouvrir l'approvisionnement rapide",
   },
   {
     key: "devis",

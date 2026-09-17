@@ -36,6 +36,12 @@ export type BusinessSettings = {
     rappelsCredit: boolean;
     reassort: boolean;
     notifications: boolean;
+    /** "Approvisionnement rapide" — page dédiée pour faire entrer du stock sans fournisseur ni bon de commande. */
+    quickSupply: boolean;
+    /** "Enlèvements partenaires" — inverse de l'approvisionnement : un confrère vient prendre de la marchandise. */
+    pickups: boolean;
+    /** "Expéditions" — suivi des colis envoyés par transporteur pour la vente en gros à distance. */
+    shipments: boolean;
   };
 };
 
@@ -64,6 +70,9 @@ const DEFAULTS: BusinessSettings = {
     rappelsCredit: true,
     reassort: true,
     notifications: true,
+    quickSupply: true,
+    pickups: true,
+    shipments: true,
   },
 };
 

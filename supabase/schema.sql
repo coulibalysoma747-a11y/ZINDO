@@ -641,6 +641,25 @@ create table purchase_items (
 create index on purchase_items (purchase_id);
 create index on purchase_items (product_id);
 
+-- Approvisionnement rapide : faire entrer de la marchandise en 30 secondes
+-- sans fournisseur ni bon de commande (voir Paramètres) — distinct du
+-- module Achats, qui reste la voie normale pour un vrai fournisseur. Chaque
+-- ligne ici est purement un historique ; le mouvement de stock réel est
+-- dans stock_movements (reason ACHAT), comme un ajustement normal.
+create table quick_supplies (
+  id text primary key default gen_random_uuid()::text,
+  business_id text not null references businesses(id) on delete cascade,
+  location_id text not null references locations(id),
+  product_id text not null references products(id),
+  quantity int not null,
+  unit_price double precision not null,
+  total double precision not null,
+  note text,
+  user_id text not null references users(id),
+  created_at timestamptz not null default now()
+);
+create index on quick_supplies (business_id, created_at);
+
 create table supplier_payments (
   id text primary key default gen_random_uuid()::text,
   supplier_id text not null references suppliers(id) on delete cascade,

@@ -34,6 +34,7 @@ import {
   Calculator,
   Images,
   CalendarClock,
+  Zap,
 } from "lucide-react";
 
 // Module simple (sans "use client") pour que cette table icône-par-module
@@ -77,4 +78,5 @@ export const NAV_ICONS: Record<NavItem["icon"], React.ComponentType<{ className?
   "cost-price": Calculator,
   "product-photos": Images,
   rentals: CalendarClock,
+  "quick-supply": Zap,
 };

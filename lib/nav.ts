@@ -38,13 +38,14 @@ export type NavItem = {
     | "restock"
     | "cost-price"
     | "product-photos"
-    | "rentals";
+    | "rentals"
+    | "quick-supply";
   permission?: Permission;
   featureFlag?: string;
   planFeature?: string;
   badge?: string;
   /** Module que le commerçant peut lui-même masquer depuis Paramètres (lib/business-settings.ts `modulesEnabled`). */
-  moduleToggle?: "devis" | "prixDeRevient" | "photosProduits" | "rappelsCredit" | "reassort" | "notifications";
+  moduleToggle?: "devis" | "prixDeRevient" | "photosProduits" | "rappelsCredit" | "reassort" | "notifications" | "quickSupply" | "pickups" | "shipments";
   /** N'apparaît que pour ce type d'activité précis (lib/activities.ts) — voir lib/nav-server.ts. */
   requireActivity?: string;
 };
@@ -81,6 +82,7 @@ export const NAV_ITEMS: NavItem[] = [
   { label: "Stock", href: "/stock", icon: "stock", permission: PERMISSIONS.STOCK_VIEW },
   { label: "Réassort", href: "/reassort", icon: "restock", permission: PERMISSIONS.STOCK_VIEW, moduleToggle: "reassort" },
   { label: "Transferts", href: "/transferts", icon: "transfers", permission: PERMISSIONS.TRANSFERS_MANAGE, planFeature: "advanced_stock" },
+  { label: "Approvisionnement rapide", href: "/approvisionnement", icon: "quick-supply", permission: PERMISSIONS.STOCK_MANAGE, moduleToggle: "quickSupply" },
   { label: "Achats", href: "/achats", icon: "purchases", permission: PERMISSIONS.PURCHASES_MANAGE },
   { label: "Dépenses", href: "/depenses", icon: "expenses", permission: PERMISSIONS.EXPENSES_MANAGE, planFeature: "expenses" },
   { label: "Clients", href: "/clients", icon: "customers", permission: PERMISSIONS.CUSTOMERS_VIEW },

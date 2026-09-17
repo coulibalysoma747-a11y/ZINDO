@@ -121,6 +121,34 @@ const DESCRIPTIONS: Record<string, { short: string; long: string }> = {
     short: "Informations de votre commerce, logo, devise, format des tickets, imprimante...",
     long: "Les informations de votre commerce : nom, logo, téléphone, adresse, devise, format des tickets (58 mm, 80 mm ou A4), message de pied de ticket, et configuration de l'imprimante.",
   },
+  "/notifications": {
+    short: "Alertes automatiques : stock faible, rupture, inventaire à faire, crédit échu.",
+    long: "Un fil d'alertes générées automatiquement à partir de l'état réel de votre commerce : produit en rupture ou sous son seuil minimum, échéance de crédit dépassée, ou inventaire recommandé si aucun n'a été fait depuis longtemps. Marquez-les comme lues une fois traitées.",
+  },
+  "/rappels-credit": {
+    short: "Relancez vos clients qui doivent encore de l'argent, en un clic WhatsApp.",
+    long: "La liste de vos crédits clients en cours, avec un bouton qui ouvre WhatsApp avec un message de rappel déjà rédigé — plus besoin de composer le message vous-même à chaque relance.",
+  },
+  "/reassort": {
+    short: "Produits sous leur seuil minimum, avec une quantité à recommander suggérée.",
+    long: "Repère automatiquement les produits dont le stock est descendu à ou sous leur seuil minimum, et suggère une quantité à recommander pour ne pas repasser sous l'alerte dès la prochaine vente. Un lien direct permet de créer l'achat correspondant.",
+  },
+  "/prix-de-revient": {
+    short: "Coût moyen réel (historique des achats) à comparer au prix d'achat renseigné sur la fiche produit.",
+    long: "Calcule le coût de revient moyen pondéré à partir de l'historique réel de vos achats, et le compare au simple prix d'achat déclaré sur la fiche produit — utile pour repérer un produit dont la marge affichée ne correspond plus à ce que vous payez vraiment.",
+  },
+  "/photos-produits": {
+    short: "Ajoutez ou remplacez la photo de n'importe quel produit en un clic, depuis une seule grille.",
+    long: "Une grille de tout votre catalogue : cliquez sur une vignette pour prendre ou choisir une photo, sans avoir à ouvrir la fiche complète de chaque produit un par un.",
+  },
+  "/location": {
+    short: "Prêtez du matériel à un client contre un tarif journalier, distinct d'une vente.",
+    long: "Suivez le prêt d'un produit à un client (tarif par jour, caution, date de retour prévue) sans que ce soit une vente — le statut passe automatiquement à « En retard » si la date de retour prévue est dépassée sans que le matériel soit revenu.",
+  },
+  "/approvisionnement": {
+    short: "Faites entrer de la marchandise en stock en 30 secondes, sans fournisseur ni bon de commande.",
+    long: "Pour une livraison reçue sans fournisseur enregistré (achat de dépannage, marché...) : indiquez le produit (ou créez-le à la volée s'il n'existe pas encore), la quantité et le prix payé, et le stock est mis à jour immédiatement. Pour un achat organisé avec un vrai fournisseur, utilisez plutôt le module Achats.",
+  },
 };
 
 export function ModulesGuide({ availability }: { availability: Record<string, ModuleAvailability> }) {
