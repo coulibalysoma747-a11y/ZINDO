@@ -8,6 +8,8 @@ export type BusinessSettings = {
   blockSaleIfCustomerDebt: boolean;
   /** "Montrer mes chiffres de vente à mes employés" — sinon le classement des vendeurs reste réservé à l'administrateur. */
   showSalesLeaderboardToEmployees: boolean;
+  /** "Suivre les marchandises à retirer" — permet de marquer une vente payée mais pas encore emportée. */
+  trackUnclaimedGoods: boolean;
   /** Modules que le commerçant peut masquer/afficher lui-même dans son propre menu (voir lib/nav.ts `moduleToggle`). */
   modulesEnabled: {
     devis: boolean;
@@ -27,6 +29,7 @@ const DEFAULTS: BusinessSettings = {
   requireCustomerOnSale: false,
   blockSaleIfCustomerDebt: false,
   showSalesLeaderboardToEmployees: true,
+  trackUnclaimedGoods: true,
   modulesEnabled: {
     devis: true,
     prixDeRevient: true,

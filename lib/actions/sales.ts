@@ -604,3 +604,34 @@ export async function getEnabledPaymentMethods() {
   }
   return (methods as unknown as Array<{ method: PaymentMethod; label: string }>).sort(byCanonicalOrder);
 }
+
+/** "Marchandise payée non emportée" — marque qu'une vente déjà encaissée reste chez le commerçant. */
+export async function markSaleUnclaimedAction(saleId: string) {
+  const user = await requirePermission(PERMISSIONS.SALES_CREATE);
+  const { error } = await supabase
+    .from("sales")
+    .update({ unclaimed_at: new Date().toISOString(), claimed_at: null })
+    .eq("id", saleId)
+    .eq("business_id", user.businessId);
+  if (error) {
+    console.error("[markSaleUnclaimedAction] Échec :", error.message);
+    return { error: "Impossible de marquer cette vente" };
+  }
+  revalidatePath("/ventes/historique");
+  return { success: true };
+}
+
+export async function markSaleClaimedAction(saleId: string) {
+  const user = await requirePermission(PERMISSIONS.SALES_CREATE);
+  const { error } = await supabase
+    .from("sales")
+    .update({ claimed_at: new Date().toISOString() })
+    .eq("id", saleId)
+    .eq("business_id", user.businessId);
+  if (error) {
+    console.error("[markSaleClaimedAction] Échec :", error.message);
+    return { error: "Impossible de marquer cette vente" };
+  }
+  revalidatePath("/ventes/historique");
+  return { success: true };
+}

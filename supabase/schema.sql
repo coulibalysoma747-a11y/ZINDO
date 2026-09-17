@@ -373,6 +373,11 @@ create table sales (
   -- "Synchroniser") et de ne jamais créer deux fois la même vente. NULL pour
   -- toute vente créée normalement en ligne.
   client_ref text,
+  -- Marchandise payée mais pas encore emportée ("il repasse ce soir") — voir
+  -- lib/business-settings.ts `trackUnclaimedGoods`. Ces articles sont déjà
+  -- sortis du stock (vendus) tout en restant physiquement chez le commerçant.
+  unclaimed_at timestamptz,
+  claimed_at timestamptz,
   created_at timestamptz not null default now(),
   unique (business_id, number),
   unique (business_id, client_ref)

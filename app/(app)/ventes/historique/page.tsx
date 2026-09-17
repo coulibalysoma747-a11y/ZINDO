@@ -4,10 +4,12 @@ import { requirePermission } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
 import { supabase } from "@/lib/supabase";
 import { formatMoney, formatDateTime, startOfToday, startOfYesterday, startOfWeek, startOfMonth } from "@/lib/format";
+import { getBusinessSettings } from "@/lib/business-settings";
 import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { EmptyState } from "@/components/ui/Empty";
 import { HistoryFilters } from "@/components/history/HistoryFilters";
+import { UnclaimedToggle } from "./UnclaimedToggle";
 
 const STATUS_TONE = {
   PAYEE: "emerald",
@@ -22,6 +24,8 @@ type SaleRow = {
   createdAt: string;
   status: keyof typeof STATUS_TONE;
   total: number;
+  unclaimedAt: string | null;
+  claimedAt: string | null;
   location: { name: string };
   customer: { name: string } | null;
   user: { firstName: string; lastName: string };
@@ -34,11 +38,12 @@ export default async function SalesHistoryPage({
 }) {
   const user = await requirePermission(PERMISSIONS.SALES_VIEW);
   const { periode } = await searchParams;
+  const businessSettings = await getBusinessSettings(user.businessId);
 
   let query = supabase
     .from("sales")
     .select(
-      "id, number, createdAt:created_at, status, total, location:locations(name), customer:customers(name), user:users(firstName:first_name, lastName:last_name)"
+      "id, number, createdAt:created_at, status, total, unclaimedAt:unclaimed_at, claimedAt:claimed_at, location:locations(name), customer:customers(name), user:users(firstName:first_name, lastName:last_name)"
     )
     .eq("business_id", user.businessId)
     .order("created_at", { ascending: false })
@@ -87,24 +92,73 @@ export default async function SalesHistoryPage({
                 </tr>
               </thead>
               <tbody className="divide-y divide-zinc-100">
-                {sales.map((s) => (
-                  <tr key={s.id} className="hover:bg-zinc-50">
-                    <td className="px-4 py-3">
-                      <Link href={`/ventes/${s.id}`} className="font-mono text-xs text-emerald-600 hover:underline">
-                        {s.number}
-                      </Link>
-                    </td>
-                    <td className="px-4 py-3 text-zinc-600">{formatDateTime(new Date(s.createdAt))}</td>
-                    <td className="px-4 py-3 text-zinc-600">{s.location.name}</td>
-                    <td className="px-4 py-3 text-zinc-600">{s.customer?.name ?? "Client de passage"}</td>
-                    <td className="px-4 py-3 text-zinc-600">
-                      {s.user.firstName} {s.user.lastName}
-                    </td>
-                    <td className="px-4 py-3">
+                {sales.map((s) => {
+                  const isUnclaimed = !!s.unclaimedAt && !s.claimedAt;
+                  return (
+                    <tr key={s.id} className="hover:bg-zinc-50">
+                      <td className="px-4 py-3">
+                        <Link href={`/ventes/${s.id}`} className="font-mono text-xs text-emerald-600 hover:underline">
+                          {s.number}
+                        </Link>
+                      </td>
+                      <td className="px-4 py-3 text-zinc-600">{formatDateTime(new Date(s.createdAt))}</td>
+                      <td className="px-4 py-3 text-zinc-600">{s.location.name}</td>
+                      <td className="px-4 py-3 text-zinc-600">{s.customer?.name ?? "Client de passage"}</td>
+                      <td className="px-4 py-3 text-zinc-600">
+                        {s.user.firstName} {s.user.lastName}
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="flex items-center gap-1.5">
+                          <Badge tone={STATUS_TONE[s.status]}>{s.status}</Badge>
+                          {isUnclaimed && <Badge tone="amber">À retirer</Badge>}
+                        </div>
+                      </td>
+                      <td className="px-4 py-3 text-right font-medium text-zinc-900">{formatMoney(s.total, currency)}</td>
+                      <td className="px-4 py-3 text-right">
+                        <div className="flex items-center justify-end gap-1.5">
+                          {businessSettings.trackUnclaimedGoods && s.status !== "ANNULEE" && (
+                            <UnclaimedToggle saleId={s.id} unclaimed={isUnclaimed} />
+                          )}
+                          <Link
+                            href={`/ventes/${s.id}?print=1`}
+                            title="Réimprimer le ticket"
+                            className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 px-2.5 py-1.5 text-xs font-medium text-zinc-600 hover:border-emerald-300 hover:bg-emerald-50 hover:text-emerald-700"
+                          >
+                            <Printer className="h-3.5 w-3.5" /> Réimprimer
+                          </Link>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </Card>
+
+          <div className="space-y-2 sm:hidden">
+            {sales.map((s) => {
+              const isUnclaimed = !!s.unclaimedAt && !s.claimedAt;
+              return (
+                <Card key={s.id} className="p-3">
+                  <div className="flex items-start justify-between gap-2">
+                    <Link href={`/ventes/${s.id}`} className="font-mono text-xs text-emerald-600 hover:underline">
+                      {s.number}
+                    </Link>
+                    <div className="flex items-center gap-1.5">
                       <Badge tone={STATUS_TONE[s.status]}>{s.status}</Badge>
-                    </td>
-                    <td className="px-4 py-3 text-right font-medium text-zinc-900">{formatMoney(s.total, currency)}</td>
-                    <td className="px-4 py-3 text-right">
+                      {isUnclaimed && <Badge tone="amber">À retirer</Badge>}
+                    </div>
+                  </div>
+                  <p className="mt-1 text-sm text-zinc-700">{s.customer?.name ?? "Client de passage"}</p>
+                  <p className="text-xs text-zinc-500">
+                    {formatDateTime(new Date(s.createdAt))} · {s.location.name} · {s.user.firstName} {s.user.lastName}
+                  </p>
+                  <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
+                    <span className="font-semibold text-zinc-900">{formatMoney(s.total, currency)}</span>
+                    <div className="flex items-center gap-1.5">
+                      {businessSettings.trackUnclaimedGoods && s.status !== "ANNULEE" && (
+                        <UnclaimedToggle saleId={s.id} unclaimed={isUnclaimed} />
+                      )}
                       <Link
                         href={`/ventes/${s.id}?print=1`}
                         title="Réimprimer le ticket"
@@ -112,38 +166,11 @@ export default async function SalesHistoryPage({
                       >
                         <Printer className="h-3.5 w-3.5" /> Réimprimer
                       </Link>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </Card>
-
-          <div className="space-y-2 sm:hidden">
-            {sales.map((s) => (
-              <Card key={s.id} className="p-3">
-                <div className="flex items-start justify-between gap-2">
-                  <Link href={`/ventes/${s.id}`} className="font-mono text-xs text-emerald-600 hover:underline">
-                    {s.number}
-                  </Link>
-                  <Badge tone={STATUS_TONE[s.status]}>{s.status}</Badge>
-                </div>
-                <p className="mt-1 text-sm text-zinc-700">{s.customer?.name ?? "Client de passage"}</p>
-                <p className="text-xs text-zinc-500">
-                  {formatDateTime(new Date(s.createdAt))} · {s.location.name} · {s.user.firstName} {s.user.lastName}
-                </p>
-                <div className="mt-2 flex items-center justify-between">
-                  <span className="font-semibold text-zinc-900">{formatMoney(s.total, currency)}</span>
-                  <Link
-                    href={`/ventes/${s.id}?print=1`}
-                    title="Réimprimer le ticket"
-                    className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 px-2.5 py-1.5 text-xs font-medium text-zinc-600 hover:border-emerald-300 hover:bg-emerald-50 hover:text-emerald-700"
-                  >
-                    <Printer className="h-3.5 w-3.5" /> Réimprimer
-                  </Link>
-                </div>
-              </Card>
-            ))}
+                    </div>
+                  </div>
+                </Card>
+              );
+            })}
           </div>
         </>
       )}
