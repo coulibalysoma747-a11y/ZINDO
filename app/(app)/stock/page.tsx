@@ -1,8 +1,9 @@
 import Link from "next/link";
-import { ArrowDownCircle, ArrowUpCircle } from "lucide-react";
+import { ArrowDownCircle, ArrowUpCircle, CheckSquare } from "lucide-react";
 import { requirePermission } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
 import { supabase } from "@/lib/supabase";
+import { getBusinessSettings } from "@/lib/business-settings";
 import { formatDateTime, startOfToday, startOfYesterday, startOfWeek, startOfMonth } from "@/lib/format";
 import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
@@ -30,6 +31,7 @@ export default async function StockPage({
 }) {
   const user = await requirePermission(PERMISSIONS.STOCK_VIEW);
   const { periode } = await searchParams;
+  const businessSettings = await getBusinessSettings(user.businessId);
 
   let query = supabase
     .from("stock_movements")
@@ -68,7 +70,12 @@ export default async function StockPage({
           <h1 className="text-xl font-bold text-zinc-900">Mouvements de stock</h1>
           <p className="text-sm text-zinc-500">{movements.length} mouvement(s)</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
+          {businessSettings.bulkStockFillEnabled && (
+            <ButtonLink href="/stock/remplissage" variant="outline">
+              <CheckSquare className="h-4 w-4" /> Remplir en un clic
+            </ButtonLink>
+          )}
           <ButtonLink href="/stock/entree" variant="secondary">
             <ArrowDownCircle className="h-4 w-4" /> Entrée
           </ButtonLink>

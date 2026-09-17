@@ -16,6 +16,8 @@ export type BusinessSettings = {
   expenseCategories: string[];
   /** "Prix du conditionnement à la pièce" — la saisie demande le prix d'une pièce du lot plutôt que le prix du lot entier (stocké tel quel en base dans les deux cas). */
   packagingUnitPriceMode: "lot" | "piece";
+  /** "Remplir le stock en un clic" — cases à cocher + quantité groupée sur /stock/remplissage. */
+  bulkStockFillEnabled: boolean;
   /** Modules que le commerçant peut masquer/afficher lui-même dans son propre menu (voir lib/nav.ts `moduleToggle`). */
   modulesEnabled: {
     devis: boolean;
@@ -39,6 +41,7 @@ const DEFAULTS: BusinessSettings = {
   dashboardShowPaymentBreakdown: true,
   expenseCategories: ["Loyer", "Marketing", "Télécom", "Carburant", "Salaires", "Électricité/eau", "Transport", "Autre"],
   packagingUnitPriceMode: "lot",
+  bulkStockFillEnabled: true,
   modulesEnabled: {
     devis: true,
     prixDeRevient: true,

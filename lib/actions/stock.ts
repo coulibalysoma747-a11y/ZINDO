@@ -109,3 +109,87 @@ async function createStockMovementImpl(direction: "IN" | "OUT", formData: FormDa
   revalidatePath(`/produits/${product.id}`);
   redirect("/stock");
 }
+
+const bulkEntrySchema = z.object({ productId: z.string().min(1), quantity: z.coerce.number().int().min(0) });
+const bulkFillSchema = z.object({
+  locationId: z.string().min(1, "Sélectionnez une boutique"),
+  mode: z.enum(["add", "set"]),
+  entries: z.array(bulkEntrySchema).min(1, "Aucun produit sélectionné"),
+});
+
+export type BulkFillEntry = { productId: string; quantity: number };
+
+/**
+ * "Remplir le stock en un clic" — applique une même quantité (ou une valeur
+ * individuelle modifiée avant validation) à plusieurs produits d'un coup.
+ * Chaque produit reçoit tout de même son propre mouvement de stock signé de
+ * l'auteur (reason CORRECTION), comme un ajustement normal — rien n'est
+ * invisible, contrairement à une écriture directe en base.
+ */
+export async function bulkFillStockAction(
+  locationId: string,
+  mode: "add" | "set",
+  entries: BulkFillEntry[]
+): Promise<{ error?: string; success?: string; updated?: number }> {
+  const user = await requirePermission(PERMISSIONS.STOCK_MANAGE);
+  const parsed = bulkFillSchema.safeParse({ locationId, mode, entries });
+  if (!parsed.success) return { error: parsed.error.issues[0]?.message };
+
+  const { data: location } = await supabase
+    .from("locations")
+    .select("id, name")
+    .eq("id", parsed.data.locationId)
+    .eq("business_id", user.businessId)
+    .maybeSingle();
+  if (!location) return { error: "Boutique introuvable" };
+
+  const productIds = parsed.data.entries.map((e) => e.productId);
+  const { data: products } = await supabase
+    .from("products")
+    .select("id")
+    .in("id", productIds)
+    .eq("business_id", user.businessId);
+  const validProductIds = new Set((products ?? []).map((p) => p.id as string));
+
+  let updated = 0;
+  for (const entry of parsed.data.entries) {
+    if (!validProductIds.has(entry.productId)) continue;
+
+    let delta: number;
+    if (parsed.data.mode === "add") {
+      delta = entry.quantity;
+    } else {
+      const current = await getStockQuantity(entry.productId, location.id as string);
+      delta = entry.quantity - current;
+    }
+    if (delta === 0) continue;
+
+    const { oldStock, newStock } = await adjustStock({ productId: entry.productId, locationId: location.id as string, delta });
+    await supabase.from("stock_movements").insert({
+      business_id: user.businessId,
+      location_id: location.id,
+      product_id: entry.productId,
+      direction: delta > 0 ? "IN" : "OUT",
+      reason: "CORRECTION",
+      quantity: Math.abs(delta),
+      old_stock: oldStock,
+      new_stock: newStock,
+      note: "Remplissage en un clic",
+      user_id: user.id,
+    });
+    updated += 1;
+  }
+
+  await logAction({
+    businessId: user.businessId,
+    userId: user.id,
+    action: "STOCK_IN",
+    entity: "Location",
+    entityId: location.id as string,
+    details: `Remplissage en un clic : ${updated} produit(s) — ${location.name}`,
+  });
+
+  revalidatePath("/stock");
+  revalidatePath("/produits");
+  return { success: `${updated} produit(s) mis à jour`, updated };
+}
