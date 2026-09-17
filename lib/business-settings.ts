@@ -24,6 +24,10 @@ export type BusinessSettings = {
   dualFormatPrintingEnabled: boolean;
   /** "Champ de saisie pour la quantité" (input) vs "Boutons (-) et (+)" (buttons) — "both" = comportement actuel (les deux affichés), les deux autres n'affichent que l'un ou l'autre. */
   posQuantityInputMode: "both" | "input" | "buttons";
+  /** "Opérateurs mobile money proposés" — décochez ceux que vous n'encaissez pas ; un seul coché = choisi automatiquement à la vente. */
+  mobileMoneyOperators: ("ORANGE" | "MOOV" | "WAVE")[];
+  /** "Autoriser le paiement mixte (espèces + mobile money)" — ajoute un moyen de paiement MIXTE qui répartit le total entre les deux. */
+  allowMixedPayment: boolean;
   /** Modules que le commerçant peut masquer/afficher lui-même dans son propre menu (voir lib/nav.ts `moduleToggle`). */
   modulesEnabled: {
     devis: boolean;
@@ -51,6 +55,8 @@ const DEFAULTS: BusinessSettings = {
   hideCustomerInPos: false,
   dualFormatPrintingEnabled: true,
   posQuantityInputMode: "both",
+  mobileMoneyOperators: ["ORANGE", "MOOV", "WAVE"],
+  allowMixedPayment: false,
   modulesEnabled: {
     devis: true,
     prixDeRevient: true,

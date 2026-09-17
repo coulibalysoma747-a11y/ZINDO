@@ -13,7 +13,10 @@ create type location_type as enum ('BOUTIQUE', 'DEPOT');
 create type role as enum ('ADMIN', 'VENDEUR', 'GESTIONNAIRE_STOCK');
 create type movement_direction as enum ('IN', 'OUT');
 create type movement_reason as enum ('ACHAT','RETOUR_CLIENT','CORRECTION','INVENTAIRE','VENTE','PRODUIT_ENDOMMAGE','PERTE','RETOUR_FOURNISSEUR','TRANSFERT','AUTRE');
-create type payment_method as enum ('ESPECES','MOBILE_MONEY','CARTE','CREDIT','AUTRE');
+-- MIXTE : paiement scindé entre espèces et mobile money sur la même vente
+-- (voir sales.cash_portion/mobile_portion) — Paramètres > "Autoriser le
+-- paiement mixte".
+create type payment_method as enum ('ESPECES','MOBILE_MONEY','CARTE','CREDIT','AUTRE','MIXTE');
 create type sale_status as enum ('PAYEE','PARTIELLE','CREDIT','ANNULEE');
 create type cash_session_status as enum ('OUVERTE','FERMEE');
 create type purchase_status as enum ('RECUE','PARTIELLE','COMMANDEE');
@@ -378,6 +381,12 @@ create table sales (
   -- sortis du stock (vendus) tout en restant physiquement chez le commerçant.
   unclaimed_at timestamptz,
   claimed_at timestamptz,
+  -- Opérateur mobile money choisi (Orange/Moov/Wave) — voir Paramètres >
+  -- "Personnaliser l'encaissement" — et répartition espèces/mobile money
+  -- quand payment_method = 'MIXTE' (sinon les deux restent nuls).
+  mobile_money_operator text,
+  cash_portion double precision,
+  mobile_portion double precision,
   created_at timestamptz not null default now(),
   unique (business_id, number),
   unique (business_id, client_ref)

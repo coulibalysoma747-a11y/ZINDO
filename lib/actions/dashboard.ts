@@ -159,22 +159,41 @@ type SaleAgg = {
   userId: string;
   amountPaid: number;
   paymentMethod: string;
+  cashPortion: number | null;
+  mobilePortion: number | null;
   items: Array<{ productId: string; quantity: number; total: number; unitPrice: number; unitCost: number }>;
 };
 
 type PaymentAgg = { amount: number; method: string; userId: string };
 
 async function fetchSalesForPeriod(businessId: string, locationId: string, from: Date, to: Date): Promise<SaleAgg[]> {
-  const { data } = await supabase
+  const ITEMS_SELECT = "items:sale_items(productId:product_id, quantity, total, unitPrice:unit_price, unitCost:unit_cost)";
+  const initial = await supabase
     .from("sales")
     .select(
-      "id, userId:user_id, amountPaid:amount_paid, paymentMethod:payment_method, items:sale_items(productId:product_id, quantity, total, unitPrice:unit_price, unitCost:unit_cost)"
+      `id, userId:user_id, amountPaid:amount_paid, paymentMethod:payment_method, cashPortion:cash_portion, mobilePortion:mobile_portion, ${ITEMS_SELECT}`
     )
     .eq("business_id", businessId)
     .eq("location_id", locationId)
     .neq("status", "ANNULEE")
     .gte("created_at", from.toISOString())
     .lt("created_at", to.toISOString());
+  let data = initial.data;
+  // Repli si cash_portion/mobile_portion (paiement mixte) ne sont pas encore
+  // migrées côté base — même logique défensive qu'ailleurs dans le code pour
+  // une colonne pas encore appliquée, pour ne jamais casser tout le tableau
+  // de bord pour ça.
+  if (initial.error && /cash_portion|mobile_portion/.test(initial.error.message)) {
+    const fallback = await supabase
+      .from("sales")
+      .select(`id, userId:user_id, amountPaid:amount_paid, paymentMethod:payment_method, ${ITEMS_SELECT}`)
+      .eq("business_id", businessId)
+      .eq("location_id", locationId)
+      .neq("status", "ANNULEE")
+      .gte("created_at", from.toISOString())
+      .lt("created_at", to.toISOString());
+    data = fallback.data ? fallback.data.map((s) => ({ ...s, cashPortion: null, mobilePortion: null })) : null;
+  }
   return (data ?? []) as unknown as SaleAgg[];
 }
 
@@ -226,6 +245,7 @@ async function summarize(sales: SaleAgg[], payments: PaymentAgg[], expenses: num
   const itemsSold = sales.reduce((s, sale) => s + sale.items.reduce((si, i) => si + i.quantity, 0), 0);
   const especes =
     sales.filter((s) => s.paymentMethod === "ESPECES").reduce((s, sale) => s + sale.amountPaid, 0) +
+    sales.filter((s) => s.paymentMethod === "MIXTE").reduce((s, sale) => s + (sale.cashPortion ?? 0), 0) +
     payments.filter((p) => p.method === "ESPECES").reduce((s, p) => s + p.amount, 0);
 
   // Détail des encaissements par moyen de paiement (montant + nombre de
@@ -239,7 +259,14 @@ async function summarize(sales: SaleAgg[], payments: PaymentAgg[], expenses: num
     m.count += 1;
     byMethod[method] = m;
   };
-  for (const sale of sales) addToMethod(sale.paymentMethod, sale.amountPaid);
+  for (const sale of sales) {
+    if (sale.paymentMethod === "MIXTE") {
+      if (sale.cashPortion) addToMethod("ESPECES", sale.cashPortion);
+      if (sale.mobilePortion) addToMethod("MOBILE_MONEY", sale.mobilePortion);
+    } else {
+      addToMethod(sale.paymentMethod, sale.amountPaid);
+    }
+  }
   for (const p of payments) addToMethod(p.method, p.amount);
 
   return {

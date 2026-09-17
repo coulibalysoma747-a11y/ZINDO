@@ -16,6 +16,7 @@ const PAYMENT_LABELS: Record<string, string> = {
   CARTE: "Carte bancaire",
   CREDIT: "Crédit",
   AUTRE: "Autre",
+  MIXTE: "Mixte (espèces + mobile money)",
 };
 
 const STATUS_LABELS: Record<string, string> = {

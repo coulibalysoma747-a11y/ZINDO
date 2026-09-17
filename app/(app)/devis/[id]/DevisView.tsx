@@ -37,6 +37,7 @@ const PAYMENT_LABELS: Record<PaymentMethod, string> = {
   CARTE: "Carte bancaire",
   CREDIT: "Crédit",
   AUTRE: "Autre",
+  MIXTE: "Mixte",
 };
 
 export function DevisView({

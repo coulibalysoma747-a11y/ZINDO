@@ -47,6 +47,11 @@ export type CreateSaleInput = {
    * commerce, elle est renvoyée telle quelle plutôt que dupliquée.
    */
   clientRef?: string;
+  /** Opérateur choisi quand paymentMethod = MOBILE_MONEY (Paramètres > opérateurs proposés). */
+  mobileMoneyOperator?: "ORANGE" | "MOOV" | "WAVE";
+  /** Répartition espèces/mobile money quand paymentMethod = MIXTE — doit sommer à amountPaid. */
+  cashPortion?: number;
+  mobilePortion?: number;
 };
 
 export type CreateSaleResult = { success: true; saleId: string } | { success: false; error: string };
@@ -268,6 +273,13 @@ async function createSaleImpl(input: CreateSaleInput): Promise<CreateSaleResult>
     }
   }
 
+  if (input.paymentMethod === "MIXTE") {
+    const sum = Math.round((input.cashPortion ?? 0) + (input.mobilePortion ?? 0));
+    if (sum !== Math.round(amountPaid)) {
+      return { success: false, error: "La part espèces et la part mobile money doivent correspondre au montant reçu" };
+    }
+  }
+
   const status = amountPaid >= total ? "PAYEE" : amountPaid > 0 ? "PARTIELLE" : "CREDIT";
   const number = await generateSaleNumber(user.businessId);
 
@@ -288,6 +300,9 @@ async function createSaleImpl(input: CreateSaleInput): Promise<CreateSaleResult>
       document_type: input.documentType ?? "TICKET",
       note: input.note ?? null,
       client_ref: input.clientRef ?? null,
+      mobile_money_operator: input.paymentMethod === "MOBILE_MONEY" ? input.mobileMoneyOperator ?? null : null,
+      cash_portion: input.paymentMethod === "MIXTE" ? input.cashPortion ?? null : null,
+      mobile_portion: input.paymentMethod === "MIXTE" ? input.mobilePortion ?? null : null,
     })
     .select("id")
     .single();

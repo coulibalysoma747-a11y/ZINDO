@@ -17,7 +17,7 @@ export type MovementReason =
   | "RETOUR_FOURNISSEUR"
   | "TRANSFERT"
   | "AUTRE";
-export type PaymentMethod = "ESPECES" | "MOBILE_MONEY" | "CARTE" | "CREDIT" | "AUTRE";
+export type PaymentMethod = "ESPECES" | "MOBILE_MONEY" | "CARTE" | "CREDIT" | "AUTRE" | "MIXTE";
 export type SaleStatus = "PAYEE" | "PARTIELLE" | "CREDIT" | "ANNULEE";
 export type CashSessionStatus = "OUVERTE" | "FERMEE";
 export type PurchaseStatus = "RECUE" | "PARTIELLE" | "COMMANDEE";

@@ -52,6 +52,13 @@ const PAYMENT_LABELS: Record<PaymentMethod, string> = {
   CARTE: "Carte bancaire",
   CREDIT: "Crédit",
   AUTRE: "Autre",
+  MIXTE: "Mixte (espèces + mobile money)",
+};
+
+const MOBILE_MONEY_OPERATOR_LABELS: Record<"ORANGE" | "MOOV" | "WAVE", string> = {
+  ORANGE: "Orange Money",
+  MOOV: "Moov Money",
+  WAVE: "Wave",
 };
 
 type SessionInfo = {
@@ -75,6 +82,8 @@ export function POS({
   businessInfo,
   hideCustomerInPos = false,
   quantityInputMode = "both",
+  mobileMoneyOperators = ["ORANGE", "MOOV", "WAVE"],
+  allowMixedPayment = false,
 }: {
   mode?: "pos" | "facture";
   customers: { id: string; name: string; phone: string | null }[];
@@ -89,6 +98,8 @@ export function POS({
   businessInfo: CachedBusinessInfo;
   hideCustomerInPos?: boolean;
   quantityInputMode?: "both" | "input" | "buttons";
+  mobileMoneyOperators?: ("ORANGE" | "MOOV" | "WAVE")[];
+  allowMixedPayment?: boolean;
 }) {
   const isFacture = mode === "facture";
   const [cart, setCart] = useState<CartLine[]>([]);
@@ -174,6 +185,11 @@ export function POS({
     paymentMethods[0]?.method ?? "ESPECES"
   );
   const [amountPaidInput, setAmountPaidInput] = useState<string>("");
+  const [mobileMoneyOperator, setMobileMoneyOperator] = useState<"ORANGE" | "MOOV" | "WAVE" | "">(
+    mobileMoneyOperators[0] ?? ""
+  );
+  const [cashPortionInput, setCashPortionInput] = useState<string>("");
+  const [mobilePortionInput, setMobilePortionInput] = useState<string>("");
   const [newClientOpen, setNewClientOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
@@ -196,13 +212,18 @@ export function POS({
   );
   const total = Math.max(0, subtotal - discount);
   const isCreditOnly = paymentMethod === "CREDIT";
-  const amountPaid = isCreditOnly
-    ? amountPaidInput === ""
-      ? 0
-      : Number(amountPaidInput)
-    : amountPaidInput === ""
-      ? total
-      : Number(amountPaidInput);
+  const isMixed = paymentMethod === "MIXTE";
+  const cashPortion = cashPortionInput === "" ? 0 : Number(cashPortionInput);
+  const mobilePortion = mobilePortionInput === "" ? 0 : Number(mobilePortionInput);
+  const amountPaid = isMixed
+    ? cashPortion + mobilePortion
+    : isCreditOnly
+      ? amountPaidInput === ""
+        ? 0
+        : Number(amountPaidInput)
+      : amountPaidInput === ""
+        ? total
+        : Number(amountPaidInput);
   const change = Math.max(0, amountPaid - total);
   const remaining = Math.max(0, total - amountPaid);
 
@@ -353,7 +374,19 @@ export function POS({
         await queueOfflineSale({
           clientRef,
           createdAt: new Date().toISOString(),
-          input: { locationId, items, customerId: customerId || undefined, discount, paymentMethod, amountPaid, documentType, clientRef },
+          input: {
+            locationId,
+            items,
+            customerId: customerId || undefined,
+            discount,
+            paymentMethod,
+            amountPaid,
+            documentType,
+            clientRef,
+            mobileMoneyOperator: paymentMethod === "MOBILE_MONEY" ? mobileMoneyOperator || undefined : undefined,
+            cashPortion: isMixed ? cashPortion : undefined,
+            mobilePortion: isMixed ? mobilePortion : undefined,
+          },
           cashierName: session.cashierName,
           customerName: selectedCustomer?.name ?? null,
         });
@@ -390,7 +423,7 @@ export function POS({
         setCart([]);
         setCustomerId("");
         setDiscount(0);
-        setAmountPaidInput("");
+        setAmountPaidInput(""); setCashPortionInput(""); setMobilePortionInput("");
         setReceiptDoc(doc);
         refreshPendingSales();
       });
@@ -406,6 +439,9 @@ export function POS({
         paymentMethod,
         amountPaid,
         documentType,
+        mobileMoneyOperator: paymentMethod === "MOBILE_MONEY" ? mobileMoneyOperator || undefined : undefined,
+        cashPortion: isMixed ? cashPortion : undefined,
+        mobilePortion: isMixed ? mobilePortion : undefined,
       });
       if (!result.success) {
         setError(result.error);
@@ -419,7 +455,7 @@ export function POS({
       setCart([]);
       setCustomerId("");
       setDiscount(0);
-      setAmountPaidInput("");
+      setAmountPaidInput(""); setCashPortionInput(""); setMobilePortionInput("");
 
       const doc = await getSaleDocumentAction(result.saleId);
       if (doc.success) setReceiptDoc(doc);
@@ -826,22 +862,63 @@ export function POS({
                     {m.label || PAYMENT_LABELS[m.method]}
                   </option>
                 ))}
+                {allowMixedPayment && <option value="MIXTE">{PAYMENT_LABELS.MIXTE}</option>}
               </Select>
             </Field>
-            <Field
-              label="Montant reçu"
-              htmlFor="amountPaid"
-              hint={isCreditOnly ? "Laissez à 0 pour un crédit total" : "Laissez vide pour un paiement exact"}
-            >
-              <Input
-                id="amountPaid"
-                type="number"
-                min={0}
-                value={amountPaidInput}
-                onChange={(e) => setAmountPaidInput(e.target.value)}
-                placeholder={String(total)}
-              />
-            </Field>
+
+            {paymentMethod === "MOBILE_MONEY" && mobileMoneyOperators.length > 1 && (
+              <Field label="Opérateur mobile money" htmlFor="mobileMoneyOperator">
+                <Select
+                  id="mobileMoneyOperator"
+                  value={mobileMoneyOperator}
+                  onChange={(e) => setMobileMoneyOperator(e.target.value as "ORANGE" | "MOOV" | "WAVE")}
+                >
+                  {mobileMoneyOperators.map((op) => (
+                    <option key={op} value={op}>
+                      {MOBILE_MONEY_OPERATOR_LABELS[op]}
+                    </option>
+                  ))}
+                </Select>
+              </Field>
+            )}
+
+            {isMixed ? (
+              <div className="grid grid-cols-2 gap-3">
+                <Field label="Part espèces" htmlFor="cashPortion">
+                  <Input
+                    id="cashPortion"
+                    type="number"
+                    min={0}
+                    value={cashPortionInput}
+                    onChange={(e) => setCashPortionInput(e.target.value)}
+                  />
+                </Field>
+                <Field label="Part mobile money" htmlFor="mobilePortion">
+                  <Input
+                    id="mobilePortion"
+                    type="number"
+                    min={0}
+                    value={mobilePortionInput}
+                    onChange={(e) => setMobilePortionInput(e.target.value)}
+                  />
+                </Field>
+              </div>
+            ) : (
+              <Field
+                label="Montant reçu"
+                htmlFor="amountPaid"
+                hint={isCreditOnly ? "Laissez à 0 pour un crédit total" : "Laissez vide pour un paiement exact"}
+              >
+                <Input
+                  id="amountPaid"
+                  type="number"
+                  min={0}
+                  value={amountPaidInput}
+                  onChange={(e) => setAmountPaidInput(e.target.value)}
+                  placeholder={String(total)}
+                />
+              </Field>
+            )}
 
             <div className="space-y-1 border-t border-zinc-100 pt-3 text-sm">
               <div className="flex justify-between text-zinc-600">

@@ -23,6 +23,7 @@ const PAYMENT_LABELS: Record<PaymentMethod, string> = {
   CARTE: "Carte bancaire",
   CREDIT: "Crédit",
   AUTRE: "Autre",
+  MIXTE: "Mixte",
 };
 
 const ENGINE_TYPES = ["Moto", "Scooter", "Tricycle", "Vélo électrique", "Autre"];

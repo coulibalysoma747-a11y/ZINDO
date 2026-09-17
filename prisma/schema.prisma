@@ -338,6 +338,7 @@ enum PaymentMethod {
   CARTE
   CREDIT
   AUTRE
+  MIXTE
 }
 
 enum SaleStatus {
