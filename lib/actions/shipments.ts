@@ -32,7 +32,7 @@ export type ShipmentRow = {
  * avancés au fil des envois.
  */
 export async function getShipmentsAction(): Promise<ShipmentRow[]> {
-  const user = await requirePermission(PERMISSIONS.SALES_VIEW);
+  const user = await requirePermission(PERMISSIONS.SHIPMENTS_MANAGE);
   const { data } = await supabase
     .from("shipments")
     .select(
@@ -59,7 +59,7 @@ const createSchema = z.object({
 export type ActionState = { error?: string } | undefined;
 
 export async function createShipmentAction(_prevState: ActionState, formData: FormData): Promise<ActionState> {
-  const user = await requirePermission(PERMISSIONS.SALES_VIEW);
+  const user = await requirePermission(PERMISSIONS.SHIPMENTS_MANAGE);
   const parsed = createSchema.safeParse({
     locationId: formData.get("locationId"),
     saleId: formData.get("saleId") || undefined,
@@ -119,7 +119,7 @@ export async function createShipmentAction(_prevState: ActionState, formData: Fo
 }
 
 export async function updateShipmentStatusAction(shipmentId: string, status: ShipmentStatus) {
-  const user = await requirePermission(PERMISSIONS.SALES_VIEW);
+  const user = await requirePermission(PERMISSIONS.SHIPMENTS_MANAGE);
   const patch: Record<string, unknown> = { status };
   if (status === "ARRIVE") patch.arrived_at = new Date().toISOString();
   if (status === "RETIRE") patch.picked_up_at = new Date().toISOString();

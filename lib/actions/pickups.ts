@@ -31,7 +31,7 @@ export type PickupRow = {
  * solde dû se suit à part des crédits clients habituels.
  */
 export async function getPickupsAction(): Promise<PickupRow[]> {
-  const user = await requirePermission(PERMISSIONS.STOCK_MANAGE);
+  const user = await requirePermission(PERMISSIONS.PICKUPS_MANAGE);
   const { data } = await supabase
     .from("pickups")
     .select(
@@ -57,7 +57,7 @@ const createSchema = z.object({
 export type ActionState = { error?: string } | undefined;
 
 export async function createPickupAction(_prevState: ActionState, formData: FormData): Promise<ActionState> {
-  const user = await requirePermission(PERMISSIONS.STOCK_MANAGE);
+  const user = await requirePermission(PERMISSIONS.PICKUPS_MANAGE);
   const parsed = createSchema.safeParse({
     locationId: formData.get("locationId"),
     productId: formData.get("productId"),
@@ -146,7 +146,7 @@ export async function createPickupAction(_prevState: ActionState, formData: Form
 }
 
 export async function recordPickupPaymentAction(pickupId: string, amount: number): Promise<{ error?: string; success?: string }> {
-  const user = await requirePermission(PERMISSIONS.STOCK_MANAGE);
+  const user = await requirePermission(PERMISSIONS.PICKUPS_MANAGE);
   if (amount <= 0) return { error: "Montant invalide" };
 
   const { data: pickup } = await supabase

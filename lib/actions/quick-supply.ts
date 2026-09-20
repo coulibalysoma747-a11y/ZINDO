@@ -21,7 +21,7 @@ export type QuickSupplyRow = {
 };
 
 export async function getQuickSuppliesAction(): Promise<QuickSupplyRow[]> {
-  const user = await requirePermission(PERMISSIONS.STOCK_MANAGE);
+  const user = await requirePermission(PERMISSIONS.QUICK_SUPPLY_MANAGE);
   const { data } = await supabase
     .from("quick_supplies")
     .select(
@@ -52,7 +52,7 @@ export type QuickSupplyResult = { error?: string; success?: string };
  * normal — ce n'est jamais le module Achats (pas de dette fournisseur).
  */
 export async function quickSupplyAction(formData: FormData): Promise<QuickSupplyResult> {
-  const user = await requirePermission(PERMISSIONS.STOCK_MANAGE);
+  const user = await requirePermission(PERMISSIONS.QUICK_SUPPLY_MANAGE);
   const parsed = schema.safeParse({
     locationId: formData.get("locationId"),
     productId: formData.get("productId") || undefined,

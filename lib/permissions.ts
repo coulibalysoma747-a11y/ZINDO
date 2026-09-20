@@ -24,6 +24,9 @@ export const PERMISSIONS = {
   CASH_SESSIONS_MANAGE: "caisse.gerer",
   /** "Caisse à deux" (lib/business-settings.ts `modulesEnabled.cashierQueue`) : récupérer un panier de la file d'attente et finaliser le paiement — distinct de SALES_CREATE (préparer/envoyer un panier). */
   CASHIER_QUEUE_MANAGE: "caisse.encaisser",
+  PICKUPS_MANAGE: "enlevements.gerer",
+  SHIPMENTS_MANAGE: "expeditions.gerer",
+  QUICK_SUPPLY_MANAGE: "appro_rapide.gerer",
 } as const;
 
 export type Permission = (typeof PERMISSIONS)[keyof typeof PERMISSIONS];
@@ -43,6 +46,7 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<Role, Permission[]> = {
     // Pas de CASHIER_QUEUE_MANAGE par défaut : le commerçant l'accorde
     // explicitement à qui doit encaisser depuis la file d'attente, une fois
     // "Caisse à deux" activé — voir Paramètres > Modules > Rôles et permissions.
+    PERMISSIONS.SHIPMENTS_MANAGE,
   ],
   GESTIONNAIRE_STOCK: [
     PERMISSIONS.PRODUCTS_VIEW,
@@ -54,6 +58,8 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<Role, Permission[]> = {
     PERMISSIONS.SUPPLIERS_MANAGE,
     PERMISSIONS.PURCHASES_MANAGE,
     PERMISSIONS.TRANSFERS_MANAGE,
+    PERMISSIONS.PICKUPS_MANAGE,
+    PERMISSIONS.QUICK_SUPPLY_MANAGE,
   ],
 };
 
@@ -85,4 +91,7 @@ export const PERMISSION_LABELS: Record<string, string> = {
   [PERMISSIONS.EXPENSES_MANAGE]: "Gérer les dépenses",
   [PERMISSIONS.CASH_SESSIONS_MANAGE]: "Ouvrir / fermer la caisse",
   [PERMISSIONS.CASHIER_QUEUE_MANAGE]: "Encaisser depuis la file d'attente (Caisse à deux)",
+  [PERMISSIONS.PICKUPS_MANAGE]: "Gérer les enlèvements partenaires",
+  [PERMISSIONS.SHIPMENTS_MANAGE]: "Gérer les expéditions",
+  [PERMISSIONS.QUICK_SUPPLY_MANAGE]: "Utiliser l'approvisionnement rapide",
 };
