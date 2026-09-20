@@ -49,6 +49,39 @@ type CartLine = {
   multiplier?: number;
 };
 
+type HeldSale = {
+  id: string;
+  savedAt: string;
+  label: string;
+  total: number;
+  customerId: string;
+  discount: number;
+  lines: {
+    productId: string;
+    quantity: number;
+    unitPrice: number;
+    discount: number;
+    vehicleUnitId?: string;
+    chassisNumber?: string;
+    packagingUnitId?: string;
+    packagingLabel?: string;
+    multiplier?: number;
+  }[];
+};
+
+function heldSalesStorageKey(locationId: string) {
+  return `zindo_held_sales_${locationId}`;
+}
+
+function loadHeldSales(locationId: string): HeldSale[] {
+  try {
+    const raw = window.localStorage.getItem(heldSalesStorageKey(locationId));
+    return raw ? (JSON.parse(raw) as HeldSale[]) : [];
+  } catch {
+    return [];
+  }
+}
+
 const PAYMENT_LABELS: Record<PaymentMethod, string> = {
   ESPECES: "Espèces",
   MOBILE_MONEY: "Mobile Money",
@@ -186,6 +219,13 @@ export function POS({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [locationId]);
 
+  const [heldSales, setHeldSales] = useState<HeldSale[]>([]);
+  const [heldSalesOpen, setHeldSalesOpen] = useState(false);
+
+  useEffect(() => {
+    setHeldSales(loadHeldSales(locationId));
+  }, [locationId]);
+
   const [customerId, setCustomerId] = useState("");
   const [discount, setDiscount] = useState(0);
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>(
@@ -225,6 +265,82 @@ export function POS({
     [cart]
   );
   const total = Math.max(0, subtotal - discount);
+
+  function persistHeldSales(next: HeldSale[]) {
+    setHeldSales(next);
+    try {
+      window.localStorage.setItem(heldSalesStorageKey(locationId), JSON.stringify(next));
+    } catch {
+      // stockage plein/indisponible — la mise en attente reste utilisable pour cette session
+    }
+  }
+
+  function holdSale() {
+    if (cart.length === 0) return;
+    const entry: HeldSale = {
+      id: crypto.randomUUID(),
+      savedAt: new Date().toISOString(),
+      label: cart[0].product.name + (cart.length > 1 ? ` +${cart.length - 1}` : ""),
+      total,
+      customerId,
+      discount,
+      lines: cart.map((l) => ({
+        productId: l.product.id,
+        quantity: l.quantity,
+        unitPrice: l.unitPrice,
+        discount: l.discount,
+        vehicleUnitId: l.vehicleUnitId,
+        chassisNumber: l.chassisNumber,
+        packagingUnitId: l.packagingUnitId,
+        packagingLabel: l.packagingLabel,
+        multiplier: l.multiplier,
+      })),
+    };
+    persistHeldSales([entry, ...heldSales]);
+    setCart([]);
+    setCustomerId("");
+    setDiscount(0);
+    setError(null);
+  }
+
+  function resumeHeldSale(id: string) {
+    const entry = heldSales.find((h) => h.id === id);
+    if (!entry) return;
+    if (cart.length > 0) {
+      setError("Terminez ou mettez en attente le panier en cours avant d'en reprendre un autre.");
+      return;
+    }
+    const lines: CartLine[] = [];
+    for (const l of entry.lines) {
+      const product = products.find((p) => p.id === l.productId);
+      if (!product) continue;
+      lines.push({
+        product,
+        quantity: l.quantity,
+        unitPrice: l.unitPrice,
+        discount: l.discount,
+        vehicleUnitId: l.vehicleUnitId,
+        chassisNumber: l.chassisNumber,
+        packagingUnitId: l.packagingUnitId,
+        packagingLabel: l.packagingLabel,
+        multiplier: l.multiplier,
+      });
+    }
+    if (lines.length === 0) {
+      setError("Ces produits ne sont plus disponibles.");
+      persistHeldSales(heldSales.filter((h) => h.id !== id));
+      return;
+    }
+    setCart(lines);
+    setCustomerId(entry.customerId);
+    setDiscount(entry.discount);
+    persistHeldSales(heldSales.filter((h) => h.id !== id));
+    setHeldSalesOpen(false);
+  }
+
+  function deleteHeldSale(id: string) {
+    persistHeldSales(heldSales.filter((h) => h.id !== id));
+  }
   const isCreditOnly = paymentMethod === "CREDIT";
   const isMixed = paymentMethod === "MIXTE";
   const cashPortion = cashPortionInput === "" ? 0 : Number(cashPortionInput);
@@ -615,7 +731,44 @@ export function POS({
               <Sparkles className="h-4 w-4" /> Panier IA
             </Button>
           )}
+          {cart.length > 0 && (
+            <Button type="button" variant="outline" onClick={holdSale}>
+              Mettre en attente
+            </Button>
+          )}
+          {heldSales.length > 0 && (
+            <Button type="button" variant="outline" onClick={() => setHeldSalesOpen(true)}>
+              En attente ({heldSales.length})
+            </Button>
+          )}
         </div>
+
+        <Modal open={heldSalesOpen} onClose={() => setHeldSalesOpen(false)} title="Ventes en attente">
+          {heldSales.length === 0 ? (
+            <p className="text-sm text-zinc-500">Aucune vente en attente.</p>
+          ) : (
+            <ul className="divide-y divide-zinc-100">
+              {heldSales.map((h) => (
+                <li key={h.id} className="flex items-center justify-between gap-3 py-3">
+                  <div>
+                    <p className="font-medium text-zinc-900">{h.label}</p>
+                    <p className="text-xs text-zinc-500">
+                      {formatMoney(h.total, currency)} — {formatDateTime(h.savedAt)}
+                    </p>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button type="button" size="sm" onClick={() => resumeHeldSale(h.id)}>
+                      Reprendre
+                    </Button>
+                    <Button type="button" size="sm" variant="outline" onClick={() => deleteHeldSale(h.id)}>
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </Modal>
 
         {aiCartEnabled && (
           <AiCartModal
