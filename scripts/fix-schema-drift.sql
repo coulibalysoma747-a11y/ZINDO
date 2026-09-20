@@ -1,0 +1,102 @@
+-- Rattrape le retard entre supabase/schema.sql (la référence du dépôt) et la
+-- base Supabase réellement déployée. Toutes les instructions sont idempotentes
+-- (IF NOT EXISTS / gardées par un DO $$ ... $$) : le script peut être relancé
+-- sans risque s'il est interrompu en cours de route.
+
+-- --- Valeurs d'enum manquantes ---------------------------------------------
+ALTER TYPE payment_method ADD VALUE IF NOT EXISTS 'MIXTE';
+ALTER TYPE movement_reason ADD VALUE IF NOT EXISTS 'ENLEVEMENT';
+
+DO $$ BEGIN
+  CREATE TYPE shipment_status AS ENUM ('ENVOYE','ARRIVE','RETIRE');
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
+
+-- --- Colonnes manquantes sur des tables existantes -------------------------
+ALTER TABLE businesses ADD COLUMN IF NOT EXISTS next_barcode_seq int not null default 1;
+ALTER TABLE businesses ADD COLUMN IF NOT EXISTS next_pickup_seq int not null default 1;
+ALTER TABLE businesses ADD COLUMN IF NOT EXISTS next_shipment_seq int not null default 1;
+
+ALTER TABLE users ADD COLUMN IF NOT EXISTS totp_secret text;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS totp_enabled boolean not null default false;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS totp_backup_codes text;
+
+ALTER TABLE super_admins ADD COLUMN IF NOT EXISTS totp_secret text;
+ALTER TABLE super_admins ADD COLUMN IF NOT EXISTS totp_enabled boolean not null default false;
+ALTER TABLE super_admins ADD COLUMN IF NOT EXISTS totp_backup_codes text;
+
+ALTER TABLE sales ADD COLUMN IF NOT EXISTS session_id text references cash_sessions(id);
+ALTER TABLE sales ADD COLUMN IF NOT EXISTS mobile_money_operator text;
+ALTER TABLE sales ADD COLUMN IF NOT EXISTS unclaimed_at timestamptz;
+ALTER TABLE sales ADD COLUMN IF NOT EXISTS claimed_at timestamptz;
+
+ALTER TABLE expenses ADD COLUMN IF NOT EXISTS category text;
+ALTER TABLE expenses ADD COLUMN IF NOT EXISTS payment_method payment_method not null default 'ESPECES';
+ALTER TABLE expenses ADD COLUMN IF NOT EXISTS session_id text references cash_sessions(id);
+
+-- --- Tables manquantes ------------------------------------------------------
+CREATE TABLE IF NOT EXISTS quick_supplies (
+  id text primary key default gen_random_uuid()::text,
+  business_id text not null references businesses(id) on delete cascade,
+  location_id text not null references locations(id),
+  product_id text not null references products(id),
+  quantity int not null,
+  unit_price double precision not null,
+  total double precision not null,
+  note text,
+  user_id text not null references users(id),
+  created_at timestamptz not null default now()
+);
+CREATE INDEX IF NOT EXISTS quick_supplies_business_id_created_at_idx ON quick_supplies (business_id, created_at);
+
+CREATE TABLE IF NOT EXISTS pickups (
+  id text primary key default gen_random_uuid()::text,
+  business_id text not null references businesses(id) on delete cascade,
+  location_id text not null references locations(id),
+  number text not null,
+  partner_name text not null,
+  partner_phone text,
+  product_id text not null references products(id),
+  quantity int not null,
+  unit_price double precision not null,
+  total double precision not null,
+  amount_paid double precision not null default 0,
+  note text,
+  user_id text not null references users(id),
+  created_at timestamptz not null default now(),
+  unique (business_id, number)
+);
+CREATE INDEX IF NOT EXISTS pickups_business_id_created_at_idx ON pickups (business_id, created_at);
+
+CREATE TABLE IF NOT EXISTS pickup_payments (
+  id text primary key default gen_random_uuid()::text,
+  pickup_id text not null references pickups(id) on delete cascade,
+  amount double precision not null,
+  method payment_method not null default 'ESPECES',
+  note text,
+  user_id text not null references users(id),
+  created_at timestamptz not null default now()
+);
+CREATE INDEX IF NOT EXISTS pickup_payments_pickup_id_idx ON pickup_payments (pickup_id);
+
+CREATE TABLE IF NOT EXISTS shipments (
+  id text primary key default gen_random_uuid()::text,
+  business_id text not null references businesses(id) on delete cascade,
+  location_id text not null references locations(id),
+  number text not null,
+  sale_id text references sales(id),
+  carrier_name text not null,
+  waybill_number text,
+  destination text,
+  recipient_name text,
+  recipient_phone text,
+  cost double precision not null default 0,
+  status shipment_status not null default 'ENVOYE',
+  note text,
+  user_id text not null references users(id),
+  created_at timestamptz not null default now(),
+  arrived_at timestamptz,
+  picked_up_at timestamptz,
+  unique (business_id, number)
+);
+CREATE INDEX IF NOT EXISTS shipments_business_id_created_at_idx ON shipments (business_id, created_at);
