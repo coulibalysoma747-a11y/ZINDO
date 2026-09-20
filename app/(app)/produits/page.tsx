@@ -198,14 +198,11 @@ export default async function ProductsPage({
             <FileUp className="h-4 w-4" /> Importer un catalogue
           </ButtonLink>
           <div className="hidden sm:block">
-            <NewProductModal
-              {...newProductModalData}
-              trigger={(open) => (
-                <Button type="button" onClick={open}>
-                  <Plus className="h-4 w-4" /> Nouveau produit
-                </Button>
-              )}
-            />
+            <NewProductModal {...newProductModalData}>
+              <Button type="button">
+                <Plus className="h-4 w-4" /> Nouveau produit
+              </Button>
+            </NewProductModal>
           </div>
         </div>
       </div>
@@ -219,14 +216,11 @@ export default async function ProductsPage({
           title="Aucun produit trouvé"
           description="Ajoutez votre premier produit ou modifiez vos filtres de recherche."
           action={
-            <NewProductModal
-              {...newProductModalData}
-              trigger={(open) => (
-                <Button type="button" onClick={open}>
-                  <Plus className="h-4 w-4" /> Ajouter un produit
-                </Button>
-              )}
-            />
+            <NewProductModal {...newProductModalData}>
+              <Button type="button">
+                <Plus className="h-4 w-4" /> Ajouter un produit
+              </Button>
+            </NewProductModal>
           }
         />
       ) : (
@@ -380,19 +374,15 @@ export default async function ProductsPage({
         </>
       )}
 
-      <NewProductModal
-        {...newProductModalData}
-        trigger={(open) => (
-          <button
-            type="button"
-            onClick={open}
-            aria-label="Nouveau produit"
-            className="fixed bottom-6 right-5 z-20 flex h-14 w-14 items-center justify-center rounded-full bg-orange-500 text-white shadow-lg shadow-orange-500/30 hover:bg-orange-600 sm:hidden"
-          >
-            <Plus className="h-6 w-6" />
-          </button>
-        )}
-      />
+      <NewProductModal {...newProductModalData}>
+        <button
+          type="button"
+          aria-label="Nouveau produit"
+          className="fixed bottom-6 right-5 z-20 flex h-14 w-14 items-center justify-center rounded-full bg-orange-500 text-white shadow-lg shadow-orange-500/30 hover:bg-orange-600 sm:hidden"
+        >
+          <Plus className="h-6 w-6" />
+        </button>
+      </NewProductModal>
     </div>
   );
 }
