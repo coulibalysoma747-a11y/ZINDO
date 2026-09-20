@@ -93,7 +93,10 @@ export async function toggleUserActiveAction(id: string, active: boolean) {
     .maybeSingle();
   if (!user) return { error: "Utilisateur introuvable" };
 
-  const { error } = await supabase.from("users").update({ active }).eq("id", id);
+  const { error } = await supabase
+    .from("users")
+    .update(active ? { active, failed_login_attempts: 0 } : { active })
+    .eq("id", id);
   if (error) {
     console.error("[toggleUserActiveAction] Échec de la mise à jour :", error.message);
     return { error: "Impossible de mettre à jour l'utilisateur" };

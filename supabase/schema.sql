@@ -126,6 +126,9 @@ create table users (
   totp_secret text,
   totp_enabled boolean not null default false,
   totp_backup_codes text,
+  -- Verrouillage après tentatives échouées répétées — voir loginAction.
+  -- Remis à 0 à la connexion réussie ou par toggleUserActiveAction.
+  failed_login_attempts int not null default 0,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
   unique (business_id, phone)

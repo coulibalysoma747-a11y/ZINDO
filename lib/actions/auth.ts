@@ -55,6 +55,12 @@ const loginSchema = z.object({
   password: z.string().min(1, "Mot de passe requis"),
 });
 
+// Verrouillage après tentatives échouées répétées — voir loginAction.
+// L'administrateur du commerce réactive ensuite le compte depuis
+// /utilisateurs (bouton "Réactiver", déjà existant pour la désactivation
+// manuelle — toggleUserActiveAction remet aussi le compteur à zéro).
+const MAX_FAILED_LOGIN_ATTEMPTS = 3;
+
 export async function loginAction(
   _prevState: ActionState,
   formData: FormData
@@ -77,7 +83,9 @@ export async function loginAction(
 
   const initialUserQuery = await supabase
     .from("users")
-    .select("id, businessId:business_id, role, active, passwordHash:password_hash, totpEnabled:totp_enabled")
+    .select(
+      "id, businessId:business_id, role, active, passwordHash:password_hash, totpEnabled:totp_enabled, failedLoginAttempts:failed_login_attempts"
+    )
     .or(`phone.eq.${trimmedIdentifier},email.ilike.${emailPattern}`)
     .maybeSingle();
   let user = initialUserQuery.data;
@@ -87,7 +95,7 @@ export async function loginAction(
   if (error && /totp/.test(error.message)) {
     const fallback = await supabase
       .from("users")
-      .select("id, businessId:business_id, role, active, passwordHash:password_hash")
+      .select("id, businessId:business_id, role, active, passwordHash:password_hash, failedLoginAttempts:failed_login_attempts")
       .or(`phone.eq.${trimmedIdentifier},email.ilike.${emailPattern}`)
       .maybeSingle();
     user = fallback.data ? { ...fallback.data, totpEnabled: false } : null;
@@ -104,6 +112,9 @@ export async function loginAction(
   if (user && user.active) {
     const valid = await bcrypt.compare(password, user.passwordHash as string);
     if (valid) {
+      if ((user.failedLoginAttempts as number) > 0) {
+        await supabase.from("users").update({ failed_login_attempts: 0 }).eq("id", user.id as string);
+      }
       if (user.totpEnabled) {
         await createPending2FASession({
           userId: user.id as string,
@@ -120,6 +131,15 @@ export async function loginAction(
       });
       redirect("/dashboard");
     }
+    const attempts = ((user.failedLoginAttempts as number) ?? 0) + 1;
+    await supabase
+      .from("users")
+      .update(
+        attempts >= MAX_FAILED_LOGIN_ATTEMPTS
+          ? { failed_login_attempts: attempts, active: false }
+          : { failed_login_attempts: attempts }
+      )
+      .eq("id", user.id as string);
   }
 
   // Aucun compte commerçant correspondant (ou mot de passe invalide) : on
