@@ -3,20 +3,18 @@ import { Plus, FileUp, FileDown, QrCode } from "lucide-react";
 import { requirePermission } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
 import { supabase } from "@/lib/supabase";
-import { getCurrentLocation, getLocations } from "@/lib/location";
+import { getCurrentLocation } from "@/lib/location";
 import { getActivityConfig, resolveTerm } from "@/lib/activity-config";
-import { MOTO_ACTIVITY_KEY } from "@/lib/activities";
 import { formatMoney } from "@/lib/format";
 import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { EmptyState } from "@/components/ui/Empty";
-import { ButtonLink, Button } from "@/components/ui/Button";
+import { ButtonLink } from "@/components/ui/Button";
 import { CatalogTabs } from "@/components/products/CatalogTabs";
 import { ProductSearchBar } from "./ProductSearchBar";
 import { ProductThumbnail } from "@/components/products/ProductThumbnail";
 import { ProductRowMenu } from "@/components/products/ProductRowMenu";
 import { QuickPackagingButton } from "@/components/products/QuickPackagingModal";
-import { NewProductModal } from "@/components/products/NewProductModal";
 import { isPackagingUnitsModuleEnabled } from "@/lib/actions/packaging-units";
 
 const PAGE_SIZE = 200;
@@ -30,12 +28,10 @@ export default async function ProductsPage({
   const { q, categorie, marque, conditionnement, filtre, page } = await searchParams;
   const currentPage = Math.max(1, parseInt(page ?? "1", 10) || 1);
   const offset = (currentPage - 1) * PAGE_SIZE;
-  const [currentLocation, activityConfig, packagingEnabled, locations, { data: suppliers }] = await Promise.all([
+  const [currentLocation, activityConfig, packagingEnabled] = await Promise.all([
     getCurrentLocation(user.businessId),
     getActivityConfig(user.business.activityKey),
     isPackagingUnitsModuleEnabled(user.businessId),
-    getLocations(user.businessId),
-    supabase.from("suppliers").select("id, name").eq("business_id", user.businessId).order("name", { ascending: true }),
   ]);
   const productsLabel = resolveTerm(activityConfig, "products");
 
@@ -133,17 +129,6 @@ export default async function ProductsPage({
   const stockByProduct = new Map(
     ((stocksRes.data ?? []) as { productId: string; quantity: number }[]).map((s) => [s.productId, s.quantity])
   );
-
-  const newProductModalData = {
-    categories: categories ?? [],
-    brands: brands ?? [],
-    suppliers: suppliers ?? [],
-    locations,
-    defaultLocationId: currentLocation?.id,
-    customFieldDefs: activityConfig.customFields,
-    showTrackUnits: user.business.activityKey === MOTO_ACTIVITY_KEY,
-    packagingEnabled,
-  };
   const withStock = (products ?? []).map((p) => ({
     ...p,
     category: p.category as unknown as { name: string } | null,
@@ -198,14 +183,9 @@ export default async function ProductsPage({
             <FileUp className="h-4 w-4" /> Importer un catalogue
           </ButtonLink>
           <div className="hidden sm:block">
-            <NewProductModal
-              {...newProductModalData}
-              trigger={(open) => (
-                <Button type="button" onClick={open}>
-                  <Plus className="h-4 w-4" /> Nouveau produit
-                </Button>
-              )}
-            />
+            <ButtonLink href="/produits/nouveau">
+              <Plus className="h-4 w-4" /> Nouveau produit
+            </ButtonLink>
           </div>
         </div>
       </div>
@@ -219,14 +199,9 @@ export default async function ProductsPage({
           title="Aucun produit trouvé"
           description="Ajoutez votre premier produit ou modifiez vos filtres de recherche."
           action={
-            <NewProductModal
-              {...newProductModalData}
-              trigger={(open) => (
-                <Button type="button" onClick={open}>
-                  <Plus className="h-4 w-4" /> Ajouter un produit
-                </Button>
-              )}
-            />
+            <ButtonLink href="/produits/nouveau">
+              <Plus className="h-4 w-4" /> Ajouter un produit
+            </ButtonLink>
           }
         />
       ) : (
@@ -380,19 +355,13 @@ export default async function ProductsPage({
         </>
       )}
 
-      <NewProductModal
-        {...newProductModalData}
-        trigger={(open) => (
-          <button
-            type="button"
-            onClick={open}
-            aria-label="Nouveau produit"
-            className="fixed bottom-6 right-5 z-20 flex h-14 w-14 items-center justify-center rounded-full bg-orange-500 text-white shadow-lg shadow-orange-500/30 hover:bg-orange-600 sm:hidden"
-          >
-            <Plus className="h-6 w-6" />
-          </button>
-        )}
-      />
+      <Link
+        href="/produits/nouveau"
+        aria-label="Nouveau produit"
+        className="fixed bottom-6 right-5 z-20 flex h-14 w-14 items-center justify-center rounded-full bg-orange-500 text-white shadow-lg shadow-orange-500/30 hover:bg-orange-600 sm:hidden"
+      >
+        <Plus className="h-6 w-6" />
+      </Link>
     </div>
   );
 }
