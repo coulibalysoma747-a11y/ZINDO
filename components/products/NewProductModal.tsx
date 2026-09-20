@@ -10,11 +10,10 @@ type Option = { id: string; name: string };
 
 /**
  * Formulaire "Nouveau produit" en popup au-dessus de la liste (au lieu
- * d'une page séparée /produits/nouveau). Le déclencheur est fourni par
- * l'appelant via `children` (pas une prop fonction : un composant serveur
- * ne peut pas passer de fonction à un composant client, seulement du JSX)
- * pour pouvoir réutiliser ce même popup à plusieurs endroits de la page
- * (bouton barre d'outils, état vide, FAB mobile) avec des styles différents.
+ * d'une page séparée /produits/nouveau) — le déclencheur est fourni par
+ * l'appelant via `trigger` pour pouvoir réutiliser ce même popup à
+ * plusieurs endroits de la page (bouton barre d'outils, état vide, FAB
+ * mobile) avec des styles différents.
  */
 export function NewProductModal({
   categories,
@@ -25,7 +24,7 @@ export function NewProductModal({
   customFieldDefs,
   showTrackUnits,
   packagingEnabled,
-  children,
+  trigger,
 }: {
   categories: Option[];
   brands: Option[];
@@ -35,16 +34,12 @@ export function NewProductModal({
   customFieldDefs?: CustomFieldDef[];
   showTrackUnits?: boolean;
   packagingEnabled?: boolean;
-  children: React.ReactNode;
+  trigger: (open: () => void) => React.ReactNode;
 }) {
   const [open, setOpen] = useState(false);
   return (
     <>
-      {/* display:contents — n'affecte pas la mise en page (le bouton flottant
-          garde son positionnement fixed), ne fait que capter le clic. */}
-      <span className="contents" onClick={() => setOpen(true)}>
-        {children}
-      </span>
+      {trigger(() => setOpen(true))}
       <Modal open={open} onClose={() => setOpen(false)} title="Nouveau produit">
         <ProductForm
           action={createProductAction}
