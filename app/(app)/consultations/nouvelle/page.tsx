@@ -1,0 +1,27 @@
+import { redirect } from "next/navigation";
+import { requirePermission } from "@/lib/auth";
+import { PERMISSIONS } from "@/lib/permissions";
+import { isConsultationsModuleEnabled } from "@/lib/actions/consultations";
+import { MEDICAL_ACTIVITY_KEY } from "@/lib/nav";
+import { Card, CardBody } from "@/components/ui/Card";
+import { ConsultationForm } from "../ConsultationForm";
+
+export default async function NouvelleConsultationPage() {
+  const user = await requirePermission(PERMISSIONS.CONSULTATIONS_MANAGE);
+  if (user.business.activityKey !== MEDICAL_ACTIVITY_KEY) redirect("/dashboard");
+  if (!(await isConsultationsModuleEnabled(user.businessId))) redirect("/dashboard");
+
+  return (
+    <div className="max-w-lg space-y-6">
+      <div>
+        <h1 className="text-xl font-bold text-zinc-900">Nouvelle consultation</h1>
+        <p className="text-sm text-zinc-500">Aucune identité nominative n&apos;est collectée — secret médical respecté.</p>
+      </div>
+      <Card>
+        <CardBody>
+          <ConsultationForm />
+        </CardBody>
+      </Card>
+    </div>
+  );
+}

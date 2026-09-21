@@ -1,6 +1,9 @@
 import { PERMISSIONS, type Permission } from "@/lib/permissions";
 import { MOTO_ACTIVITY_KEY } from "@/lib/activities";
 
+export const MEDICAL_ACTIVITY_KEY = "cabinet_medical";
+export const CONSULTATIONS_FLAG = "consultations_cabinet_medical";
+
 export type NavItem = {
   label: string;
   href: string;
@@ -42,7 +45,9 @@ export type NavItem = {
     | "quick-supply"
     | "pickups"
     | "shipments"
-    | "cashier";
+    | "cashier"
+    | "consultations"
+    | "medical-stats";
   permission?: Permission;
   featureFlag?: string;
   planFeature?: string;
@@ -88,6 +93,22 @@ export const NAV_ITEMS: NavItem[] = [
     icon: "vehicle-registration",
     permission: PERMISSIONS.SALES_VIEW,
     requireActivity: MOTO_ACTIVITY_KEY,
+  },
+  {
+    label: "Consultations",
+    href: "/consultations",
+    icon: "consultations",
+    permission: PERMISSIONS.CONSULTATIONS_MANAGE,
+    requireActivity: MEDICAL_ACTIVITY_KEY,
+    featureFlag: CONSULTATIONS_FLAG,
+  },
+  {
+    label: "Statistiques médicales",
+    href: "/consultations/statistiques",
+    icon: "medical-stats",
+    permission: PERMISSIONS.CONSULTATIONS_MANAGE,
+    requireActivity: MEDICAL_ACTIVITY_KEY,
+    featureFlag: CONSULTATIONS_FLAG,
   },
   { label: "Facture A4", href: "/factures", icon: "invoices", permission: PERMISSIONS.SALES_CREATE },
   { label: "Devis", href: "/devis", icon: "quotes", permission: PERMISSIONS.SALES_CREATE, featureFlag: "devis", moduleToggle: "devis" },

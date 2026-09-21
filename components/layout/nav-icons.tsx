@@ -38,6 +38,8 @@ import {
   Send,
   Package2,
   Banknote,
+  Stethoscope,
+  Activity,
 } from "lucide-react";
 
 // Module simple (sans "use client") pour que cette table icône-par-module
@@ -85,4 +87,6 @@ export const NAV_ICONS: Record<NavItem["icon"], React.ComponentType<{ className?
   pickups: Send,
   shipments: Package2,
   cashier: Banknote,
+  consultations: Stethoscope,
+  "medical-stats": Activity,
 };

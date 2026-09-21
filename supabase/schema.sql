@@ -894,6 +894,26 @@ create table expenses (
 create index on expenses (business_id, date);
 create index on expenses (location_id);
 
+-- ---------------------------------------------------------------------------
+-- Cabinet médical / Clinique (activité "cabinet_medical", voir lib/activities.ts) :
+-- registre de consultations anonymisé (secret médical — pas d'identité
+-- nominative ni d'adresse). Les charges du cabinet réutilisent la table
+-- `expenses` existante, voir app/(app)/consultations/statistiques.
+-- ---------------------------------------------------------------------------
+create table consultations (
+  id text primary key default gen_random_uuid()::text,
+  business_id text not null references businesses(id) on delete cascade,
+  user_id text not null references users(id),
+  patient_code text,
+  sex text not null check (sex in ('M','F')),
+  age_group text not null check (age_group in ('ENFANT','ADULTE','SENIOR')),
+  diagnosis text not null,
+  treatment text,
+  fee int not null default 0,
+  created_at timestamptz not null default now()
+);
+create index on consultations (business_id, created_at desc);
+
 create table notifications (
   id text primary key default gen_random_uuid()::text,
   business_id text not null references businesses(id) on delete cascade,

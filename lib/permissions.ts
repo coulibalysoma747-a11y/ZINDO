@@ -27,6 +27,7 @@ export const PERMISSIONS = {
   PICKUPS_MANAGE: "enlevements.gerer",
   SHIPMENTS_MANAGE: "expeditions.gerer",
   QUICK_SUPPLY_MANAGE: "appro_rapide.gerer",
+  CONSULTATIONS_MANAGE: "consultations.gerer",
 } as const;
 
 export type Permission = (typeof PERMISSIONS)[keyof typeof PERMISSIONS];
@@ -94,4 +95,5 @@ export const PERMISSION_LABELS: Record<string, string> = {
   [PERMISSIONS.PICKUPS_MANAGE]: "Gérer les enlèvements partenaires",
   [PERMISSIONS.SHIPMENTS_MANAGE]: "Gérer les expéditions",
   [PERMISSIONS.QUICK_SUPPLY_MANAGE]: "Utiliser l'approvisionnement rapide",
+  [PERMISSIONS.CONSULTATIONS_MANAGE]: "Gérer les consultations (cabinet médical)",
 };

@@ -1,0 +1,96 @@
+import { redirect } from "next/navigation";
+import { Plus, BarChart3, Download } from "lucide-react";
+import { requirePermission } from "@/lib/auth";
+import { PERMISSIONS } from "@/lib/permissions";
+import { supabase } from "@/lib/supabase";
+import { formatMoney, formatLongDate } from "@/lib/format";
+import { ensureConsultationsFlagRegistered, isConsultationsModuleEnabled } from "@/lib/actions/consultations";
+import { AGE_GROUP_LABELS } from "@/lib/consultation-constants";
+import { MEDICAL_ACTIVITY_KEY } from "@/lib/nav";
+import { Card } from "@/components/ui/Card";
+import { EmptyState } from "@/components/ui/Empty";
+import { ButtonLink } from "@/components/ui/Button";
+import { Table, TableHead, TableBody, TableRow, TableHeaderCell, TableCell } from "@/components/ui/Table";
+
+type ConsultationRow = {
+  id: string;
+  patientCode: string | null;
+  sex: "M" | "F";
+  ageGroup: "ENFANT" | "ADULTE" | "SENIOR";
+  diagnosis: string;
+  fee: number;
+  createdAt: string;
+};
+
+export default async function ConsultationsPage() {
+  const user = await requirePermission(PERMISSIONS.CONSULTATIONS_MANAGE);
+  if (user.business.activityKey !== MEDICAL_ACTIVITY_KEY) redirect("/dashboard");
+
+  await ensureConsultationsFlagRegistered();
+  if (!(await isConsultationsModuleEnabled(user.businessId))) redirect("/dashboard");
+
+  const { data } = await supabase
+    .from("consultations")
+    .select("id, patientCode:patient_code, sex, ageGroup:age_group, diagnosis, fee, createdAt:created_at")
+    .eq("business_id", user.businessId)
+    .order("created_at", { ascending: false })
+    .limit(100);
+  const consultations = (data ?? []) as unknown as ConsultationRow[];
+  const currency = user.business.currency;
+
+  return (
+    <div className="space-y-6">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h1 className="text-xl font-bold text-zinc-900">Consultations</h1>
+          <p className="text-sm text-zinc-500">{consultations.length} consultation(s) récente(s)</p>
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <ButtonLink href="/consultations/statistiques" variant="outline">
+            <BarChart3 className="h-4 w-4" /> Statistiques
+          </ButtonLink>
+          <a
+            href="/consultations/export"
+            className="inline-flex h-10 shrink-0 items-center gap-2 rounded-lg border border-zinc-200 bg-white px-4 text-sm font-semibold text-zinc-700 shadow-sm transition hover:bg-zinc-50"
+          >
+            <Download className="h-4 w-4" /> Exporter
+          </a>
+          <ButtonLink href="/consultations/nouvelle">
+            <Plus className="h-4 w-4" /> Nouvelle consultation
+          </ButtonLink>
+        </div>
+      </div>
+
+      {consultations.length === 0 ? (
+        <EmptyState title="Aucune consultation" description="Enregistrez votre première consultation." />
+      ) : (
+        <Card className="overflow-x-auto">
+          <Table className="min-w-[700px]">
+            <TableHead>
+              <TableRow interactive={false}>
+                <TableHeaderCell>Date</TableHeaderCell>
+                <TableHeaderCell>Patient</TableHeaderCell>
+                <TableHeaderCell>Sexe</TableHeaderCell>
+                <TableHeaderCell>Âge</TableHeaderCell>
+                <TableHeaderCell>Diagnostic</TableHeaderCell>
+                <TableHeaderCell>Frais</TableHeaderCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {consultations.map((c) => (
+                <TableRow key={c.id} interactive={false}>
+                  <TableCell className="text-zinc-600 dark:text-slate-400">{formatLongDate(c.createdAt)}</TableCell>
+                  <TableCell className="font-medium text-zinc-900 dark:text-slate-100">{c.patientCode ?? "—"}</TableCell>
+                  <TableCell>{c.sex}</TableCell>
+                  <TableCell>{AGE_GROUP_LABELS[c.ageGroup]}</TableCell>
+                  <TableCell className="text-zinc-600 dark:text-slate-400">{c.diagnosis}</TableCell>
+                  <TableCell className="font-semibold text-zindo-green-600">{formatMoney(c.fee, currency)}</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </Card>
+      )}
+    </div>
+  );
+}
