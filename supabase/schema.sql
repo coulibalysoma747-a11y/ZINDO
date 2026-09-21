@@ -37,6 +37,7 @@ create type invoice_payment_method as enum ('MANUEL','CINETPAY');
 create type quote_status as enum ('BROUILLON','ENVOYE','ACCEPTE','REFUSE','EXPIRE','CONVERTI');
 create type shipment_status as enum ('ENVOYE','ARRIVE','RETIRE');
 create type rental_status as enum ('EN_COURS','RETOURNEE','ANNULEE');
+create type promo_discount_type as enum ('PERCENTAGE', 'FIXED');
 
 -- ---------------------------------------------------------------------------
 -- Commerce / compte
@@ -1112,6 +1113,27 @@ create table online_stores (
   updated_at timestamptz not null default now()
 );
 
+-- Codes promo utilisables par les clients au moment de commander sur la
+-- boutique en ligne (/boutique/[slug]) — n'affecte pas les ventes en caisse,
+-- qui ont déjà leur propre champ de remise libre saisi par le vendeur.
+create table promo_codes (
+  id text primary key default gen_random_uuid()::text,
+  store_id text not null references online_stores(id) on delete cascade,
+  code text not null,
+  discount_type promo_discount_type not null,
+  discount_value double precision not null,
+  active boolean not null default true,
+  starts_at timestamptz,
+  ends_at timestamptz,
+  min_order_amount double precision not null default 0,
+  usage_limit int,
+  used_count int not null default 0,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  unique (store_id, code)
+);
+create index on promo_codes (store_id);
+
 create table online_orders (
   id text primary key default gen_random_uuid()::text,
   store_id text not null references online_stores(id) on delete cascade,
@@ -1126,6 +1148,8 @@ create table online_orders (
   total double precision not null,
   status online_order_status not null default 'EN_ATTENTE',
   merchant_note text,
+  promo_code_id text references promo_codes(id),
+  discount double precision not null default 0,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
   unique (store_id, number)
@@ -1220,6 +1244,27 @@ begin
     into v_old
     using p_business_id;
   return v_old;
+end;
+$$ language plpgsql;
+
+-- ---------------------------------------------------------------------------
+-- Fonction utilitaire : réclamation atomique de l'usage d'un code promo.
+-- Incrémente used_count seulement si le code est encore actif et sous sa
+-- limite d'usage, en une seule opération — évite qu'un code à usage limité
+-- soit accepté deux fois par deux commandes passées au même instant.
+-- ---------------------------------------------------------------------------
+create or replace function claim_promo_code_usage(p_promo_code_id text)
+returns boolean as $$
+declare
+  v_claimed boolean;
+begin
+  update promo_codes
+    set used_count = used_count + 1, updated_at = now()
+    where id = p_promo_code_id
+      and active
+      and (usage_limit is null or used_count < usage_limit)
+    returning true into v_claimed;
+  return coalesce(v_claimed, false);
 end;
 $$ language plpgsql;
 

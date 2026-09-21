@@ -860,7 +860,8 @@ model OnlineStore {
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt
 
-  orders OnlineOrder[]
+  orders      OnlineOrder[]
+  promoCodes  PromoCode[]
 }
 
 enum OnlineOrderStatus {
@@ -869,6 +870,36 @@ enum OnlineOrderStatus {
   PRETE
   LIVREE
   ANNULEE
+}
+
+enum PromoDiscountType {
+  PERCENTAGE
+  FIXED
+}
+
+// Code promo utilisable par un client au moment de commander sur la vitrine
+// publique — n'affecte pas les ventes en caisse, qui ont déjà leur propre
+// champ de remise libre saisi par le vendeur.
+model PromoCode {
+  id            String            @id @default(cuid())
+  storeId       String
+  store         OnlineStore       @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  code          String
+  discountType  PromoDiscountType
+  discountValue Float
+  active        Boolean           @default(true)
+  startsAt      DateTime?
+  endsAt        DateTime?
+  minOrderAmount Float            @default(0)
+  usageLimit    Int?
+  usedCount     Int               @default(0)
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+
+  orders OnlineOrder[]
+
+  @@unique([storeId, code])
+  @@index([storeId])
 }
 
 // Commande passée par un client depuis la vitrine publique — volontairement
@@ -891,6 +922,9 @@ model OnlineOrder {
   total           Float
   status          OnlineOrderStatus @default(EN_ATTENTE)
   merchantNote    String?
+  promoCodeId     String?
+  promoCode       PromoCode?        @relation(fields: [promoCodeId], references: [id])
+  discount        Float             @default(0)
   createdAt       DateTime          @default(now())
   updatedAt       DateTime          @updatedAt
 

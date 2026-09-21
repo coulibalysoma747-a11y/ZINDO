@@ -1,9 +1,9 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { ShoppingBasket, Plus, Minus, Trash2, Truck, Store, CheckCircle2 } from "lucide-react";
+import { ShoppingBasket, Plus, Minus, Trash2, Truck, Store, CheckCircle2, Tag } from "lucide-react";
 import { formatMoney } from "@/lib/format";
-import { createOnlineOrderAction } from "@/lib/actions/online-store-public";
+import { createOnlineOrderAction, checkPromoCodeAction } from "@/lib/actions/online-store-public";
 
 type Product = {
   id: string;
@@ -49,6 +49,10 @@ export function StorefrontView({ store, products }: { store: Store; products: Pr
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [orderNumber, setOrderNumber] = useState<string | null>(null);
+  const [promoInput, setPromoInput] = useState("");
+  const [promoChecking, setPromoChecking] = useState(false);
+  const [promoError, setPromoError] = useState<string | null>(null);
+  const [appliedPromo, setAppliedPromo] = useState<{ code: string; discount: number; label: string } | null>(null);
 
   const productMap = useMemo(() => new Map(products.map((p) => [p.id, p])), [products]);
 
@@ -58,15 +62,31 @@ export function StorefrontView({ store, products }: { store: Store; products: Pr
     .filter((i) => i.product);
 
   const subtotal = cartItems.reduce((sum, i) => sum + i.product.salePrice * i.qty, 0);
+  const discount = appliedPromo ? Math.min(appliedPromo.discount, subtotal) : 0;
   const deliveryFee =
     wantsDelivery && store.deliveryEnabled
       ? store.freeDeliveryAbove != null && subtotal >= store.freeDeliveryAbove
         ? 0
         : store.deliveryFee
       : 0;
-  const total = subtotal + deliveryFee;
+  const total = Math.max(0, subtotal - discount) + deliveryFee;
   const itemCount = cartItems.reduce((sum, i) => sum + i.qty, 0);
   const belowMinimum = store.minOrderAmount > 0 && subtotal > 0 && subtotal < store.minOrderAmount;
+
+  async function handleApplyPromo() {
+    if (!promoInput.trim()) return;
+    setPromoChecking(true);
+    setPromoError(null);
+    const result = await checkPromoCodeAction({ slug: store.slug, code: promoInput.trim(), subtotal });
+    setPromoChecking(false);
+    if (!result.valid) {
+      setPromoError(result.error);
+      setAppliedPromo(null);
+      return;
+    }
+    setAppliedPromo({ code: promoInput.trim().toUpperCase(), discount: result.discount, label: result.label });
+    setPromoInput("");
+  }
 
   const paymentMethods = [
     store.payOnDeliveryEnabled ? "Paiement à la livraison / sur place" : null,
@@ -102,6 +122,7 @@ export function StorefrontView({ store, products }: { store: Store; products: Pr
       wantsDelivery,
       note: note || undefined,
       items: cartItems.map((i) => ({ productId: i.product.id, quantity: i.qty })),
+      promoCode: appliedPromo?.code,
     });
     setSubmitting(false);
     if (!result.success) {
@@ -110,6 +131,7 @@ export function StorefrontView({ store, products }: { store: Store; products: Pr
     }
     setOrderNumber(result.orderNumber);
     setCart({});
+    setAppliedPromo(null);
   }
 
   if (orderNumber) {
@@ -339,6 +361,43 @@ export function StorefrontView({ store, products }: { store: Store; products: Pr
               {paymentMethods.length > 0 && (
                 <p className="text-xs text-zinc-500">Paiement : {paymentMethods.join(" ou ")}</p>
               )}
+
+              <div>
+                <label className="mb-1 block text-xs font-medium text-zinc-600">Code promo (facultatif)</label>
+                {appliedPromo ? (
+                  <div className="flex items-center justify-between rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700">
+                    <span className="flex items-center gap-1.5">
+                      <Tag className="h-3.5 w-3.5" /> {appliedPromo.code} ({appliedPromo.label})
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setAppliedPromo(null)}
+                      className="text-xs font-medium text-emerald-700 underline"
+                    >
+                      Retirer
+                    </button>
+                  </div>
+                ) : (
+                  <div className="flex gap-2">
+                    <input
+                      value={promoInput}
+                      onChange={(e) => setPromoInput(e.target.value)}
+                      placeholder="Ex. BIENVENUE10"
+                      className="w-full rounded-md border border-zinc-300 px-3 py-2 text-sm uppercase"
+                    />
+                    <button
+                      type="button"
+                      onClick={handleApplyPromo}
+                      disabled={promoChecking || !promoInput.trim()}
+                      className="whitespace-nowrap rounded-md border border-orange-300 px-3 py-2 text-xs font-medium text-orange-600 disabled:opacity-50"
+                    >
+                      {promoChecking ? "..." : "Appliquer"}
+                    </button>
+                  </div>
+                )}
+                {promoError && <p className="mt-1 text-xs text-red-600">{promoError}</p>}
+              </div>
+
               <div>
                 <label className="mb-1 block text-xs font-medium text-zinc-600">Note (facultatif)</label>
                 <textarea
@@ -354,6 +413,12 @@ export function StorefrontView({ store, products }: { store: Store; products: Pr
                   <span>Sous-total</span>
                   <span>{formatMoney(subtotal, store.currency)}</span>
                 </div>
+                {discount > 0 && (
+                  <div className="flex justify-between text-emerald-600">
+                    <span>Remise ({appliedPromo?.code})</span>
+                    <span>-{formatMoney(discount, store.currency)}</span>
+                  </div>
+                )}
                 {wantsDelivery && (
                   <div className="flex justify-between text-zinc-500">
                     <span>Livraison</span>

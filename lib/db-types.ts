@@ -38,3 +38,4 @@ export type RentalStatus = "EN_COURS" | "RETOURNEE" | "ANNULEE";
 export type ShipmentStatus = "ENVOYE" | "ARRIVE" | "RETIRE";
 export type InvoiceStatus = "EN_ATTENTE" | "PAYEE" | "ANNULEE";
 export type InvoicePaymentMethod = "MANUEL" | "CINETPAY";
+export type PromoDiscountType = "PERCENTAGE" | "FIXED";

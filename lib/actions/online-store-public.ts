@@ -4,6 +4,7 @@ import { z } from "zod";
 import { supabase } from "@/lib/supabase";
 import { generateOnlineOrderNumber } from "@/lib/reference";
 import { isFeatureEnabled } from "@/lib/feature-flags";
+import { validatePromoCode } from "@/lib/actions/promo-codes";
 
 const itemSchema = z.object({
   productId: z.string().min(1),
@@ -18,12 +19,35 @@ const orderSchema = z.object({
   wantsDelivery: z.boolean(),
   note: z.string().optional(),
   items: z.array(itemSchema).min(1, "Le panier est vide"),
+  promoCode: z.string().optional(),
 });
 
 export type CreateOnlineOrderInput = z.infer<typeof orderSchema>;
 export type CreateOnlineOrderResult =
   | { success: true; orderNumber: string }
   | { success: false; error: string };
+
+export type CheckPromoCodeResult =
+  | { valid: true; discount: number; label: string }
+  | { valid: false; error: string };
+
+/** Aperçu sans engagement, appelé quand le client saisit un code dans le panier. */
+export async function checkPromoCodeAction(input: {
+  slug: string;
+  code: string;
+  subtotal: number;
+}): Promise<CheckPromoCodeResult> {
+  const { data: store } = await supabase
+    .from("online_stores")
+    .select("id, published")
+    .eq("slug", input.slug)
+    .maybeSingle();
+  if (!store || !store.published) return { valid: false, error: "Cette boutique n'est pas disponible" };
+
+  const result = await validatePromoCode(store.id as string, input.code, input.subtotal);
+  if (!result.valid) return result;
+  return { valid: true, discount: result.discount, label: result.label };
+}
 
 /** Aucune authentification : appelée depuis la page publique /boutique/[slug]. */
 export async function createOnlineOrderAction(
@@ -89,12 +113,27 @@ export async function createOnlineOrderAction(
     return { success: false, error: `Commande minimum non atteinte (minimum : ${minOrderAmount})` };
   }
 
+  // Ne jamais faire confiance à une remise calculée côté client : on ne lit
+  // que le code fourni et on recalcule tout ici, à partir du sous-total
+  // qu'on vient nous-mêmes de recalculer ligne par ligne ci-dessus.
+  let discount = 0;
+  let promoCodeId: string | null = null;
+  if (data.promoCode) {
+    const promoResult = await validatePromoCode(store.id as string, data.promoCode, subtotal);
+    if (!promoResult.valid) return { success: false, error: promoResult.error };
+    discount = promoResult.discount;
+    promoCodeId = promoResult.promoCodeId;
+
+    const { data: claimed } = await supabase.rpc("claim_promo_code_usage", { p_promo_code_id: promoCodeId });
+    if (!claimed) return { success: false, error: "Ce code a atteint sa limite d'utilisation" };
+  }
+
   let deliveryFee = 0;
   if (data.wantsDelivery && store.deliveryEnabled) {
     const freeThreshold = store.freeDeliveryAbove as number | null;
     deliveryFee = freeThreshold != null && subtotal >= freeThreshold ? 0 : (store.deliveryFee as number);
   }
-  const total = subtotal + deliveryFee;
+  const total = Math.max(0, subtotal - discount) + deliveryFee;
 
   const number = await generateOnlineOrderNumber(store.businessId as string);
 
@@ -110,6 +149,8 @@ export async function createOnlineOrderAction(
       note: data.note ?? null,
       subtotal,
       delivery_fee: deliveryFee,
+      promo_code_id: promoCodeId,
+      discount,
       total,
     })
     .select("id")

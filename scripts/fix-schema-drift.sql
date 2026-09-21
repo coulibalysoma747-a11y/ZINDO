@@ -12,6 +12,11 @@ DO $$ BEGIN
 EXCEPTION WHEN duplicate_object THEN NULL;
 END $$;
 
+DO $$ BEGIN
+  CREATE TYPE promo_discount_type AS ENUM ('PERCENTAGE', 'FIXED');
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
+
 -- --- Colonnes manquantes sur des tables existantes -------------------------
 ALTER TABLE businesses ADD COLUMN IF NOT EXISTS next_barcode_seq int not null default 1;
 ALTER TABLE businesses ADD COLUMN IF NOT EXISTS next_pickup_seq int not null default 1;
@@ -100,3 +105,41 @@ CREATE TABLE IF NOT EXISTS shipments (
   unique (business_id, number)
 );
 CREATE INDEX IF NOT EXISTS shipments_business_id_created_at_idx ON shipments (business_id, created_at);
+
+-- Codes promo utilisables sur la boutique en ligne (/boutique/[slug]).
+CREATE TABLE IF NOT EXISTS promo_codes (
+  id text primary key default gen_random_uuid()::text,
+  store_id text not null references online_stores(id) on delete cascade,
+  code text not null,
+  discount_type promo_discount_type not null,
+  discount_value double precision not null,
+  active boolean not null default true,
+  starts_at timestamptz,
+  ends_at timestamptz,
+  min_order_amount double precision not null default 0,
+  usage_limit int,
+  used_count int not null default 0,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  unique (store_id, code)
+);
+CREATE INDEX IF NOT EXISTS promo_codes_store_id_idx ON promo_codes (store_id);
+
+ALTER TABLE online_orders ADD COLUMN IF NOT EXISTS promo_code_id text references promo_codes(id);
+ALTER TABLE online_orders ADD COLUMN IF NOT EXISTS discount double precision not null default 0;
+
+-- --- Fonctions manquantes ---------------------------------------------------
+CREATE OR REPLACE FUNCTION claim_promo_code_usage(p_promo_code_id text)
+RETURNS boolean AS $$
+DECLARE
+  v_claimed boolean;
+BEGIN
+  UPDATE promo_codes
+    SET used_count = used_count + 1, updated_at = now()
+    WHERE id = p_promo_code_id
+      AND active
+      AND (usage_limit IS NULL OR used_count < usage_limit)
+    RETURNING true INTO v_claimed;
+  RETURN coalesce(v_claimed, false);
+END;
+$$ LANGUAGE plpgsql;
