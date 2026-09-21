@@ -71,7 +71,12 @@ export async function submitGoogleSignupProfileAction(
 
   const code = String(randomInt(100000, 1000000));
 
-  await sendVerificationCodeEmail(pending.email, code, pending.firstName);
+  try {
+    await sendVerificationCodeEmail(pending.email, code, pending.firstName);
+  } catch (err) {
+    console.error("[submitGoogleSignupProfileAction] Échec de l'envoi de l'e-mail :", err);
+    return { error: "Impossible d'envoyer le code de confirmation pour le moment. Réessayez plus tard." };
+  }
 
   await createPendingGoogleSignupSession({
     ...pending,
