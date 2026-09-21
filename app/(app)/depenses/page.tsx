@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/Badge";
 import { EmptyState } from "@/components/ui/Empty";
 import { ButtonLink } from "@/components/ui/Button";
 import { HistoryFilters } from "@/components/history/HistoryFilters";
+import { Table, TableHead, TableBody, TableRow, TableHeaderCell, TableCell } from "@/components/ui/Table";
 import { ExpenseManager } from "./ExpenseManager";
 import { DeleteExpenseButton } from "./DeleteExpenseButton";
 
@@ -92,39 +93,39 @@ export default async function ExpensesPage({
         <EmptyState title="Aucune dépense sur cette période" description="Enregistrez votre première dépense." />
       ) : (
         <Card className="overflow-x-auto">
-          <table className="w-full min-w-[600px] text-sm">
-            <thead className="bg-zinc-50 text-left text-zinc-500">
-              <tr>
-                <th className="px-4 py-3 font-medium">Date</th>
-                <th className="px-4 py-3 font-medium">Libellé</th>
-                <th className="px-4 py-3 font-medium">Catégorie</th>
-                <th className="px-4 py-3 font-medium">Règlement</th>
-                <th className="px-4 py-3 font-medium">Enregistré par</th>
-                <th className="px-4 py-3 text-right font-medium">Montant</th>
-                <th className="px-4 py-3" />
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-zinc-100">
+          <Table className="min-w-[600px]">
+            <TableHead>
+              <TableRow interactive={false}>
+                <TableHeaderCell>Date</TableHeaderCell>
+                <TableHeaderCell>Libellé</TableHeaderCell>
+                <TableHeaderCell>Catégorie</TableHeaderCell>
+                <TableHeaderCell>Règlement</TableHeaderCell>
+                <TableHeaderCell>Enregistré par</TableHeaderCell>
+                <TableHeaderCell align="right">Montant</TableHeaderCell>
+                <TableHeaderCell />
+              </TableRow>
+            </TableHead>
+            <TableBody>
               {expenses.map((e) => (
-                <tr key={e.id} className="hover:bg-zinc-50">
-                  <td className="px-4 py-3 text-zinc-600">{formatDateTime(new Date(e.date))}</td>
-                  <td className="px-4 py-3">
-                    <p className="font-medium text-zinc-900">{e.label}</p>
+                <TableRow key={e.id}>
+                  <TableCell className="text-zinc-600 dark:text-slate-400">{formatDateTime(new Date(e.date))}</TableCell>
+                  <TableCell>
+                    <p className="font-medium text-zinc-900 dark:text-slate-100">{e.label}</p>
                     {e.note && <p className="text-xs text-zinc-400">{e.note}</p>}
-                  </td>
-                  <td className="px-4 py-3">{e.category ? <Badge tone="zinc">{e.category}</Badge> : "—"}</td>
-                  <td className="px-4 py-3 text-zinc-600">{PAYMENT_LABELS[e.paymentMethod] ?? e.paymentMethod}</td>
-                  <td className="px-4 py-3 text-zinc-600">
+                  </TableCell>
+                  <TableCell>{e.category ? <Badge tone="zinc">{e.category}</Badge> : "—"}</TableCell>
+                  <TableCell className="text-zinc-600 dark:text-slate-400">{PAYMENT_LABELS[e.paymentMethod] ?? e.paymentMethod}</TableCell>
+                  <TableCell className="text-zinc-600 dark:text-slate-400">
                     {e.user.firstName} {e.user.lastName}
-                  </td>
-                  <td className="px-4 py-3 text-right font-medium text-red-600">{formatMoney(e.amount, currency)}</td>
-                  <td className="px-4 py-3 text-right">
+                  </TableCell>
+                  <TableCell align="right" className="font-medium text-red-600 tabular-nums">{formatMoney(e.amount, currency)}</TableCell>
+                  <TableCell align="right">
                     <DeleteExpenseButton id={e.id} label={e.label} />
-                  </td>
-                </tr>
+                  </TableCell>
+                </TableRow>
               ))}
-            </tbody>
-          </table>
+            </TableBody>
+          </Table>
         </Card>
       )}
     </div>

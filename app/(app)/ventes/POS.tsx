@@ -8,6 +8,7 @@ import { BarcodeScannerButton } from "@/components/products/BarcodeScannerButton
 import { Card, CardBody, CardHeader } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Field, Input, Select } from "@/components/ui/Input";
+import { Table, TableHead, TableBody, TableRow, TableHeaderCell, TableCell } from "@/components/ui/Table";
 import { formatMoney, formatDateTime } from "@/lib/format";
 import { createSaleAction } from "@/lib/actions/sales";
 import { getSaleDocumentAction, type SaleDocument } from "@/lib/actions/receipt";
@@ -652,7 +653,7 @@ export function POS({
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="flex items-start gap-2">
             <div>
-              <h1 className="text-xl font-bold text-zinc-900">{isFacture ? "Facture A4" : "Vente / Caisse"}</h1>
+              <h1 className="text-xl font-bold tracking-tight text-zinc-900">{isFacture ? "Facture A4" : "Vente / Caisse"}</h1>
               <p className="text-sm text-zinc-500">
                 Boutique : <span className="font-medium text-zinc-700">{locationName}</span> —{" "}
                 {isFacture
@@ -673,17 +674,17 @@ export function POS({
               />
             </div>
           </div>
-          <div className="flex items-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs text-emerald-800">
+          <div className="flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs text-emerald-800 dark:border-emerald-400/20 dark:bg-emerald-500/10 dark:text-emerald-400">
             <Wallet className="h-4 w-4 shrink-0" />
             <div>
               <p className="font-semibold">Session {session.number} ouverte</p>
-              <p className="text-emerald-700">
+              <p className="text-emerald-700 dark:text-emerald-400/80">
                 {session.cashierName} — depuis {formatDateTime(session.openedAt)}
               </p>
             </div>
             <Link
               href={`/ventes/session/${session.id}/fermer`}
-              className="ml-2 inline-flex items-center gap-1 rounded-md bg-emerald-600 px-2.5 py-1.5 font-medium text-white hover:bg-emerald-700"
+              className="ml-2 inline-flex items-center gap-1 rounded-lg bg-emerald-600 px-2.5 py-1.5 font-medium text-white transition-colors hover:bg-emerald-700"
             >
               <Lock className="h-3.5 w-3.5" /> Fermer la caisse
             </Link>
@@ -692,8 +693,10 @@ export function POS({
 
         {(!isOnline || pendingSales.length > 0) && (
           <div
-            className={`flex flex-wrap items-center justify-between gap-2 rounded-lg border px-3 py-2 text-xs ${
-              !isOnline ? "border-amber-200 bg-amber-50 text-amber-800" : "border-blue-200 bg-blue-50 text-blue-800"
+            className={`flex flex-wrap items-center justify-between gap-2 rounded-xl border px-3 py-2 text-xs ${
+              !isOnline
+                ? "border-amber-200 bg-amber-50 text-amber-800 dark:border-amber-400/20 dark:bg-amber-500/10 dark:text-amber-400"
+                : "border-blue-200 bg-blue-50 text-blue-800 dark:border-blue-400/20 dark:bg-blue-500/10 dark:text-blue-400"
             }`}
           >
             <div className="flex items-center gap-2">
@@ -714,8 +717,8 @@ export function POS({
           </div>
         )}
 
-        <div className="flex gap-2">
-          <div className="relative flex-1">
+        <div className="flex flex-wrap gap-2">
+          <div className="relative min-w-[220px] flex-1">
             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" />
             <Input
               value={search}
@@ -753,7 +756,7 @@ export function POS({
                   <div>
                     <p className="font-medium text-zinc-900">{h.label}</p>
                     <p className="text-xs text-zinc-500">
-                      {formatMoney(h.total, currency)} — {formatDateTime(h.savedAt)}
+                      <span className="tabular-nums">{formatMoney(h.total, currency)}</span> — {formatDateTime(h.savedAt)}
                     </p>
                   </div>
                   <div className="flex gap-2">
@@ -786,7 +789,7 @@ export function POS({
           />
         )}
 
-        <div className="max-h-[420px] overflow-y-auto rounded-xl">
+        <div className="max-h-[420px] overflow-y-auto rounded-2xl">
           {loadingProducts ? (
             <div className="flex items-center justify-center gap-2 py-16 text-sm text-zinc-400">
               <Loader2 className="h-4 w-4 animate-spin" /> Chargement des produits...
@@ -802,6 +805,14 @@ export function POS({
         </div>
 
         <Card>
+          <CardHeader>
+            <h2 className="font-semibold tracking-tight text-zinc-900">Panier</h2>
+            {cart.length > 0 && (
+              <span className="rounded-full bg-zindo-green-50 px-2.5 py-0.5 text-xs font-semibold text-zindo-green-700 dark:bg-emerald-500/10 dark:text-emerald-400">
+                {cart.length} article{cart.length > 1 ? "s" : ""}
+              </span>
+            )}
+          </CardHeader>
           <CardBody className="p-0">
             {cart.length === 0 ? (
               <p className="p-8 text-center text-sm text-zinc-500">Le panier est vide.</p>
@@ -812,25 +823,25 @@ export function POS({
                     illisible et impossible à remplir sur téléphone — voir la version
                     carte juste en dessous, réservée à sm:hidden. */}
                 <div className="hidden overflow-x-auto sm:block">
-                  <table className="w-full text-sm">
-                    <thead className="bg-zinc-50 text-left text-zinc-500">
-                      <tr>
-                        <th className="px-4 py-2 font-medium">Produit</th>
-                        <th className="px-4 py-2 font-medium">Qté</th>
-                        <th className="px-4 py-2 text-right font-medium">P.U.</th>
-                        <th className="px-4 py-2 text-right font-medium">Remise</th>
-                        <th className="px-4 py-2 text-right font-medium">Total</th>
-                        <th className="px-4 py-2" />
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-zinc-100">
+                  <Table>
+                    <TableHead>
+                      <TableRow interactive={false}>
+                        <TableHeaderCell>Produit</TableHeaderCell>
+                        <TableHeaderCell>Qté</TableHeaderCell>
+                        <TableHeaderCell align="right">P.U.</TableHeaderCell>
+                        <TableHeaderCell align="right">Remise</TableHeaderCell>
+                        <TableHeaderCell align="right">Total</TableHeaderCell>
+                        <TableHeaderCell />
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
                       {cart.map((line) => (
-                        <tr key={lineKey(line)}>
-                          <td className="px-4 py-2">
+                        <TableRow key={lineKey(line)} interactive={false}>
+                          <TableCell>
                             <p className="font-medium text-zinc-900">
                               {line.product.name}
                               {line.packagingLabel && (
-                                <span className="ml-1.5 rounded-md bg-zindo-green-50 px-1.5 py-0.5 text-[10px] font-semibold text-zindo-green-700">
+                                <span className="ml-1.5 rounded-md bg-zindo-green-50 px-1.5 py-0.5 text-[10px] font-semibold text-zindo-green-700 dark:bg-emerald-500/10 dark:text-emerald-400">
                                   {line.packagingLabel}
                                 </span>
                               )}
@@ -842,17 +853,17 @@ export function POS({
                                 line.product.reference
                               )}
                             </p>
-                          </td>
-                          <td className="px-4 py-2">
+                          </TableCell>
+                          <TableCell>
                             {line.vehicleUnitId ? (
                               <span className="text-zinc-500">1 {line.product.unit}</span>
                             ) : (
-                              <div className="flex items-center gap-1">
+                              <div className="flex items-center gap-1.5">
                                 {quantityInputMode !== "input" && (
                                   <button
                                     type="button"
                                     onClick={() => updateLine(lineKey(line), { quantity: Math.max(1, line.quantity - 1) })}
-                                    className="rounded p-1 text-zinc-500 hover:bg-zinc-100"
+                                    className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-zinc-200 text-zinc-600 transition-colors hover:border-zinc-300 hover:bg-zinc-100 active:scale-95 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
                                   >
                                     <Minus className="h-3.5 w-3.5" />
                                   </button>
@@ -871,11 +882,11 @@ export function POS({
                                         ),
                                       })
                                     }
-                                    className="h-7 w-14 rounded border border-zinc-200 text-center text-sm"
+                                    className="h-8 w-14 rounded-lg border border-zinc-200 text-center text-sm tabular-nums focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zindo-green-500/40 dark:border-slate-700 dark:bg-slate-900"
                                   />
                                 )}
                                 {quantityInputMode === "buttons" && (
-                                  <span className="w-6 text-center text-sm text-zinc-700">{line.quantity}</span>
+                                  <span className="w-6 text-center text-sm tabular-nums text-zinc-700">{line.quantity}</span>
                                 )}
                                 {quantityInputMode !== "input" && (
                                   <button
@@ -885,60 +896,61 @@ export function POS({
                                         quantity: Math.min(lineMaxQty(line), line.quantity + 1),
                                       })
                                     }
-                                    className="rounded p-1 text-zinc-500 hover:bg-zinc-100"
+                                    className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-zinc-200 text-zinc-600 transition-colors hover:border-zinc-300 hover:bg-zinc-100 active:scale-95 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
                                   >
                                     <Plus className="h-3.5 w-3.5" />
                                   </button>
                                 )}
                               </div>
                             )}
-                          </td>
-                          <td className="px-4 py-2 text-right">
+                          </TableCell>
+                          <TableCell align="right">
                             <input
                               type="number"
                               min={0}
                               value={line.unitPrice}
                               onChange={(e) => updateLine(lineKey(line), { unitPrice: Number(e.target.value) || 0 })}
-                              className="h-7 w-24 rounded border border-zinc-200 text-right text-sm"
+                              className="h-8 w-24 rounded-lg border border-zinc-200 text-right text-sm tabular-nums focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zindo-green-500/40 dark:border-slate-700 dark:bg-slate-900"
                             />
-                          </td>
-                          <td className="px-4 py-2 text-right">
+                          </TableCell>
+                          <TableCell align="right">
                             <input
                               type="number"
                               min={0}
                               value={line.discount}
                               onChange={(e) => updateLine(lineKey(line), { discount: Number(e.target.value) || 0 })}
-                              className="h-7 w-20 rounded border border-zinc-200 text-right text-sm"
+                              className="h-8 w-20 rounded-lg border border-zinc-200 text-right text-sm tabular-nums focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zindo-green-500/40 dark:border-slate-700 dark:bg-slate-900"
                             />
-                          </td>
-                          <td className="px-4 py-2 text-right font-medium text-zinc-900">
+                          </TableCell>
+                          <TableCell align="right" className="font-semibold text-zinc-900 tabular-nums">
                             {formatMoney(line.unitPrice * line.quantity - line.discount, currency)}
-                          </td>
-                          <td className="px-4 py-2">
+                          </TableCell>
+                          <TableCell>
                             <button
                               type="button"
                               onClick={() => removeLine(lineKey(line))}
-                              className="rounded p-1 text-red-500 hover:bg-red-50"
+                              aria-label={`Retirer ${line.product.name} du panier`}
+                              className="flex h-8 w-8 items-center justify-center rounded-lg text-red-500 transition-colors hover:bg-red-50 dark:hover:bg-red-500/10"
                             >
                               <Trash2 className="h-4 w-4" />
                             </button>
-                          </td>
-                        </tr>
+                          </TableCell>
+                        </TableRow>
                       ))}
-                    </tbody>
-                  </table>
+                    </TableBody>
+                  </Table>
                 </div>
 
                 {/* Version carte : téléphone. */}
-                <ul className="divide-y divide-zinc-100 sm:hidden">
+                <ul className="divide-y divide-zinc-100 sm:hidden dark:divide-slate-800">
                   {cart.map((line) => (
-                    <li key={lineKey(line)} className="space-y-2.5 p-3">
+                    <li key={lineKey(line)} className="space-y-3 p-3">
                       <div className="flex items-start justify-between gap-2">
                         <div className="min-w-0">
                           <p className="truncate font-medium text-zinc-900">
                             {line.product.name}
                             {line.packagingLabel && (
-                              <span className="ml-1.5 rounded-md bg-zindo-green-50 px-1.5 py-0.5 text-[10px] font-semibold text-zindo-green-700">
+                              <span className="ml-1.5 rounded-md bg-zindo-green-50 px-1.5 py-0.5 text-[10px] font-semibold text-zindo-green-700 dark:bg-emerald-500/10 dark:text-emerald-400">
                                 {line.packagingLabel}
                               </span>
                             )}
@@ -954,13 +966,14 @@ export function POS({
                         <button
                           type="button"
                           onClick={() => removeLine(lineKey(line))}
-                          className="shrink-0 rounded p-1.5 text-red-500 hover:bg-red-50"
+                          aria-label={`Retirer ${line.product.name} du panier`}
+                          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-red-500 transition-colors hover:bg-red-50 dark:hover:bg-red-500/10"
                         >
                           <Trash2 className="h-4 w-4" />
                         </button>
                       </div>
 
-                      <div className="flex items-center gap-1">
+                      <div className="flex items-center gap-1.5">
                         {line.vehicleUnitId ? (
                           <span className="text-sm text-zinc-500">1 {line.product.unit}</span>
                         ) : (
@@ -969,7 +982,7 @@ export function POS({
                               <button
                                 type="button"
                                 onClick={() => updateLine(lineKey(line), { quantity: Math.max(1, line.quantity - 1) })}
-                                className="rounded-lg border border-zinc-200 p-2 text-zinc-500 hover:bg-zinc-100"
+                                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-zinc-200 text-zinc-600 transition-colors hover:border-zinc-300 hover:bg-zinc-100 active:scale-95 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
                               >
                                 <Minus className="h-4 w-4" />
                               </button>
@@ -985,11 +998,11 @@ export function POS({
                                     quantity: Math.min(lineMaxQty(line), Math.max(1, Number(e.target.value) || 1)),
                                   })
                                 }
-                                className="h-9 w-16 rounded-lg border border-zinc-200 text-center text-sm"
+                                className="h-10 w-16 rounded-lg border border-zinc-200 text-center text-sm tabular-nums dark:border-slate-700 dark:bg-slate-900"
                               />
                             )}
                             {quantityInputMode === "buttons" && (
-                              <span className="w-8 text-center text-sm text-zinc-700">{line.quantity}</span>
+                              <span className="w-8 text-center text-sm tabular-nums text-zinc-700">{line.quantity}</span>
                             )}
                             {quantityInputMode !== "input" && (
                               <button
@@ -999,14 +1012,14 @@ export function POS({
                                     quantity: Math.min(lineMaxQty(line), line.quantity + 1),
                                   })
                                 }
-                                className="rounded-lg border border-zinc-200 p-2 text-zinc-500 hover:bg-zinc-100"
+                                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-zinc-200 text-zinc-600 transition-colors hover:border-zinc-300 hover:bg-zinc-100 active:scale-95 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
                               >
                                 <Plus className="h-4 w-4" />
                               </button>
                             )}
                           </>
                         )}
-                        <span className="ml-auto text-right font-semibold text-zinc-900">
+                        <span className="ml-auto text-right font-semibold tabular-nums text-zinc-900">
                           {formatMoney(line.unitPrice * line.quantity - line.discount, currency)}
                         </span>
                       </div>
@@ -1020,7 +1033,7 @@ export function POS({
                             inputMode="decimal"
                             value={line.unitPrice}
                             onChange={(e) => updateLine(lineKey(line), { unitPrice: Number(e.target.value) || 0 })}
-                            className="h-9 w-full rounded-lg border border-zinc-200 px-2 text-right text-sm"
+                            className="h-10 w-full rounded-lg border border-zinc-200 px-2 text-right text-sm tabular-nums dark:border-slate-700 dark:bg-slate-900"
                           />
                         </label>
                         <label className="block">
@@ -1031,7 +1044,7 @@ export function POS({
                             inputMode="decimal"
                             value={line.discount}
                             onChange={(e) => updateLine(lineKey(line), { discount: Number(e.target.value) || 0 })}
-                            className="h-9 w-full rounded-lg border border-zinc-200 px-2 text-right text-sm"
+                            className="h-10 w-full rounded-lg border border-zinc-200 px-2 text-right text-sm tabular-nums dark:border-slate-700 dark:bg-slate-900"
                           />
                         </label>
                       </div>
@@ -1044,11 +1057,11 @@ export function POS({
         </Card>
       </div>
 
-      <div className="space-y-4">
+      <div className="space-y-4 lg:sticky lg:top-4 lg:self-start">
         {(!hideCustomerInPos || isCreditOnly) && (
           <Card>
             <CardHeader>
-              <h2 className="font-semibold text-zinc-900">Client</h2>
+              <h2 className="font-semibold tracking-tight text-zinc-900">Client</h2>
             </CardHeader>
             <CardBody className="flex gap-2">
               <Select value={customerId} onChange={(e) => setCustomerId(e.target.value)} className="flex-1">
@@ -1059,7 +1072,7 @@ export function POS({
                   </option>
                 ))}
               </Select>
-              <Button type="button" variant="outline" onClick={() => setNewClientOpen(true)}>
+              <Button type="button" variant="outline" onClick={() => setNewClientOpen(true)} aria-label="Ajouter un client">
                 <UserPlus className="h-4 w-4" />
               </Button>
             </CardBody>
@@ -1068,7 +1081,7 @@ export function POS({
 
         <Card>
           <CardHeader>
-            <h2 className="font-semibold text-zinc-900">{queueOnlyMode ? "Panier" : "Paiement"}</h2>
+            <h2 className="font-semibold tracking-tight text-zinc-900">{queueOnlyMode ? "Panier" : "Paiement"}</h2>
           </CardHeader>
           <CardBody className="space-y-3">
             <Field label="Remise globale" htmlFor="discount">
@@ -1154,30 +1167,34 @@ export function POS({
               </>
             )}
 
-            <div className="space-y-1 border-t border-zinc-100 pt-3 text-sm">
+            <div className="space-y-1.5 border-t border-zinc-100 pt-3 text-sm dark:border-slate-800">
               <div className="flex justify-between text-zinc-600">
                 <span>Sous-total</span>
-                <span>{formatMoney(subtotal, currency)}</span>
+                <span className="tabular-nums">{formatMoney(subtotal, currency)}</span>
               </div>
-              <div className="flex justify-between font-semibold text-zinc-900">
-                <span>Total</span>
-                <span>{formatMoney(total, currency)}</span>
+              <div className="flex items-baseline justify-between border-t border-dashed border-zinc-200 pt-2 dark:border-slate-700">
+                <span className="font-semibold text-zinc-900">Total</span>
+                <span className="text-xl font-bold tabular-nums text-zinc-900">{formatMoney(total, currency)}</span>
               </div>
               {!queueOnlyMode && change > 0 && (
-                <div className="flex justify-between text-emerald-600">
+                <div className="flex justify-between font-medium text-emerald-600">
                   <span>Monnaie à rendre</span>
-                  <span>{formatMoney(change, currency)}</span>
+                  <span className="tabular-nums">{formatMoney(change, currency)}</span>
                 </div>
               )}
               {!queueOnlyMode && remaining > 0 && (
-                <div className="flex justify-between text-red-600">
+                <div className="flex justify-between font-medium text-red-600">
                   <span>Reste à payer (crédit)</span>
-                  <span>{formatMoney(remaining, currency)}</span>
+                  <span className="tabular-nums">{formatMoney(remaining, currency)}</span>
                 </div>
               )}
             </div>
 
-            {error && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
+            {error && (
+              <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700 dark:bg-red-500/10 dark:text-red-400">
+                {error}
+              </p>
+            )}
 
             {queueOnlyMode ? (
               <Button className="w-full" size="lg" disabled={sendingToQueue} onClick={handleSendToQueue}>

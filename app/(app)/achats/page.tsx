@@ -8,6 +8,7 @@ import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { EmptyState } from "@/components/ui/Empty";
 import { ButtonLink } from "@/components/ui/Button";
+import { Table, TableHead, TableBody, TableRow, TableHeaderCell, TableCell } from "@/components/ui/Table";
 
 type PurchaseRow = {
   id: string;
@@ -59,40 +60,44 @@ export default async function PurchasesPage() {
         />
       ) : (
         <Card className="overflow-x-auto">
-          <table className="w-full min-w-[700px] text-sm">
-            <thead className="bg-zinc-50 text-left text-zinc-500">
-              <tr>
-                <th className="px-4 py-3 font-medium">N°</th>
-                <th className="px-4 py-3 font-medium">Date</th>
-                <th className="px-4 py-3 font-medium">Boutique</th>
-                <th className="px-4 py-3 font-medium">Fournisseur</th>
-                <th className="px-4 py-3 font-medium">Statut</th>
-                <th className="px-4 py-3 text-right font-medium">Total</th>
-                <th className="px-4 py-3 text-right font-medium">Payé</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-zinc-100">
+          <Table className="min-w-[700px]">
+            <TableHead>
+              <TableRow interactive={false}>
+                <TableHeaderCell>N°</TableHeaderCell>
+                <TableHeaderCell>Date</TableHeaderCell>
+                <TableHeaderCell>Boutique</TableHeaderCell>
+                <TableHeaderCell>Fournisseur</TableHeaderCell>
+                <TableHeaderCell>Statut</TableHeaderCell>
+                <TableHeaderCell align="right">Total</TableHeaderCell>
+                <TableHeaderCell align="right">Payé</TableHeaderCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
               {purchases.map((p) => (
-                <tr key={p.id} className="hover:bg-zinc-50">
-                  <td className="px-4 py-3">
+                <TableRow key={p.id}>
+                  <TableCell>
                     <Link href={`/achats/${p.id}`} className="font-mono text-xs text-emerald-600 hover:underline">
                       {p.number}
                     </Link>
-                  </td>
-                  <td className="px-4 py-3 text-zinc-600">{formatDateTime(new Date(p.createdAt))}</td>
-                  <td className="px-4 py-3 text-zinc-600">{p.location.name}</td>
-                  <td className="px-4 py-3 text-zinc-600">{p.supplier.name}</td>
-                  <td className="px-4 py-3">
+                  </TableCell>
+                  <TableCell className="text-zinc-600 dark:text-slate-400">{formatDateTime(new Date(p.createdAt))}</TableCell>
+                  <TableCell className="text-zinc-600 dark:text-slate-400">{p.location.name}</TableCell>
+                  <TableCell className="text-zinc-600 dark:text-slate-400">{p.supplier.name}</TableCell>
+                  <TableCell>
                     <Badge tone={p.status === "RECUE" ? "emerald" : p.status === "PARTIELLE" ? "amber" : "zinc"}>
                       {p.status}
                     </Badge>
-                  </td>
-                  <td className="px-4 py-3 text-right font-medium text-zinc-900">{formatMoney(p.total, currency)}</td>
-                  <td className="px-4 py-3 text-right text-zinc-600">{formatMoney(p.amountPaid, currency)}</td>
-                </tr>
+                  </TableCell>
+                  <TableCell align="right" className="font-medium text-zinc-900 tabular-nums dark:text-slate-100">
+                    {formatMoney(p.total, currency)}
+                  </TableCell>
+                  <TableCell align="right" className="text-zinc-600 tabular-nums dark:text-slate-400">
+                    {formatMoney(p.amountPaid, currency)}
+                  </TableCell>
+                </TableRow>
               ))}
-            </tbody>
-          </table>
+            </TableBody>
+          </Table>
         </Card>
       )}
     </div>

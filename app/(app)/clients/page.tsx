@@ -7,6 +7,7 @@ import { getActivityConfig, resolveTerm } from "@/lib/activity-config";
 import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { EmptyState } from "@/components/ui/Empty";
+import { Table, TableHead, TableBody, TableRow, TableHeaderCell, TableCell } from "@/components/ui/Table";
 import { ClientManager } from "./ClientManager";
 
 type CustomerRow = {
@@ -50,44 +51,46 @@ export default async function CustomersPage() {
         <EmptyState title="Aucun client" description="Ajoutez votre premier client." />
       ) : (
         <Card className="overflow-x-auto">
-          <table className="w-full min-w-[600px] text-sm">
-            <thead className="bg-zinc-50 text-left text-zinc-500">
-              <tr>
-                <th className="px-4 py-3 font-medium">Nom</th>
-                <th className="px-4 py-3 font-medium">Téléphone</th>
-                {canSeeSales && <th className="px-4 py-3 text-right font-medium">Total acheté</th>}
-                <th className="px-4 py-3 text-right font-medium">Crédit</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-zinc-100">
+          <Table className="min-w-[600px]">
+            <TableHead>
+              <TableRow interactive={false}>
+                <TableHeaderCell>Nom</TableHeaderCell>
+                <TableHeaderCell>Téléphone</TableHeaderCell>
+                {canSeeSales && <TableHeaderCell align="right">Total acheté</TableHeaderCell>}
+                <TableHeaderCell align="right">Crédit</TableHeaderCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
               {customers.map((c) => {
                 const totalBought = c.sales.reduce((s, sale) => s + sale.total, 0);
                 const credit = c.sales
                   .filter((s) => s.status !== "ANNULEE")
                   .reduce((s, sale) => s + (sale.total - sale.amountPaid), 0);
                 return (
-                  <tr key={c.id} className="hover:bg-zinc-50">
-                    <td className="px-4 py-3">
-                      <Link href={`/clients/${c.id}`} className="font-medium text-zinc-900 hover:text-emerald-600">
+                  <TableRow key={c.id}>
+                    <TableCell>
+                      <Link href={`/clients/${c.id}`} className="font-medium text-zinc-900 hover:text-emerald-600 dark:text-slate-100">
                         {c.name}
                       </Link>
-                    </td>
-                    <td className="px-4 py-3 text-zinc-600">{c.phone ?? "—"}</td>
+                    </TableCell>
+                    <TableCell className="text-zinc-600 dark:text-slate-400">{c.phone ?? "—"}</TableCell>
                     {canSeeSales && (
-                      <td className="px-4 py-3 text-right text-zinc-900">{formatMoney(totalBought, currency)}</td>
+                      <TableCell align="right" className="text-zinc-900 tabular-nums dark:text-slate-100">
+                        {formatMoney(totalBought, currency)}
+                      </TableCell>
                     )}
-                    <td className="px-4 py-3 text-right">
+                    <TableCell align="right" className="tabular-nums">
                       {credit > 0 ? (
                         <Badge tone="red">{formatMoney(credit, currency)}</Badge>
                       ) : (
                         <span className="text-zinc-400">—</span>
                       )}
-                    </td>
-                  </tr>
+                    </TableCell>
+                  </TableRow>
                 );
               })}
-            </tbody>
-          </table>
+            </TableBody>
+          </Table>
         </Card>
       )}
     </div>

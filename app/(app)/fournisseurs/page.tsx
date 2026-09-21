@@ -5,6 +5,7 @@ import { supabase } from "@/lib/supabase";
 import { getActivityConfig, resolveTerm } from "@/lib/activity-config";
 import { Card } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/Empty";
+import { Table, TableHead, TableBody, TableRow, TableHeaderCell, TableCell } from "@/components/ui/Table";
 import { SupplierManager } from "./SupplierManager";
 
 export default async function SuppliersPage() {
@@ -32,30 +33,30 @@ export default async function SuppliersPage() {
         <EmptyState title="Aucun fournisseur" description="Ajoutez votre premier fournisseur." />
       ) : (
         <Card className="overflow-x-auto">
-          <table className="w-full min-w-[600px] text-sm">
-            <thead className="bg-zinc-50 text-left text-zinc-500">
-              <tr>
-                <th className="px-4 py-3 font-medium">Nom</th>
-                <th className="px-4 py-3 font-medium">Entreprise</th>
-                <th className="px-4 py-3 font-medium">Téléphone</th>
-                <th className="px-4 py-3 font-medium">Adresse</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-zinc-100">
+          <Table className="min-w-[600px]">
+            <TableHead>
+              <TableRow interactive={false}>
+                <TableHeaderCell>Nom</TableHeaderCell>
+                <TableHeaderCell>Entreprise</TableHeaderCell>
+                <TableHeaderCell>Téléphone</TableHeaderCell>
+                <TableHeaderCell>Adresse</TableHeaderCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
               {(suppliers ?? []).map((s) => (
-                <tr key={s.id as string} className="hover:bg-zinc-50">
-                  <td className="px-4 py-3">
-                    <Link href={`/fournisseurs/${s.id}`} className="font-medium text-zinc-900 hover:text-emerald-600">
+                <TableRow key={s.id as string}>
+                  <TableCell>
+                    <Link href={`/fournisseurs/${s.id}`} className="font-medium text-zinc-900 hover:text-emerald-600 dark:text-slate-100">
                       {s.name as string}
                     </Link>
-                  </td>
-                  <td className="px-4 py-3 text-zinc-600">{(s.company as string | null) ?? "—"}</td>
-                  <td className="px-4 py-3 text-zinc-600">{(s.phone as string | null) ?? "—"}</td>
-                  <td className="px-4 py-3 text-zinc-600">{(s.address as string | null) ?? "—"}</td>
-                </tr>
+                  </TableCell>
+                  <TableCell className="text-zinc-600 dark:text-slate-400">{(s.company as string | null) ?? "—"}</TableCell>
+                  <TableCell className="text-zinc-600 dark:text-slate-400">{(s.phone as string | null) ?? "—"}</TableCell>
+                  <TableCell className="text-zinc-600 dark:text-slate-400">{(s.address as string | null) ?? "—"}</TableCell>
+                </TableRow>
               ))}
-            </tbody>
-          </table>
+            </TableBody>
+          </Table>
         </Card>
       )}
     </div>

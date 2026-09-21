@@ -42,15 +42,15 @@ export function ProductGrid({
       {products.map((product) => (
         <div
           key={product.id}
-          className="group relative flex flex-col rounded-xl border border-zinc-200 bg-white text-left transition hover:border-emerald-300 hover:shadow-md dark:border-slate-700 dark:bg-slate-900"
+          className="group relative flex flex-col rounded-2xl border border-zinc-200/80 bg-white text-left shadow-sm shadow-zinc-900/[0.02] transition-all hover:-translate-y-0.5 hover:border-zindo-green-300 hover:shadow-md dark:border-slate-800 dark:bg-slate-900"
         >
           <button
             type="button"
             onClick={() => onSelect(product)}
             aria-label={`Ajouter ${product.name} au panier`}
-            className="absolute inset-0 z-0 rounded-xl active:scale-[0.98]"
+            className="absolute inset-0 z-0 rounded-2xl active:scale-[0.98]"
           />
-          <div className="pointer-events-none relative aspect-square w-full overflow-hidden rounded-t-xl bg-zinc-50">
+          <div className="pointer-events-none relative aspect-square w-full overflow-hidden rounded-t-2xl bg-zinc-50 dark:bg-slate-800">
             {product.photoUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img

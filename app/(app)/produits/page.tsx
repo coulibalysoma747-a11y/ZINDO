@@ -163,7 +163,7 @@ export default async function ProductsPage({
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-xl font-bold text-zinc-900">{productsLabel}</h1>
+          <h1 className="text-xl font-bold tracking-tight text-zinc-900">{productsLabel}</h1>
           <p className="text-sm text-zinc-500">
             {totalCount ?? 0} produit(s){totalPages > 1 ? ` · page ${currentPage}/${totalPages}` : ""} · Stock affiché
             pour {currentLocation?.name ?? "—"}
@@ -211,20 +211,20 @@ export default async function ProductsPage({
               chaque produit — remplacée par une liste de cartes (voir plus bas). */}
           <Card className="hidden overflow-x-auto sm:block">
             <table className="w-full min-w-[720px] text-sm">
-              <thead className="bg-zinc-50 text-left text-zinc-500">
+              <thead className="border-b border-zinc-100 bg-zinc-50/60 text-left text-zinc-500 dark:border-slate-800 dark:bg-slate-800/40">
                 <tr>
-                  <th className="px-4 py-3 font-medium">Produit</th>
-                  <th className="px-4 py-3 font-medium">Référence</th>
-                  <th className="px-4 py-3 font-medium">Catégorie</th>
-                  <th className="px-4 py-3 text-right font-medium">Prix de vente</th>
-                  <th className="px-4 py-3 text-right font-medium">Stock ({currentLocation?.name ?? "—"})</th>
-                  <th className="px-4 py-3 font-medium">Statut</th>
+                  <th className="px-4 py-3 text-[11px] font-semibold uppercase tracking-wide">Produit</th>
+                  <th className="px-4 py-3 text-[11px] font-semibold uppercase tracking-wide">Référence</th>
+                  <th className="px-4 py-3 text-[11px] font-semibold uppercase tracking-wide">Catégorie</th>
+                  <th className="px-4 py-3 text-right text-[11px] font-semibold uppercase tracking-wide">Prix de vente</th>
+                  <th className="px-4 py-3 text-right text-[11px] font-semibold uppercase tracking-wide">Stock ({currentLocation?.name ?? "—"})</th>
+                  <th className="px-4 py-3 text-[11px] font-semibold uppercase tracking-wide">Statut</th>
                   <th className="px-4 py-3" />
                 </tr>
               </thead>
-              <tbody className="divide-y divide-zinc-100">
+              <tbody className="divide-y divide-zinc-100 dark:divide-slate-800">
                 {filtered.map((p) => (
-                  <tr key={p.id as string} className="hover:bg-zinc-50">
+                  <tr key={p.id as string} className="transition-colors hover:bg-zinc-50 dark:hover:bg-slate-800/40">
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-3">
                         <ProductThumbnail photoUrl={p.photoUrl as string | null} name={p.name as string} size={40} />

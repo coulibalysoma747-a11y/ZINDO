@@ -7,6 +7,7 @@ import { getUpcomingInstallmentsAction } from "@/lib/actions/installments";
 import { Card, CardBody, CardHeader } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { EmptyState } from "@/components/ui/Empty";
+import { Table, TableHead, TableBody, TableRow, TableHeaderCell, TableCell } from "@/components/ui/Table";
 
 type SaleRow = {
   createdAt: string;
@@ -75,32 +76,32 @@ export default async function CreditsPage() {
         <EmptyState title="Aucun crédit en cours" description="Tous les clients sont à jour." />
       ) : (
         <Card className="overflow-x-auto">
-          <table className="w-full min-w-[600px] text-sm">
-            <thead className="bg-zinc-50 text-left text-zinc-500">
-              <tr>
-                <th className="px-4 py-3 font-medium">Client</th>
-                <th className="px-4 py-3 font-medium">Téléphone</th>
-                <th className="px-4 py-3 font-medium">Crédit depuis</th>
-                <th className="px-4 py-3 text-right font-medium">Montant dû</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-zinc-100">
+          <Table className="min-w-[600px]">
+            <TableHead>
+              <TableRow interactive={false}>
+                <TableHeaderCell>Client</TableHeaderCell>
+                <TableHeaderCell>Téléphone</TableHeaderCell>
+                <TableHeaderCell>Crédit depuis</TableHeaderCell>
+                <TableHeaderCell align="right">Montant dû</TableHeaderCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
               {rows.map((r) => (
-                <tr key={r.customerId} className="hover:bg-zinc-50">
-                  <td className="px-4 py-3">
-                    <Link href={`/clients/${r.customerId}`} className="font-medium text-zinc-900 hover:text-emerald-600">
+                <TableRow key={r.customerId}>
+                  <TableCell>
+                    <Link href={`/clients/${r.customerId}`} className="font-medium text-zinc-900 hover:text-emerald-600 dark:text-slate-100">
                       {r.name}
                     </Link>
-                  </td>
-                  <td className="px-4 py-3 text-zinc-600">{r.phone ?? "—"}</td>
-                  <td className="px-4 py-3 text-zinc-600">{formatDate(r.oldest)}</td>
-                  <td className="px-4 py-3 text-right">
+                  </TableCell>
+                  <TableCell className="text-zinc-600 dark:text-slate-400">{r.phone ?? "—"}</TableCell>
+                  <TableCell className="text-zinc-600 dark:text-slate-400">{formatDate(r.oldest)}</TableCell>
+                  <TableCell align="right">
                     <Badge tone="red">{formatMoney(r.total, currency)}</Badge>
-                  </td>
-                </tr>
+                  </TableCell>
+                </TableRow>
               ))}
-            </tbody>
-          </table>
+            </TableBody>
+          </Table>
         </Card>
       )}
 
@@ -110,39 +111,39 @@ export default async function CreditsPage() {
             <h2 className="font-semibold text-zinc-900">Échéances à venir</h2>
           </CardHeader>
           <CardBody className="overflow-x-auto p-0">
-            <table className="w-full min-w-[600px] text-sm">
-              <thead className="bg-zinc-50 text-left text-zinc-500">
-                <tr>
-                  <th className="px-4 py-3 font-medium">Client</th>
-                  <th className="px-4 py-3 font-medium">Vente</th>
-                  <th className="px-4 py-3 font-medium">Échéance</th>
-                  <th className="px-4 py-3 text-right font-medium">Montant restant</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-zinc-100">
+            <Table className="min-w-[600px]">
+              <TableHead>
+                <TableRow interactive={false}>
+                  <TableHeaderCell>Client</TableHeaderCell>
+                  <TableHeaderCell>Vente</TableHeaderCell>
+                  <TableHeaderCell>Échéance</TableHeaderCell>
+                  <TableHeaderCell align="right">Montant restant</TableHeaderCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
                 {upcomingInstallments.map((i) => {
                   const isLate = new Date(i.dueDate) < new Date();
                   return (
-                    <tr key={i.id} className="hover:bg-zinc-50">
-                      <td className="px-4 py-3">
-                        <Link href={`/clients/${i.customerId}`} className="font-medium text-zinc-900 hover:text-emerald-600">
+                    <TableRow key={i.id}>
+                      <TableCell>
+                        <Link href={`/clients/${i.customerId}`} className="font-medium text-zinc-900 hover:text-emerald-600 dark:text-slate-100">
                           {i.customerName}
                         </Link>
-                      </td>
-                      <td className="px-4 py-3">
+                      </TableCell>
+                      <TableCell>
                         <Link href={`/ventes/${i.saleId}`} className="font-mono text-xs text-emerald-600 hover:underline">
                           {i.saleNumber}
                         </Link>
-                      </td>
-                      <td className="px-4 py-3 text-zinc-600">{formatDate(new Date(i.dueDate))}</td>
-                      <td className="px-4 py-3 text-right">
+                      </TableCell>
+                      <TableCell className="text-zinc-600 dark:text-slate-400">{formatDate(new Date(i.dueDate))}</TableCell>
+                      <TableCell align="right">
                         <Badge tone={isLate ? "red" : "amber"}>{formatMoney(i.amount - i.paidAmount, currency)}</Badge>
-                      </td>
-                    </tr>
+                      </TableCell>
+                    </TableRow>
                   );
                 })}
-              </tbody>
-            </table>
+              </TableBody>
+            </Table>
           </CardBody>
         </Card>
       )}

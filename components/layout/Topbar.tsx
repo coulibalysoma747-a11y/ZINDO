@@ -31,7 +31,7 @@ export function Topbar({
   const [pending, startTransition] = useTransition();
 
   return (
-    <header className="relative flex h-16 items-center justify-between border-b border-zinc-200 bg-white px-4 dark:border-slate-700 dark:bg-slate-900 md:px-6">
+    <header className="relative flex h-16 items-center justify-between border-b border-zinc-200 bg-white/95 px-4 shadow-sm shadow-zinc-900/[0.02] backdrop-blur-sm dark:border-slate-800 dark:bg-slate-900/95 md:px-6">
       <div className="zindo-flag-stripe absolute inset-x-0 top-0 h-1" />
       <button
         className="rounded-lg p-2 text-zinc-500 hover:bg-zinc-100 md:hidden"
@@ -51,9 +51,9 @@ export function Topbar({
         <div className="relative">
         <button
           onClick={() => setMenuOpen((v) => !v)}
-          className="flex items-center gap-2 rounded-lg px-2 py-1.5 hover:bg-zinc-50"
+          className="flex items-center gap-2 rounded-lg px-2 py-1.5 transition-colors hover:bg-zinc-100 dark:hover:bg-slate-800"
         >
-          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-zindo-green-100 text-sm font-semibold text-zindo-green-700">
+          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-zindo-green-100 text-sm font-semibold text-zindo-green-700 ring-1 ring-zindo-green-600/10 dark:bg-zindo-green-500/15 dark:text-zindo-green-400">
             {userName.slice(0, 1).toUpperCase()}
           </div>
           <div className="hidden text-left sm:block">
@@ -62,7 +62,7 @@ export function Topbar({
           </div>
         </button>
         {menuOpen && (
-          <div className="absolute right-0 z-20 mt-2 w-48 rounded-lg border border-zinc-200 bg-white py-1 shadow-lg dark:border-slate-700 dark:bg-slate-900">
+          <div className="animate-zindo-fade-in absolute right-0 z-20 mt-2 w-48 rounded-xl border border-zinc-200 bg-white py-1 shadow-lg shadow-zinc-900/10 ring-1 ring-zinc-900/5 dark:border-slate-700 dark:bg-slate-900">
             <Link
               href="/profil"
               className="flex items-center gap-2 px-3 py-2 text-sm text-zinc-700 hover:bg-zinc-50 dark:hover:bg-slate-800"

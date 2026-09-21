@@ -3,6 +3,7 @@ import { PERMISSIONS, ROLE_LABELS } from "@/lib/permissions";
 import { supabase } from "@/lib/supabase";
 import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
+import { Table, TableHead, TableBody, TableRow, TableHeaderCell, TableCell } from "@/components/ui/Table";
 import { UserManager } from "./UserManager";
 import { UserRowActions } from "./UserRowActions";
 
@@ -36,22 +37,22 @@ export default async function UsersPage() {
       </div>
 
       <Card className="overflow-x-auto">
-        <table className="w-full min-w-[600px] text-sm">
-          <thead className="bg-zinc-50 text-left text-zinc-500">
-            <tr>
-              <th className="px-4 py-3 font-medium">Nom</th>
-              <th className="px-4 py-3 font-medium">Téléphone</th>
-              <th className="px-4 py-3 font-medium">Rôle</th>
-              <th className="px-4 py-3 font-medium">Statut</th>
-              <th className="px-4 py-3" />
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-zinc-100">
+        <Table className="min-w-[600px]">
+          <TableHead>
+            <TableRow interactive={false}>
+              <TableHeaderCell>Nom</TableHeaderCell>
+              <TableHeaderCell>Téléphone</TableHeaderCell>
+              <TableHeaderCell>Rôle</TableHeaderCell>
+              <TableHeaderCell>Statut</TableHeaderCell>
+              <TableHeaderCell />
+            </TableRow>
+          </TableHead>
+          <TableBody>
             {users.map((u) => (
               <UserRow key={u.id} user={u} isSelf={u.id === admin.id} />
             ))}
-          </tbody>
-        </table>
+          </TableBody>
+        </Table>
       </Card>
     </div>
   );
@@ -65,20 +66,20 @@ function UserRow({
   isSelf: boolean;
 }) {
   return (
-    <tr className="hover:bg-zinc-50">
-      <td className="px-4 py-3 font-medium text-zinc-900">
+    <TableRow>
+      <TableCell className="font-medium text-zinc-900 dark:text-slate-100">
         {user.firstName} {user.lastName} {isSelf && <span className="text-xs text-zinc-400">(vous)</span>}
-      </td>
-      <td className="px-4 py-3 text-zinc-600">{user.phone}</td>
-      <td className="px-4 py-3">
+      </TableCell>
+      <TableCell className="text-zinc-600 dark:text-slate-400">{user.phone}</TableCell>
+      <TableCell>
         <Badge tone="blue">{ROLE_LABELS[user.role]}</Badge>
-      </td>
-      <td className="px-4 py-3">
+      </TableCell>
+      <TableCell>
         <Badge tone={user.active ? "emerald" : "zinc"}>{user.active ? "Actif" : "Désactivé"}</Badge>
-      </td>
-      <td className="px-4 py-3 text-right">
+      </TableCell>
+      <TableCell align="right">
         {!isSelf && <UserRowActions userId={user.id} userName={`${user.firstName} ${user.lastName}`} active={user.active} />}
-      </td>
-    </tr>
+      </TableCell>
+    </TableRow>
   );
 }

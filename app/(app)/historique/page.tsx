@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/Badge";
 import { EmptyState } from "@/components/ui/Empty";
 import { HistoryFilters } from "@/components/history/HistoryFilters";
 import { TypeFilter } from "@/components/history/TypeFilter";
+import { Table, TableHead, TableBody, TableRow, TableHeaderCell, TableCell } from "@/components/ui/Table";
 
 type Row = {
   date: Date;
@@ -222,34 +223,34 @@ export default async function GlobalHistoryPage({
         <EmptyState title="Aucune opération sur cette période" />
       ) : (
         <Card className="overflow-x-auto">
-          <table className="w-full min-w-[700px] text-sm">
-            <thead className="bg-zinc-50 text-left text-zinc-500">
-              <tr>
-                <th className="px-4 py-3 font-medium">Date</th>
-                <th className="px-4 py-3 font-medium">Boutique</th>
-                <th className="px-4 py-3 font-medium">Type</th>
-                <th className="px-4 py-3 font-medium">Détail</th>
-                <th className="px-4 py-3 text-right font-medium">Montant / Qté</th>
-                <th className="px-4 py-3 font-medium">Utilisateur</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-zinc-100">
+          <Table className="min-w-[700px]">
+            <TableHead>
+              <TableRow interactive={false}>
+                <TableHeaderCell>Date</TableHeaderCell>
+                <TableHeaderCell>Boutique</TableHeaderCell>
+                <TableHeaderCell>Type</TableHeaderCell>
+                <TableHeaderCell>Détail</TableHeaderCell>
+                <TableHeaderCell align="right">Montant / Qté</TableHeaderCell>
+                <TableHeaderCell>Utilisateur</TableHeaderCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
               {rows.map((r, i) => (
-                <tr key={i} className="hover:bg-zinc-50">
-                  <td className="px-4 py-3 text-zinc-600">{formatDateTime(r.date)}</td>
-                  <td className="px-4 py-3 text-zinc-600">{r.location}</td>
-                  <td className="px-4 py-3">
+                <TableRow key={i}>
+                  <TableCell className="text-zinc-600 dark:text-slate-400">{formatDateTime(r.date)}</TableCell>
+                  <TableCell className="text-zinc-600 dark:text-slate-400">{r.location}</TableCell>
+                  <TableCell>
                     <Badge tone={r.tone}>{r.type}</Badge>
-                  </td>
-                  <td className="px-4 py-3 text-zinc-900">{r.description}</td>
-                  <td className="px-4 py-3 text-right font-medium text-zinc-900">
+                  </TableCell>
+                  <TableCell className="text-zinc-900 dark:text-slate-100">{r.description}</TableCell>
+                  <TableCell align="right" className="font-medium text-zinc-900 tabular-nums dark:text-slate-100">
                     {r.type === "Entrée" || r.type === "Sortie" ? r.amount : formatMoney(r.amount, currency)}
-                  </td>
-                  <td className="px-4 py-3 text-zinc-600">{r.user}</td>
-                </tr>
+                  </TableCell>
+                  <TableCell className="text-zinc-600 dark:text-slate-400">{r.user}</TableCell>
+                </TableRow>
               ))}
-            </tbody>
-          </table>
+            </TableBody>
+          </Table>
         </Card>
       )}
     </div>

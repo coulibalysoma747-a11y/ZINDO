@@ -68,7 +68,7 @@ export default async function StockPage({
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-xl font-bold text-zinc-900">Mouvements de stock</h1>
+          <h1 className="text-xl font-bold tracking-tight text-zinc-900">Mouvements de stock</h1>
           <p className="text-sm text-zinc-500">{movements.length} mouvement(s)</p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -94,20 +94,20 @@ export default async function StockPage({
         <>
           <Card className="hidden overflow-x-auto sm:block">
             <table className="w-full min-w-[700px] text-sm">
-              <thead className="bg-zinc-50 text-left text-zinc-500">
+              <thead className="border-b border-zinc-100 bg-zinc-50/60 text-left text-zinc-500 dark:border-slate-800 dark:bg-slate-800/40">
                 <tr>
-                  <th className="px-4 py-3 font-medium">Date</th>
-                  <th className="px-4 py-3 font-medium">Boutique</th>
-                  <th className="px-4 py-3 font-medium">Produit</th>
-                  <th className="px-4 py-3 font-medium">Motif</th>
-                  <th className="px-4 py-3 text-right font-medium">Quantité</th>
-                  <th className="px-4 py-3 text-right font-medium">Stock avant → après</th>
-                  <th className="px-4 py-3 font-medium">Utilisateur</th>
+                  <th className="px-4 py-3 text-[11px] font-semibold uppercase tracking-wide">Date</th>
+                  <th className="px-4 py-3 text-[11px] font-semibold uppercase tracking-wide">Boutique</th>
+                  <th className="px-4 py-3 text-[11px] font-semibold uppercase tracking-wide">Produit</th>
+                  <th className="px-4 py-3 text-[11px] font-semibold uppercase tracking-wide">Motif</th>
+                  <th className="px-4 py-3 text-right text-[11px] font-semibold uppercase tracking-wide">Quantité</th>
+                  <th className="px-4 py-3 text-right text-[11px] font-semibold uppercase tracking-wide">Stock avant → après</th>
+                  <th className="px-4 py-3 text-[11px] font-semibold uppercase tracking-wide">Utilisateur</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-zinc-100">
+              <tbody className="divide-y divide-zinc-100 dark:divide-slate-800">
                 {movements.map((m) => (
-                  <tr key={m.id} className="hover:bg-zinc-50">
+                  <tr key={m.id} className="transition-colors hover:bg-zinc-50 dark:hover:bg-slate-800/40">
                     <td className="px-4 py-3 text-zinc-600">{formatDateTime(new Date(m.createdAt))}</td>
                     <td className="px-4 py-3 text-zinc-600">{m.location.name}</td>
                     <td className="px-4 py-3">

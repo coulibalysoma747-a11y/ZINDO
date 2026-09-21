@@ -142,6 +142,14 @@ body {
   font-family: Arial, Helvetica, sans-serif;
 }
 
+/* Petite touche de finition "pro" appliquée globalement : sélection de texte
+   et défilement dans la teinte de marque plutôt que le bleu par défaut du
+   navigateur — cohérent avec le reste de la refonte visuelle. */
+::selection {
+  background: var(--color-zindo-green-200);
+  color: var(--color-zindo-green-800);
+}
+
 /* Liseré tricolore de marque (rouge/or/vert, drapeau du Burkina Faso et
    logo ZINDO) — utilisé comme fine bande d'accent en tête de la Sidebar, de
    la Topbar et de la barre mobile basse (voir components/layout/*). */

@@ -9,6 +9,7 @@ import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { EmptyState } from "@/components/ui/Empty";
 import { HistoryFilters } from "@/components/history/HistoryFilters";
+import { Table, TableHead, TableBody, TableRow, TableHeaderCell, TableCell } from "@/components/ui/Table";
 import { UnclaimedToggle } from "./UnclaimedToggle";
 
 const STATUS_TONE = {
@@ -78,43 +79,45 @@ export default async function SalesHistoryPage({
       ) : (
         <>
           <Card className="hidden overflow-x-auto sm:block">
-            <table className="w-full min-w-[700px] text-sm">
-              <thead className="bg-zinc-50 text-left text-zinc-500">
-                <tr>
-                  <th className="px-4 py-3 font-medium">N°</th>
-                  <th className="px-4 py-3 font-medium">Date</th>
-                  <th className="px-4 py-3 font-medium">Boutique</th>
-                  <th className="px-4 py-3 font-medium">Client</th>
-                  <th className="px-4 py-3 font-medium">Vendeur</th>
-                  <th className="px-4 py-3 font-medium">Statut</th>
-                  <th className="px-4 py-3 text-right font-medium">Total</th>
-                  <th className="px-4 py-3" />
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-zinc-100">
+            <Table className="min-w-[700px]">
+              <TableHead>
+                <TableRow interactive={false}>
+                  <TableHeaderCell>N°</TableHeaderCell>
+                  <TableHeaderCell>Date</TableHeaderCell>
+                  <TableHeaderCell>Boutique</TableHeaderCell>
+                  <TableHeaderCell>Client</TableHeaderCell>
+                  <TableHeaderCell>Vendeur</TableHeaderCell>
+                  <TableHeaderCell>Statut</TableHeaderCell>
+                  <TableHeaderCell align="right">Total</TableHeaderCell>
+                  <TableHeaderCell />
+                </TableRow>
+              </TableHead>
+              <TableBody>
                 {sales.map((s) => {
                   const isUnclaimed = !!s.unclaimedAt && !s.claimedAt;
                   return (
-                    <tr key={s.id} className="hover:bg-zinc-50">
-                      <td className="px-4 py-3">
+                    <TableRow key={s.id}>
+                      <TableCell>
                         <Link href={`/ventes/${s.id}`} className="font-mono text-xs text-emerald-600 hover:underline">
                           {s.number}
                         </Link>
-                      </td>
-                      <td className="px-4 py-3 text-zinc-600">{formatDateTime(new Date(s.createdAt))}</td>
-                      <td className="px-4 py-3 text-zinc-600">{s.location.name}</td>
-                      <td className="px-4 py-3 text-zinc-600">{s.customer?.name ?? "Client de passage"}</td>
-                      <td className="px-4 py-3 text-zinc-600">
+                      </TableCell>
+                      <TableCell className="text-zinc-600 dark:text-slate-400">{formatDateTime(new Date(s.createdAt))}</TableCell>
+                      <TableCell className="text-zinc-600 dark:text-slate-400">{s.location.name}</TableCell>
+                      <TableCell className="text-zinc-600 dark:text-slate-400">{s.customer?.name ?? "Client de passage"}</TableCell>
+                      <TableCell className="text-zinc-600 dark:text-slate-400">
                         {s.user.firstName} {s.user.lastName}
-                      </td>
-                      <td className="px-4 py-3">
+                      </TableCell>
+                      <TableCell>
                         <div className="flex items-center gap-1.5">
                           <Badge tone={STATUS_TONE[s.status]}>{s.status}</Badge>
                           {isUnclaimed && <Badge tone="amber">À retirer</Badge>}
                         </div>
-                      </td>
-                      <td className="px-4 py-3 text-right font-medium text-zinc-900">{formatMoney(s.total, currency)}</td>
-                      <td className="px-4 py-3 text-right">
+                      </TableCell>
+                      <TableCell align="right" className="font-medium text-zinc-900 tabular-nums dark:text-slate-100">
+                        {formatMoney(s.total, currency)}
+                      </TableCell>
+                      <TableCell align="right">
                         <div className="flex items-center justify-end gap-1.5">
                           {businessSettings.trackUnclaimedGoods && s.status !== "ANNULEE" && (
                             <UnclaimedToggle saleId={s.id} unclaimed={isUnclaimed} />
@@ -127,12 +130,12 @@ export default async function SalesHistoryPage({
                             <Printer className="h-3.5 w-3.5" /> Réimprimer
                           </Link>
                         </div>
-                      </td>
-                    </tr>
+                      </TableCell>
+                    </TableRow>
                   );
                 })}
-              </tbody>
-            </table>
+              </TableBody>
+            </Table>
           </Card>
 
           <div className="space-y-2 sm:hidden">
