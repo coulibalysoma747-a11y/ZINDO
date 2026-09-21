@@ -7,6 +7,7 @@ const PUBLIC_PATHS = [
   "/",
   "/login",
   "/inscription",
+  "/inscription-google",
   "/mot-de-passe-oublie",
   "/verifier",
   "/compte-suspendu",

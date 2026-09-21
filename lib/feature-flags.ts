@@ -32,6 +32,21 @@ export async function isFeatureEnabled(key: string, businessId: string): Promise
 }
 
 /**
+ * Variante pour les fonctionnalités qui n'ont pas encore de businessId (ex. :
+ * une étape avant la création du commerce) — ne regarde que l'activation
+ * globale, les dérogations par commerce n'ayant pas de sens à ce stade.
+ */
+export async function isFeatureEnabledGlobally(key: string): Promise<boolean> {
+  const { data: flag } = await supabase
+    .from("feature_flags")
+    .select("enabledGlobally:enabled_globally")
+    .eq("key", key)
+    .maybeSingle();
+  if (!flag) return true;
+  return Boolean(flag.enabledGlobally);
+}
+
+/**
  * À appeler (une fois, par ex. au moment d'introduire la fonctionnalité dans
  * le code) pour créer la fiche du flag s'il n'existe pas déjà — sans jamais
  * écraser un flag existant (et donc sans jamais réactiver par erreur quelque

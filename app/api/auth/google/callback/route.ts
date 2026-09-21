@@ -1,7 +1,8 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { supabase } from "@/lib/supabase";
-import { createSession } from "@/lib/session";
+import { createSession, createPendingGoogleSignupSession } from "@/lib/session";
 import { exchangeGoogleCode, fetchGoogleUserInfo } from "@/lib/google-auth";
+import { ensureGoogleSignupFlagRegistered, isGoogleSignupEnabled } from "@/lib/actions/google-signup";
 
 const STATE_COOKIE = "google_oauth_state";
 
@@ -40,7 +41,18 @@ export async function GET(request: NextRequest) {
       return redirectWithClearedState(request, "/login?error=google-echec");
     }
     if (!user) {
-      return redirectWithClearedState(request, "/login?error=google-aucun-compte");
+      await ensureGoogleSignupFlagRegistered();
+      if (!(await isGoogleSignupEnabled())) {
+        return redirectWithClearedState(request, "/login?error=google-aucun-compte");
+      }
+      const response = NextResponse.redirect(new URL("/inscription-google", request.url));
+      response.cookies.delete(STATE_COOKIE);
+      await createPendingGoogleSignupSession({
+        email: profile.email,
+        firstName: profile.given_name || profile.name?.split(" ")[0] || "",
+        lastName: profile.family_name || profile.name?.split(" ").slice(1).join(" ") || "",
+      });
+      return response;
     }
     if (!user.active) {
       return redirectWithClearedState(request, "/login?error=google-compte-desactive");

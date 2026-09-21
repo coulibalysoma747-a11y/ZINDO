@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Check, Gift, Calendar, CreditCard, ShieldCheck, Lock, Headphones, RefreshCw, ArrowRight } from "lucide-react";
 import { ZindoLogo } from "@/components/auth/ZindoLogo";
+import { GoogleIcon } from "@/components/icons/GoogleIcon";
 
 const PLANS = [
   {
@@ -22,9 +23,9 @@ const PLANS = [
     badgeClass: "bg-zindo-gold-500/15 text-zindo-gold-400",
     icon: Calendar,
     title: "Annuel",
-    price: "100 000",
+    price: "75 000",
     priceSuffix: "FCFA / an",
-    features: ["Tout le plan mensuel", "Économisez 20 000 FCFA", "Facturation unique"],
+    features: ["Tout le plan mensuel", "Économisez 15 000 FCFA", "Facturation unique"],
     cta: "Choisir le plan annuel",
     ctaClass: "bg-zindo-gold-500 text-zindo-ink-900 hover:bg-zindo-gold-400",
     highlighted: true,
@@ -35,7 +36,7 @@ const PLANS = [
     badgeClass: "bg-white/10 text-slate-300",
     icon: CreditCard,
     title: "Mensuel",
-    price: "10 000",
+    price: "7 500",
     priceSuffix: "FCFA / mois",
     features: ["Toutes les fonctionnalités", "Multi-boutiques & utilisateurs", "Support prioritaire", "Mises à jour incluses"],
     cta: "Choisir le plan mensuel",
@@ -132,6 +133,15 @@ export default function TarifsPage() {
               >
                 {plan.cta} <ArrowRight className="h-4 w-4" />
               </Link>
+              {plan.key === "trial" && (
+                <a
+                  href="/api/auth/google"
+                  className="mt-2.5 flex items-center justify-center gap-2 rounded-xl border border-white/15 bg-white/5 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-white/10"
+                >
+                  <GoogleIcon className="h-4 w-4" />
+                  Continuer avec Google
+                </a>
+              )}
             </div>
           ))}
         </div>

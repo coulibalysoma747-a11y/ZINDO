@@ -45,3 +45,31 @@ export async function sendPasswordResetEmail(to: string, resetUrl: string) {
 
   if (error) throw new Error(`Envoi de l'e-mail échoué : ${error.message}`);
 }
+
+export async function sendVerificationCodeEmail(to: string, code: string, firstName: string) {
+  const resend = getClient();
+  const from = process.env.EMAIL_FROM || DEFAULT_FROM;
+
+  const { error } = await resend.emails.send({
+    from,
+    to,
+    subject: `${code} — Confirmez votre compte ZINDO`,
+    html: `
+      <div style="font-family:Arial,Helvetica,sans-serif;max-width:480px;margin:0 auto;padding:24px;color:#18181b">
+        <h2 style="color:#176d30;margin-bottom:4px">ZINDO</h2>
+        <p>Bonjour ${firstName},</p>
+        <p>Voici votre code de confirmation pour finaliser la création de votre compte :</p>
+        <p style="font-size:32px;font-weight:bold;letter-spacing:8px;text-align:center;
+                  background:#f4f4f5;border-radius:12px;padding:16px;margin:16px 0;color:#176d30">
+          ${code}
+        </p>
+        <p style="font-size:13px;color:#71717a">
+          Ce code expire dans 10 minutes. Si vous n'êtes pas à l'origine de cette demande,
+          ignorez simplement cet e-mail.
+        </p>
+      </div>
+    `,
+  });
+
+  if (error) throw new Error(`Envoi de l'e-mail échoué : ${error.message}`);
+}

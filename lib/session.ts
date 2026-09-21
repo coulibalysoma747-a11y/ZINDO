@@ -104,3 +104,57 @@ export async function destroyPending2FASession() {
   const cookieStore = await cookies();
   cookieStore.delete(PENDING_2FA_COOKIE);
 }
+
+// Session intermédiaire pour l'inscription via Google : entre "identité
+// Google vérifiée, aucun compte trouvé" et "compte créé". Traverse deux
+// écrans (profil, puis code reçu par e-mail) — le payload s'enrichit d'une
+// étape à l'autre. Cookie distinct : si l'inscription n'est jamais terminée,
+// elle expire seule sans jamais créer de compte.
+const PENDING_GOOGLE_SIGNUP_COOKIE = "zindo_google_signup_pending";
+const PENDING_GOOGLE_SIGNUP_DURATION_SECONDS = 60 * 15;
+
+export type PendingGoogleSignupPayload = {
+  email: string;
+  firstName: string;
+  lastName: string;
+  phone?: string;
+  businessName?: string;
+  city?: string;
+  code?: string;
+  codeExpiresAt?: number;
+  attempts?: number;
+};
+
+export async function createPendingGoogleSignupSession(payload: PendingGoogleSignupPayload) {
+  const token = await new SignJWT(payload)
+    .setProtectedHeader({ alg: "HS256" })
+    .setIssuedAt()
+    .setExpirationTime(`${PENDING_GOOGLE_SIGNUP_DURATION_SECONDS}s`)
+    .sign(getSecret());
+
+  const cookieStore = await cookies();
+  cookieStore.set(PENDING_GOOGLE_SIGNUP_COOKIE, token, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    path: "/",
+    maxAge: PENDING_GOOGLE_SIGNUP_DURATION_SECONDS,
+  });
+}
+
+export async function getPendingGoogleSignupSession(): Promise<PendingGoogleSignupPayload | null> {
+  const cookieStore = await cookies();
+  const token = cookieStore.get(PENDING_GOOGLE_SIGNUP_COOKIE)?.value;
+  if (!token) return null;
+  try {
+    const { payload } = await jwtVerify(token, getSecret());
+    return payload as unknown as PendingGoogleSignupPayload;
+  } catch {
+    return null;
+  }
+}
+
+export async function destroyPendingGoogleSignupSession() {
+  const cookieStore = await cookies();
+  cookieStore.delete(PENDING_GOOGLE_SIGNUP_COOKIE);
+}

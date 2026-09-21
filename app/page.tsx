@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
+import { GoogleIcon } from "@/components/icons/GoogleIcon";
 import {
   Boxes,
   TrendingUp,
@@ -113,7 +114,7 @@ const FAQS = [
   {
     question: "Combien coûte ZINDO ?",
     answer:
-      "ZINDO propose 7 jours d'essai gratuit, sans engagement. Ensuite, l'abonnement coûte 10 000 FCFA par mois, ou 100 000 FCFA par an (soit 20 000 FCFA d'économie par rapport au paiement mensuel).",
+      "ZINDO propose 7 jours d'essai gratuit, sans engagement. Ensuite, l'abonnement coûte 7 500 FCFA par mois, ou 75 000 FCFA par an (soit 15 000 FCFA d'économie par rapport au paiement mensuel).",
   },
   {
     question: "Est-ce que je peux utiliser ZINDO sans connexion Internet ?",
@@ -269,6 +270,15 @@ export default async function RootPage() {
             >
               J&apos;ai déjà un compte
             </Link>
+          </div>
+          <div className="mt-3 flex justify-center">
+            <a
+              href="/api/auth/google"
+              className="flex w-full items-center justify-center gap-2.5 rounded-2xl border border-zinc-200 bg-white px-6 py-3 text-sm font-medium text-zindo-ink-700 transition hover:border-zinc-300 hover:bg-zinc-50 sm:w-auto"
+            >
+              <GoogleIcon className="h-[18px] w-[18px]" />
+              Continuer avec Google
+            </a>
           </div>
         </section>
 

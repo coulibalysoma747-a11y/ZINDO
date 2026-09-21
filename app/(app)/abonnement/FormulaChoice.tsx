@@ -5,23 +5,23 @@ import { useRouter } from "next/navigation";
 import { Check } from "lucide-react";
 import { createSubscriptionInvoiceAction } from "@/lib/actions/subscription";
 
-export const MONTHLY_PRICE = 10_000;
-export const ANNUAL_PRICE = 100_000;
+export const MONTHLY_PRICE = 7_500;
+export const ANNUAL_PRICE = 75_000;
 
 const OPTIONS = [
   {
     cycle: "MONTHLY" as const,
-    title: "Standard (mensuel)",
+    title: "Pro (mensuel)",
     period: "par mois",
     price: MONTHLY_PRICE,
     feature: "Toutes les fonctionnalités incluses",
   },
   {
     cycle: "ANNUAL" as const,
-    title: "Standard (annuel)",
+    title: "Pro (annuel)",
     period: `par an · soit ${Math.round(ANNUAL_PRICE / 12).toLocaleString("fr-FR")} FCFA/mois`,
     price: ANNUAL_PRICE,
-    feature: "Économisez 20 000 FCFA",
+    feature: `Économisez ${(MONTHLY_PRICE * 12 - ANNUAL_PRICE).toLocaleString("fr-FR")} FCFA`,
   },
 ];
 

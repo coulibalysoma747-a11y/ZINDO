@@ -6,7 +6,7 @@ import { supabase } from "@/lib/supabase";
 import { requireUserForBilling } from "@/lib/auth";
 import { logAction } from "@/lib/audit";
 import { generateSubscriptionInvoiceNumber } from "@/lib/reference";
-import { STANDARD_PLAN_KEY } from "@/lib/subscription";
+import { ACTIVE_PLAN_KEY } from "@/lib/subscription";
 
 export type ActionState = { error?: string; success?: string } | undefined;
 
@@ -14,7 +14,7 @@ const cycleSchema = z.object({ billingCycle: z.enum(["MONTHLY", "ANNUAL"]) });
 
 export type CreateInvoiceResult = { success: true; invoiceId: string } | { success: false; error: string };
 
-/** Crée une facture d'abonnement "standard" en attente de paiement manuel. */
+/** Crée une facture d'abonnement "pro" en attente de paiement manuel. */
 export async function createSubscriptionInvoiceAction(billingCycle: "MONTHLY" | "ANNUAL"): Promise<CreateInvoiceResult> {
   const user = await requireUserForBilling();
   const parsed = cycleSchema.safeParse({ billingCycle });
@@ -23,7 +23,7 @@ export async function createSubscriptionInvoiceAction(billingCycle: "MONTHLY" | 
   const { data: plan } = await supabase
     .from("subscription_plans")
     .select("id, key, label, monthlyPrice:monthly_price, annualPrice:annual_price")
-    .eq("key", STANDARD_PLAN_KEY)
+    .eq("key", ACTIVE_PLAN_KEY)
     .maybeSingle();
   if (!plan) return { success: false, error: "Palier d'abonnement introuvable — contactez le support" };
 

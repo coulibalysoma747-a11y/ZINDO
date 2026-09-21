@@ -6,7 +6,7 @@ import type { SubscriptionStatus, BillingCycle } from "@/lib/db-types";
 export { FEATURE_CATALOG } from "@/lib/subscription-features";
 
 const TRIAL_DURATION_DAYS = 7;
-export const STANDARD_PLAN_KEY = "standard";
+export const ACTIVE_PLAN_KEY = "pro";
 
 export type BusinessLimits = {
   planKey: string | null;
@@ -55,8 +55,8 @@ export async function checkLimit(
 }
 
 // ---------------------------------------------------------------------------
-// Essai gratuit de 7 jours puis abonnement payant obligatoire (10 000
-// FCFA/mois ou 100 000 FCFA/an, sans palier gratuit) — indépendant des
+// Essai gratuit de 7 jours puis abonnement payant obligatoire (7 500
+// FCFA/mois ou 75 000 FCFA/an, sans palier gratuit) — indépendant des
 // limites par fonctionnalité ci-dessus (désactivées) : ici on ne contrôle que
 // l'ACCÈS à l'application, pas le nombre de produits/utilisateurs/boutiques.
 // ---------------------------------------------------------------------------
@@ -107,7 +107,7 @@ async function ensureSubscriptionRow(businessId: string): Promise<SubscriptionRo
   const { data: plan } = await supabase
     .from("subscription_plans")
     .select("id, key, label")
-    .eq("key", STANDARD_PLAN_KEY)
+    .eq("key", ACTIVE_PLAN_KEY)
     .maybeSingle();
   if (!plan) return null; // Palier pas encore configuré en base : pas de blocage tant que ce n'est pas prêt.
 
