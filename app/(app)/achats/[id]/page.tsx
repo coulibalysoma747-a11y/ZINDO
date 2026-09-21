@@ -7,6 +7,7 @@ import { supabase } from "@/lib/supabase";
 import { formatMoney, formatDateTime } from "@/lib/format";
 import { Card, CardBody, CardHeader } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
+import { Table, TableHead, TableBody, TableRow, TableHeaderCell, TableCell } from "@/components/ui/Table";
 
 type PurchaseRow = {
   id: string;
@@ -68,26 +69,30 @@ export default async function PurchaseDetailPage({
         </CardHeader>
         <CardBody className="p-0">
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[420px] text-sm">
-              <thead className="bg-zinc-50 text-left text-zinc-500">
+            <Table className="min-w-[420px]">
+              <TableHead>
                 <tr>
-                  <th className="px-4 py-2 font-medium">Produit</th>
-                  <th className="px-4 py-2 text-right font-medium">Quantité</th>
-                  <th className="px-4 py-2 text-right font-medium">Prix d&apos;achat</th>
-                  <th className="px-4 py-2 text-right font-medium">Total</th>
+                  <TableHeaderCell>Produit</TableHeaderCell>
+                  <TableHeaderCell align="right">Quantité</TableHeaderCell>
+                  <TableHeaderCell align="right">Prix d&apos;achat</TableHeaderCell>
+                  <TableHeaderCell align="right">Total</TableHeaderCell>
                 </tr>
-              </thead>
-              <tbody className="divide-y divide-zinc-100">
+              </TableHead>
+              <TableBody>
                 {purchase.items.map((item) => (
-                  <tr key={item.id}>
-                    <td className="px-4 py-2 font-medium text-zinc-900">{item.product.name}</td>
-                    <td className="px-4 py-2 text-right text-zinc-700">{item.quantity}</td>
-                    <td className="px-4 py-2 text-right text-zinc-700">{formatMoney(item.unitPrice, currency)}</td>
-                    <td className="px-4 py-2 text-right font-medium text-zinc-900">{formatMoney(item.total, currency)}</td>
-                  </tr>
+                  <TableRow key={item.id}>
+                    <TableCell className="font-medium text-zinc-900 dark:text-slate-100">{item.product.name}</TableCell>
+                    <TableCell align="right" className="tabular-nums text-zinc-700 dark:text-slate-300">{item.quantity}</TableCell>
+                    <TableCell align="right" className="tabular-nums text-zinc-700 dark:text-slate-300">
+                      {formatMoney(item.unitPrice, currency)}
+                    </TableCell>
+                    <TableCell align="right" className="font-medium tabular-nums text-zinc-900 dark:text-slate-100">
+                      {formatMoney(item.total, currency)}
+                    </TableCell>
+                  </TableRow>
                 ))}
-              </tbody>
-            </table>
+              </TableBody>
+            </Table>
           </div>
         </CardBody>
       </Card>

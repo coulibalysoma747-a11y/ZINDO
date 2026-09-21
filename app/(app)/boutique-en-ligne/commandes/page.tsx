@@ -7,6 +7,7 @@ import { formatMoney, formatDateTime } from "@/lib/format";
 import { Card, CardBody } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { EmptyState } from "@/components/ui/Empty";
+import { Table, TableBody, TableRow, TableCell } from "@/components/ui/Table";
 import { OnlineStoreTabs } from "../OnlineStoreTabs";
 import { OrderStatusControls } from "./OrderStatusControls";
 
@@ -152,21 +153,21 @@ export default async function OnlineOrdersPage({
                 </div>
 
                 <div className="overflow-x-auto">
-                  <table className="w-full min-w-[320px] text-sm">
-                    <tbody className="divide-y divide-zinc-100">
+                  <Table className="min-w-[320px]">
+                    <TableBody>
                       {order.items.map((item) => (
-                        <tr key={item.id}>
-                          <td className="py-1 text-zinc-700">{item.product.name}</td>
-                          <td className="py-1 text-right text-zinc-500">
+                        <TableRow key={item.id} interactive={false}>
+                          <TableCell className="px-0 py-1 text-zinc-700 dark:text-slate-300">{item.product.name}</TableCell>
+                          <TableCell align="right" className="px-0 py-1 tabular-nums text-zinc-500 dark:text-slate-400">
                             {item.quantity} × {formatMoney(item.unitPrice, currency)}
-                          </td>
-                          <td className="py-1 text-right font-medium text-zinc-900">
+                          </TableCell>
+                          <TableCell align="right" className="px-0 py-1 font-medium tabular-nums text-zinc-900 dark:text-slate-100">
                             {formatMoney(item.total, currency)}
-                          </td>
-                        </tr>
+                          </TableCell>
+                        </TableRow>
                       ))}
-                    </tbody>
-                  </table>
+                    </TableBody>
+                  </Table>
                 </div>
 
                 <div className="flex justify-end gap-4 border-t border-zinc-100 pt-2 text-sm">

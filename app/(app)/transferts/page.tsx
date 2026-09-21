@@ -7,6 +7,7 @@ import { formatDateTime } from "@/lib/format";
 import { Card } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/Empty";
 import { ButtonLink } from "@/components/ui/Button";
+import { Table, TableHead, TableBody, TableRow, TableHeaderCell, TableCell } from "@/components/ui/Table";
 
 type TransferRow = {
   id: string;
@@ -64,39 +65,39 @@ export default async function TransfersPage() {
         />
       ) : (
         <Card className="overflow-x-auto">
-          <table className="w-full min-w-[700px] text-sm">
-            <thead className="bg-zinc-50 text-left text-zinc-500">
-              <tr>
-                <th className="px-4 py-3 font-medium">N°</th>
-                <th className="px-4 py-3 font-medium">Date</th>
-                <th className="px-4 py-3 font-medium">Trajet</th>
-                <th className="px-4 py-3 font-medium">Produits</th>
-                <th className="px-4 py-3 font-medium">Par</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-zinc-100">
+          <Table className="min-w-[700px]">
+            <TableHead>
+              <TableRow interactive={false}>
+                <TableHeaderCell>N°</TableHeaderCell>
+                <TableHeaderCell>Date</TableHeaderCell>
+                <TableHeaderCell>Trajet</TableHeaderCell>
+                <TableHeaderCell>Produits</TableHeaderCell>
+                <TableHeaderCell>Par</TableHeaderCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
               {transfers.map((t) => (
-                <tr key={t.id} className="hover:bg-zinc-50">
-                  <td className="px-4 py-3">
+                <TableRow key={t.id}>
+                  <TableCell>
                     <Link href={`/transferts/${t.id}`} className="font-mono text-xs text-emerald-600 hover:underline">
                       {t.number}
                     </Link>
-                  </td>
-                  <td className="px-4 py-3 text-zinc-600">{formatDateTime(new Date(t.createdAt))}</td>
-                  <td className="px-4 py-3">
-                    <span className="inline-flex items-center gap-1.5 text-zinc-700">
+                  </TableCell>
+                  <TableCell className="text-zinc-600 dark:text-slate-400">{formatDateTime(new Date(t.createdAt))}</TableCell>
+                  <TableCell>
+                    <span className="inline-flex items-center gap-1.5 text-zinc-700 dark:text-slate-300">
                       {locationNames.get(t.fromLocationId) ?? "—"} <ArrowRight className="h-3.5 w-3.5 text-zinc-400" />{" "}
                       {locationNames.get(t.toLocationId) ?? "—"}
                     </span>
-                  </td>
-                  <td className="px-4 py-3 text-zinc-600">{t.items.length} référence(s)</td>
-                  <td className="px-4 py-3 text-zinc-600">
+                  </TableCell>
+                  <TableCell className="text-zinc-600 dark:text-slate-400">{t.items.length} référence(s)</TableCell>
+                  <TableCell className="text-zinc-600 dark:text-slate-400">
                     {t.user.firstName} {t.user.lastName}
-                  </td>
-                </tr>
+                  </TableCell>
+                </TableRow>
               ))}
-            </tbody>
-          </table>
+            </TableBody>
+          </Table>
         </Card>
       )}
     </div>

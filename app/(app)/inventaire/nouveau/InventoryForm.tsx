@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Card, CardBody } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Input, Field, Select } from "@/components/ui/Input";
+import { Table, TableHead, TableBody, TableRow, TableHeaderCell, TableCell } from "@/components/ui/Table";
 import { createInventoryAction } from "@/lib/actions/inventory";
 
 type Product = {
@@ -93,29 +94,29 @@ export function InventoryForm({
       </div>
 
       <Card className="overflow-x-auto">
-        <table className="w-full min-w-[600px] text-sm">
-          <thead className="bg-zinc-50 text-left text-zinc-500">
-            <tr>
-              <th className="px-4 py-2 font-medium">Produit</th>
-              <th className="px-4 py-2 text-right font-medium">Stock théorique</th>
-              <th className="px-4 py-2 text-right font-medium">Stock réel</th>
-              <th className="px-4 py-2 text-right font-medium">Écart</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-zinc-100">
+        <Table className="min-w-[600px]">
+          <TableHead>
+            <TableRow interactive={false}>
+              <TableHeaderCell>Produit</TableHeaderCell>
+              <TableHeaderCell align="right">Stock théorique</TableHeaderCell>
+              <TableHeaderCell align="right">Stock réel</TableHeaderCell>
+              <TableHeaderCell align="right">Écart</TableHeaderCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
             {filtered.map((p) => {
               const real = realQty[p.id];
               const diff = real === undefined ? null : real - p.theoreticalQty;
               return (
-                <tr key={p.id}>
-                  <td className="px-4 py-2">
-                    <p className="font-medium text-zinc-900">{p.name}</p>
+                <TableRow key={p.id} interactive={false}>
+                  <TableCell>
+                    <p className="font-medium text-zinc-900 dark:text-slate-100">{p.name}</p>
                     <p className="text-xs text-zinc-400">{p.reference}</p>
-                  </td>
-                  <td className="px-4 py-2 text-right text-zinc-700">
+                  </TableCell>
+                  <TableCell align="right" className="tabular-nums text-zinc-700 dark:text-slate-300">
                     {p.theoreticalQty} {p.unit}
-                  </td>
-                  <td className="px-4 py-2 text-right">
+                  </TableCell>
+                  <TableCell align="right">
                     <input
                       type="number"
                       min={0}
@@ -127,21 +128,22 @@ export function InventoryForm({
                           [p.id]: e.target.value === "" ? (undefined as unknown as number) : Number(e.target.value),
                         }))
                       }
-                      className="h-8 w-24 rounded border border-zinc-200 text-right text-sm"
+                      className="h-8 w-24 rounded border border-zinc-200 text-right text-sm dark:border-slate-700 dark:bg-slate-900"
                     />
-                  </td>
-                  <td
-                    className={`px-4 py-2 text-right font-medium ${
+                  </TableCell>
+                  <TableCell
+                    align="right"
+                    className={`font-medium tabular-nums ${
                       diff === null ? "text-zinc-300" : diff === 0 ? "text-zinc-500" : diff > 0 ? "text-emerald-600" : "text-red-600"
                     }`}
                   >
                     {diff === null ? "—" : diff > 0 ? `+${diff}` : diff}
-                  </td>
-                </tr>
+                  </TableCell>
+                </TableRow>
               );
             })}
-          </tbody>
-        </table>
+          </TableBody>
+        </Table>
       </Card>
 
       <Card>

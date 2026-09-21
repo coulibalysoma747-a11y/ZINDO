@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/Badge";
 import { EmptyState } from "@/components/ui/Empty";
 import { ButtonLink } from "@/components/ui/Button";
 import { HistoryFilters } from "@/components/history/HistoryFilters";
+import { Table, TableHead, TableBody, TableRow, TableHeaderCell, TableCell } from "@/components/ui/Table";
 
 const REASON_LABELS: Record<string, string> = {
   ACHAT: "Achat",
@@ -93,47 +94,47 @@ export default async function StockPage({
       ) : (
         <>
           <Card className="hidden overflow-x-auto sm:block">
-            <table className="w-full min-w-[700px] text-sm">
-              <thead className="border-b border-zinc-100 bg-zinc-50/60 text-left text-zinc-500 dark:border-slate-800 dark:bg-slate-800/40">
-                <tr>
-                  <th className="px-4 py-3 text-[11px] font-semibold uppercase tracking-wide">Date</th>
-                  <th className="px-4 py-3 text-[11px] font-semibold uppercase tracking-wide">Boutique</th>
-                  <th className="px-4 py-3 text-[11px] font-semibold uppercase tracking-wide">Produit</th>
-                  <th className="px-4 py-3 text-[11px] font-semibold uppercase tracking-wide">Motif</th>
-                  <th className="px-4 py-3 text-right text-[11px] font-semibold uppercase tracking-wide">Quantité</th>
-                  <th className="px-4 py-3 text-right text-[11px] font-semibold uppercase tracking-wide">Stock avant → après</th>
-                  <th className="px-4 py-3 text-[11px] font-semibold uppercase tracking-wide">Utilisateur</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-zinc-100 dark:divide-slate-800">
+            <Table className="min-w-[700px]">
+              <TableHead>
+                <TableRow interactive={false}>
+                  <TableHeaderCell>Date</TableHeaderCell>
+                  <TableHeaderCell>Boutique</TableHeaderCell>
+                  <TableHeaderCell>Produit</TableHeaderCell>
+                  <TableHeaderCell>Motif</TableHeaderCell>
+                  <TableHeaderCell align="right">Quantité</TableHeaderCell>
+                  <TableHeaderCell align="right">Stock avant → après</TableHeaderCell>
+                  <TableHeaderCell>Utilisateur</TableHeaderCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
                 {movements.map((m) => (
-                  <tr key={m.id} className="transition-colors hover:bg-zinc-50 dark:hover:bg-slate-800/40">
-                    <td className="px-4 py-3 text-zinc-600">{formatDateTime(new Date(m.createdAt))}</td>
-                    <td className="px-4 py-3 text-zinc-600">{m.location.name}</td>
-                    <td className="px-4 py-3">
-                      <Link href={`/produits/${m.productId}`} className="font-medium text-zinc-900 hover:text-emerald-600">
+                  <TableRow key={m.id}>
+                    <TableCell className="text-zinc-600 dark:text-slate-400">{formatDateTime(new Date(m.createdAt))}</TableCell>
+                    <TableCell className="text-zinc-600 dark:text-slate-400">{m.location.name}</TableCell>
+                    <TableCell>
+                      <Link href={`/produits/${m.productId}`} className="font-medium text-zinc-900 hover:text-emerald-600 dark:text-slate-100">
                         {m.product.name}
                       </Link>
-                    </td>
-                    <td className="px-4 py-3">
+                    </TableCell>
+                    <TableCell>
                       <Badge tone={m.direction === "IN" ? "emerald" : "red"}>
                         {REASON_LABELS[m.reason] ?? m.reason}
                       </Badge>
-                    </td>
-                    <td className="px-4 py-3 text-right text-zinc-700">
+                    </TableCell>
+                    <TableCell align="right" className="tabular-nums text-zinc-700 dark:text-slate-300">
                       {m.direction === "IN" ? "+" : "-"}
                       {m.quantity}
-                    </td>
-                    <td className="px-4 py-3 text-right text-zinc-500">
+                    </TableCell>
+                    <TableCell align="right" className="tabular-nums text-zinc-500 dark:text-slate-400">
                       {m.oldStock} → {m.newStock}
-                    </td>
-                    <td className="px-4 py-3 text-zinc-600">
+                    </TableCell>
+                    <TableCell className="text-zinc-600 dark:text-slate-400">
                       {m.user.firstName} {m.user.lastName}
-                    </td>
-                  </tr>
+                    </TableCell>
+                  </TableRow>
                 ))}
-              </tbody>
-            </table>
+              </TableBody>
+            </Table>
           </Card>
 
           <div className="space-y-2 sm:hidden">

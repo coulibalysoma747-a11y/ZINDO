@@ -6,6 +6,7 @@ import { PERMISSIONS } from "@/lib/permissions";
 import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { EmptyState } from "@/components/ui/Empty";
+import { Table, TableHead, TableBody, TableRow, TableHeaderCell, TableCell } from "@/components/ui/Table";
 
 export default async function CostPricePage() {
   const user = await requirePermission(PERMISSIONS.PRODUCTS_MANAGE);
@@ -28,36 +29,40 @@ export default async function CostPricePage() {
         <EmptyState title="Aucun produit" />
       ) : (
         <Card className="overflow-x-auto p-0">
-          <table className="w-full min-w-[640px] text-sm">
-            <thead className="bg-zinc-50 text-left text-zinc-500">
-              <tr>
-                <th className="px-4 py-3 font-medium">Produit</th>
-                <th className="px-4 py-3 text-right font-medium">Prix d&apos;achat (fiche)</th>
-                <th className="px-4 py-3 text-right font-medium">Coût de revient moyen</th>
-                <th className="px-4 py-3 text-right font-medium">Prix de vente</th>
-                <th className="px-4 py-3 text-right font-medium">Marge réelle</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-zinc-100">
+          <Table className="min-w-[640px]">
+            <TableHead>
+              <TableRow interactive={false}>
+                <TableHeaderCell>Produit</TableHeaderCell>
+                <TableHeaderCell align="right">Prix d&apos;achat (fiche)</TableHeaderCell>
+                <TableHeaderCell align="right">Coût de revient moyen</TableHeaderCell>
+                <TableHeaderCell align="right">Prix de vente</TableHeaderCell>
+                <TableHeaderCell align="right">Marge réelle</TableHeaderCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
               {rows.map((r) => {
                 const diverges =
                   r.averageCost !== null && Math.abs(r.averageCost - r.listedPurchasePrice) > r.listedPurchasePrice * 0.05;
                 return (
-                  <tr key={r.productId}>
-                    <td className="px-4 py-3">
-                      <p className="font-medium text-zinc-900">{r.name}</p>
+                  <TableRow key={r.productId}>
+                    <TableCell>
+                      <p className="font-medium text-zinc-900 dark:text-slate-100">{r.name}</p>
                       <p className="text-xs text-zinc-400">Réf. {r.reference}</p>
-                    </td>
-                    <td className="px-4 py-3 text-right text-zinc-600">{formatMoney(r.listedPurchasePrice, currency)}</td>
-                    <td className="px-4 py-3 text-right">
+                    </TableCell>
+                    <TableCell align="right" className="tabular-nums text-zinc-600 dark:text-slate-400">
+                      {formatMoney(r.listedPurchasePrice, currency)}
+                    </TableCell>
+                    <TableCell align="right">
                       {r.averageCost === null ? (
                         <span className="text-zinc-400">Pas d&apos;achat enregistré</span>
                       ) : (
                         <Badge tone={diverges ? "amber" : "zinc"}>{formatMoney(r.averageCost, currency)}</Badge>
                       )}
-                    </td>
-                    <td className="px-4 py-3 text-right text-zinc-600">{formatMoney(r.salePrice, currency)}</td>
-                    <td className="px-4 py-3 text-right">
+                    </TableCell>
+                    <TableCell align="right" className="tabular-nums text-zinc-600 dark:text-slate-400">
+                      {formatMoney(r.salePrice, currency)}
+                    </TableCell>
+                    <TableCell align="right" className="tabular-nums">
                       {r.marginOnAverage === null ? (
                         "—"
                       ) : (
@@ -65,12 +70,12 @@ export default async function CostPricePage() {
                           {formatMoney(r.marginOnAverage, currency)}
                         </span>
                       )}
-                    </td>
-                  </tr>
+                    </TableCell>
+                  </TableRow>
                 );
               })}
-            </tbody>
-          </table>
+            </TableBody>
+          </Table>
         </Card>
       )}
     </div>

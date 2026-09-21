@@ -7,6 +7,7 @@ import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { EmptyState } from "@/components/ui/Empty";
 import { ButtonLink } from "@/components/ui/Button";
+import { Table, TableHead, TableBody, TableRow, TableHeaderCell, TableCell } from "@/components/ui/Table";
 
 const STATUS_LABELS: Record<string, string> = {
   BROUILLON: "Brouillon",
@@ -62,36 +63,38 @@ export default async function DevisPage() {
       ) : (
         <>
           <Card className="hidden overflow-x-auto sm:block">
-            <table className="w-full min-w-[640px] text-sm">
-              <thead className="bg-zinc-50 text-left text-zinc-500">
-                <tr>
-                  <th className="px-4 py-3 font-medium">N°</th>
-                  <th className="px-4 py-3 font-medium">Date</th>
-                  <th className="px-4 py-3 font-medium">Client</th>
-                  <th className="px-4 py-3 font-medium">Statut</th>
-                  <th className="px-4 py-3 text-right font-medium">Total</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-zinc-100">
+            <Table className="min-w-[640px]">
+              <TableHead>
+                <TableRow interactive={false}>
+                  <TableHeaderCell>N°</TableHeaderCell>
+                  <TableHeaderCell>Date</TableHeaderCell>
+                  <TableHeaderCell>Client</TableHeaderCell>
+                  <TableHeaderCell>Statut</TableHeaderCell>
+                  <TableHeaderCell align="right">Total</TableHeaderCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
                 {quotes.map((q) => (
-                  <tr key={q.id} className="hover:bg-zinc-50">
-                    <td className="px-4 py-3">
+                  <TableRow key={q.id}>
+                    <TableCell>
                       <Link href={`/devis/${q.id}`} className="font-mono text-xs text-emerald-600 hover:underline">
                         {q.number}
                       </Link>
-                    </td>
-                    <td className="px-4 py-3 text-zinc-600">{formatDateTime(new Date(q.createdAt))}</td>
-                    <td className="px-4 py-3 text-zinc-600">{q.customerLabel}</td>
-                    <td className="px-4 py-3">
+                    </TableCell>
+                    <TableCell className="text-zinc-600 dark:text-slate-400">{formatDateTime(new Date(q.createdAt))}</TableCell>
+                    <TableCell className="text-zinc-600 dark:text-slate-400">{q.customerLabel}</TableCell>
+                    <TableCell>
                       <Badge tone={STATUS_TONE[q.status as keyof typeof STATUS_TONE] ?? "zinc"}>
                         {STATUS_LABELS[q.status] ?? q.status}
                       </Badge>
-                    </td>
-                    <td className="px-4 py-3 text-right font-medium text-zinc-900">{formatMoney(q.total, currency)}</td>
-                  </tr>
+                    </TableCell>
+                    <TableCell align="right" className="font-medium tabular-nums text-zinc-900 dark:text-slate-100">
+                      {formatMoney(q.total, currency)}
+                    </TableCell>
+                  </TableRow>
                 ))}
-              </tbody>
-            </table>
+              </TableBody>
+            </Table>
           </Card>
 
           <div className="space-y-2 sm:hidden">

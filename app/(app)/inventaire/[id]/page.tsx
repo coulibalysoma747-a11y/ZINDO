@@ -7,6 +7,7 @@ import { supabase } from "@/lib/supabase";
 import { formatDateTime } from "@/lib/format";
 import { Card, CardBody, CardHeader } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
+import { Table, TableHead, TableBody, TableRow, TableHeaderCell, TableCell } from "@/components/ui/Table";
 import { ValidateInventoryButton } from "./ValidateInventoryButton";
 
 // La validation d'un inventaire peut porter sur des dizaines/centaines de
@@ -72,32 +73,33 @@ export default async function InventoryDetailPage({
         </CardHeader>
         <CardBody className="p-0">
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[420px] text-sm">
-              <thead className="bg-zinc-50 text-left text-zinc-500">
+            <Table className="min-w-[420px]">
+              <TableHead>
                 <tr>
-                  <th className="px-4 py-2 font-medium">Produit</th>
-                  <th className="px-4 py-2 text-right font-medium">Stock théorique</th>
-                  <th className="px-4 py-2 text-right font-medium">Stock réel</th>
-                  <th className="px-4 py-2 text-right font-medium">Écart</th>
+                  <TableHeaderCell>Produit</TableHeaderCell>
+                  <TableHeaderCell align="right">Stock théorique</TableHeaderCell>
+                  <TableHeaderCell align="right">Stock réel</TableHeaderCell>
+                  <TableHeaderCell align="right">Écart</TableHeaderCell>
                 </tr>
-              </thead>
-              <tbody className="divide-y divide-zinc-100">
+              </TableHead>
+              <TableBody>
                 {inventory.items.map((item) => (
-                  <tr key={item.id}>
-                    <td className="px-4 py-2 font-medium text-zinc-900">{item.product.name}</td>
-                    <td className="px-4 py-2 text-right text-zinc-700">{item.theoreticalQty}</td>
-                    <td className="px-4 py-2 text-right text-zinc-700">{item.realQty}</td>
-                    <td
-                      className={`px-4 py-2 text-right font-medium ${
+                  <TableRow key={item.id}>
+                    <TableCell className="font-medium text-zinc-900 dark:text-slate-100">{item.product.name}</TableCell>
+                    <TableCell align="right" className="tabular-nums text-zinc-700 dark:text-slate-300">{item.theoreticalQty}</TableCell>
+                    <TableCell align="right" className="tabular-nums text-zinc-700 dark:text-slate-300">{item.realQty}</TableCell>
+                    <TableCell
+                      align="right"
+                      className={`font-medium tabular-nums ${
                         item.difference === 0 ? "text-zinc-400" : item.difference > 0 ? "text-emerald-600" : "text-red-600"
                       }`}
                     >
                       {item.difference > 0 ? `+${item.difference}` : item.difference}
-                    </td>
-                  </tr>
+                    </TableCell>
+                  </TableRow>
                 ))}
-              </tbody>
-            </table>
+              </TableBody>
+            </Table>
           </div>
         </CardBody>
       </Card>

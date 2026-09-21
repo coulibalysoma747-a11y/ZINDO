@@ -4,6 +4,7 @@ import { useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { DEFAULT_ROLE_PERMISSIONS, PERMISSIONS, PERMISSION_LABELS, ROLE_LABELS } from "@/lib/permissions";
 import { togglePermissionAction } from "@/lib/actions/settings";
+import { Table, TableHead, TableBody, TableRow, TableHeaderCell, TableCell } from "@/components/ui/Table";
 import type { Role } from "@prisma/client";
 
 const ROLES: Role[] = ["ADMIN", "VENDEUR", "GESTIONNAIRE_STOCK"];
@@ -24,23 +25,23 @@ export function PermissionsPanel({
 
   return (
     <div className="overflow-x-auto">
-      <table className="w-full min-w-[600px] text-sm">
-        <thead>
-          <tr className="text-left text-zinc-500">
-            <th className="py-2 font-medium">Permission</th>
+      <Table className="min-w-[600px]">
+        <TableHead>
+          <TableRow interactive={false}>
+            <TableHeaderCell className="normal-case tracking-normal">Permission</TableHeaderCell>
             {ROLES.map((r) => (
-              <th key={r} className="py-2 text-center font-medium">
+              <TableHeaderCell key={r} align="center" className="normal-case tracking-normal">
                 {ROLE_LABELS[r]}
-              </th>
+              </TableHeaderCell>
             ))}
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-zinc-100">
+          </TableRow>
+        </TableHead>
+        <TableBody>
           {Object.values(PERMISSIONS).map((permission) => (
-            <tr key={permission}>
-              <td className="py-2 text-zinc-700">{PERMISSION_LABELS[permission] ?? permission}</td>
+            <TableRow key={permission}>
+              <TableCell className="text-zinc-700 dark:text-slate-300">{PERMISSION_LABELS[permission] ?? permission}</TableCell>
               {ROLES.map((role) => (
-                <td key={role} className="py-2 text-center">
+                <TableCell key={role} align="center">
                   <input
                     type="checkbox"
                     disabled={pending || role === "ADMIN"}
@@ -53,12 +54,12 @@ export function PermissionsPanel({
                     }
                     className="h-4 w-4 rounded accent-zindo-green-500 disabled:opacity-50"
                   />
-                </td>
+                </TableCell>
               ))}
-            </tr>
+            </TableRow>
           ))}
-        </tbody>
-      </table>
+        </TableBody>
+      </Table>
       <p className="mt-3 text-xs text-zinc-400">
         L&apos;administrateur dispose toujours de toutes les permissions.
       </p>

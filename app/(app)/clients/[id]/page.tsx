@@ -8,6 +8,7 @@ import { formatMoney, formatDate } from "@/lib/format";
 import { Card, CardBody, CardHeader } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { EmptyState } from "@/components/ui/Empty";
+import { Table, TableHead, TableBody, TableRow, TableHeaderCell, TableCell } from "@/components/ui/Table";
 import { ClientEditButton } from "./ClientEditButton";
 import { RecordPaymentButton } from "./RecordPaymentButton";
 
@@ -125,46 +126,50 @@ export default async function CustomerDetailPage({
               </div>
             ) : (
               <div className="overflow-x-auto">
-                <table className="w-full min-w-[560px] text-sm">
-                  <thead className="bg-zinc-50 text-left text-zinc-500">
+                <Table className="min-w-[560px]">
+                  <TableHead>
                     <tr>
-                      <th className="px-4 py-2 font-medium">N°</th>
-                      <th className="px-4 py-2 font-medium">Date</th>
-                      <th className="px-4 py-2 font-medium">Statut</th>
-                      <th className="px-4 py-2 text-right font-medium">Total</th>
-                      <th className="px-4 py-2 text-right font-medium">Payé</th>
-                      <th className="px-4 py-2" />
+                      <TableHeaderCell>N°</TableHeaderCell>
+                      <TableHeaderCell>Date</TableHeaderCell>
+                      <TableHeaderCell>Statut</TableHeaderCell>
+                      <TableHeaderCell align="right">Total</TableHeaderCell>
+                      <TableHeaderCell align="right">Payé</TableHeaderCell>
+                      <TableHeaderCell />
                     </tr>
-                  </thead>
-                  <tbody className="divide-y divide-zinc-100">
+                  </TableHead>
+                  <TableBody>
                     {sales.map((s) => (
-                      <tr key={s.id}>
-                        <td className="px-4 py-2">
+                      <TableRow key={s.id}>
+                        <TableCell>
                           <Link href={`/ventes/${s.id}`} className="font-mono text-xs text-emerald-600 hover:underline">
                             {s.number}
                           </Link>
-                        </td>
-                        <td className="px-4 py-2 text-zinc-600">{formatDate(new Date(s.createdAt))}</td>
-                        <td className="px-4 py-2">
+                        </TableCell>
+                        <TableCell className="text-zinc-600 dark:text-slate-400">{formatDate(new Date(s.createdAt))}</TableCell>
+                        <TableCell>
                           <Badge tone={s.status === "PAYEE" ? "emerald" : s.status === "CREDIT" ? "red" : "amber"}>
                             {s.status}
                           </Badge>
-                        </td>
-                        <td className="px-4 py-2 text-right text-zinc-900">{formatMoney(s.total, currency)}</td>
-                        <td className="px-4 py-2 text-right text-zinc-600">{formatMoney(s.amountPaid, currency)}</td>
-                        <td className="px-4 py-2 text-right">
+                        </TableCell>
+                        <TableCell align="right" className="tabular-nums text-zinc-900 dark:text-slate-100">
+                          {formatMoney(s.total, currency)}
+                        </TableCell>
+                        <TableCell align="right" className="tabular-nums text-zinc-600 dark:text-slate-400">
+                          {formatMoney(s.amountPaid, currency)}
+                        </TableCell>
+                        <TableCell align="right">
                           <Link
                             href={`/ventes/${s.id}?print=1`}
                             title="Réimprimer le ticket"
-                            className="inline-flex items-center gap-1 rounded-lg p-1.5 text-zinc-400 hover:bg-emerald-50 hover:text-emerald-700"
+                            className="inline-flex items-center gap-1 rounded-lg p-1.5 text-zinc-400 hover:bg-emerald-50 hover:text-emerald-700 dark:hover:bg-emerald-900/30"
                           >
                             <Printer className="h-4 w-4" />
                           </Link>
-                        </td>
-                      </tr>
+                        </TableCell>
+                      </TableRow>
                     ))}
-                  </tbody>
-                </table>
+                  </TableBody>
+                </Table>
               </div>
             )}
           </CardBody>

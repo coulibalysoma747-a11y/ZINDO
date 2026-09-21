@@ -8,6 +8,7 @@ import { ProductGrid, type PosProduct } from "@/components/products/ProductGrid"
 import { Card, CardBody, CardHeader } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Field, Input, Select } from "@/components/ui/Input";
+import { Table, TableHead, TableBody, TableRow, TableHeaderCell, TableCell } from "@/components/ui/Table";
 import { formatMoney } from "@/lib/format";
 import { updateSaleAction } from "@/lib/actions/sales";
 import type { PaymentMethod } from "@/lib/db-types";
@@ -176,30 +177,30 @@ export function EditSaleForm({
             ) : (
               <>
                 <div className="hidden overflow-x-auto sm:block">
-                  <table className="w-full text-sm">
-                    <thead className="bg-zinc-50 text-left text-zinc-500">
-                      <tr>
-                        <th className="px-4 py-2 font-medium">Produit</th>
-                        <th className="px-4 py-2 font-medium">Qté</th>
-                        <th className="px-4 py-2 text-right font-medium">P.U.</th>
-                        <th className="px-4 py-2 text-right font-medium">Remise</th>
-                        <th className="px-4 py-2 text-right font-medium">Total</th>
-                        <th className="px-4 py-2" />
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-zinc-100">
+                  <Table>
+                    <TableHead>
+                      <TableRow interactive={false}>
+                        <TableHeaderCell>Produit</TableHeaderCell>
+                        <TableHeaderCell>Qté</TableHeaderCell>
+                        <TableHeaderCell align="right">P.U.</TableHeaderCell>
+                        <TableHeaderCell align="right">Remise</TableHeaderCell>
+                        <TableHeaderCell align="right">Total</TableHeaderCell>
+                        <TableHeaderCell />
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
                       {cart.map((line) => (
-                        <tr key={line.product.id}>
-                          <td className="px-4 py-2">
-                            <p className="font-medium text-zinc-900">{line.product.name}</p>
+                        <TableRow key={line.product.id} interactive={false}>
+                          <TableCell>
+                            <p className="font-medium text-zinc-900 dark:text-slate-100">{line.product.name}</p>
                             <p className="text-xs text-zinc-400">{line.product.reference}</p>
-                          </td>
-                          <td className="px-4 py-2">
+                          </TableCell>
+                          <TableCell>
                             <div className="flex items-center gap-1">
                               <button
                                 type="button"
                                 onClick={() => updateLine(line.product.id, { quantity: Math.max(1, line.quantity - 1) })}
-                                className="rounded p-1 text-zinc-500 hover:bg-zinc-100"
+                                className="rounded p-1 text-zinc-500 hover:bg-zinc-100 dark:hover:bg-slate-800"
                               >
                                 <Minus className="h-3.5 w-3.5" />
                               </button>
@@ -216,7 +217,7 @@ export function EditSaleForm({
                                     ),
                                   })
                                 }
-                                className="h-7 w-14 rounded border border-zinc-200 text-center text-sm"
+                                className="h-7 w-14 rounded border border-zinc-200 text-center text-sm dark:border-slate-700 dark:bg-slate-900"
                               />
                               <button
                                 type="button"
@@ -225,46 +226,46 @@ export function EditSaleForm({
                                     quantity: Math.min(line.product.quantity, line.quantity + 1),
                                   })
                                 }
-                                className="rounded p-1 text-zinc-500 hover:bg-zinc-100"
+                                className="rounded p-1 text-zinc-500 hover:bg-zinc-100 dark:hover:bg-slate-800"
                               >
                                 <Plus className="h-3.5 w-3.5" />
                               </button>
                             </div>
-                          </td>
-                          <td className="px-4 py-2 text-right">
+                          </TableCell>
+                          <TableCell align="right">
                             <input
                               type="number"
                               min={0}
                               value={line.unitPrice}
                               onChange={(e) => updateLine(line.product.id, { unitPrice: Number(e.target.value) || 0 })}
-                              className="h-7 w-24 rounded border border-zinc-200 text-right text-sm"
+                              className="h-7 w-24 rounded border border-zinc-200 text-right text-sm dark:border-slate-700 dark:bg-slate-900"
                             />
-                          </td>
-                          <td className="px-4 py-2 text-right">
+                          </TableCell>
+                          <TableCell align="right">
                             <input
                               type="number"
                               min={0}
                               value={line.discount}
                               onChange={(e) => updateLine(line.product.id, { discount: Number(e.target.value) || 0 })}
-                              className="h-7 w-20 rounded border border-zinc-200 text-right text-sm"
+                              className="h-7 w-20 rounded border border-zinc-200 text-right text-sm dark:border-slate-700 dark:bg-slate-900"
                             />
-                          </td>
-                          <td className="px-4 py-2 text-right font-medium text-zinc-900">
+                          </TableCell>
+                          <TableCell align="right" className="font-medium tabular-nums text-zinc-900 dark:text-slate-100">
                             {formatMoney(line.unitPrice * line.quantity - line.discount, currency)}
-                          </td>
-                          <td className="px-4 py-2">
+                          </TableCell>
+                          <TableCell>
                             <button
                               type="button"
                               onClick={() => removeLine(line.product.id)}
-                              className="rounded p-1 text-red-500 hover:bg-red-50"
+                              className="rounded p-1 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30"
                             >
                               <Trash2 className="h-4 w-4" />
                             </button>
-                          </td>
-                        </tr>
+                          </TableCell>
+                        </TableRow>
                       ))}
-                    </tbody>
-                  </table>
+                    </TableBody>
+                  </Table>
                 </div>
 
                 <ul className="divide-y divide-zinc-100 sm:hidden">

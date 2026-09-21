@@ -7,6 +7,7 @@ import { formatMoney, formatDateTime } from "@/lib/format";
 import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { EmptyState } from "@/components/ui/Empty";
+import { Table, TableHead, TableBody, TableRow, TableHeaderCell, TableCell } from "@/components/ui/Table";
 
 type SessionRow = {
   id: string;
@@ -46,39 +47,41 @@ export default async function CashSessionsPage() {
         <EmptyState title="Aucune session de caisse" description="Ouvrez une session depuis la page Vente / Caisse." />
       ) : (
         <Card className="overflow-x-auto">
-          <table className="w-full min-w-[800px] text-sm">
-            <thead className="bg-zinc-50 text-left text-zinc-500">
-              <tr>
-                <th className="px-4 py-3 font-medium">N°</th>
-                <th className="px-4 py-3 font-medium">Boutique</th>
-                <th className="px-4 py-3 font-medium">Caissier</th>
-                <th className="px-4 py-3 font-medium">Ouverture</th>
-                <th className="px-4 py-3 font-medium">Clôture</th>
-                <th className="px-4 py-3 font-medium">Statut</th>
-                <th className="px-4 py-3 text-right font-medium">CA</th>
-                <th className="px-4 py-3 text-right font-medium">Écart</th>
-                <th className="px-4 py-3" />
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-zinc-100">
+          <Table className="min-w-[800px]">
+            <TableHead>
+              <TableRow interactive={false}>
+                <TableHeaderCell>N°</TableHeaderCell>
+                <TableHeaderCell>Boutique</TableHeaderCell>
+                <TableHeaderCell>Caissier</TableHeaderCell>
+                <TableHeaderCell>Ouverture</TableHeaderCell>
+                <TableHeaderCell>Clôture</TableHeaderCell>
+                <TableHeaderCell>Statut</TableHeaderCell>
+                <TableHeaderCell align="right">CA</TableHeaderCell>
+                <TableHeaderCell align="right">Écart</TableHeaderCell>
+                <TableHeaderCell />
+              </TableRow>
+            </TableHead>
+            <TableBody>
               {sessions.map((s) => (
-                <tr key={s.id} className="hover:bg-zinc-50">
-                  <td className="px-4 py-3 font-mono text-xs text-zinc-700">{s.number}</td>
-                  <td className="px-4 py-3 text-zinc-600">{s.location.name}</td>
-                  <td className="px-4 py-3 text-zinc-600">
+                <TableRow key={s.id}>
+                  <TableCell className="font-mono text-xs text-zinc-700 dark:text-slate-300">{s.number}</TableCell>
+                  <TableCell className="text-zinc-600 dark:text-slate-400">{s.location.name}</TableCell>
+                  <TableCell className="text-zinc-600 dark:text-slate-400">
                     {s.user.firstName} {s.user.lastName}
-                  </td>
-                  <td className="px-4 py-3 text-zinc-600">{formatDateTime(new Date(s.openedAt))}</td>
-                  <td className="px-4 py-3 text-zinc-600">{s.closedAt ? formatDateTime(new Date(s.closedAt)) : "—"}</td>
-                  <td className="px-4 py-3">
+                  </TableCell>
+                  <TableCell className="text-zinc-600 dark:text-slate-400">{formatDateTime(new Date(s.openedAt))}</TableCell>
+                  <TableCell className="text-zinc-600 dark:text-slate-400">
+                    {s.closedAt ? formatDateTime(new Date(s.closedAt)) : "—"}
+                  </TableCell>
+                  <TableCell>
                     <Badge tone={s.status === "OUVERTE" ? "amber" : "zinc"}>
                       {s.status === "OUVERTE" ? "Ouverte" : "Fermée"}
                     </Badge>
-                  </td>
-                  <td className="px-4 py-3 text-right font-medium text-zinc-900">
+                  </TableCell>
+                  <TableCell align="right" className="font-medium tabular-nums text-zinc-900 dark:text-slate-100">
                     {s.totalRevenue != null ? formatMoney(s.totalRevenue, currency) : "—"}
-                  </td>
-                  <td className="px-4 py-3 text-right">
+                  </TableCell>
+                  <TableCell align="right" className="tabular-nums">
                     {s.variance != null ? (
                       <span
                         className={
@@ -91,28 +94,28 @@ export default async function CashSessionsPage() {
                     ) : (
                       "—"
                     )}
-                  </td>
-                  <td className="px-4 py-3 text-right">
+                  </TableCell>
+                  <TableCell align="right">
                     {s.status === "OUVERTE" ? (
                       <Link
                         href={`/ventes/session/${s.id}/fermer`}
-                        className="inline-flex items-center gap-1.5 rounded-lg border border-emerald-200 px-2.5 py-1.5 text-xs font-medium text-emerald-700 hover:bg-emerald-50"
+                        className="inline-flex items-center gap-1.5 rounded-lg border border-emerald-200 px-2.5 py-1.5 text-xs font-medium text-emerald-700 hover:bg-emerald-50 dark:border-emerald-800 dark:text-emerald-400 dark:hover:bg-emerald-900/30"
                       >
                         <Lock className="h-3.5 w-3.5" /> Fermer
                       </Link>
                     ) : (
                       <Link
                         href={`/ventes/session/${s.id}`}
-                        className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 px-2.5 py-1.5 text-xs font-medium text-zinc-600 hover:border-emerald-300 hover:bg-emerald-50 hover:text-emerald-700"
+                        className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 px-2.5 py-1.5 text-xs font-medium text-zinc-600 hover:border-emerald-300 hover:bg-emerald-50 hover:text-emerald-700 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-emerald-900/30"
                       >
                         <Eye className="h-3.5 w-3.5" /> Voir le ticket
                       </Link>
                     )}
-                  </td>
-                </tr>
+                  </TableCell>
+                </TableRow>
               ))}
-            </tbody>
-          </table>
+            </TableBody>
+          </Table>
         </Card>
       )}
     </div>

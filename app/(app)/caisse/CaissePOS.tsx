@@ -104,7 +104,7 @@ export function CaissePOS({
       <div className="max-w-2xl space-y-4">
         <div className="flex items-center justify-between gap-3">
           <div>
-            <h1 className="text-xl font-bold text-zinc-900">Caisse</h1>
+            <h1 className="text-xl font-bold tracking-tight text-zinc-900">Caisse</h1>
             <p className="text-sm text-zinc-500">
               Boutique : <span className="font-medium text-zinc-700">{locationName}</span>
             </p>
@@ -116,7 +116,12 @@ export function CaissePOS({
 
         <Card>
           <CardHeader>
-            <h2 className="font-semibold text-zinc-900">File d&apos;attente</h2>
+            <h2 className="font-semibold tracking-tight text-zinc-900">File d&apos;attente</h2>
+            {!!carts?.length && (
+              <span className="rounded-full bg-zindo-green-50 px-2.5 py-0.5 text-xs font-semibold text-zindo-green-700 dark:bg-emerald-500/10 dark:text-emerald-400">
+                {carts.length} panier{carts.length > 1 ? "s" : ""}
+              </span>
+            )}
           </CardHeader>
           <CardBody className="space-y-2">
             {carts === null && (
@@ -128,15 +133,22 @@ export function CaissePOS({
               <p className="py-6 text-center text-sm text-zinc-500">Aucun panier en attente pour l&apos;instant.</p>
             )}
             {carts?.map((cart) => (
-              <div key={cart.id} className="flex items-center justify-between gap-3 rounded-lg border border-zinc-200 p-3">
+              <div
+                key={cart.id}
+                className="flex items-center justify-between gap-3 rounded-xl border border-zinc-200 p-3.5 transition-colors hover:border-zindo-green-300 hover:bg-zindo-green-50/40 dark:border-slate-700 dark:hover:border-emerald-800 dark:hover:bg-emerald-500/5"
+              >
                 <div className="min-w-0">
                   <p className="truncate text-sm font-medium text-zinc-900">
                     {cart.customerName ?? "Client anonyme"} — {cart.itemCount} article{cart.itemCount > 1 ? "s" : ""}
                   </p>
-                  <p className="flex items-center gap-2 text-xs text-zinc-400">
-                    <User className="h-3 w-3" /> {cart.createdByName}
-                    <Clock className="h-3 w-3" /> {timeAgo(cart.createdAt)}
-                    <span className="font-medium text-zinc-600">{formatMoney(cart.total, currency)}</span>
+                  <p className="flex flex-wrap items-center gap-x-3 gap-y-1 pt-0.5 text-xs text-zinc-400">
+                    <span className="flex items-center gap-1">
+                      <User className="h-3 w-3" /> {cart.createdByName}
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <Clock className="h-3 w-3" /> {timeAgo(cart.createdAt)}
+                    </span>
+                    <span className="font-semibold tabular-nums text-zinc-600">{formatMoney(cart.total, currency)}</span>
                   </p>
                 </div>
                 <Button type="button" size="sm" disabled={claimingId === cart.id} onClick={() => claim(cart.id)}>
@@ -144,7 +156,11 @@ export function CaissePOS({
                 </Button>
               </div>
             ))}
-            {error && <p className="text-sm text-red-600">{error}</p>}
+            {error && (
+              <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700 dark:bg-red-500/10 dark:text-red-400">
+                {error}
+              </p>
+            )}
           </CardBody>
         </Card>
 
@@ -216,7 +232,7 @@ export function CaissePOS({
   return (
     <div className="max-w-2xl space-y-4">
       <div>
-        <h1 className="text-xl font-bold text-zinc-900">Caisse</h1>
+        <h1 className="text-xl font-bold tracking-tight text-zinc-900">Caisse</h1>
         <p className="text-sm text-zinc-500">
           Boutique : <span className="font-medium text-zinc-700">{locationName}</span>
         </p>
@@ -224,14 +240,17 @@ export function CaissePOS({
 
       <Card>
         <CardHeader>
-          <h2 className="font-semibold text-zinc-900">
+          <h2 className="font-semibold tracking-tight text-zinc-900">
             Panier — {claimed.customerName ?? "Client anonyme"}
           </h2>
+          <span className="rounded-full bg-zindo-green-50 px-2.5 py-0.5 text-xs font-semibold text-zindo-green-700 dark:bg-emerald-500/10 dark:text-emerald-400">
+            {claimed.items.length} article{claimed.items.length > 1 ? "s" : ""}
+          </span>
         </CardHeader>
         <CardBody className="p-0">
-          <ul className="divide-y divide-zinc-100">
+          <ul className="divide-y divide-zinc-100 dark:divide-slate-800">
             {claimed.items.map((item, i) => (
-              <li key={i} className="flex items-center justify-between gap-3 px-4 py-2 text-sm">
+              <li key={i} className="flex items-center justify-between gap-3 px-4 py-2.5 text-sm">
                 <div className="min-w-0">
                   <p className="truncate font-medium text-zinc-900">
                     {item.productName}
@@ -239,7 +258,7 @@ export function CaissePOS({
                   </p>
                   <p className="text-xs text-zinc-400">Qté {item.quantity}</p>
                 </div>
-                <span className="shrink-0 font-medium text-zinc-700">
+                <span className="shrink-0 font-medium tabular-nums text-zinc-700">
                   {formatMoney(item.unitPrice * item.quantity - item.discount, currency)}
                 </span>
               </li>
@@ -250,7 +269,7 @@ export function CaissePOS({
 
       <Card>
         <CardHeader>
-          <h2 className="font-semibold text-zinc-900">Paiement</h2>
+          <h2 className="font-semibold tracking-tight text-zinc-900">Paiement</h2>
         </CardHeader>
         <CardBody className="space-y-3">
           <Field label="Moyen de paiement" htmlFor="caisse-paymentMethod">
@@ -322,36 +341,40 @@ export function CaissePOS({
             </Field>
           )}
 
-          <div className="space-y-1 border-t border-zinc-100 pt-3 text-sm">
+          <div className="space-y-1.5 border-t border-zinc-100 pt-3 text-sm dark:border-slate-800">
             <div className="flex justify-between text-zinc-600">
               <span>Sous-total</span>
-              <span>{formatMoney(subtotal, currency)}</span>
+              <span className="tabular-nums">{formatMoney(subtotal, currency)}</span>
             </div>
             {claimed.discount > 0 && (
               <div className="flex justify-between text-zinc-600">
                 <span>Remise</span>
-                <span>-{formatMoney(claimed.discount, currency)}</span>
+                <span className="tabular-nums">-{formatMoney(claimed.discount, currency)}</span>
               </div>
             )}
-            <div className="flex justify-between font-semibold text-zinc-900">
-              <span>Total</span>
-              <span>{formatMoney(total, currency)}</span>
+            <div className="flex items-baseline justify-between border-t border-dashed border-zinc-200 pt-2 dark:border-slate-700">
+              <span className="font-semibold text-zinc-900">Total</span>
+              <span className="text-xl font-bold tabular-nums text-zinc-900">{formatMoney(total, currency)}</span>
             </div>
             {change > 0 && (
-              <div className="flex justify-between text-emerald-600">
+              <div className="flex justify-between font-medium text-emerald-600">
                 <span>Monnaie à rendre</span>
-                <span>{formatMoney(change, currency)}</span>
+                <span className="tabular-nums">{formatMoney(change, currency)}</span>
               </div>
             )}
             {remaining > 0 && (
-              <div className="flex justify-between text-red-600">
+              <div className="flex justify-between font-medium text-red-600">
                 <span>Reste à payer (crédit)</span>
-                <span>{formatMoney(remaining, currency)}</span>
+                <span className="tabular-nums">{formatMoney(remaining, currency)}</span>
               </div>
             )}
           </div>
 
-          {error && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
+          {error && (
+            <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700 dark:bg-red-500/10 dark:text-red-400">
+              {error}
+            </p>
+          )}
 
           <div className="flex gap-2">
             <Button type="button" variant="outline" onClick={() => setClaimed(null)} disabled={pending}>

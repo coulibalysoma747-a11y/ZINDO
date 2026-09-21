@@ -6,6 +6,7 @@ import { PERMISSIONS } from "@/lib/permissions";
 import { supabase } from "@/lib/supabase";
 import { formatDateTime } from "@/lib/format";
 import { Card, CardBody, CardHeader } from "@/components/ui/Card";
+import { Table, TableHead, TableBody, TableRow, TableHeaderCell, TableCell } from "@/components/ui/Table";
 
 type TransferRow = {
   id: string;
@@ -66,24 +67,24 @@ export default async function TransferDetailPage({
         </CardHeader>
         <CardBody className="p-0">
           <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead className="bg-zinc-50 text-left text-zinc-500">
+            <Table>
+              <TableHead>
                 <tr>
-                  <th className="px-4 py-2 font-medium">Produit</th>
-                  <th className="px-4 py-2 text-right font-medium">Quantité</th>
+                  <TableHeaderCell>Produit</TableHeaderCell>
+                  <TableHeaderCell align="right">Quantité</TableHeaderCell>
                 </tr>
-              </thead>
-              <tbody className="divide-y divide-zinc-100">
+              </TableHead>
+              <TableBody>
                 {transfer.items.map((item) => (
-                  <tr key={item.id}>
-                    <td className="px-4 py-2 font-medium text-zinc-900">{item.product.name}</td>
-                    <td className="px-4 py-2 text-right text-zinc-700">
+                  <TableRow key={item.id}>
+                    <TableCell className="font-medium text-zinc-900 dark:text-slate-100">{item.product.name}</TableCell>
+                    <TableCell align="right" className="tabular-nums text-zinc-700 dark:text-slate-300">
                       {item.quantity} {item.product.unit}
-                    </td>
-                  </tr>
+                    </TableCell>
+                  </TableRow>
                 ))}
-              </tbody>
-            </table>
+              </TableBody>
+            </Table>
           </div>
         </CardBody>
       </Card>

@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Input, Select } from "@/components/ui/Input";
 import { EmptyState } from "@/components/ui/Empty";
+import { Table, TableHead, TableBody, TableRow, TableHeaderCell, TableCell } from "@/components/ui/Table";
 import { ProductThumbnail } from "@/components/products/ProductThumbnail";
 import { ProductQrLabel, DEFAULT_LABEL_FIELDS, type LabelFieldOptions } from "@/components/products/ProductQrLabel";
 import { LABEL_FORMATS, DEFAULT_FORMAT_ID, getLabelFormat, buildPrintCss } from "@/lib/label-formats";
@@ -278,30 +279,30 @@ export function BulkLabelPrintView({
           />
         ) : (
           <Card className="max-h-96 overflow-y-auto p-0">
-            <table className="w-full text-sm">
-              <thead className="sticky top-0 bg-zinc-50 text-left text-xs uppercase tracking-wide text-zinc-500">
-                <tr>
-                  <th className="px-3 py-2 font-medium">Sél.</th>
-                  <th className="px-3 py-2 font-medium">Miniat.</th>
-                  <th className="px-3 py-2 font-medium">Produit</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-zinc-100">
+            <Table>
+              <TableHead className="sticky top-0 z-10">
+                <TableRow interactive={false}>
+                  <TableHeaderCell className="w-12">Sél.</TableHeaderCell>
+                  <TableHeaderCell className="w-16">Miniat.</TableHeaderCell>
+                  <TableHeaderCell>Produit</TableHeaderCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
                 {visible.map((p) => (
-                  <tr key={p.id} className="hover:bg-zinc-50">
-                    <td className="px-3 py-2">
+                  <TableRow key={p.id}>
+                    <TableCell className="px-3 py-2">
                       <input
                         type="checkbox"
                         checked={selected.has(p.id)}
                         onChange={() => toggle(p.id)}
                         className="h-4 w-4 rounded accent-zindo-green-500"
                       />
-                    </td>
-                    <td className="px-3 py-2">
+                    </TableCell>
+                    <TableCell className="px-3 py-2">
                       <ProductThumbnail photoUrl={p.photoUrl} name={p.name} size={32} />
-                    </td>
-                    <td className="px-3 py-2">
-                      <p className="font-medium text-zinc-900">{p.name}</p>
+                    </TableCell>
+                    <TableCell className="px-3 py-2">
+                      <p className="font-medium text-zinc-900 dark:text-slate-100">{p.name}</p>
                       <p className="flex items-center gap-1.5 text-xs text-zinc-400">
                         {p.reference}
                         {!p.barcode && (
@@ -310,11 +311,11 @@ export function BulkLabelPrintView({
                           </span>
                         )}
                       </p>
-                    </td>
-                  </tr>
+                    </TableCell>
+                  </TableRow>
                 ))}
-              </tbody>
-            </table>
+              </TableBody>
+            </Table>
           </Card>
         )}
       </div>

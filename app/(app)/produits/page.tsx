@@ -10,6 +10,7 @@ import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { EmptyState } from "@/components/ui/Empty";
 import { ButtonLink } from "@/components/ui/Button";
+import { Table, TableHead, TableBody, TableRow, TableHeaderCell, TableCell } from "@/components/ui/Table";
 import { CatalogTabs } from "@/components/products/CatalogTabs";
 import { ProductSearchBar } from "./ProductSearchBar";
 import { ProductThumbnail } from "@/components/products/ProductThumbnail";
@@ -210,26 +211,26 @@ export default async function ProductsPage({
               n'est lisible qu'en faisant défiler horizontalement en boucle pour
               chaque produit — remplacée par une liste de cartes (voir plus bas). */}
           <Card className="hidden overflow-x-auto sm:block">
-            <table className="w-full min-w-[720px] text-sm">
-              <thead className="border-b border-zinc-100 bg-zinc-50/60 text-left text-zinc-500 dark:border-slate-800 dark:bg-slate-800/40">
-                <tr>
-                  <th className="px-4 py-3 text-[11px] font-semibold uppercase tracking-wide">Produit</th>
-                  <th className="px-4 py-3 text-[11px] font-semibold uppercase tracking-wide">Référence</th>
-                  <th className="px-4 py-3 text-[11px] font-semibold uppercase tracking-wide">Catégorie</th>
-                  <th className="px-4 py-3 text-right text-[11px] font-semibold uppercase tracking-wide">Prix de vente</th>
-                  <th className="px-4 py-3 text-right text-[11px] font-semibold uppercase tracking-wide">Stock ({currentLocation?.name ?? "—"})</th>
-                  <th className="px-4 py-3 text-[11px] font-semibold uppercase tracking-wide">Statut</th>
-                  <th className="px-4 py-3" />
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-zinc-100 dark:divide-slate-800">
+            <Table className="min-w-[720px]">
+              <TableHead>
+                <TableRow interactive={false}>
+                  <TableHeaderCell>Produit</TableHeaderCell>
+                  <TableHeaderCell>Référence</TableHeaderCell>
+                  <TableHeaderCell>Catégorie</TableHeaderCell>
+                  <TableHeaderCell align="right">Prix de vente</TableHeaderCell>
+                  <TableHeaderCell align="right">Stock ({currentLocation?.name ?? "—"})</TableHeaderCell>
+                  <TableHeaderCell>Statut</TableHeaderCell>
+                  <TableHeaderCell />
+                </TableRow>
+              </TableHead>
+              <TableBody>
                 {filtered.map((p) => (
-                  <tr key={p.id as string} className="transition-colors hover:bg-zinc-50 dark:hover:bg-slate-800/40">
-                    <td className="px-4 py-3">
+                  <TableRow key={p.id as string}>
+                    <TableCell>
                       <div className="flex items-center gap-3">
                         <ProductThumbnail photoUrl={p.photoUrl as string | null} name={p.name as string} size={40} />
                         <div className="min-w-0">
-                          <Link href={`/produits/${p.id}`} className="font-medium text-zinc-900 hover:text-emerald-600">
+                          <Link href={`/produits/${p.id}`} className="font-medium text-zinc-900 hover:text-emerald-600 dark:text-slate-100">
                             {p.name as string}
                           </Link>
                           {p.brand ? <p className="text-xs text-zinc-400">{p.brand as string}</p> : null}
@@ -238,16 +239,16 @@ export default async function ProductsPage({
                           )}
                         </div>
                       </div>
-                    </td>
-                    <td className="px-4 py-3 font-mono text-xs text-zinc-500">{p.reference as string}</td>
-                    <td className="px-4 py-3 text-zinc-600">{p.category?.name ?? "—"}</td>
-                    <td className="px-4 py-3 text-right font-medium text-zinc-900">
+                    </TableCell>
+                    <TableCell className="font-mono text-xs text-zinc-500">{p.reference as string}</TableCell>
+                    <TableCell className="text-zinc-600 dark:text-slate-400">{p.category?.name ?? "—"}</TableCell>
+                    <TableCell align="right" className="font-medium tabular-nums text-zinc-900 dark:text-slate-100">
                       {formatMoney(p.salePrice as number, user.business.currency)}
-                    </td>
-                    <td className="px-4 py-3 text-right text-zinc-700">
+                    </TableCell>
+                    <TableCell align="right" className="tabular-nums text-zinc-700 dark:text-slate-300">
                       {p.quantity} {p.unit as string}
-                    </td>
-                    <td className="px-4 py-3">
+                    </TableCell>
+                    <TableCell>
                       {p.quantity <= 0 ? (
                         <Badge tone="red">Rupture</Badge>
                       ) : p.quantity <= (p.minStock as number) ? (
@@ -255,8 +256,8 @@ export default async function ProductsPage({
                       ) : (
                         <Badge tone="emerald">En stock</Badge>
                       )}
-                    </td>
-                    <td className="px-4 py-3 text-right">
+                    </TableCell>
+                    <TableCell align="right">
                       <div className="flex items-center justify-end gap-1">
                         {packagingEnabled && !p.trackUnits && (
                           <QuickPackagingButton
@@ -269,11 +270,11 @@ export default async function ProductsPage({
                         )}
                         <ProductRowMenu productId={p.id as string} />
                       </div>
-                    </td>
-                  </tr>
+                    </TableCell>
+                  </TableRow>
                 ))}
-              </tbody>
-            </table>
+              </TableBody>
+            </Table>
           </Card>
 
           {/* Liste de cartes : téléphone. */}

@@ -6,6 +6,7 @@ import { Bike, FileText, Search } from "lucide-react";
 import { Card } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
 import { EmptyState } from "@/components/ui/Empty";
+import { Table, TableHead, TableBody, TableRow, TableHeaderCell, TableCell } from "@/components/ui/Table";
 import { formatMoney, formatDateTime } from "@/lib/format";
 import type { VehicleSaleListItem } from "@/lib/actions/vehicle-sales";
 
@@ -56,32 +57,34 @@ export function VehicleSalesHistory({ sales, currency }: { sales: VehicleSaleLis
         ) : (
           <>
             <Card className="hidden overflow-x-auto sm:block">
-              <table className="w-full min-w-[640px] text-sm">
-                <thead className="bg-zinc-50 text-left text-zinc-500">
-                  <tr>
-                    <th className="px-4 py-3 font-medium">Réf.</th>
-                    <th className="px-4 py-3 font-medium">Date</th>
-                    <th className="px-4 py-3 font-medium">Client</th>
-                    <th className="px-4 py-3 font-medium">Châssis</th>
-                    <th className="px-4 py-3 text-right font-medium">Total</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-zinc-100">
+              <Table className="min-w-[640px]">
+                <TableHead>
+                  <TableRow interactive={false}>
+                    <TableHeaderCell>Réf.</TableHeaderCell>
+                    <TableHeaderCell>Date</TableHeaderCell>
+                    <TableHeaderCell>Client</TableHeaderCell>
+                    <TableHeaderCell>Châssis</TableHeaderCell>
+                    <TableHeaderCell align="right">Total</TableHeaderCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
                   {filtered.map((s) => (
-                    <tr key={s.saleId} className="hover:bg-zinc-50">
-                      <td className="px-4 py-3">
+                    <TableRow key={s.saleId}>
+                      <TableCell>
                         <Link href={`/ventes/${s.saleId}`} className="font-mono text-xs text-emerald-600 hover:underline">
                           {s.number}
                         </Link>
-                      </td>
-                      <td className="px-4 py-3 text-zinc-600">{formatDateTime(new Date(s.createdAt))}</td>
-                      <td className="px-4 py-3 text-zinc-600">{s.customerLabel}</td>
-                      <td className="px-4 py-3 font-mono text-xs text-zinc-600">{s.chassisNumber ?? "—"}</td>
-                      <td className="px-4 py-3 text-right font-medium text-zinc-900">{formatMoney(s.total, currency)}</td>
-                    </tr>
+                      </TableCell>
+                      <TableCell className="text-zinc-600 dark:text-slate-400">{formatDateTime(new Date(s.createdAt))}</TableCell>
+                      <TableCell className="text-zinc-600 dark:text-slate-400">{s.customerLabel}</TableCell>
+                      <TableCell className="font-mono text-xs text-zinc-600 dark:text-slate-400">{s.chassisNumber ?? "—"}</TableCell>
+                      <TableCell align="right" className="font-medium tabular-nums text-zinc-900 dark:text-slate-100">
+                        {formatMoney(s.total, currency)}
+                      </TableCell>
+                    </TableRow>
                   ))}
-                </tbody>
-              </table>
+                </TableBody>
+              </Table>
             </Card>
 
             <div className="space-y-2 sm:hidden">

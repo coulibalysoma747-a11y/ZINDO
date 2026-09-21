@@ -7,6 +7,7 @@ import { ProductPicker } from "@/components/products/ProductPicker";
 import { Card, CardBody, CardHeader } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Field, Input, Select } from "@/components/ui/Input";
+import { Table, TableHead, TableBody, TableRow, TableHeaderCell, TableCell } from "@/components/ui/Table";
 import { createTransferAction } from "@/lib/actions/transfers";
 import { findProductByExactCodeAction } from "@/lib/actions/product-search";
 
@@ -125,23 +126,23 @@ export function TransferForm({
             <p className="p-8 text-center text-sm text-zinc-500">Aucun produit ajouté.</p>
           ) : (
             <div className="overflow-x-auto">
-              <table className="w-full min-w-[480px] text-sm">
-                <thead className="bg-zinc-50 text-left text-zinc-500">
-                  <tr>
-                    <th className="px-4 py-2 font-medium">Produit</th>
-                    <th className="px-4 py-2 text-right font-medium">Disponible</th>
-                    <th className="px-4 py-2 text-right font-medium">Quantité à transférer</th>
-                    <th className="px-4 py-2" />
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-zinc-100">
+              <Table className="min-w-[480px]">
+                <TableHead>
+                  <TableRow interactive={false}>
+                    <TableHeaderCell>Produit</TableHeaderCell>
+                    <TableHeaderCell align="right">Disponible</TableHeaderCell>
+                    <TableHeaderCell align="right">Quantité à transférer</TableHeaderCell>
+                    <TableHeaderCell />
+                  </TableRow>
+                </TableHead>
+                <TableBody>
                   {lines.map((line) => (
-                    <tr key={line.product.id}>
-                      <td className="px-4 py-2 font-medium text-zinc-900">{line.product.name}</td>
-                      <td className="px-4 py-2 text-right text-zinc-500">
+                    <TableRow key={line.product.id} interactive={false}>
+                      <TableCell className="font-medium text-zinc-900 dark:text-slate-100">{line.product.name}</TableCell>
+                      <TableCell align="right" className="tabular-nums text-zinc-500 dark:text-slate-400">
                         {line.product.quantity} {line.product.unit}
-                      </td>
-                      <td className="px-4 py-2 text-right">
+                      </TableCell>
+                      <TableCell align="right">
                         <input
                           type="number"
                           min={1}
@@ -153,22 +154,22 @@ export function TransferForm({
                               Math.min(line.product.quantity, Math.max(1, Number(e.target.value) || 1))
                             )
                           }
-                          className="h-8 w-24 rounded border border-zinc-200 text-right text-sm"
+                          className="h-8 w-24 rounded border border-zinc-200 text-right text-sm dark:border-slate-700 dark:bg-slate-900"
                         />
-                      </td>
-                      <td className="px-4 py-2">
+                      </TableCell>
+                      <TableCell>
                         <button
                           type="button"
                           onClick={() => removeLine(line.product.id)}
-                          className="rounded p-1 text-red-500 hover:bg-red-50"
+                          className="rounded p-1 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30"
                         >
                           <Trash2 className="h-4 w-4" />
                         </button>
-                      </td>
-                    </tr>
+                      </TableCell>
+                    </TableRow>
                   ))}
-                </tbody>
-              </table>
+                </TableBody>
+              </Table>
             </div>
           )}
         </CardBody>

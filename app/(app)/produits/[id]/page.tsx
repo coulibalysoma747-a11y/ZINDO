@@ -14,6 +14,7 @@ import { formatMoney, formatDateTime } from "@/lib/format";
 import { Card, CardBody, CardHeader } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { ButtonLink } from "@/components/ui/Button";
+import { Table, TableHead, TableBody, TableRow, TableHeaderCell, TableCell } from "@/components/ui/Table";
 import { ProductThumbnail } from "@/components/products/ProductThumbnail";
 import { VehicleUnitsPanel } from "@/components/products/VehicleUnitsPanel";
 import { PackagingUnitsPanel } from "@/components/products/PackagingUnitsPanel";
@@ -240,22 +241,22 @@ export default async function ProductDetailPage({
             <p className="p-5 text-sm text-zinc-500">Aucun stock enregistré dans une boutique.</p>
           ) : (
             <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead className="bg-zinc-50 text-left text-zinc-500">
+            <Table>
+              <TableHead>
                 <tr>
-                  <th className="px-4 py-2 font-medium">Boutique</th>
-                  <th className="px-4 py-2 text-right font-medium">Quantité</th>
-                  <th className="px-4 py-2 text-right font-medium">Statut</th>
+                  <TableHeaderCell>Boutique</TableHeaderCell>
+                  <TableHeaderCell align="right">Quantité</TableHeaderCell>
+                  <TableHeaderCell align="right">Statut</TableHeaderCell>
                 </tr>
-              </thead>
-              <tbody className="divide-y divide-zinc-100">
+              </TableHead>
+              <TableBody>
                 {stocks.map((s) => (
-                  <tr key={s.id}>
-                    <td className="px-4 py-2 font-medium text-zinc-900">{s.location.name}</td>
-                    <td className="px-4 py-2 text-right text-zinc-700">
+                  <TableRow key={s.id}>
+                    <TableCell className="font-medium text-zinc-900 dark:text-slate-100">{s.location.name}</TableCell>
+                    <TableCell align="right" className="tabular-nums text-zinc-700 dark:text-slate-300">
                       {s.quantity} {product.unit}
-                    </td>
-                    <td className="px-4 py-2 text-right">
+                    </TableCell>
+                    <TableCell align="right">
                       {s.quantity <= 0 ? (
                         <Badge tone="red">Rupture</Badge>
                       ) : s.quantity <= product.minStock ? (
@@ -263,11 +264,11 @@ export default async function ProductDetailPage({
                       ) : (
                         <Badge tone="emerald">OK</Badge>
                       )}
-                    </td>
-                  </tr>
+                    </TableCell>
+                  </TableRow>
                 ))}
-              </tbody>
-            </table>
+              </TableBody>
+            </Table>
             </div>
           )}
         </CardBody>
@@ -315,41 +316,41 @@ export default async function ProductDetailPage({
           {movements.length === 0 ? (
             <p className="p-5 text-sm text-zinc-500">Aucun mouvement enregistré.</p>
           ) : (
-            <table className="w-full min-w-[700px] text-sm">
-              <thead className="bg-zinc-50 text-left text-zinc-500">
+            <Table className="min-w-[700px]">
+              <TableHead>
                 <tr>
-                  <th className="px-4 py-2 font-medium">Date</th>
-                  <th className="px-4 py-2 font-medium">Boutique</th>
-                  <th className="px-4 py-2 font-medium">Motif</th>
-                  <th className="px-4 py-2 text-right font-medium">Quantité</th>
-                  <th className="px-4 py-2 text-right font-medium">Stock avant → après</th>
-                  <th className="px-4 py-2 font-medium">Utilisateur</th>
+                  <TableHeaderCell>Date</TableHeaderCell>
+                  <TableHeaderCell>Boutique</TableHeaderCell>
+                  <TableHeaderCell>Motif</TableHeaderCell>
+                  <TableHeaderCell align="right">Quantité</TableHeaderCell>
+                  <TableHeaderCell align="right">Stock avant → après</TableHeaderCell>
+                  <TableHeaderCell>Utilisateur</TableHeaderCell>
                 </tr>
-              </thead>
-              <tbody className="divide-y divide-zinc-100">
+              </TableHead>
+              <TableBody>
                 {movements.map((m) => (
-                  <tr key={m.id}>
-                    <td className="px-4 py-2 text-zinc-600">{formatDateTime(new Date(m.createdAt))}</td>
-                    <td className="px-4 py-2 text-zinc-600">{m.location.name}</td>
-                    <td className="px-4 py-2">
+                  <TableRow key={m.id}>
+                    <TableCell className="text-zinc-600 dark:text-slate-400">{formatDateTime(new Date(m.createdAt))}</TableCell>
+                    <TableCell className="text-zinc-600 dark:text-slate-400">{m.location.name}</TableCell>
+                    <TableCell>
                       <Badge tone={m.direction === "IN" ? "emerald" : "red"}>
                         {REASON_LABELS[m.reason] ?? m.reason}
                       </Badge>
-                    </td>
-                    <td className="px-4 py-2 text-right text-zinc-700">
+                    </TableCell>
+                    <TableCell align="right" className="tabular-nums text-zinc-700 dark:text-slate-300">
                       {m.direction === "IN" ? "+" : "-"}
                       {m.quantity}
-                    </td>
-                    <td className="px-4 py-2 text-right text-zinc-500">
+                    </TableCell>
+                    <TableCell align="right" className="tabular-nums text-zinc-500 dark:text-slate-400">
                       {m.oldStock} → {m.newStock}
-                    </td>
-                    <td className="px-4 py-2 text-zinc-600">
+                    </TableCell>
+                    <TableCell className="text-zinc-600 dark:text-slate-400">
                       {m.user.firstName} {m.user.lastName}
-                    </td>
-                  </tr>
+                    </TableCell>
+                  </TableRow>
                 ))}
-              </tbody>
-            </table>
+              </TableBody>
+            </Table>
           )}
         </CardBody>
       </Card>

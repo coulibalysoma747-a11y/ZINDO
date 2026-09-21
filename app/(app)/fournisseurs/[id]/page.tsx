@@ -8,6 +8,7 @@ import { formatMoney, formatDate } from "@/lib/format";
 import { Card, CardBody, CardHeader } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/Empty";
 import { Badge } from "@/components/ui/Badge";
+import { Table, TableHead, TableBody, TableRow, TableHeaderCell, TableCell } from "@/components/ui/Table";
 import { SupplierEditButton } from "./SupplierEditButton";
 
 type SupplierRow = {
@@ -129,34 +130,38 @@ export default async function SupplierDetailPage({
             </div>
           ) : (
             <div className="overflow-x-auto">
-              <table className="w-full min-w-[480px] text-sm">
-                <thead className="bg-zinc-50 text-left text-zinc-500">
+              <Table className="min-w-[480px]">
+                <TableHead>
                   <tr>
-                    <th className="px-4 py-2 font-medium">N°</th>
-                    <th className="px-4 py-2 font-medium">Date</th>
-                    <th className="px-4 py-2 font-medium">Statut</th>
-                    <th className="px-4 py-2 text-right font-medium">Total</th>
-                    <th className="px-4 py-2 text-right font-medium">Payé</th>
+                    <TableHeaderCell>N°</TableHeaderCell>
+                    <TableHeaderCell>Date</TableHeaderCell>
+                    <TableHeaderCell>Statut</TableHeaderCell>
+                    <TableHeaderCell align="right">Total</TableHeaderCell>
+                    <TableHeaderCell align="right">Payé</TableHeaderCell>
                   </tr>
-                </thead>
-                <tbody className="divide-y divide-zinc-100">
+                </TableHead>
+                <TableBody>
                   {purchases.map((p) => (
-                    <tr key={p.id}>
-                      <td className="px-4 py-2">
+                    <TableRow key={p.id}>
+                      <TableCell>
                         <Link href={`/achats/${p.id}`} className="font-mono text-xs text-emerald-600 hover:underline">
                           {p.number}
                         </Link>
-                      </td>
-                      <td className="px-4 py-2 text-zinc-600">{formatDate(new Date(p.createdAt))}</td>
-                      <td className="px-4 py-2">
+                      </TableCell>
+                      <TableCell className="text-zinc-600 dark:text-slate-400">{formatDate(new Date(p.createdAt))}</TableCell>
+                      <TableCell>
                         <Badge tone={p.status === "RECUE" ? "emerald" : "amber"}>{p.status}</Badge>
-                      </td>
-                      <td className="px-4 py-2 text-right text-zinc-900">{formatMoney(p.total, currency)}</td>
-                      <td className="px-4 py-2 text-right text-zinc-600">{formatMoney(p.amountPaid, currency)}</td>
-                    </tr>
+                      </TableCell>
+                      <TableCell align="right" className="tabular-nums text-zinc-900 dark:text-slate-100">
+                        {formatMoney(p.total, currency)}
+                      </TableCell>
+                      <TableCell align="right" className="tabular-nums text-zinc-600 dark:text-slate-400">
+                        {formatMoney(p.amountPaid, currency)}
+                      </TableCell>
+                    </TableRow>
                   ))}
-                </tbody>
-              </table>
+                </TableBody>
+              </Table>
             </div>
           )}
         </CardBody>
