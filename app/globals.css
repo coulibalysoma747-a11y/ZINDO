@@ -18,43 +18,45 @@
 
   /* Identité visuelle ZINDO : vert (actions, couleur dominante du logo), encre
      neutre quasi noire (titres/panneaux — plus de bleu marine, le logo n'en
-     contient pas), blanc cassé chaleureux (surfaces), vert succès. Le vert
-     "zindo-green-500" est échantillonné directement sur public/brand/
-     zindo-emblem.png. Le rouge et l'or du logo (et du drapeau du Burkina
-     Faso) ont désormais leurs propres échelles ci-dessous — utilisées comme
+     contient pas), blanc cassé chaleureux (surfaces), vert succès. Palette
+     "zindo-green" recalibrée (v2) pour un vert plus vif/saturé (teinte
+     ~150°) que l'échantillon d'origine de public/brand/zindo-emblem.png,
+     tout en gardant un contraste AA (texte blanc sur -500 ≈ 4.75:1). Le
+     rouge et l'or (logo et drapeau du Burkina Faso) ont été réharmonisés en
+     cohérence (rouge plus vif type drapeau, or plus riche) — utilisés comme
      accents de marque (liseré tricolore de la Sidebar/Topbar/MobileTabBar,
      halos décoratifs des écrans d'authentification et de la page publique,
      badges) EN PLUS du vert dominant. Les classes Tailwind standard
      (red-*, amber-*) restent inchangées pour les états sémantiques
      danger/attention (boutons de suppression, alertes) — jamais réutilisées
      comme accent de marque, pour ne pas brouiller leur sens. */
-  --color-zindo-green-50: #eefbf2;
-  --color-zindo-green-100: #d3f3dc;
-  --color-zindo-green-200: #a3e3b8;
-  --color-zindo-green-300: #6ecb8d;
-  --color-zindo-green-400: #3ba85f;
-  --color-zindo-green-500: #176d30;
-  --color-zindo-green-600: #135b28;
-  --color-zindo-green-700: #0f4a21;
-  --color-zindo-green-800: #0b3a1a;
-  --color-zindo-red-50: #fdeeee;
-  --color-zindo-red-100: #fad3d3;
-  --color-zindo-red-200: #f3a3a3;
-  --color-zindo-red-300: #e86e6e;
-  --color-zindo-red-400: #dd4141;
-  --color-zindo-red-500: #c81e1e;
-  --color-zindo-red-600: #a81818;
-  --color-zindo-red-700: #8a1414;
-  --color-zindo-red-800: #6b0f0f;
-  --color-zindo-gold-50: #fef8e8;
-  --color-zindo-gold-100: #fbecc0;
-  --color-zindo-gold-200: #f6d787;
-  --color-zindo-gold-300: #eebd4c;
-  --color-zindo-gold-400: #e2a625;
-  --color-zindo-gold-500: #c8860a;
-  --color-zindo-gold-600: #a66d08;
-  --color-zindo-gold-700: #855707;
-  --color-zindo-gold-800: #664305;
+  --color-zindo-green-50: #ebf9f2;
+  --color-zindo-green-100: #d8f4e6;
+  --color-zindo-green-200: #a8e6c7;
+  --color-zindo-green-300: #64d89e;
+  --color-zindo-green-400: #22c373;
+  --color-zindo-green-500: #10844a;
+  --color-zindo-green-600: #0c6e3d;
+  --color-zindo-green-700: #095830;
+  --color-zindo-green-800: #064124;
+  --color-zindo-red-50: #fdecec;
+  --color-zindo-red-100: #fbd0d0;
+  --color-zindo-red-200: #f6a0a0;
+  --color-zindo-red-300: #ed6b6b;
+  --color-zindo-red-400: #e23f3f;
+  --color-zindo-red-500: #d22323;
+  --color-zindo-red-600: #ad1c1c;
+  --color-zindo-red-700: #8c1717;
+  --color-zindo-red-800: #6b1212;
+  --color-zindo-gold-50: #fbf4ea;
+  --color-zindo-gold-100: #f5e8d1;
+  --color-zindo-gold-200: #eccf9c;
+  --color-zindo-gold-300: #e7b45a;
+  --color-zindo-gold-400: #ec9c13;
+  --color-zindo-gold-500: #c27e0a;
+  --color-zindo-gold-600: #a06808;
+  --color-zindo-gold-700: #815508;
+  --color-zindo-gold-800: #654001;
   --color-zindo-ink-50: #f4f4f5;
   --color-zindo-ink-100: #e4e4e7;
   --color-zindo-ink-200: #d4d4d8;
