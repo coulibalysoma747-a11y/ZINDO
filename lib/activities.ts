@@ -103,6 +103,13 @@ export const ACTIVITIES: Activity[] = [
     category: "sante_beaute",
   },
   {
+    key: "cabinet_medical",
+    emoji: "🩺",
+    label: "Cabinet médical / Clinique",
+    description: "Consultations, suivi des actes médicaux et statistiques épidémiologiques.",
+    category: "sante_beaute",
+  },
+  {
     key: "cosmetique_beaute",
     emoji: "💄",
     label: "Cosmétique & Beauté",
