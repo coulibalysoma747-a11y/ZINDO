@@ -6,12 +6,14 @@ import { getLocations, getCurrentLocation } from "@/lib/location";
 import { isSubscriptionBlocked } from "@/lib/subscription";
 import { getAdminSession } from "@/lib/adminSession";
 import { getPlatformConfig } from "@/lib/platform-config";
+import { getBusinessSettings } from "@/lib/business-settings";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { Topbar } from "@/components/layout/Topbar";
 import { AppFooter } from "@/components/layout/AppFooter";
 import { MobileTabBar } from "@/components/layout/MobileTabBar";
 import { ImpersonationBanner } from "@/components/layout/ImpersonationBanner";
 import { AnnouncementBanner } from "@/components/layout/AnnouncementBanner";
+import { HasPhysicalStoreBanner } from "@/components/layout/HasPhysicalStoreBanner";
 import { ROLE_LABELS, PERMISSIONS } from "@/lib/permissions";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
@@ -23,9 +25,10 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   // le blocage d'abonnement (c'est justement pour déboguer ces cas-là).
   const isImpersonating = !!(await getAdminSession());
 
-  const [platformConfig, subscriptionBlocked] = await Promise.all([
+  const [platformConfig, subscriptionBlocked, businessSettings] = await Promise.all([
     getPlatformConfig(),
     isImpersonating ? Promise.resolve(false) : isSubscriptionBlocked(user.businessId),
+    getBusinessSettings(user.businessId),
   ]);
 
   const pathname = (await headers()).get("x-zindo-pathname") ?? "";
@@ -61,6 +64,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           {platformConfig.announcementActive && platformConfig.announcementMessage && (
             <AnnouncementBanner message={platformConfig.announcementMessage} tone={platformConfig.announcementTone} />
           )}
+          {businessSettings.hasPhysicalStore === null && user.role === "ADMIN" && <HasPhysicalStoreBanner />}
           <Topbar
             userName={`${user.firstName} ${user.lastName}`}
             role={ROLE_LABELS[user.role]}

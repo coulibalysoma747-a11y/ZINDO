@@ -3,11 +3,55 @@
 import bcrypt from "bcryptjs";
 import { revalidatePath } from "next/cache";
 import { supabase } from "@/lib/supabase";
-import { requireSuperAdmin } from "@/lib/superadmin-auth";
+import { requireSuperAdmin, requireFounder } from "@/lib/superadmin-auth";
 import { logAdminAction } from "@/lib/admin-audit";
 import type { Role } from "@/lib/db-types";
 
 export type ActionState = { error?: string; success?: string } | undefined;
+
+export type DeleteBusinessResult = { success?: string; error?: string };
+
+/**
+ * Réservé au fondateur : suppression définitive d'un commerce et de toutes
+ * ses données (cascade via les FK `on delete cascade` déjà en place sur
+ * chaque table liée à businesses(id)). Reconfirmation par mot de passe
+ * obligatoire, même logique que deleteAdminAction (lib/actions/admin-management.ts).
+ */
+export async function deleteBusinessAction(
+  businessId: string,
+  currentPassword: string
+): Promise<DeleteBusinessResult> {
+  const founder = await requireFounder();
+
+  const valid = await bcrypt.compare(currentPassword, founder.passwordHash);
+  if (!valid) return { error: "Mot de passe incorrect" };
+
+  const { data: target } = await supabase.from("businesses").select("id, name").eq("id", businessId).maybeSingle();
+  if (!target) return { error: "Commerce introuvable" };
+
+  const { error } = await supabase.from("businesses").delete().eq("id", businessId);
+  if (error) {
+    console.error("[deleteBusinessAction] Échec de la suppression :", error.message);
+    const isForeignKeyError = /foreign key|violates/.test(error.message.toLowerCase());
+    return {
+      error: isForeignKeyError
+        ? "Impossible de supprimer : des données liées bloquent encore la suppression"
+        : "Impossible de supprimer ce commerce",
+    };
+  }
+
+  await logAdminAction({
+    superAdminId: founder.id,
+    actorName: founder.name,
+    action: "DELETE",
+    entity: "Business",
+    entityId: businessId,
+    details: target.name as string,
+  });
+
+  revalidatePath("/admin/commercants");
+  return { success: "Commerce supprimé" };
+}
 
 export async function toggleBusinessSuspendedAction(businessId: string, suspended: boolean) {
   const admin = await requireSuperAdmin();

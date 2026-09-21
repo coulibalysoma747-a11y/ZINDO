@@ -7,6 +7,7 @@ import { formatDateTime, formatMoney } from "@/lib/format";
 import { Card, CardBody, CardHeader } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { SuspendToggle } from "./SuspendToggle";
+import { DeleteBusinessButton } from "./DeleteBusinessButton";
 import { BusinessPlanSelect } from "../../abonnements/BusinessPlanSelect";
 import { ResetPasswordButton } from "./ResetPasswordButton";
 import { ImpersonateButton } from "./ImpersonateButton";
@@ -99,7 +100,10 @@ export default async function AdminBusinessDetailPage({
             {business.activity ?? "Activité non renseignée"} — {business.city ?? "—"}, {business.country}
           </p>
         </div>
-        <SuspendToggle businessId={business.id} suspended={business.suspended} />
+        <div className="flex items-center gap-2">
+          <SuspendToggle businessId={business.id} suspended={business.suspended} />
+          {isFounder && <DeleteBusinessButton businessId={business.id} businessName={business.name} />}
+        </div>
       </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">

@@ -30,6 +30,8 @@ export type BusinessSettings = {
   allowMixedPayment: boolean;
   /** "Panier IA" — lit une commande dictée/tapée/photographiée en caisse pour proposer les lignes de panier, à confirmer avant tout ajout réel. Coûte un appel IA par analyse : désactivé par défaut. */
   aiCartEnabled: boolean;
+  /** "Avez-vous une boutique/local physique ?" — répond au bandeau affiché à l'administrateur tant que la question n'a pas été posée. `null` = jamais répondu (déclenche le bandeau), distinct d'une réponse explicite `false`. */
+  hasPhysicalStore: boolean | null;
   /** Modules que le commerçant peut masquer/afficher lui-même dans son propre menu (voir lib/nav.ts `moduleToggle`). */
   modulesEnabled: {
     devis: boolean;
@@ -68,6 +70,7 @@ const DEFAULTS: BusinessSettings = {
   mobileMoneyOperators: ["ORANGE", "MOOV", "WAVE"],
   allowMixedPayment: false,
   aiCartEnabled: false,
+  hasPhysicalStore: null,
   modulesEnabled: {
     devis: true,
     prixDeRevient: true,
