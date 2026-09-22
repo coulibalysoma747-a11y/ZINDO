@@ -16,7 +16,8 @@ export type InvoiceTemplateId =
   | "pharmacie"
   | "grossiste"
   | "moto"
-  | "restaurant";
+  | "restaurant"
+  | "epicerie";
 
 export type InvoiceTemplateMeta = {
   id: InvoiceTemplateId;
@@ -74,6 +75,12 @@ export const INVOICE_TEMPLATES: InvoiceTemplateMeta[] = [
     label: "Restaurant",
     description: "Chaleureuse, filets pointillés façon addition de table, total dans une pastille arrondie.",
     suggestedFor: ["Restaurant / Maquis", "Bar / Buvette"],
+  },
+  {
+    id: "epicerie",
+    label: "Épicerie",
+    description: "Blanc/vert frais, grille dense façon ticket de supermarché élargi — pour les factures à beaucoup de lignes.",
+    suggestedFor: ["Supermarché / Alimentation", "Boutique générale"],
   },
 ];
 
