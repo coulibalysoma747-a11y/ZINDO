@@ -165,53 +165,6 @@ export async function createConsultationAction(
   redirect("/consultations");
 }
 
-export type ConsultationReceipt = {
-  ticketNumber: string;
-  date: string;
-  itemName: string;
-  fee: number;
-  cashierName: string;
-  patientName: string | null;
-};
-
-/**
- * Reçu de consultation imprimable (§3.2 du cahier des charges) — le nom du
- * patient n'y figure que si le praticien l'a saisi (champ facultatif, voir
- * §1) : par défaut le reçu reste anonyme.
- */
-export async function getConsultationReceiptAction(id: string): Promise<ConsultationReceipt | { error: string }> {
-  const user = await requirePermission(PERMISSIONS.CONSULTATIONS_MANAGE);
-
-  const { data } = await supabase
-    .from("consultations")
-    .select(
-      "id, diagnosis, fee, createdAt:created_at, patientName:patient_name, act:medical_acts(name), user:users(firstName:first_name, lastName:last_name)"
-    )
-    .eq("id", id)
-    .eq("business_id", user.businessId)
-    .maybeSingle();
-  if (!data) return { error: "Consultation introuvable" };
-
-  const row = data as unknown as {
-    id: string;
-    diagnosis: string;
-    fee: number;
-    createdAt: string;
-    patientName: string | null;
-    act: { name: string } | null;
-    user: { firstName: string; lastName: string } | null;
-  };
-
-  return {
-    ticketNumber: `CONS-${row.id.slice(0, 8).toUpperCase()}`,
-    date: row.createdAt,
-    itemName: row.act?.name ?? row.diagnosis,
-    fee: row.fee,
-    cashierName: row.user ? `${row.user.firstName} ${row.user.lastName}` : "",
-    patientName: row.patientName,
-  };
-}
-
 export type Ordonnance = {
   number: string;
   date: string;

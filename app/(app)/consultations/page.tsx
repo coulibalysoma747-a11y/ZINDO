@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { Plus, BarChart3, Download, Stethoscope, Microscope, AlarmClock, Receipt as ReceiptIcon, Pill } from "lucide-react";
+import { Plus, BarChart3, Download, Stethoscope, Microscope, AlarmClock, Pill } from "lucide-react";
 import { requirePermission } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
 import { supabase } from "@/lib/supabase";
@@ -107,22 +107,16 @@ export default async function ConsultationsPage() {
                   <TableCell className="text-zinc-600 dark:text-slate-400">{c.diagnosis}</TableCell>
                   <TableCell className="font-semibold text-zindo-green-600">{formatMoney(c.fee, currency)}</TableCell>
                   <TableCell>
-                    <div className="flex flex-col gap-1">
+                    {c.items.length > 0 ? (
                       <a
-                        href={`/consultations/${c.id}/recu`}
+                        href={`/consultations/${c.id}/ordonnance`}
                         className="inline-flex items-center gap-1 text-sm font-medium text-zindo-green-700 hover:underline"
                       >
-                        <ReceiptIcon className="h-3.5 w-3.5" /> Reçu
+                        <Pill className="h-3.5 w-3.5" /> Ordonnance
                       </a>
-                      {c.items.length > 0 && (
-                        <a
-                          href={`/consultations/${c.id}/ordonnance`}
-                          className="inline-flex items-center gap-1 text-sm font-medium text-zindo-green-700 hover:underline"
-                        >
-                          <Pill className="h-3.5 w-3.5" /> Ordonnance
-                        </a>
-                      )}
-                    </div>
+                    ) : (
+                      <span className="text-xs text-zinc-400">—</span>
+                    )}
                   </TableCell>
                 </TableRow>
               ))}

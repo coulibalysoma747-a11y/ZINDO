@@ -21,8 +21,8 @@ renseigné.
 renseigner le **nom** et l'**âge exact** du patient — deux champs facultatifs,
 distincts du sexe/tranche d'âge/`patientCode` qui restent, eux, pensés pour
 un usage anonyme. Laissés vides, le registre reste anonyme comme avant. Une
-fois saisi, le nom du patient apparaît aussi sur le reçu imprimable (§3.2).
-Cette exception est un choix produit assumé par le porteur du projet
+fois saisi, le nom du patient apparaît aussi sur l'ordonnance imprimable
+(§3.5). Cette exception est un choix produit assumé par le porteur du projet
 (Coulibaly Soma) : elle sort ZINDO du régime "aucune donnée nominative" pour
 les cabinets qui préfèrent tenir un vrai registre nominatif — libre à chaque
 cabinet de ne pas utiliser ces deux champs.
@@ -66,14 +66,17 @@ devient un champ structuré à visée tarifaire.
   modifiable à la volée.
 - Les statistiques et l'export CSV intègrent la répartition par acte.
 
-### 3.2 Reçu de consultation imprimable
+### 3.2 Pas de « reçu » de consultation — correction explicite
 
-Section 11 du cahier des charges général de ZINDO ("Ticket de caisse")
-s'applique aussi au cabinet médical : après une consultation, un reçu
-(numéro, date, acte/diagnostic, montant, mode de paiement implicite espèces)
-peut être imprimé ou partagé, en réutilisant le composant `Receipt` déjà
-utilisé pour les ventes (formats 58 mm / 80 mm / A4). Le nom du patient n'y
-figure que si le praticien l'a saisi (§1) — sinon le reçu reste anonyme.
+Une première version reprenait ici la section 11 du cahier des charges
+général de ZINDO ("Ticket de caisse") pour générer un reçu de paiement
+imprimable après chaque consultation (comme un ticket de caisse). **Retiré
+sur demande explicite** : un cabinet médical n'a pas de "reçu" au sens
+commerce — le document que le médecin remet au patient est l'**ordonnance**
+(§3.5), pas une preuve de paiement. La route et l'action dédiées au reçu de
+consultation ont été supprimées ; le montant des frais reste visible dans le
+registre (`/consultations`) et les statistiques (§2), simplement sans
+document imprimable séparé pour le paiement.
 
 ### 3.3 Numéro de patient auto-généré
 
@@ -193,9 +196,9 @@ peut : définir son catalogue d'actes et leurs tarifs, ainsi que sa liste de
 diagnostics courants → enregistrer une consultation en 30 secondes (numéro de
 patient auto-généré, acte et diagnostic choisis dans une liste, frais
 pré-rempli, nom/âge du patient facultatifs) → prescrire directement des
-produits de son catalogue avec quantité et posologie → imprimer/partager le
-reçu et l'ordonnance → suivre ses statistiques épidémiologiques et son bilan
-financier par période — en choisissant lui-même, consultation par
+produits de son catalogue ou décrits librement, avec quantité et posologie →
+imprimer/partager l'ordonnance → suivre ses statistiques épidémiologiques et
+son bilan financier par période — en choisissant lui-même, consultation par
 consultation, de rester anonyme ou non.
 
 ## 7. Interface épurée : Aide/Support et Paramètres
