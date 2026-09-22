@@ -21,7 +21,7 @@ export async function GET() {
 
   const { data } = await supabase
     .from("consultations")
-    .select("patientCode:patient_code, sex, ageGroup:age_group, diagnosis, treatment, fee, createdAt:created_at")
+    .select("patientCode:patient_code, sex, ageGroup:age_group, diagnosis, treatment, fee, createdAt:created_at, act:medical_acts(name)")
     .eq("business_id", user.businessId)
     .order("created_at", { ascending: false });
 
@@ -33,15 +33,17 @@ export async function GET() {
     treatment: string | null;
     fee: number;
     createdAt: string;
+    act: { name: string } | null;
   }>;
 
-  let csv = "﻿" + toRow(["date", "code_patient", "sexe", "tranche_age", "diagnostic", "traitement", "frais_fcfa"]);
+  let csv = "﻿" + toRow(["date", "code_patient", "sexe", "tranche_age", "acte", "diagnostic", "traitement", "frais_fcfa"]);
   for (const r of rows) {
     csv += toRow([
       new Date(r.createdAt).toLocaleString("fr-FR"),
       r.patientCode,
       r.sex,
       AGE_GROUP_LABELS[r.ageGroup],
+      r.act?.name ?? "",
       r.diagnosis,
       r.treatment,
       r.fee,

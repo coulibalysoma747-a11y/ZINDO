@@ -1,12 +1,19 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import { createConsultationAction } from "@/lib/actions/consultations";
+import type { MedicalAct } from "@/lib/actions/medical-acts";
 import { Field, Input, Select, Textarea } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 
-export function ConsultationForm() {
+export function ConsultationForm({ medicalActs }: { medicalActs: MedicalAct[] }) {
   const [state, action, pending] = useActionState(createConsultationAction, undefined);
+  const [fee, setFee] = useState(0);
+
+  function handleActChange(actId: string) {
+    const act = medicalActs.find((a) => a.id === actId);
+    if (act) setFee(act.defaultFee);
+  }
 
   return (
     <form action={action} className="space-y-4">
@@ -34,6 +41,18 @@ export function ConsultationForm() {
           </Select>
         </Field>
       </div>
+      {medicalActs.length > 0 && (
+        <Field label="Acte médical (facultatif — pré-remplit les frais)" htmlFor="actId">
+          <Select id="actId" name="actId" defaultValue="" onChange={(e) => handleActChange(e.target.value)}>
+            <option value="">Aucun / saisie libre</option>
+            {medicalActs.map((a) => (
+              <option key={a.id} value={a.id}>
+                {a.name}
+              </option>
+            ))}
+          </Select>
+        </Field>
+      )}
       <Field label="Diagnostic / pathologie" htmlFor="diagnosis">
         <Input id="diagnosis" name="diagnosis" placeholder="Ex: Paludisme" required />
       </Field>
@@ -41,7 +60,16 @@ export function ConsultationForm() {
         <Textarea id="treatment" name="treatment" rows={3} placeholder="Ordonnance ou soins administrés" />
       </Field>
       <Field label="Frais de consultation (FCFA)" htmlFor="fee">
-        <Input id="fee" name="fee" type="number" min={0} step={1} required defaultValue={0} />
+        <Input
+          id="fee"
+          name="fee"
+          type="number"
+          min={0}
+          step={1}
+          required
+          value={fee}
+          onChange={(e) => setFee(Number(e.target.value))}
+        />
       </Field>
       {state?.error && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{state.error}</p>}
       <Button type="submit" className="w-full" disabled={pending}>

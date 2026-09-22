@@ -920,6 +920,19 @@ create index on expenses (location_id);
 -- nominative ni d'adresse). Les charges du cabinet réutilisent la table
 -- `expenses` existante, voir app/(app)/consultations/statistiques.
 -- ---------------------------------------------------------------------------
+-- Catalogue des actes médicaux (consultation générale, pansement,
+-- injection...) : sert à pré-remplir le tarif d'une consultation, séparé du
+-- diagnostic (qui reste un champ libre à visée épidémiologique).
+create table medical_acts (
+  id text primary key default gen_random_uuid()::text,
+  business_id text not null references businesses(id) on delete cascade,
+  name text not null,
+  default_fee int not null default 0,
+  created_at timestamptz not null default now(),
+  unique (business_id, name)
+);
+create index on medical_acts (business_id);
+
 create table consultations (
   id text primary key default gen_random_uuid()::text,
   business_id text not null references businesses(id) on delete cascade,
@@ -927,12 +940,14 @@ create table consultations (
   patient_code text,
   sex text not null check (sex in ('M','F')),
   age_group text not null check (age_group in ('ENFANT','ADULTE','SENIOR')),
+  act_id text references medical_acts(id) on delete set null,
   diagnosis text not null,
   treatment text,
   fee int not null default 0,
   created_at timestamptz not null default now()
 );
 create index on consultations (business_id, created_at desc);
+create index on consultations (act_id);
 
 create table notifications (
   id text primary key default gen_random_uuid()::text,

@@ -141,6 +141,21 @@ CREATE TABLE IF NOT EXISTS feature_flag_locations (
 );
 CREATE INDEX IF NOT EXISTS feature_flag_locations_location_id_idx ON feature_flag_locations (location_id);
 
+-- Catalogue des actes médicaux (cabinet médical) et lien depuis consultations
+-- — voir docs/cahier-des-charges-cabinet-medical.md §3.1.
+CREATE TABLE IF NOT EXISTS medical_acts (
+  id text primary key default gen_random_uuid()::text,
+  business_id text not null references businesses(id) on delete cascade,
+  name text not null,
+  default_fee int not null default 0,
+  created_at timestamptz not null default now(),
+  unique (business_id, name)
+);
+CREATE INDEX IF NOT EXISTS medical_acts_business_id_idx ON medical_acts (business_id);
+
+ALTER TABLE consultations ADD COLUMN IF NOT EXISTS act_id text references medical_acts(id) on delete set null;
+CREATE INDEX IF NOT EXISTS consultations_act_id_idx ON consultations (act_id);
+
 -- --- Fonctions manquantes ---------------------------------------------------
 CREATE OR REPLACE FUNCTION claim_promo_code_usage(p_promo_code_id text)
 RETURNS boolean AS $$

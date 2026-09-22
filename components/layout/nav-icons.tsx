@@ -41,6 +41,7 @@ import {
   Stethoscope,
   Activity,
   CalendarX2,
+  HeartPulse,
 } from "lucide-react";
 
 // Module simple (sans "use client") pour que cette table icône-par-module
@@ -109,6 +110,7 @@ const ICON_KEYS_ORDER: NavItem["icon"][] = [
   "shipments",
   "cashier",
   "consultations",
+  "medical-acts",
   "medical-stats",
   "expiry",
 ];
@@ -157,6 +159,7 @@ export const NAV_ICONS: Record<NavItem["icon"], React.ComponentType<{ className?
   shipments: Package2,
   cashier: Banknote,
   consultations: Stethoscope,
+  "medical-acts": HeartPulse,
   "medical-stats": Activity,
   expiry: CalendarX2,
 };

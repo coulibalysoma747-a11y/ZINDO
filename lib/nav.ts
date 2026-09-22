@@ -52,6 +52,7 @@ export type NavItem = {
     | "shipments"
     | "cashier"
     | "consultations"
+    | "medical-acts"
     | "medical-stats"
     | "expiry";
   permission?: Permission;
@@ -112,6 +113,14 @@ export const NAV_ITEMS: NavItem[] = [
     label: "Statistiques médicales",
     href: "/consultations/statistiques",
     icon: "medical-stats",
+    permission: PERMISSIONS.CONSULTATIONS_MANAGE,
+    requireActivity: MEDICAL_ACTIVITY_KEY,
+    featureFlag: CONSULTATIONS_FLAG,
+  },
+  {
+    label: "Actes médicaux",
+    href: "/consultations/actes",
+    icon: "medical-acts",
     permission: PERMISSIONS.CONSULTATIONS_MANAGE,
     requireActivity: MEDICAL_ACTIVITY_KEY,
     featureFlag: CONSULTATIONS_FLAG,

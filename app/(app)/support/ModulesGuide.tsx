@@ -161,6 +161,18 @@ export const DESCRIPTIONS: Record<string, { short: string; long: string }> = {
     short: "Récupérez un panier envoyé par un vendeur (module Vente) et finalisez le paiement.",
     long: "Avec « Caisse à deux » activé (Paramètres > Modules), un vendeur prépare un panier sur Vente et clique « Envoyer à la caisse » sans encaisser. Ici, récupérez ce panier dans la file d'attente (retiré dès qu'il est récupéré, pour ne jamais être pris deux fois) et finalisez le paiement — c'est seulement à ce moment que le stock est déduit. Nécessite la permission « Encaisser depuis la file d'attente », à accorder dans Rôles et permissions.",
   },
+  "/consultations": {
+    short: "Registre anonymisé des consultations : sexe, âge, diagnostic et frais — sans identité du patient.",
+    long: "Enregistrez chaque consultation en quelques secondes (sexe, tranche d'âge, acte, diagnostic, frais) sans jamais collecter de nom, téléphone ou adresse — secret médical respecté. Chaque ligne peut être réimprimée en reçu et l'ensemble du registre s'exporte en CSV. Réservé à l'activité « Cabinet médical / Clinique ».",
+  },
+  "/consultations/actes": {
+    short: "Votre catalogue d'actes médicaux et leur tarif par défaut, pour accélérer la saisie.",
+    long: "Définissez vos actes (consultation générale, pansement, injection, suivi de grossesse...) avec un tarif par défaut. Une fois créés, ils apparaissent dans un sélecteur sur l'écran Nouvelle consultation qui pré-remplit les frais — modifiables à la volée si besoin.",
+  },
+  "/consultations/statistiques": {
+    short: "Chiffre d'affaires, charges et bénéfice du cabinet, pathologies et actes les plus fréquents.",
+    long: "Le bilan financier du cabinet sur la période choisie (7 derniers jours, ce mois-ci, depuis le début) : recettes de consultation, charges (module Dépenses) et bénéfice, ainsi que le classement des pathologies et des actes les plus fréquents et le profil de la patientèle (sexe, tranche d'âge).",
+  },
 };
 
 export function ModulesGuide({ availability }: { availability: Record<string, ModuleAvailability> }) {

@@ -37,7 +37,7 @@ export default async function ConsultationsStatsPage({
 
   let consultationsQuery = supabase
     .from("consultations")
-    .select("sex, ageGroup:age_group, diagnosis, fee")
+    .select("sex, ageGroup:age_group, diagnosis, fee, act:medical_acts(name)")
     .eq("business_id", user.businessId);
   if (since) consultationsQuery = consultationsQuery.gte("created_at", since);
   let expensesQuery = supabase.from("expenses").select("amount").eq("business_id", user.businessId);
@@ -49,6 +49,7 @@ export default async function ConsultationsStatsPage({
     ageGroup: "ENFANT" | "ADULTE" | "SENIOR";
     diagnosis: string;
     fee: number;
+    act: { name: string } | null;
   }>;
   const expenses = (expensesData ?? []) as unknown as Array<{ amount: number }>;
 
@@ -58,14 +59,20 @@ export default async function ConsultationsStatsPage({
   const benefice = recettes - depenses;
 
   const diagnosisCounts = new Map<string, number>();
+  const actCounts = new Map<string, number>();
   const sexCounts = { M: 0, F: 0 };
   const ageCounts = { ENFANT: 0, ADULTE: 0, SENIOR: 0 };
   for (const c of consultations) {
     diagnosisCounts.set(c.diagnosis, (diagnosisCounts.get(c.diagnosis) ?? 0) + 1);
+    if (c.act?.name) actCounts.set(c.act.name, (actCounts.get(c.act.name) ?? 0) + 1);
     sexCounts[c.sex] += 1;
     ageCounts[c.ageGroup] += 1;
   }
   const topDiagnoses = [...diagnosisCounts.entries()]
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 10)
+    .map(([name, count]) => ({ name, count, pct: total ? Math.round((count / total) * 100) : 0 }));
+  const topActs = [...actCounts.entries()]
     .sort((a, b) => b[1] - a[1])
     .slice(0, 10)
     .map(([name, count]) => ({ name, count, pct: total ? Math.round((count / total) * 100) : 0 }));
@@ -153,6 +160,23 @@ export default async function ConsultationsStatsPage({
                 <span className="text-zinc-700">{d.name}</span>
                 <span className="font-medium text-zinc-900">
                   {d.count} ({d.pct}%)
+                </span>
+              </div>
+            ))}
+          </CardBody>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <h2 className="font-semibold text-zinc-900">Actes les plus pratiqués</h2>
+          </CardHeader>
+          <CardBody className="space-y-2">
+            {topActs.length === 0 && <p className="text-sm text-zinc-500">Aucune donnée sur cette période.</p>}
+            {topActs.map((a) => (
+              <div key={a.name} className="flex items-center justify-between gap-3 text-sm">
+                <span className="text-zinc-700">{a.name}</span>
+                <span className="font-medium text-zinc-900">
+                  {a.count} ({a.pct}%)
                 </span>
               </div>
             ))}
