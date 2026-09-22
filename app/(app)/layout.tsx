@@ -53,7 +53,11 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   return (
     <div className="flex min-h-screen bg-zinc-50 print:block print:min-h-0 print:bg-white">
       <div className="print:hidden">
-        <Sidebar businessName={user.business.name} items={navItems} />
+        <Sidebar
+          businessName={user.business.name}
+          items={navItems}
+          userName={`${user.firstName} ${user.lastName}`}
+        />
       </div>
       <div className="flex min-w-0 flex-1 flex-col print:block">
         <div className="print:hidden">

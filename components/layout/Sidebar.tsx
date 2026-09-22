@@ -1,3 +1,4 @@
+import Link from "next/link";
 import type { NavItem } from "@/lib/nav";
 import { SidebarLink } from "./SidebarLink";
 import { ZindoLogo } from "@/components/auth/ZindoLogo";
@@ -5,9 +6,11 @@ import { ZindoLogo } from "@/components/auth/ZindoLogo";
 export function Sidebar({
   businessName,
   items,
+  userName,
 }: {
   businessName: string;
   items: NavItem[];
+  userName: string;
 }) {
   const footerHrefs = ["/support", "/parametres"];
   const footerItems = footerHrefs
@@ -43,6 +46,19 @@ export function Sidebar({
           ))}
         </div>
       )}
+
+      <Link
+        href="/profil"
+        className="flex shrink-0 items-center gap-3 border-t-2 border-dashed border-zindo-green-200 p-3 hover:bg-zindo-ink-50"
+      >
+        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-zindo-green-100 text-sm font-semibold text-zindo-green-700">
+          {userName.slice(0, 1).toUpperCase()}
+        </div>
+        <div className="min-w-0">
+          <p className="text-[10px] font-semibold uppercase tracking-wider text-zindo-ink-500">Compte</p>
+          <p className="truncate text-sm font-medium text-zindo-ink-900">{userName}</p>
+        </div>
+      </Link>
     </aside>
   );
 }
