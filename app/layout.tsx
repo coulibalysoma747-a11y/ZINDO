@@ -22,7 +22,7 @@ export const metadata: Metadata = {
   // Requis par Next.js pour résoudre les URLs d'images relatives (openGraph,
   // twitter) en URLs absolues dans le HTML généré — sans ça, les aperçus de
   // lien (WhatsApp, Facebook...) reçoivent une URL invalide.
-  metadataBase: new URL("https://zindo.vercel.app"),
+  metadataBase: new URL("https://www.zindo.site"),
   title: {
     default: TITLE,
     template: "%s | ZINDO",

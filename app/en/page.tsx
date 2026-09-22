@@ -159,7 +159,7 @@ const STRUCTURED_DATA = [
     operatingSystem: "Web, Android, iOS, Windows",
     description:
       "Stock, checkout, and sales management app for businesses across West Africa (shops, hardware stores, spare parts, motorcycles, groceries).",
-    url: "https://zindo.vercel.app/en",
+    url: "https://www.zindo.site/en",
     offers: {
       "@type": "Offer",
       price: "0",

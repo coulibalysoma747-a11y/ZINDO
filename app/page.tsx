@@ -171,7 +171,7 @@ const STRUCTURED_DATA = [
     operatingSystem: "Web, Android, iOS, Windows",
     description:
       "Application de gestion de stock, de caisse et de ventes pour les commerces d'Afrique de l'Ouest (boutiques, quincailleries, pièces détachées, motos, alimentation).",
-    url: "https://zindo.vercel.app",
+    url: "https://www.zindo.site",
     offers: {
       "@type": "Offer",
       price: "0",
