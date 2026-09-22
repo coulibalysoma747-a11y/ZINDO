@@ -4,7 +4,8 @@ import { useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { X } from "lucide-react";
 import { Button } from "@/components/ui/Button";
-import { updateCustomOrderStatusAction, CUSTOM_ORDER_STATUS_LABELS, CUSTOM_ORDER_STATUS_FLOW } from "@/lib/actions/custom-orders";
+import { updateCustomOrderStatusAction } from "@/lib/actions/custom-orders";
+import { CUSTOM_ORDER_STATUS_LABELS, CUSTOM_ORDER_STATUS_FLOW } from "@/lib/custom-order-status";
 import type { CustomOrderStatus } from "@/lib/db-types";
 
 function nextStatus(status: CustomOrderStatus): CustomOrderStatus | null {

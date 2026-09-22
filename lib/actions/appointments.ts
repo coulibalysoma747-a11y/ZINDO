@@ -6,19 +6,11 @@ import { supabase } from "@/lib/supabase";
 import { requirePermission } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
 import { isFeatureEnabled, registerFeatureFlag } from "@/lib/feature-flags";
-import { APPOINTMENTS_FLAG, BEAUTY_ACTIVITY_KEY } from "@/lib/nav";
+import { APPOINTMENTS_FLAG } from "@/lib/nav";
+import { APPOINTMENT_STATUS_LABELS } from "@/lib/appointment-status";
 import type { AppointmentStatus } from "@/lib/db-types";
 
-export { BEAUTY_ACTIVITY_KEY };
-
 export type ActionState = { error?: string; success?: string } | undefined;
-
-export const APPOINTMENT_STATUS_LABELS: Record<AppointmentStatus, string> = {
-  CONFIRME: "Confirmé",
-  TERMINE: "Terminé",
-  ANNULE: "Annulé",
-  ABSENT: "Absent",
-};
 
 /**
  * Rendez-vous : nouvelle fonctionnalité, désactivée par défaut tant qu'elle

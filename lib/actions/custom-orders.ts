@@ -10,20 +10,10 @@ import { logAction } from "@/lib/audit";
 import { adjustStock } from "@/lib/stock";
 import { generateCustomOrderNumber } from "@/lib/reference";
 import { isFeatureEnabled, registerFeatureFlag } from "@/lib/feature-flags";
-import { CUSTOM_ORDERS_FLAG, ARTISAN_ACTIVITY_KEY } from "@/lib/nav";
+import { CUSTOM_ORDERS_FLAG } from "@/lib/nav";
 import { rethrowIfNavigationSignal } from "@/lib/action-errors";
+import { CUSTOM_ORDER_STATUS_LABELS } from "@/lib/custom-order-status";
 import type { CustomOrderStatus, PaymentMethod } from "@/lib/db-types";
-
-export { ARTISAN_ACTIVITY_KEY };
-
-export const CUSTOM_ORDER_STATUS_LABELS: Record<CustomOrderStatus, string> = {
-  EN_COURS: "En cours",
-  PRET: "Prêt",
-  LIVRE: "Livré",
-  ANNULE: "Annulé",
-};
-
-export const CUSTOM_ORDER_STATUS_FLOW: CustomOrderStatus[] = ["EN_COURS", "PRET", "LIVRE"];
 
 /**
  * Commandes sur mesure : nouvelle fonctionnalité, désactivée par défaut tant

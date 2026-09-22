@@ -25,16 +25,12 @@ export function WarrantyManager({ products, customers }: { products: { id: strin
   const [state, formAction, pending] = useActionState<ActionState, FormData>(registerWarrantyAction, undefined);
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<WarrantyRecord[]>([]);
-  const [searching, setSearching] = useState(false);
   const [, startTransition] = useTransition();
 
   useEffect(() => {
     if (tab !== "search") return;
-    setSearching(true);
     const timeout = setTimeout(() => {
-      searchWarrantyAction(query)
-        .then((r) => setResults(r))
-        .finally(() => setSearching(false));
+      searchWarrantyAction(query).then((r) => setResults(r));
     }, 250);
     return () => clearTimeout(timeout);
   }, [query, tab]);

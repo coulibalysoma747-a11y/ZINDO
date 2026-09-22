@@ -14,11 +14,11 @@ import {
   createAppointmentAction,
   updateAppointmentStatusAction,
   deleteAppointmentAction,
-  APPOINTMENT_STATUS_LABELS,
   type ActionState,
   type AppointmentRow,
   type ServiceRow,
 } from "@/lib/actions/appointments";
+import { APPOINTMENT_STATUS_LABELS } from "@/lib/appointment-status";
 import type { AppointmentStatus } from "@/lib/db-types";
 
 const STATUS_TONE: Record<AppointmentStatus, "zinc" | "blue" | "amber" | "emerald" | "red"> = {

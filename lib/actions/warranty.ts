@@ -6,9 +6,7 @@ import { supabase } from "@/lib/supabase";
 import { requirePermission } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
 import { isFeatureEnabled, registerFeatureFlag } from "@/lib/feature-flags";
-import { WARRANTY_FLAG, ELECTRONICS_ACTIVITY_KEY } from "@/lib/nav";
-
-export { ELECTRONICS_ACTIVITY_KEY };
+import { WARRANTY_FLAG } from "@/lib/nav";
 
 export type ActionState = { error?: string; success?: string } | undefined;
 

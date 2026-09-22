@@ -4,7 +4,8 @@ import { useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { X } from "lucide-react";
 import { Button } from "@/components/ui/Button";
-import { updateRepairStatusAction, REPAIR_STATUS_LABELS, REPAIR_STATUS_FLOW } from "@/lib/actions/repairs";
+import { updateRepairStatusAction } from "@/lib/actions/repairs";
+import { REPAIR_STATUS_LABELS, REPAIR_STATUS_FLOW } from "@/lib/repair-status";
 import type { RepairStatus } from "@/lib/db-types";
 
 /** Prochaine étape normale du parcours d'un bon — le commerçant peut aussi sauter des étapes si besoin (ex. RECU → TERMINE). */

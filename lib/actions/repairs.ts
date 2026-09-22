@@ -10,24 +10,10 @@ import { logAction } from "@/lib/audit";
 import { adjustStock } from "@/lib/stock";
 import { generateRepairNumber } from "@/lib/reference";
 import { isFeatureEnabled, registerFeatureFlag } from "@/lib/feature-flags";
-import { REPAIR_FLAG, REPAIR_ACTIVITIES } from "@/lib/nav";
+import { REPAIR_FLAG } from "@/lib/nav";
 import { rethrowIfNavigationSignal } from "@/lib/action-errors";
+import { REPAIR_STATUS_LABELS } from "@/lib/repair-status";
 import type { RepairStatus, PaymentMethod } from "@/lib/db-types";
-
-export { REPAIR_ACTIVITIES };
-
-export const REPAIR_STATUS_LABELS: Record<RepairStatus, string> = {
-  RECU: "Reçu",
-  DIAGNOSTIC: "Diagnostic",
-  EN_COURS: "En réparation",
-  ATTENTE_PIECES: "Attente pièces",
-  TERMINE: "Terminé",
-  LIVRE: "Livré",
-  ANNULE: "Annulé",
-};
-
-/** Ordre normal du parcours d'un bon (hors ANNULE, accessible depuis n'importe quel statut). */
-export const REPAIR_STATUS_FLOW: RepairStatus[] = ["RECU", "DIAGNOSTIC", "EN_COURS", "ATTENTE_PIECES", "TERMINE", "LIVRE"];
 
 /**
  * Bons de réparation : nouvelle fonctionnalité, désactivée par défaut tant

@@ -8,12 +8,10 @@ import { PERMISSIONS } from "@/lib/permissions";
 import { logAction } from "@/lib/audit";
 import { generateTableOrderNumber } from "@/lib/reference";
 import { isFeatureEnabled, registerFeatureFlag } from "@/lib/feature-flags";
-import { TABLES_FLAG, TABLE_ACTIVITIES } from "@/lib/nav";
+import { TABLES_FLAG } from "@/lib/nav";
 import { createSaleAction, type CartItemInput } from "@/lib/actions/sales";
 import { rethrowIfNavigationSignal } from "@/lib/action-errors";
 import type { TableStatus, TableOrderStatus, PaymentMethod } from "@/lib/db-types";
-
-export { TABLE_ACTIVITIES };
 
 export type ActionState = { error?: string; success?: string } | undefined;
 
