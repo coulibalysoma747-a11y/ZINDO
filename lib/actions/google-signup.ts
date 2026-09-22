@@ -9,6 +9,7 @@ import { createSession, getPendingGoogleSignupSession, createPendingGoogleSignup
 import { isEmailConfigured, sendVerificationCodeEmail } from "@/lib/email";
 import { registerFeatureFlag, isFeatureEnabledGlobally } from "@/lib/feature-flags";
 import type { Role } from "@/lib/db-types";
+import { isCountryCode, countryNameFr, DEFAULT_COUNTRY_CODE } from "@/lib/countries";
 
 export type ActionState = { error?: string } | undefined;
 
@@ -40,6 +41,7 @@ const profileSchema = z.object({
   phone: z.string().min(6, "Numéro de téléphone invalide"),
   businessName: z.string().min(1, "Nom du commerce requis"),
   city: z.string().optional(),
+  country: z.string().optional(),
 });
 
 export async function submitGoogleSignupProfileAction(
@@ -53,11 +55,12 @@ export async function submitGoogleSignupProfileAction(
     phone: formData.get("phone"),
     businessName: formData.get("businessName"),
     city: formData.get("city") || undefined,
+    country: formData.get("country") || undefined,
   });
   if (!parsed.success) {
     return { error: parsed.error.issues[0]?.message ?? "Champs invalides" };
   }
-  const { phone, businessName, city } = parsed.data;
+  const { phone, businessName, city, country } = parsed.data;
 
   if (!isEmailConfigured()) {
     console.error("[submitGoogleSignupProfileAction] RESEND_API_KEY manquant");
@@ -83,6 +86,7 @@ export async function submitGoogleSignupProfileAction(
     phone,
     businessName,
     city,
+    country,
     code,
     codeExpiresAt: Date.now() + CODE_TTL_MS,
     attempts: 0,
@@ -121,6 +125,7 @@ export async function confirmGoogleSignupCodeAction(
   const { data, error } = await supabase.rpc("register_business", {
     p_business_name: pending.businessName,
     p_city: pending.city ?? null,
+    p_country: countryNameFr(isCountryCode(pending.country) ? pending.country : DEFAULT_COUNTRY_CODE),
     p_first_name: pending.firstName,
     p_last_name: pending.lastName,
     p_phone: pending.phone,

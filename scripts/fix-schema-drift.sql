@@ -448,3 +448,50 @@ BEGIN
   RETURN coalesce(v_claimed, false);
 END;
 $$ LANGUAGE plpgsql;
+
+-- register_business : ajoute p_country (Afrique de l'Ouest, ZINDO n'est plus
+-- Burkina-only) — colonne businesses.country déjà présente, ancien défaut
+-- 'Burkina Faso' conservé si p_country est omis par un appelant existant.
+CREATE OR REPLACE FUNCTION register_business(
+  p_business_name text,
+  p_city text,
+  p_first_name text,
+  p_last_name text,
+  p_phone text,
+  p_email text,
+  p_password_hash text,
+  p_country text DEFAULT NULL
+)
+RETURNS TABLE (user_id text, business_id text, role text) AS $$
+DECLARE
+  v_business_id text;
+  v_user_id text;
+  v_standard_plan_id text;
+BEGIN
+  INSERT INTO businesses (name, city, country) VALUES (p_business_name, p_city, coalesce(p_country, 'Burkina Faso'))
+    RETURNING id INTO v_business_id;
+
+  INSERT INTO users (business_id, first_name, last_name, phone, email, password_hash, role)
+    VALUES (v_business_id, p_first_name, p_last_name, p_phone, nullif(p_email, ''), p_password_hash, 'ADMIN')
+    RETURNING id INTO v_user_id;
+
+  INSERT INTO payment_method_configs (business_id, method, label) VALUES
+    (v_business_id, 'ESPECES', 'Espèces'),
+    (v_business_id, 'MOBILE_MONEY', 'Mobile Money'),
+    (v_business_id, 'CARTE', 'Carte bancaire'),
+    (v_business_id, 'CREDIT', 'Crédit');
+
+  INSERT INTO categories (business_id, name) VALUES (v_business_id, 'Général');
+
+  INSERT INTO locations (business_id, name, type, city, is_default)
+    VALUES (v_business_id, 'Boutique principale', 'BOUTIQUE', p_city, true);
+
+  SELECT id INTO v_standard_plan_id FROM subscription_plans WHERE key = 'standard';
+  IF v_standard_plan_id IS NOT NULL THEN
+    INSERT INTO business_subscriptions (business_id, plan_id, billing_cycle, status, trial_ends_at)
+      VALUES (v_business_id, v_standard_plan_id, 'MONTHLY', 'TRIAL', now() + interval '7 days');
+  END IF;
+
+  RETURN QUERY SELECT v_user_id, v_business_id, 'ADMIN'::text;
+END;
+$$ LANGUAGE plpgsql;

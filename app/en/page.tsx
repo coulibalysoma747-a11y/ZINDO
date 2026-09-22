@@ -23,9 +23,9 @@ import { InstallAppButton } from "@/components/InstallAppButton";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 
 export const metadata: Metadata = {
-  title: "ZINDO — Stock and point-of-sale management for Burkina Faso businesses",
+  title: "ZINDO — Stock and point-of-sale management for West African businesses",
   description:
-    "ZINDO is the stock, checkout, and sales management app built for businesses in Burkina Faso: shops, hardware stores, spare parts dealers, motorcycle shops, grocers. Track your stock in real time, get paid, and know your profits — in FCFA.",
+    "ZINDO is the stock, checkout, and sales management app built for businesses across West Africa (Burkina Faso, Côte d'Ivoire, Mali, Niger, Senegal...): shops, hardware stores, spare parts dealers, motorcycle shops, grocers. Track your stock in real time, get paid, and know your profits — in FCFA.",
   alternates: { canonical: "/en" },
 };
 
@@ -103,12 +103,12 @@ const FAQS = [
   {
     question: "What is ZINDO?",
     answer:
-      "ZINDO is a stock, checkout, and sales management app built for businesses in Burkina Faso: shops, hardware stores, spare parts dealers, motorcycle shops, grocers, and wholesalers. It replaces notebooks and spreadsheets.",
+      "ZINDO is a stock, checkout, and sales management app built for businesses across West Africa (Burkina Faso, Côte d'Ivoire, Mali, Niger, Senegal...): shops, hardware stores, spare parts dealers, motorcycle shops, grocers, and wholesalers. It replaces notebooks and spreadsheets.",
   },
   {
-    question: "Is ZINDO built for FCFA and Burkinabè businesses?",
+    question: "Is ZINDO built for FCFA and West African businesses?",
     answer:
-      "Yes. ZINDO runs natively in FCFA and adapts to the business type you choose at sign-up (general store, hardware store, spare parts, motorcycle shop, grocery...) to show the right fields and modules.",
+      "Yes. ZINDO runs natively in FCFA and adapts to the country and business type you choose at sign-up (general store, hardware store, spare parts, motorcycle shop, grocery...) to show the right fields and modules.",
   },
   {
     question: "How much does ZINDO cost?",
@@ -158,7 +158,7 @@ const STRUCTURED_DATA = [
     applicationCategory: "BusinessApplication",
     operatingSystem: "Web, Android, iOS, Windows",
     description:
-      "Stock, checkout, and sales management app for businesses in Burkina Faso (shops, hardware stores, spare parts, motorcycles, groceries).",
+      "Stock, checkout, and sales management app for businesses across West Africa (shops, hardware stores, spare parts, motorcycles, groceries).",
     url: "https://zindo.vercel.app/en",
     offers: {
       "@type": "Offer",
@@ -233,7 +233,7 @@ export default async function EnglishRootPage() {
           </h1>
           <p className="mx-auto mt-4 max-w-xl text-base text-zinc-600 sm:text-lg">
             Track your stock in real time, take payments, and finally know your profits — from a single app built
-            for businesses in Burkina Faso.
+            for businesses across West Africa.
           </p>
           <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
             <Link
@@ -357,7 +357,7 @@ export default async function EnglishRootPage() {
       </main>
 
       <footer className="relative z-10 border-t border-zinc-200 py-8 text-center text-xs text-zinc-400">
-        <p>ZINDO — Stock and sales management for businesses in Burkina Faso.</p>
+        <p>ZINDO — Stock and sales management for businesses across West Africa.</p>
         <p className="mt-1">
           WhatsApp support:{" "}
           <a

@@ -44,7 +44,7 @@ export async function askAssistantAction(
   if (isMedical) {
     tools = MEDICAL_ASSISTANT_TOOLS;
     executeTool = createMedicalToolExecutor(user.businessId);
-    systemPrompt = `Tu es l'assistant intelligent de ZINDO, une application de gestion pour les commerces et cabinets au Burkina Faso.
+    systemPrompt = `Tu es l'assistant intelligent de ZINDO, une application de gestion pour les commerces et cabinets d'Afrique de l'Ouest.
 Tu aides ${user.firstName}, du cabinet "${user.business.name}", à comprendre l'activité de son cabinet médical (consultations, pathologies, actes, patientèle, bilan financier).
 
 Règles :
@@ -60,7 +60,7 @@ Règles :
       return { success: false, error: "Configurez d'abord une boutique pour utiliser l'assistant." };
     }
     executeTool = createToolExecutor(user.businessId, currentLocation.id, user.business.currency);
-    systemPrompt = `Tu es l'assistant commercial intelligent de ZINDO, une application de gestion de stock et de ventes pour les commerces au Burkina Faso.
+    systemPrompt = `Tu es l'assistant commercial intelligent de ZINDO, une application de gestion de stock et de ventes pour les commerces d'Afrique de l'Ouest.
 Tu aides ${user.firstName}, gérant de "${user.business.name}", à comprendre les performances de sa boutique "${currentLocation.name}".
 
 Règles :

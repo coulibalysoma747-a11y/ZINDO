@@ -1,7 +1,7 @@
 import "server-only";
 
 // Intégration CinetPay (passerelle supportant Orange Money, Moov Money, Wave
-// et carte bancaire au Burkina Faso). Reste inactive tant que les variables
+// et carte bancaire dans la zone UEMOA). Reste inactive tant que les variables
 // d'environnement ne sont pas configurées — dans ce cas, seul le paiement
 // manuel (Mobile Money + référence à confirmer) est proposé au commerçant.
 // Une fois le compte marchand créé, ajouter CINETPAY_API_KEY, CINETPAY_SITE_ID

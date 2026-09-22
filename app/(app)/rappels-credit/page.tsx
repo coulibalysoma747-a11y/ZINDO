@@ -4,15 +4,9 @@ import { requirePermission } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
 import { getCreditRemindersAction } from "@/lib/actions/credit-reminders";
 import { formatMoney, formatDate } from "@/lib/format";
+import { toWhatsAppDigits } from "@/lib/countries";
 import { Card, CardBody } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/Empty";
-
-/** Normalise un numéro burkinabè pour wa.me : que des chiffres, indicatif 226 par défaut. */
-function toWhatsAppNumber(phone: string) {
-  const digits = phone.replace(/\D/g, "");
-  if (digits.startsWith("226")) return digits;
-  return `226${digits}`;
-}
 
 export default async function CreditRemindersPage() {
   const user = await requirePermission(PERMISSIONS.CUSTOMERS_VIEW);
@@ -36,7 +30,7 @@ export default async function CreditRemindersPage() {
           {rows.map((r) => {
             const message = `Bonjour ${r.name}, ceci est un rappel amical de ${user.business.name} : vous avez un solde de ${formatMoney(r.amountDue, currency)} restant à régler. Merci de votre compréhension.`;
             const waHref = r.phone
-              ? `https://wa.me/${toWhatsAppNumber(r.phone)}?text=${encodeURIComponent(message)}`
+              ? `https://wa.me/${toWhatsAppDigits(r.phone, user.business.country)}?text=${encodeURIComponent(message)}`
               : null;
             return (
               <CardBody key={r.customerId} className="flex flex-wrap items-center justify-between gap-3">

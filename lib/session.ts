@@ -120,6 +120,7 @@ export type PendingGoogleSignupPayload = {
   phone?: string;
   businessName?: string;
   city?: string;
+  country?: string;
   code?: string;
   codeExpiresAt?: number;
   attempts?: number;

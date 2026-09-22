@@ -16,8 +16,9 @@ export default function CguPage() {
         <p>
           Les présentes conditions générales d&apos;utilisation (« CGU ») régissent l&apos;accès et l&apos;utilisation de
           l&apos;application ZINDO, éditée par Coulibaly Soma, destinée à la gestion de stock, de caisse et de ventes
-          des commerces (boutiques, quincailleries, pièces détachées, motos, alimentation, grossistes...) au Burkina
-          Faso. En créant un compte, vous acceptez sans réserve les présentes CGU.
+          des commerces (boutiques, quincailleries, pièces détachées, motos, alimentation, grossistes...) en Afrique
+          de l&apos;Ouest (Burkina Faso, Côte d&apos;Ivoire, Mali, Niger, Sénégal et autres pays de la zone). En créant un
+          compte, vous acceptez sans réserve les présentes CGU.
         </p>
       </LegalSection>
 
@@ -92,8 +93,9 @@ export default function CguPage() {
 
       <LegalSection title="9. Droit applicable">
         <p>
-          Les présentes CGU sont soumises au droit burkinabè. Tout litige relève, à défaut de résolution amiable, des
-          juridictions compétentes du Burkina Faso.
+          Les présentes CGU sont soumises au droit burkinabè, quel que soit le pays d&apos;Afrique de l&apos;Ouest depuis
+          lequel vous utilisez ZINDO. Tout litige relève, à défaut de résolution amiable, des juridictions
+          compétentes du Burkina Faso.
         </p>
       </LegalSection>
 

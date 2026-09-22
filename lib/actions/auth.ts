@@ -19,6 +19,7 @@ import {
 } from "@/lib/adminSession";
 import { verifyTotp, consumeBackupCode } from "@/lib/totp";
 import type { Role } from "@/lib/db-types";
+import { isCountryCode, countryNameFr, DEFAULT_COUNTRY_CODE } from "@/lib/countries";
 
 export type ActionState = { error?: string } | undefined;
 
@@ -279,6 +280,7 @@ const registerSchema = z.object({
   password: z.string().min(6, "6 caractères minimum"),
   businessName: z.string().min(1, "Nom du commerce requis"),
   city: z.string().optional(),
+  country: z.string().optional(),
 });
 
 export async function registerAction(
@@ -298,13 +300,15 @@ export async function registerAction(
     password: formData.get("password"),
     businessName: formData.get("businessName"),
     city: formData.get("city") || undefined,
+    country: formData.get("country") || undefined,
   });
 
   if (!parsed.success) {
     return { error: parsed.error.issues[0]?.message ?? t.invalidFields };
   }
 
-  const { firstName, lastName, phone, email, password, businessName, city } = parsed.data;
+  const { firstName, lastName, phone, email, password, businessName, city, country } = parsed.data;
+  const countryCode = isCountryCode(country) ? country : DEFAULT_COUNTRY_CODE;
 
   const { data: existing } = await supabase.from("users").select("id").eq("phone", phone).maybeSingle();
   if (existing) {
@@ -316,6 +320,7 @@ export async function registerAction(
   const { data, error } = await supabase.rpc("register_business", {
     p_business_name: businessName,
     p_city: city ?? null,
+    p_country: countryNameFr(countryCode),
     p_first_name: firstName,
     p_last_name: lastName,
     p_phone: phone,

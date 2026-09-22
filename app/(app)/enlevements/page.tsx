@@ -5,17 +5,13 @@ import { PERMISSIONS } from "@/lib/permissions";
 import { getBusinessSettings } from "@/lib/business-settings";
 import { getPickupsAction } from "@/lib/actions/pickups";
 import { formatMoney, formatDate } from "@/lib/format";
+import { toWhatsAppDigits } from "@/lib/countries";
 import { Card, CardBody } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { ButtonLink } from "@/components/ui/Button";
 import { ProductThumbnail } from "@/components/products/ProductThumbnail";
 import { EmptyState } from "@/components/ui/Empty";
 import { PickupPaymentButton } from "./PickupPaymentButton";
-
-function toWhatsAppNumber(phone: string) {
-  const digits = phone.replace(/\D/g, "");
-  return digits.startsWith("226") ? digits : `226${digits}`;
-}
 
 export default async function PickupsPage() {
   const user = await requirePermission(PERMISSIONS.STOCK_MANAGE);
@@ -57,7 +53,7 @@ export default async function PickupsPage() {
           {pickups.map((p) => {
             const remaining = Math.max(0, p.total - p.amountPaid);
             const waHref = p.partnerPhone
-              ? `https://wa.me/${toWhatsAppNumber(p.partnerPhone)}?text=${encodeURIComponent(
+              ? `https://wa.me/${toWhatsAppDigits(p.partnerPhone, user.business.country)}?text=${encodeURIComponent(
                   `Bonjour ${p.partnerName}, petit rappel : il reste ${formatMoney(remaining, currency)} pour l'enlèvement ${p.number}. Merci !`
                 )}`
               : null;

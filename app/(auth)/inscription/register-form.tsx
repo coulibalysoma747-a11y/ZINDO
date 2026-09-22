@@ -1,10 +1,11 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import Link from "next/link";
 import { registerAction } from "@/lib/actions/auth";
 import { Field, Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
+import { COUNTRIES, DEFAULT_COUNTRY_CODE, getCountry, type CountryCode } from "@/lib/countries";
 
 const TEXT = {
   fr: {
@@ -15,8 +16,8 @@ const TEXT = {
     password: "Mot de passe",
     businessName: "Nom du commerce",
     businessPlaceholder: "Ex: Quincaillerie Diallo",
+    country: "Pays",
     city: "Ville",
-    cityPlaceholder: "Ouagadougou",
     acceptPrefix: "J'accepte les",
     terms: "conditions générales d'utilisation",
     and: "et la",
@@ -34,8 +35,8 @@ const TEXT = {
     password: "Password",
     businessName: "Business name",
     businessPlaceholder: "E.g. Diallo Hardware Store",
+    country: "Country",
     city: "City",
-    cityPlaceholder: "Ouagadougou",
     acceptPrefix: "I accept the",
     terms: "Terms of Service",
     and: "and the",
@@ -49,7 +50,9 @@ const TEXT = {
 
 export function RegisterForm({ locale = "fr" }: { locale?: "fr" | "en" }) {
   const [state, action, pending] = useActionState(registerAction, undefined);
+  const [countryCode, setCountryCode] = useState<CountryCode>(DEFAULT_COUNTRY_CODE);
   const t = TEXT[locale];
+  const country = getCountry(countryCode);
 
   return (
     <form action={action} className="space-y-4">
@@ -62,8 +65,23 @@ export function RegisterForm({ locale = "fr" }: { locale?: "fr" | "en" }) {
           <Input id="lastName" name="lastName" required />
         </Field>
       </div>
+      <Field label={t.country} htmlFor="country">
+        <select
+          id="country"
+          name="country"
+          value={countryCode}
+          onChange={(e) => setCountryCode(e.target.value as CountryCode)}
+          className="h-11 w-full rounded-xl border border-zinc-200 bg-white px-3 text-[15px] text-zindo-ink-900 outline-none transition focus:border-zindo-green-500 focus:ring-4 focus:ring-zindo-green-100"
+        >
+          {COUNTRIES.map((c) => (
+            <option key={c.code} value={c.code}>
+              {c.name[locale]} ({c.dialCode})
+            </option>
+          ))}
+        </select>
+      </Field>
       <Field label={t.phone} htmlFor="phone">
-        <Input id="phone" name="phone" placeholder="70 00 00 00" required />
+        <Input id="phone" name="phone" placeholder={country.phoneExample} required />
       </Field>
       <Field label={t.email} htmlFor="email">
         <Input id="email" name="email" type="email" />
@@ -76,7 +94,7 @@ export function RegisterForm({ locale = "fr" }: { locale?: "fr" | "en" }) {
         <Input id="businessName" name="businessName" placeholder={t.businessPlaceholder} required />
       </Field>
       <Field label={t.city} htmlFor="city">
-        <Input id="city" name="city" placeholder={t.cityPlaceholder} />
+        <Input id="city" name="city" placeholder={country.capital} />
       </Field>
       <label className="flex items-start gap-2.5 text-sm text-zinc-600">
         <input

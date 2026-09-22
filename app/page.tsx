@@ -104,12 +104,12 @@ const FAQS = [
   {
     question: "Qu'est-ce que ZINDO ?",
     answer:
-      "ZINDO est une application de gestion de stock, de caisse et de ventes conçue pour les commerces du Burkina Faso : boutiques, quincailleries, magasins de pièces détachées, boutiques de motos, alimentations et grossistes. Elle remplace les cahiers et les fichiers Excel.",
+      "ZINDO est une application de gestion de stock, de caisse et de ventes conçue pour les commerces d'Afrique de l'Ouest (Burkina Faso, Côte d'Ivoire, Mali, Niger, Sénégal...) : boutiques, quincailleries, magasins de pièces détachées, boutiques de motos, alimentations et grossistes. Elle remplace les cahiers et les fichiers Excel.",
   },
   {
-    question: "ZINDO est-elle adaptée au FCFA et aux commerces burkinabè ?",
+    question: "ZINDO est-elle adaptée au FCFA et aux commerces d'Afrique de l'Ouest ?",
     answer:
-      "Oui. ZINDO fonctionne nativement en FCFA et s'adapte à l'activité choisie à l'inscription (boutique générale, quincaillerie, pièces détachées, boutique de motos, alimentation...) pour proposer les bons champs et les bons modules.",
+      "Oui. ZINDO fonctionne nativement en FCFA et s'adapte au pays et à l'activité choisis à l'inscription (boutique générale, quincaillerie, pièces détachées, boutique de motos, alimentation...) pour proposer les bons champs et les bons modules.",
   },
   {
     question: "Combien coûte ZINDO ?",
@@ -170,7 +170,7 @@ const STRUCTURED_DATA = [
     applicationCategory: "BusinessApplication",
     operatingSystem: "Web, Android, iOS, Windows",
     description:
-      "Application de gestion de stock, de caisse et de ventes pour les commerces du Burkina Faso (boutiques, quincailleries, pièces détachées, motos, alimentation).",
+      "Application de gestion de stock, de caisse et de ventes pour les commerces d'Afrique de l'Ouest (boutiques, quincailleries, pièces détachées, motos, alimentation).",
     url: "https://zindo.vercel.app",
     offers: {
       "@type": "Offer",
@@ -255,7 +255,7 @@ export default async function RootPage() {
           </h1>
           <p className="mx-auto mt-4 max-w-xl text-base text-zinc-600 sm:text-lg">
             Suivez votre stock en temps réel, encaissez vos ventes et connaissez enfin vos bénéfices —
-            depuis une seule application pensée pour les commerces du Burkina Faso.
+            depuis une seule application pensée pour les commerces d&apos;Afrique de l&apos;Ouest.
           </p>
           <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
             <Link
@@ -465,7 +465,7 @@ export default async function RootPage() {
       </main>
 
       <footer className="relative z-10 border-t border-zinc-200 py-8 text-center text-xs text-zinc-400">
-        <p>ZINDO — Gestion de stock et de ventes pour commerces du Burkina Faso.</p>
+        <p>ZINDO — Gestion de stock et de ventes pour commerces d&apos;Afrique de l&apos;Ouest.</p>
         <p className="mt-1">
           Support WhatsApp :{" "}
           <a

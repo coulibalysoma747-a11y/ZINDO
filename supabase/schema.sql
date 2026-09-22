@@ -1666,7 +1666,8 @@ create or replace function register_business(
   p_last_name text,
   p_phone text,
   p_email text,
-  p_password_hash text
+  p_password_hash text,
+  p_country text default null
 )
 returns table (user_id text, business_id text, role text) as $$
 declare
@@ -1674,7 +1675,7 @@ declare
   v_user_id text;
   v_standard_plan_id text;
 begin
-  insert into businesses (name, city) values (p_business_name, p_city)
+  insert into businesses (name, city, country) values (p_business_name, p_city, coalesce(p_country, 'Burkina Faso'))
     returning id into v_business_id;
 
   insert into users (business_id, first_name, last_name, phone, email, password_hash, role)

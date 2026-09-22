@@ -40,7 +40,7 @@ export function LocationFormModal({
     <Modal open={open} onClose={onClose} title={location ? "Modifier la boutique" : "Nouvelle boutique"}>
       <form action={formAction} className="space-y-4">
         <Field label="Nom" htmlFor="name">
-          <Input id="name" name="name" defaultValue={location?.name} placeholder="Ex: Boutique Ouagadougou" required autoFocus />
+          <Input id="name" name="name" defaultValue={location?.name} placeholder="Ex: Boutique Centre-ville" required autoFocus />
         </Field>
         <Field label="Type" htmlFor="type">
           <Select id="type" name="type" defaultValue={location?.type ?? "BOUTIQUE"}>

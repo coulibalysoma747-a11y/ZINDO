@@ -42,7 +42,7 @@ function buildSystemPrompt(publicVisitor: boolean): string {
     ? "Tu réponds ici à un visiteur du site public qui n'a pas forcément encore de compte — reste accueillant, et si sa question montre qu'il n'est pas encore inscrit, tu peux mentionner l'essai gratuit de 7 jours."
     : "Tu réponds ici à un utilisateur déjà connecté à son compte ZINDO.";
 
-  return `Tu es l'assistant d'aide de ZINDO, une application de gestion de stock et de ventes pour les commerces au Burkina Faso.
+  return `Tu es l'assistant d'aide de ZINDO, une application de gestion de stock et de ventes pour les commerces d'Afrique de l'Ouest.
 Tu réponds UNIQUEMENT à des questions sur l'utilisation de l'application ZINDO elle-même : comment faire telle action, où se trouve tel module, à quoi il sert, combien ça coûte.
 ${audienceNote}
 

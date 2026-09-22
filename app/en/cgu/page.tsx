@@ -16,8 +16,9 @@ export default function EnglishCguPage() {
         <p>
           These Terms of Service (&quot;Terms&quot;) govern access to and use of the ZINDO application, published
           by Coulibaly Soma, for stock, checkout, and sales management by businesses (shops, hardware stores,
-          spare parts dealers, motorcycle shops, grocers, wholesalers...) in Burkina Faso. By creating an account,
-          you accept these Terms without reservation.
+          spare parts dealers, motorcycle shops, grocers, wholesalers...) across West Africa (Burkina Faso, Côte
+          d&apos;Ivoire, Mali, Niger, Senegal, and other countries in the region). By creating an account, you accept
+          these Terms without reservation.
         </p>
       </LegalSection>
 
@@ -90,8 +91,8 @@ export default function EnglishCguPage() {
 
       <LegalSection title="9. Governing law">
         <p>
-          These Terms are governed by the law of Burkina Faso. Any dispute, failing an amicable resolution, falls
-          under the competent courts of Burkina Faso.
+          These Terms are governed by the law of Burkina Faso, regardless of the West African country you use ZINDO
+          from. Any dispute, failing an amicable resolution, falls under the competent courts of Burkina Faso.
         </p>
       </LegalSection>
 

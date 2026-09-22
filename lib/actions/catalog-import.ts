@@ -63,7 +63,7 @@ const extractedProductSchema = z.object({
 });
 const catalogSchema = z.array(extractedProductSchema).max(200);
 
-const EXTRACTION_PROMPT = `Tu analyses un catalogue produits (liste de prix fournisseur, catalogue PDF...) pour une application de gestion de stock au Burkina Faso (devise FCFA/XOF sauf indication contraire dans le document).
+const EXTRACTION_PROMPT = `Tu analyses un catalogue produits (liste de prix fournisseur, catalogue PDF...) pour une application de gestion de stock en Afrique de l'Ouest (devise FCFA/XOF sauf indication contraire dans le document).
 
 Extrait CHAQUE produit/article que tu identifies dans ce document (jusqu'à 200). Pour chacun, donne :
 - name (obligatoire) : nom du produit

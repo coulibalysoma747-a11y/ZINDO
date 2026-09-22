@@ -91,7 +91,7 @@ export function OnlineStoreForm({
           <Textarea id="description" name="description" rows={2} defaultValue={store?.description ?? ""} />
         </Field>
         <Field label="Numéro WhatsApp (facultatif)" htmlFor="whatsappNumber">
-          <Input id="whatsappNumber" name="whatsappNumber" defaultValue={store?.whatsappNumber ?? ""} placeholder="+226 XX XX XX XX" />
+          <Input id="whatsappNumber" name="whatsappNumber" defaultValue={store?.whatsappNumber ?? ""} placeholder="+225 XX XX XX XX XX" />
         </Field>
         <Field label="Téléphone (facultatif)" htmlFor="contactPhone">
           <Input id="contactPhone" name="contactPhone" defaultValue={store?.contactPhone ?? ""} />

@@ -17,7 +17,7 @@ export type AiCartLine = {
 export type AiCartResult = { error: string } | { lines: AiCartLine[] };
 
 const SYSTEM_PROMPT =
-  "Tu lis la commande d'un client pour un commerce au Burkina Faso (texte tapé, dicté, ou écrit à la main sur une photo). " +
+  "Tu lis la commande d'un client pour un commerce d'Afrique de l'Ouest (texte tapé, dicté, ou écrit à la main sur une photo). " +
   "Réponds UNIQUEMENT avec un JSON strict de cette forme, sans aucun texte autour : " +
   '{"items":[{"name":"nom du produit tel qu\'écrit/dit","quantity":<nombre>}]}. ' +
   "Une ligne par article. Si aucune quantité n'est précisée pour un article, mets 1. Ignore tout ce qui n'est pas un article à commander (salutations, dates, adresse...).";

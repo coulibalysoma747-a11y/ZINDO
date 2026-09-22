@@ -73,10 +73,12 @@ export default function EnglishConfidentialitePage() {
 
       <LegalSection title="6. Your rights">
         <p>
-          Under Burkina Faso&apos;s law n° 001-2021/AN on the protection of personal data, you have a right of
-          access, rectification, deletion, and objection regarding your personal data. You can exercise these
-          rights by contacting us (details above), or by reaching out to Burkina Faso&apos;s Commission de
-          l&apos;Informatique et des Libertés (CIL).
+          Under Burkina Faso&apos;s law n° 001-2021/AN on the protection of personal data — the country where ZINDO
+          is domiciled — you have a right of access, rectification, deletion, and objection regarding your personal
+          data. You can exercise these rights by contacting us (details above), or by reaching out to Burkina
+          Faso&apos;s Commission de l&apos;Informatique et des Libertés (CIL). If you use ZINDO from another West
+          African country, you may also have additional rights under your own country&apos;s data protection law —
+          contact us first and we will forward your request to the relevant authority if needed.
         </p>
       </LegalSection>
 

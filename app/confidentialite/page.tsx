@@ -66,10 +66,14 @@ export default function ConfidentialitePage() {
 
       <LegalSection title="6. Vos droits">
         <p>
-          Conformément à la loi n° 001-2021/AN portant protection des données à caractère personnel au Burkina Faso,
-          vous disposez d&apos;un droit d&apos;accès, de rectification, de suppression et d&apos;opposition sur vos
-          données personnelles. Vous pouvez exercer ces droits en nous contactant (coordonnées ci-dessus), ou en vous
-          adressant à la Commission de l&apos;Informatique et des Libertés (CIL) du Burkina Faso.
+          Conformément à la loi n° 001-2021/AN portant protection des données à caractère personnel au Burkina Faso —
+          pays où ZINDO est domiciliée — vous disposez d&apos;un droit d&apos;accès, de rectification, de suppression
+          et d&apos;opposition sur vos données personnelles. Vous pouvez exercer ces droits en nous contactant
+          (coordonnées ci-dessus), ou en vous adressant à la Commission de l&apos;Informatique et des Libertés (CIL)
+          du Burkina Faso. Si vous utilisez ZINDO depuis un autre pays d&apos;Afrique de l&apos;Ouest, vous pouvez
+          également disposer de droits complémentaires au titre de la loi de votre pays de résidence sur la
+          protection des données personnelles ; contactez-nous en priorité, nous nous chargeons de relayer votre
+          demande à l&apos;autorité compétente si nécessaire.
         </p>
       </LegalSection>
 
