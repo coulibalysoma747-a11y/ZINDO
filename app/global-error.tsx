@@ -1,5 +1,8 @@
 "use client";
 
+import { useEffect } from "react";
+import * as Sentry from "@sentry/nextjs";
+
 /**
  * Dernier filet de sécurité : ne se déclenche que si app/layout.tsx (le
  * layout racine) plante lui-même — auquel cas app/error.tsx n'est pas
@@ -8,11 +11,16 @@
  * qui pourrait lui-même échouer à charger dans ce cas de figure.
  */
 export default function GlobalError({
+  error,
   reset,
 }: {
   error: Error & { digest?: string };
   reset: () => void;
 }) {
+  useEffect(() => {
+    Sentry.captureException(error);
+  }, [error]);
+
   return (
     <html lang="fr">
       <body

@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import { AlertTriangle } from "lucide-react";
+import * as Sentry from "@sentry/nextjs";
 import { AuthCard } from "@/components/auth/AuthCard";
 import { Button } from "@/components/ui/Button";
 
@@ -19,9 +20,8 @@ export default function GlobalErrorBoundary({
   reset: () => void;
 }) {
   useEffect(() => {
-    // Journalisé côté client pour le diagnostic (visible dans les outils dev
-    // du navigateur et, si configuré, remonté à un service de suivi d'erreurs).
     console.error("[GlobalErrorBoundary]", error);
+    Sentry.captureException(error);
   }, [error]);
 
   return (
