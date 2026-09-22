@@ -8,7 +8,7 @@
  * Pas de directive "use server" ici : fichier de données neutre, importé à
  * la fois par des composants client (le sélecteur) et des actions serveur.
  */
-export type InvoiceTemplateId = "classique" | "moderne" | "boutique" | "atelier";
+export type InvoiceTemplateId = "classique" | "moderne" | "boutique" | "atelier" | "pharmacie";
 
 export type InvoiceTemplateMeta = {
   id: InvoiceTemplateId;
@@ -42,6 +42,12 @@ export const INVOICE_TEMPLATES: InvoiceTemplateMeta[] = [
     label: "Atelier",
     description: "Fond sombre façon fiche de travail, accent cuivre — pour les ateliers de réparation, la chaudronnerie et les garages.",
     suggestedFor: ["Atelier de réparation", "Pièces détachées auto/moto", "Atelier (couture, menuiserie...)"],
+  },
+  {
+    id: "pharmacie",
+    label: "Pharmacie",
+    description: "Blanc/teal clinique, très ordonné, référence produit affichée sous chaque ligne.",
+    suggestedFor: ["Pharmacie", "Cabinet médical / Clinique"],
   },
 ];
 
