@@ -34,7 +34,7 @@ export function MobileNav({
       <div className="absolute left-0 top-0 flex h-full w-72 flex-col justify-between bg-white text-zindo-ink-700 shadow-xl">
         <div className="zindo-flag-stripe h-1 w-full shrink-0" />
         <div className="min-h-0 flex-1 overflow-y-auto">
-          <div className="flex items-center justify-between gap-2 border-b border-zindo-ink-100 p-4">
+          <div className="flex items-center justify-between gap-2 border-b-2 border-dashed border-zindo-green-200 p-4">
             <div className="flex min-w-0 items-center gap-3">
               <ZindoLogo size={36} />
               <div className="min-w-0">
@@ -92,7 +92,7 @@ export function MobileNav({
         </div>
 
         {footerItems.length > 0 && (
-          <div className="space-y-1 border-t border-zindo-ink-100 bg-zindo-ink-50/60 p-3">
+          <div className="space-y-1 border-t-2 border-dashed border-zindo-green-200 bg-zindo-ink-50/60 p-3">
             {footerItems.map((item) => (
               <Link
                 key={item.href}

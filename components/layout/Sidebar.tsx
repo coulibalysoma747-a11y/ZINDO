@@ -16,10 +16,10 @@ export function Sidebar({
   const mainItems = items.filter((item) => !footerHrefs.includes(item.href));
 
   return (
-    <aside className="sticky top-0 hidden h-screen w-64 shrink-0 flex-col justify-between border-r border-zindo-ink-100 bg-white text-zindo-ink-700 shadow-xl md:flex">
+    <aside className="sticky top-0 hidden h-screen w-64 shrink-0 flex-col justify-between border-r-2 border-dashed border-zindo-green-300 bg-white text-zindo-ink-700 shadow-xl md:flex">
       <div className="zindo-flag-stripe h-1 w-full shrink-0" />
       <div className="min-h-0 flex-1 overflow-y-auto">
-        <div className="flex items-center gap-3 border-b border-zindo-ink-100 p-5">
+        <div className="flex items-center gap-3 border-b-2 border-dashed border-zindo-green-200 p-5">
           <ZindoLogo size={40} />
           <div className="min-w-0">
             <h1 className="truncate text-lg font-extrabold tracking-wide text-zindo-ink-900">ZINDO</h1>
@@ -37,7 +37,7 @@ export function Sidebar({
       </div>
 
       {footerItems.length > 0 && (
-        <div className="space-y-1 border-t border-zindo-ink-100 bg-zindo-ink-50/60 p-3">
+        <div className="space-y-1 border-t-2 border-dashed border-zindo-green-200 bg-zindo-ink-50/60 p-3">
           {footerItems.map((item) => (
             <SidebarLink key={item.href} item={item} />
           ))}
