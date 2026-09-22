@@ -4,11 +4,13 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { ChevronDown, ChevronUp, Trash2, Store, Warehouse } from "lucide-react";
 import { ConfirmButton } from "@/components/ui/ConfirmButton";
+import { ACTIVITIES } from "@/lib/activities";
 import {
   setFeatureFlagGlobalAction,
   setFeatureFlagBusinessAction,
   setFeatureFlagLocationAction,
   clearFeatureFlagLocationAction,
+  setFeatureFlagActivityAction,
   deleteFeatureFlagAction,
 } from "@/lib/actions/feature-flags";
 
@@ -32,8 +34,20 @@ export function FeatureFlagCard({
 }) {
   const [expanded, setExpanded] = useState(false);
   const [openBusinessId, setOpenBusinessId] = useState<string | null>(null);
+  const [activityKey, setActivityKey] = useState(ACTIVITIES[0]?.key ?? "");
+  const [activityMessage, setActivityMessage] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
   const router = useRouter();
+
+  function handleActivityToggle(enabled: boolean) {
+    if (!activityKey) return;
+    setActivityMessage(null);
+    startTransition(async () => {
+      const result = await setFeatureFlagActivityAction(flag.id, activityKey, enabled);
+      setActivityMessage(result?.error ?? result?.success ?? null);
+      router.refresh();
+    });
+  }
 
   function isBusinessEnabled(businessId: string) {
     if (flag.enabledGlobally) return true;
@@ -104,6 +118,39 @@ export function FeatureFlagCard({
             Par commerce {expanded ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
           </button>
         </div>
+      </div>
+
+      <div className="flex flex-wrap items-center gap-2 border-t border-zinc-100 px-4 py-3">
+        <span className="text-xs font-medium text-zinc-500">Par activité :</span>
+        <select
+          value={activityKey}
+          disabled={pending || flag.enabledGlobally}
+          onChange={(e) => setActivityKey(e.target.value)}
+          className="rounded-lg border border-zinc-200 bg-white px-2 py-1.5 text-xs text-zinc-700 disabled:opacity-40"
+        >
+          {ACTIVITIES.map((a) => (
+            <option key={a.key} value={a.key}>
+              {a.emoji} {a.label}
+            </option>
+          ))}
+        </select>
+        <button
+          type="button"
+          disabled={pending || flag.enabledGlobally || !activityKey}
+          onClick={() => handleActivityToggle(true)}
+          className="rounded-lg border border-zindo-green-200 px-2.5 py-1.5 text-xs font-medium text-zindo-green-700 hover:bg-zindo-green-50 disabled:opacity-40"
+        >
+          Activer
+        </button>
+        <button
+          type="button"
+          disabled={pending || flag.enabledGlobally || !activityKey}
+          onClick={() => handleActivityToggle(false)}
+          className="rounded-lg border border-red-200 px-2.5 py-1.5 text-xs font-medium text-red-600 hover:bg-red-50 disabled:opacity-40"
+        >
+          Désactiver
+        </button>
+        {activityMessage && <span className="text-xs text-zinc-500">{activityMessage}</span>}
       </div>
 
       {expanded && (

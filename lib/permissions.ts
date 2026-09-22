@@ -28,6 +28,7 @@ export const PERMISSIONS = {
   SHIPMENTS_MANAGE: "expeditions.gerer",
   QUICK_SUPPLY_MANAGE: "appro_rapide.gerer",
   CONSULTATIONS_MANAGE: "consultations.gerer",
+  EXPIRY_MANAGE: "peremption.gerer",
 } as const;
 
 export type Permission = (typeof PERMISSIONS)[keyof typeof PERMISSIONS];
@@ -61,6 +62,7 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<Role, Permission[]> = {
     PERMISSIONS.TRANSFERS_MANAGE,
     PERMISSIONS.PICKUPS_MANAGE,
     PERMISSIONS.QUICK_SUPPLY_MANAGE,
+    PERMISSIONS.EXPIRY_MANAGE,
   ],
 };
 
@@ -96,4 +98,5 @@ export const PERMISSION_LABELS: Record<string, string> = {
   [PERMISSIONS.SHIPMENTS_MANAGE]: "Gérer les expéditions",
   [PERMISSIONS.QUICK_SUPPLY_MANAGE]: "Utiliser l'approvisionnement rapide",
   [PERMISSIONS.CONSULTATIONS_MANAGE]: "Gérer les consultations (cabinet médical)",
+  [PERMISSIONS.EXPIRY_MANAGE]: "Gérer le suivi des dates de péremption (supermarché / pharmacie)",
 };

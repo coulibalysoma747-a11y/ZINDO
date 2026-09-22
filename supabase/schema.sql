@@ -298,6 +298,26 @@ create table product_packaging_units (
 );
 create index on product_packaging_units (business_id, product_id);
 
+-- Suivi des dates de péremption (DLC), activité "supermarche_alimentation"
+-- (voir lib/activities.ts) : un lot = une quantité reçue avec sa propre date
+-- de péremption (deux livraisons du même produit peuvent avoir des DLC
+-- différentes). Suivi déclaratif uniquement — retirer un lot d'ici n'ajuste
+-- pas product_stocks ; c'est au commerçant de faire une sortie de stock
+-- séparée (motif PERTE) s'il jette la marchandise. Voir lib/actions/expiry.ts.
+create table product_expiry_batches (
+  id text primary key default gen_random_uuid()::text,
+  business_id text not null references businesses(id) on delete cascade,
+  location_id text not null references locations(id),
+  product_id text not null references products(id) on delete cascade,
+  quantity int not null,
+  expiry_date date not null,
+  note text,
+  user_id text not null references users(id),
+  created_at timestamptz not null default now()
+);
+create index on product_expiry_batches (business_id, expiry_date);
+create index on product_expiry_batches (product_id);
+
 -- Exemplaires individuels d'un produit à suivi unitaire (motos/engins) : un
 -- exemplaire = une ligne, avec son propre numéro de châssis (identifiant
 -- réel du véhicule) et moteur. "EN_STOCK" tant qu'il n'a pas été vendu ;

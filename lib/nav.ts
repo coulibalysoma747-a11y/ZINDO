@@ -3,6 +3,11 @@ import { MOTO_ACTIVITY_KEY } from "@/lib/activities";
 
 export const MEDICAL_ACTIVITY_KEY = "cabinet_medical";
 export const CONSULTATIONS_FLAG = "consultations_cabinet_medical";
+export const SUPERMARKET_ACTIVITY_KEY = "supermarche_alimentation";
+export const PHARMACY_ACTIVITY_KEY = "pharmacie";
+export const EXPIRY_FLAG = "peremption_dlc";
+/** Activités concernées par le suivi des dates de péremption (DLC) — voir requireActivity sur l'entrée "Péremption (DLC)" ci-dessous. */
+export const EXPIRY_ACTIVITIES = [SUPERMARKET_ACTIVITY_KEY, PHARMACY_ACTIVITY_KEY];
 
 export type NavItem = {
   label: string;
@@ -47,7 +52,8 @@ export type NavItem = {
     | "shipments"
     | "cashier"
     | "consultations"
-    | "medical-stats";
+    | "medical-stats"
+    | "expiry";
   permission?: Permission;
   featureFlag?: string;
   planFeature?: string;
@@ -64,8 +70,8 @@ export type NavItem = {
     | "pickups"
     | "shipments"
     | "cashierQueue";
-  /** N'apparaît que pour ce type d'activité précis (lib/activities.ts) — voir lib/nav-server.ts. */
-  requireActivity?: string;
+  /** N'apparaît que pour ce(s) type(s) d'activité précis (lib/activities.ts) — un tableau si plusieurs activités sont concernées. Voir lib/nav-server.ts. */
+  requireActivity?: string | string[];
 };
 
 export const NAV_ITEMS: NavItem[] = [
@@ -122,6 +128,14 @@ export const NAV_ITEMS: NavItem[] = [
   { label: "Marques", href: "/marques", icon: "brands", permission: PERMISSIONS.CATEGORIES_MANAGE },
   { label: "Stock", href: "/stock", icon: "stock", permission: PERMISSIONS.STOCK_VIEW },
   { label: "Réassort", href: "/reassort", icon: "restock", permission: PERMISSIONS.STOCK_VIEW, moduleToggle: "reassort" },
+  {
+    label: "Péremption (DLC)",
+    href: "/peremption",
+    icon: "expiry",
+    permission: PERMISSIONS.EXPIRY_MANAGE,
+    requireActivity: EXPIRY_ACTIVITIES,
+    featureFlag: EXPIRY_FLAG,
+  },
   { label: "Transferts", href: "/transferts", icon: "transfers", permission: PERMISSIONS.TRANSFERS_MANAGE, planFeature: "advanced_stock" },
   { label: "Approvisionnement rapide", href: "/approvisionnement", icon: "quick-supply", permission: PERMISSIONS.STOCK_MANAGE, moduleToggle: "quickSupply" },
   { label: "Enlèvements partenaires", href: "/enlevements", icon: "pickups", permission: PERMISSIONS.STOCK_MANAGE, moduleToggle: "pickups" },

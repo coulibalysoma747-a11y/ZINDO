@@ -130,6 +130,46 @@ export async function setFeatureFlagLocationAction(flagId: string, locationId: s
   return { success: "Mis à jour pour cette boutique" };
 }
 
+/**
+ * Active/désactive une fonctionnalité pour TOUS les commerces d'une même
+ * activité (ex. tous les "Supermarché / Alimentation") en une seule action —
+ * pratique pour un module conçu pour une activité précise (voir
+ * lib/nav.ts `requireActivity`), sans avoir à cocher commerce par commerce.
+ * Réutilise simplement feature_flag_businesses (pas de nouvelle table/priorité).
+ */
+export async function setFeatureFlagActivityAction(flagId: string, activityKey: string, enabled: boolean) {
+  const admin = await requireSuperAdmin();
+  const { data: businesses, error: fetchError } = await supabase
+    .from("businesses")
+    .select("id")
+    .eq("activity_key", activityKey);
+  if (fetchError) {
+    console.error("[setFeatureFlagActivityAction] Échec de la lecture des commerces :", fetchError.message);
+    return { error: "Impossible de lire les commerces de cette activité" };
+  }
+  const rows = (businesses ?? []).map((b) => ({ feature_flag_id: flagId, business_id: b.id as string, enabled }));
+  if (rows.length === 0) return { error: "Aucun commerce n'a cette activité pour le moment" };
+
+  const { error } = await supabase
+    .from("feature_flag_businesses")
+    .upsert(rows, { onConflict: "feature_flag_id,business_id", ignoreDuplicates: false });
+  if (error) {
+    console.error("[setFeatureFlagActivityAction] Échec de la mise à jour :", error.message);
+    return { error: "Impossible de mettre à jour pour cette activité" };
+  }
+
+  await logAdminAction({
+    superAdminId: admin.id,
+    actorName: admin.name,
+    action: "SET",
+    entity: "FeatureFlagActivity",
+    entityId: activityKey,
+    details: `${flagId} -> ${enabled} (${rows.length} commerce(s))`,
+  });
+  revalidatePath("/admin/fonctionnalites");
+  return { success: `${enabled ? "Activée" : "Désactivée"} pour ${rows.length} commerce(s) de cette activité` };
+}
+
 export async function clearFeatureFlagLocationAction(flagId: string, locationId: string) {
   const admin = await requireSuperAdmin();
   const { error } = await supabase

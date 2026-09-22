@@ -11,6 +11,12 @@ const HREF_TO_TERM: Record<string, TermKey> = Object.fromEntries(
   Object.entries(TERM_NAV_HREF).map(([term, href]) => [href, term as TermKey])
 );
 
+function matchesRequiredActivity(item: NavItem, activityKey?: string | null): boolean {
+  if (!item.requireActivity) return true;
+  const allowed = Array.isArray(item.requireActivity) ? item.requireActivity : [item.requireActivity];
+  return !!activityKey && allowed.includes(activityKey);
+}
+
 export type ModuleUnavailableReason = "permission" | "feature" | "plan" | "activity" | "module";
 export type ModuleAvailability = { allowed: boolean; reason: ModuleUnavailableReason | null };
 
@@ -42,8 +48,7 @@ export async function getNavItemsAvailability(
       ]);
       const planOk = item.planFeature ? planLimits.features.includes(item.planFeature) : true;
       const moduleOk = item.moduleToggle ? businessSettings.modulesEnabled[item.moduleToggle] : true;
-      const hiddenByActivity =
-        activityConfig.hiddenNavHrefs.includes(item.href) || (!!item.requireActivity && item.requireActivity !== activityKey);
+      const hiddenByActivity = activityConfig.hiddenNavHrefs.includes(item.href) || !matchesRequiredActivity(item, activityKey);
 
       let reason: ModuleUnavailableReason | null = null;
       if (!permissionOk) reason = "permission";
@@ -80,8 +85,7 @@ export async function getVisibleNavItems(
       ]);
       const planOk = item.planFeature ? planLimits.features.includes(item.planFeature) : true;
       const moduleOk = item.moduleToggle ? businessSettings.modulesEnabled[item.moduleToggle] : true;
-      const hiddenByActivity =
-        activityConfig.hiddenNavHrefs.includes(item.href) || (!!item.requireActivity && item.requireActivity !== activityKey);
+      const hiddenByActivity = activityConfig.hiddenNavHrefs.includes(item.href) || !matchesRequiredActivity(item, activityKey);
       return { item, allowed: permissionOk && featureOk && planOk && moduleOk && !hiddenByActivity };
     })
   );
