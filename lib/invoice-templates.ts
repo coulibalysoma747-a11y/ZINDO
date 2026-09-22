@@ -17,7 +17,8 @@ export type InvoiceTemplateId =
   | "grossiste"
   | "moto"
   | "restaurant"
-  | "epicerie";
+  | "epicerie"
+  | "cabinet";
 
 export type InvoiceTemplateMeta = {
   id: InvoiceTemplateId;
@@ -81,6 +82,12 @@ export const INVOICE_TEMPLATES: InvoiceTemplateMeta[] = [
     label: "Épicerie",
     description: "Blanc/vert frais, grille dense façon ticket de supermarché élargi — pour les factures à beaucoup de lignes.",
     suggestedFor: ["Supermarché / Alimentation", "Boutique générale"],
+  },
+  {
+    id: "cabinet",
+    label: "Cabinet",
+    description: "Blanc/indigo formel, encadré sobre façon document de consultation.",
+    suggestedFor: ["Cabinet médical / Clinique"],
   },
 ];
 
