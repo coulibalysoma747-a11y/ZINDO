@@ -938,6 +938,11 @@ create table consultations (
   business_id text not null references businesses(id) on delete cascade,
   user_id text not null references users(id),
   patient_code text,
+  -- Nom et âge exact du patient : facultatifs, laissés à la discrétion du
+  -- praticien (contrairement à patient_code/sex/age_group, pensés pour rester
+  -- anonymes). Voir docs/cahier-des-charges-cabinet-medical.md §1.
+  patient_name text,
+  patient_age int,
   sex text not null check (sex in ('M','F')),
   age_group text not null check (age_group in ('ENFANT','ADULTE','SENIOR')),
   act_id text references medical_acts(id) on delete set null,

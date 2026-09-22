@@ -5,23 +5,28 @@ l'activité `cabinet_medical` (voir `lib/activities.ts`). Il documente ce qui
 existe déjà, la contrainte de conception qui encadre tout le module, et la
 feuille de route.
 
-## 1. Contrainte de conception : secret médical
+## 1. Contrainte de conception : secret médical (registre anonyme par défaut)
 
-ZINDO n'est **pas un dossier médical électronique (DME)**. Contrairement aux
-autres activités (boutique, pharmacie...) où un client est identifié
-nominativement, le module Cabinet médical enregistre un **registre
-anonymisé** :
+ZINDO n'est **pas un dossier médical électronique (DME)**. Par défaut, le
+module Cabinet médical enregistre un **registre anonymisé** : sexe, tranche
+d'âge, diagnostic, traitement, acte pratiqué, frais perçus, plus un
+`patientCode` facultatif choisi librement par le praticien (ex. `PAT-001`),
+qui ne doit jamais être une donnée d'identification directe.
 
-- pas de nom, prénom, téléphone ni adresse du patient ;
-- un `patientCode` facultatif, choisi librement par le praticien (ex.
-  `PAT-001`), qui ne doit jamais être une donnée d'identification directe ;
-- les données conservées sont celles utiles au suivi épidémiologique et
-  financier du cabinet : sexe, tranche d'âge, diagnostic, traitement, acte
-  pratiqué, frais perçus.
+**Exception explicitement demandée** : le praticien peut, s'il le souhaite,
+renseigner le **nom** et l'**âge exact** du patient — deux champs facultatifs,
+distincts du sexe/tranche d'âge/`patientCode` qui restent, eux, pensés pour
+un usage anonyme. Laissés vides, le registre reste anonyme comme avant. Une
+fois saisi, le nom du patient apparaît aussi sur le reçu imprimable (§3.2).
+Cette exception est un choix produit assumé par le porteur du projet
+(Coulibaly Soma) : elle sort ZINDO du régime "aucune donnée nominative" pour
+les cabinets qui préfèrent tenir un vrai registre nominatif — libre à chaque
+cabinet de ne pas utiliser ces deux champs.
 
-Toute évolution future du module doit respecter cette contrainte tant que
-ZINDO n'implémente pas un chiffrement dédié et un cadre de conformité
-spécifique aux données de santé (voir §5, "Hors périmètre V1/V2").
+Toute évolution future qui multiplierait les données nominatives (historique
+patient complet, coordonnées...) doit rester consciente de l'absence de
+chiffrement dédié et de cadre de conformité santé (voir §5, "Hors périmètre
+V1/V2").
 
 ## 2. Existant (déployé)
 
@@ -31,8 +36,9 @@ spécifique aux données de santé (voir §5, "Hors périmètre V1/V2").
 - Flag `consultations_cabinet_medical` (`CONSULTATIONS_FLAG`), **désactivé
   par défaut**, activable par commerce/boutique depuis
   `/admin/fonctionnalites` — voir la règle "Feature rollout rule".
-- Table `consultations` (patient_code, sex, age_group, diagnosis, treatment,
-  fee, created_at).
+- Table `consultations` (patient_code, patient_name, patient_age, sex,
+  age_group, diagnosis, treatment, fee, created_at) — `patient_name` et
+  `patient_age` sont facultatifs (§1).
 - Écrans : `/consultations` (registre), `/consultations/nouvelle`
   (saisie), `/consultations/statistiques` (bilan + pathologies fréquentes +
   profil patientèle), `/consultations/export` (export CSV).
@@ -62,8 +68,8 @@ Section 11 du cahier des charges général de ZINDO ("Ticket de caisse")
 s'applique aussi au cabinet médical : après une consultation, un reçu
 (numéro, date, acte/diagnostic, montant, mode de paiement implicite espèces)
 peut être imprimé ou partagé, en réutilisant le composant `Receipt` déjà
-utilisé pour les ventes (formats 58 mm / 80 mm / A4). Aucune identité
-nominative n'y figure, conformément à la contrainte du §1.
+utilisé pour les ventes (formats 58 mm / 80 mm / A4). Le nom du patient n'y
+figure que si le praticien l'a saisi (§1) — sinon le reçu reste anonyme.
 
 ## 4. Permissions et activation
 
@@ -99,6 +105,7 @@ explicite du porteur du produit :
 
 Un cabinet médical/clinique qui active le flag `consultations_cabinet_medical`
 peut : définir son catalogue d'actes et leurs tarifs → enregistrer une
-consultation en 30 secondes (acte présélectionné, frais pré-rempli) →
-imprimer/partager un reçu → suivre ses statistiques épidémiologiques et son
-bilan financier par période, sans jamais collecter de donnée nominative.
+consultation en 30 secondes (acte présélectionné, frais pré-rempli, nom/âge du
+patient facultatifs) → imprimer/partager un reçu → suivre ses statistiques
+épidémiologiques et son bilan financier par période — en choisissant
+lui-même, consultation par consultation, de rester anonyme ou non.

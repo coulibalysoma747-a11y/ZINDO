@@ -162,8 +162,8 @@ export const DESCRIPTIONS: Record<string, { short: string; long: string }> = {
     long: "Avec « Caisse à deux » activé (Paramètres > Modules), un vendeur prépare un panier sur Vente et clique « Envoyer à la caisse » sans encaisser. Ici, récupérez ce panier dans la file d'attente (retiré dès qu'il est récupéré, pour ne jamais être pris deux fois) et finalisez le paiement — c'est seulement à ce moment que le stock est déduit. Nécessite la permission « Encaisser depuis la file d'attente », à accorder dans Rôles et permissions.",
   },
   "/consultations": {
-    short: "Registre anonymisé des consultations : sexe, âge, diagnostic et frais — sans identité du patient.",
-    long: "Enregistrez chaque consultation en quelques secondes (sexe, tranche d'âge, acte, diagnostic, frais) sans jamais collecter de nom, téléphone ou adresse — secret médical respecté. Chaque ligne peut être réimprimée en reçu et l'ensemble du registre s'exporte en CSV. Réservé à l'activité « Cabinet médical / Clinique ».",
+    short: "Registre des consultations : sexe, âge, diagnostic et frais — nom du patient facultatif.",
+    long: "Enregistrez chaque consultation en quelques secondes (sexe, tranche d'âge, acte, diagnostic, frais). Le nom et l'âge exact du patient sont facultatifs : laissez-les vides pour garder un registre anonyme, ou renseignez-les si vous tenez un vrai registre nominatif. Chaque ligne peut être réimprimée en reçu et l'ensemble du registre s'exporte en CSV. Réservé à l'activité « Cabinet médical / Clinique ».",
   },
   "/consultations/actes": {
     short: "Votre catalogue d'actes médicaux et leur tarif par défaut, pour accélérer la saisie.",

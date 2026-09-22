@@ -15,6 +15,8 @@ import { Table, TableHead, TableBody, TableRow, TableHeaderCell, TableCell } fro
 type ConsultationRow = {
   id: string;
   patientCode: string | null;
+  patientName: string | null;
+  patientAge: number | null;
   sex: "M" | "F";
   ageGroup: "ENFANT" | "ADULTE" | "SENIOR";
   diagnosis: string;
@@ -32,7 +34,9 @@ export default async function ConsultationsPage() {
 
   const { data } = await supabase
     .from("consultations")
-    .select("id, patientCode:patient_code, sex, ageGroup:age_group, diagnosis, fee, createdAt:created_at, act:medical_acts(name)")
+    .select(
+      "id, patientCode:patient_code, patientName:patient_name, patientAge:patient_age, sex, ageGroup:age_group, diagnosis, fee, createdAt:created_at, act:medical_acts(name)"
+    )
     .eq("business_id", user.businessId)
     .order("created_at", { ascending: false })
     .limit(100);
@@ -86,9 +90,11 @@ export default async function ConsultationsPage() {
               {consultations.map((c) => (
                 <TableRow key={c.id} interactive={false}>
                   <TableCell className="text-zinc-600 dark:text-slate-400">{formatLongDate(c.createdAt)}</TableCell>
-                  <TableCell className="font-medium text-zinc-900 dark:text-slate-100">{c.patientCode ?? "—"}</TableCell>
+                  <TableCell className="font-medium text-zinc-900 dark:text-slate-100">
+                    {c.patientName ?? c.patientCode ?? "—"}
+                  </TableCell>
                   <TableCell>{c.sex}</TableCell>
-                  <TableCell>{AGE_GROUP_LABELS[c.ageGroup]}</TableCell>
+                  <TableCell>{c.patientAge != null ? `${c.patientAge} ans` : AGE_GROUP_LABELS[c.ageGroup]}</TableCell>
                   <TableCell className="text-zinc-600 dark:text-slate-400">{c.act?.name ?? "—"}</TableCell>
                   <TableCell className="text-zinc-600 dark:text-slate-400">{c.diagnosis}</TableCell>
                   <TableCell className="font-semibold text-zindo-green-600">{formatMoney(c.fee, currency)}</TableCell>

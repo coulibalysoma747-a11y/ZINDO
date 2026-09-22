@@ -23,6 +23,7 @@ export default async function ConsultationReceiptPage({ params }: { params: Prom
     ticketNumber: receipt.ticketNumber,
     date: new Date(receipt.date),
     cashierName: receipt.cashierName,
+    customerName: receipt.patientName ?? undefined,
     items: [{ name: receipt.itemName, quantity: 1, unitPrice: receipt.fee, total: receipt.fee }],
     subtotal: receipt.fee,
     total: receipt.fee,

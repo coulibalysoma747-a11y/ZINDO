@@ -156,6 +156,11 @@ CREATE INDEX IF NOT EXISTS medical_acts_business_id_idx ON medical_acts (busines
 ALTER TABLE consultations ADD COLUMN IF NOT EXISTS act_id text references medical_acts(id) on delete set null;
 CREATE INDEX IF NOT EXISTS consultations_act_id_idx ON consultations (act_id);
 
+-- Nom et âge exact du patient : facultatifs, à la discrétion du praticien —
+-- voir docs/cahier-des-charges-cabinet-medical.md §1.
+ALTER TABLE consultations ADD COLUMN IF NOT EXISTS patient_name text;
+ALTER TABLE consultations ADD COLUMN IF NOT EXISTS patient_age int;
+
 -- --- Fonctions manquantes ---------------------------------------------------
 CREATE OR REPLACE FUNCTION claim_promo_code_usage(p_promo_code_id text)
 RETURNS boolean AS $$

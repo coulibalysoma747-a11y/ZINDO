@@ -32,6 +32,8 @@ export async function isConsultationsModuleEnabled(businessId: string) {
 
 const consultationSchema = z.object({
   patientCode: z.string().optional(),
+  patientName: z.string().optional(),
+  patientAge: z.coerce.number().int().min(0, "Âge invalide").max(130, "Âge invalide").optional(),
   sex: z.enum(SEX_OPTIONS, { message: "Sexe requis" }),
   ageGroup: z.enum(AGE_GROUP_OPTIONS, { message: "Tranche d'âge requise" }),
   actId: z.string().optional(),
@@ -48,6 +50,8 @@ export async function createConsultationAction(
 
   const parsed = consultationSchema.safeParse({
     patientCode: formData.get("patientCode") || undefined,
+    patientName: formData.get("patientName") || undefined,
+    patientAge: formData.get("patientAge") || undefined,
     sex: formData.get("sex"),
     ageGroup: formData.get("ageGroup"),
     actId: formData.get("actId") || undefined,
@@ -75,6 +79,8 @@ export async function createConsultationAction(
     business_id: user.businessId,
     user_id: user.id,
     patient_code: parsed.data.patientCode || null,
+    patient_name: parsed.data.patientName || null,
+    patient_age: parsed.data.patientAge ?? null,
     sex: parsed.data.sex,
     age_group: parsed.data.ageGroup,
     act_id: actId,
@@ -97,15 +103,22 @@ export type ConsultationReceipt = {
   itemName: string;
   fee: number;
   cashierName: string;
+  patientName: string | null;
 };
 
-/** Reçu de consultation imprimable (§3.2 du cahier des charges) — aucune identité nominative du patient n'y figure. */
+/**
+ * Reçu de consultation imprimable (§3.2 du cahier des charges) — le nom du
+ * patient n'y figure que si le praticien l'a saisi (champ facultatif, voir
+ * §1) : par défaut le reçu reste anonyme.
+ */
 export async function getConsultationReceiptAction(id: string): Promise<ConsultationReceipt | { error: string }> {
   const user = await requirePermission(PERMISSIONS.CONSULTATIONS_MANAGE);
 
   const { data } = await supabase
     .from("consultations")
-    .select("id, diagnosis, fee, createdAt:created_at, act:medical_acts(name), user:users(firstName:first_name, lastName:last_name)")
+    .select(
+      "id, diagnosis, fee, createdAt:created_at, patientName:patient_name, act:medical_acts(name), user:users(firstName:first_name, lastName:last_name)"
+    )
     .eq("id", id)
     .eq("business_id", user.businessId)
     .maybeSingle();
@@ -116,6 +129,7 @@ export async function getConsultationReceiptAction(id: string): Promise<Consulta
     diagnosis: string;
     fee: number;
     createdAt: string;
+    patientName: string | null;
     act: { name: string } | null;
     user: { firstName: string; lastName: string } | null;
   };
@@ -126,5 +140,6 @@ export async function getConsultationReceiptAction(id: string): Promise<Consulta
     itemName: row.act?.name ?? row.diagnosis,
     fee: row.fee,
     cashierName: row.user ? `${row.user.firstName} ${row.user.lastName}` : "",
+    patientName: row.patientName,
   };
 }

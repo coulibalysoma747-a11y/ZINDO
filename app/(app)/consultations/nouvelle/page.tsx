@@ -18,7 +18,9 @@ export default async function NouvelleConsultationPage() {
     <div className="max-w-lg space-y-6">
       <div>
         <h1 className="text-xl font-bold text-zinc-900">Nouvelle consultation</h1>
-        <p className="text-sm text-zinc-500">Aucune identité nominative n&apos;est collectée — secret médical respecté.</p>
+        <p className="text-sm text-zinc-500">
+          Le nom et l&apos;âge du patient sont facultatifs — laissez-les vides pour garder un registre anonyme.
+        </p>
       </div>
       <Card>
         <CardBody>

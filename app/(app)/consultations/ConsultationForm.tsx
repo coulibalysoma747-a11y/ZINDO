@@ -21,6 +21,14 @@ export function ConsultationForm({ medicalActs }: { medicalActs: MedicalAct[] })
         <Input id="patientCode" name="patientCode" placeholder="Ex: PAT-001" />
       </Field>
       <div className="grid grid-cols-2 gap-3">
+        <Field label="Nom du patient (facultatif)" htmlFor="patientName">
+          <Input id="patientName" name="patientName" placeholder="Ex: Awa Ouédraogo" />
+        </Field>
+        <Field label="Âge du patient (facultatif)" htmlFor="patientAge">
+          <Input id="patientAge" name="patientAge" type="number" min={0} max={130} step={1} placeholder="Ex: 34" />
+        </Field>
+      </div>
+      <div className="grid grid-cols-2 gap-3">
         <Field label="Sexe" htmlFor="sex">
           <Select id="sex" name="sex" required defaultValue="">
             <option value="" disabled>
