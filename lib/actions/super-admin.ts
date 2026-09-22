@@ -80,9 +80,14 @@ export async function toggleBusinessSuspendedAction(businessId: string, suspende
 
 export async function toggleUserActiveAction(userId: string, active: boolean) {
   const admin = await requireSuperAdmin();
+  // Si on réactive, on remet aussi le compteur de tentatives échouées à zéro
+  // (comme côté commerçant, voir toggleUserActiveAction dans lib/actions/users.ts) —
+  // sinon un compte verrouillé après 3 échecs (lib/actions/auth.ts) se
+  // reverrouille dès la prochaine erreur de frappe, alors que le fondateur
+  // vient de le "réactiver".
   const { data: user, error } = await supabase
     .from("users")
-    .update({ active })
+    .update(active ? { active, failed_login_attempts: 0 } : { active })
     .eq("id", userId)
     .select("firstName:first_name, lastName:last_name")
     .single();

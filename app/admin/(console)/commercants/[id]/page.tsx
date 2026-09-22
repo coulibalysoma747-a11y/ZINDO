@@ -11,6 +11,7 @@ import { DeleteBusinessButton } from "./DeleteBusinessButton";
 import { BusinessPlanSelect } from "../../abonnements/BusinessPlanSelect";
 import { ResetPasswordButton } from "./ResetPasswordButton";
 import { ImpersonateButton } from "./ImpersonateButton";
+import { ForceCloseSessionButton } from "./ForceCloseSessionButton";
 import { UserActiveToggle } from "../../utilisateurs/UserActiveToggle";
 import { UserRoleSelect } from "../../utilisateurs/UserRoleSelect";
 
@@ -35,6 +36,12 @@ type UserRow = {
   email: string | null;
   role: "ADMIN" | "VENDEUR" | "GESTIONNAIRE_STOCK";
   active: boolean;
+};
+type OpenSessionRow = {
+  id: string;
+  openedAt: string;
+  location: { name: string } | null;
+  user: { firstName: string; lastName: string } | null;
 };
 
 export default async function AdminBusinessDetailPage({
@@ -62,6 +69,7 @@ export default async function AdminBusinessDetailPage({
     { data: salesForRevenue },
     { data: subscriptionData },
     { data: plansData },
+    { data: openSessionsData },
   ] = await Promise.all([
     supabase
       .from("users")
@@ -78,11 +86,18 @@ export default async function AdminBusinessDetailPage({
       .eq("business_id", id)
       .maybeSingle(),
     supabase.from("subscription_plans").select("key, label").order("order", { ascending: true }),
+    supabase
+      .from("cash_sessions")
+      .select("id, openedAt:opened_at, location:locations(name), user:users(firstName:first_name, lastName:last_name)")
+      .eq("business_id", id)
+      .eq("status", "OUVERTE")
+      .order("opened_at", { ascending: true }),
   ]);
   const users = (usersData ?? []) as unknown as UserRow[];
   const totalRevenue = ((salesForRevenue ?? []) as Array<{ total: number }>).reduce((s, sale) => s + sale.total, 0);
   const subscription = subscriptionData as unknown as { billingCycle: "MONTHLY" | "ANNUAL"; plan: { key: string } } | null;
   const plans = (plansData ?? []) as unknown as Array<{ key: string; label: string }>;
+  const openSessions = (openSessionsData ?? []) as unknown as OpenSessionRow[];
 
   return (
     <div className="space-y-6">
@@ -166,6 +181,33 @@ export default async function AdminBusinessDetailPage({
           </div>
         </CardBody>
       </Card>
+
+      {openSessions.length > 0 && (
+        <Card>
+          <CardHeader>
+            <h2 className="font-semibold text-zinc-900">Sessions de caisse ouvertes ({openSessions.length})</h2>
+            <p className="text-xs text-zinc-500">
+              Une seule session ouverte par boutique bloque toute nouvelle vente ailleurs sur cette boutique tant
+              qu&apos;elle n&apos;est pas clôturée — utile si un employé n&apos;est plus joignable pour la fermer
+              lui-même.
+            </p>
+          </CardHeader>
+          <CardBody className="space-y-2">
+            {openSessions.map((s) => (
+              <div key={s.id} className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-zinc-100 p-3 text-sm">
+                <div>
+                  <p className="font-medium text-zinc-900">{s.location?.name ?? "Boutique inconnue"}</p>
+                  <p className="text-xs text-zinc-500">
+                    Ouverte par {s.user ? `${s.user.firstName} ${s.user.lastName}` : "utilisateur inconnu"} —{" "}
+                    {formatDateTime(new Date(s.openedAt))}
+                  </p>
+                </div>
+                <ForceCloseSessionButton businessId={business.id} sessionId={s.id} locationName={s.location?.name ?? "cette boutique"} />
+              </div>
+            ))}
+          </CardBody>
+        </Card>
+      )}
 
       <Card>
         <CardHeader>
