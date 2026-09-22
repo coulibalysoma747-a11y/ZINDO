@@ -4,6 +4,7 @@ import { requirePermission } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
 import { supabase } from "@/lib/supabase";
 import { findActivity } from "@/lib/activities";
+import { MEDICAL_ACTIVITY_KEY } from "@/lib/nav";
 import { getLocations } from "@/lib/location";
 import { getInvoiceCustomization } from "@/lib/invoice-customization";
 import { getBusinessSettings } from "@/lib/business-settings";
@@ -70,10 +71,16 @@ export default async function SettingsPage() {
   }));
 
   const activity = findActivity(user.business.activityKey);
+  // Cabinet médical/clinique n'a pas de caisse/stock au sens des autres
+  // activités : les réglages de vente, l'intégration FasoStock et les
+  // modules boutique n'y « marchent » pas (rien ne les alimente) — on les
+  // masque plutôt que d'afficher des réglages sans effet. Voir
+  // docs/cahier-des-charges-cabinet-medical.md §7.
+  const isMedical = user.business.activityKey === MEDICAL_ACTIVITY_KEY;
 
   const fasoStockApiKey = businessRow?.fasoStockApiKey as string | null;
   let fasoStockStores: FasoStockStore[] = [];
-  if (fasoStockApiKey) {
+  if (fasoStockApiKey && !isMedical) {
     try {
       fasoStockStores = await listFasoStockStores(fasoStockApiKey);
     } catch {
@@ -138,22 +145,24 @@ export default async function SettingsPage() {
         </CardBody>
       </Card>
 
-      <Card>
-        <CardHeader>
-          <h2 className="font-semibold text-zinc-900">Intégration FasoStock</h2>
-        </CardHeader>
-        <CardBody>
-          <FasoStockPanel
-            initiallyConnected={!!fasoStockApiKey}
-            initialStores={fasoStockStores}
-            locations={locations.map((l) => ({ id: l.id as string, name: l.name as string }))}
-            initialMapping={fasoStockMapping}
-            lastSyncAt={(businessRow?.fasoStockLastSyncAt as string | null) ?? null}
-            lastSyncStatus={(businessRow?.fasoStockLastSyncStatus as string | null) ?? null}
-            lastSyncError={(businessRow?.fasoStockLastSyncError as string | null) ?? null}
-          />
-        </CardBody>
-      </Card>
+      {!isMedical && (
+        <Card>
+          <CardHeader>
+            <h2 className="font-semibold text-zinc-900">Intégration FasoStock</h2>
+          </CardHeader>
+          <CardBody>
+            <FasoStockPanel
+              initiallyConnected={!!fasoStockApiKey}
+              initialStores={fasoStockStores}
+              locations={locations.map((l) => ({ id: l.id as string, name: l.name as string }))}
+              initialMapping={fasoStockMapping}
+              lastSyncAt={(businessRow?.fasoStockLastSyncAt as string | null) ?? null}
+              lastSyncStatus={(businessRow?.fasoStockLastSyncStatus as string | null) ?? null}
+              lastSyncError={(businessRow?.fasoStockLastSyncError as string | null) ?? null}
+            />
+          </CardBody>
+        </Card>
+      )}
 
       <Card>
         <CardHeader>
@@ -173,35 +182,53 @@ export default async function SettingsPage() {
         </CardBody>
       </Card>
 
-      <Card>
-        <CardHeader>
-          <h2 className="font-semibold text-zinc-900">Règles de vente</h2>
-        </CardHeader>
-        <CardBody className="space-y-4">
-          <BusinessRulesPanel settings={businessSettings} />
-          <SalesLeaderboardPanel settings={businessSettings} />
-          <UnclaimedGoodsPanel settings={businessSettings} />
-          <PaymentBreakdownPanel settings={businessSettings} />
-          <ExpenseCategoriesPanel categories={businessSettings.expenseCategories} />
-          <PackagingPriceModePanel settings={businessSettings} />
-          <BulkStockFillPanel settings={businessSettings} />
-          <HideCustomerPanel settings={businessSettings} />
-          <DualFormatPrintingPanel settings={businessSettings} />
-          <QuantityInputModePanel settings={businessSettings} />
-          <MobileMoneyPanel settings={businessSettings} />
-          <AiCartPanel settings={businessSettings} />
-          <ApiKeysPanel />
-        </CardBody>
-      </Card>
+      {isMedical ? (
+        // Cabinet médical : seules les catégories de dépenses restent
+        // pertinentes (réutilisées par le bilan financier de
+        // /consultations/statistiques) — le reste de "Règles de vente"
+        // (leaderboard vendeurs, mode de saisie caisse, packaging...) ne
+        // s'applique qu'aux activités avec une vraie caisse/stock.
+        <Card>
+          <CardHeader>
+            <h2 className="font-semibold text-zinc-900">Dépenses</h2>
+          </CardHeader>
+          <CardBody className="space-y-4">
+            <ExpenseCategoriesPanel categories={businessSettings.expenseCategories} />
+          </CardBody>
+        </Card>
+      ) : (
+        <>
+          <Card>
+            <CardHeader>
+              <h2 className="font-semibold text-zinc-900">Règles de vente</h2>
+            </CardHeader>
+            <CardBody className="space-y-4">
+              <BusinessRulesPanel settings={businessSettings} />
+              <SalesLeaderboardPanel settings={businessSettings} />
+              <UnclaimedGoodsPanel settings={businessSettings} />
+              <PaymentBreakdownPanel settings={businessSettings} />
+              <ExpenseCategoriesPanel categories={businessSettings.expenseCategories} />
+              <PackagingPriceModePanel settings={businessSettings} />
+              <BulkStockFillPanel settings={businessSettings} />
+              <HideCustomerPanel settings={businessSettings} />
+              <DualFormatPrintingPanel settings={businessSettings} />
+              <QuantityInputModePanel settings={businessSettings} />
+              <MobileMoneyPanel settings={businessSettings} />
+              <AiCartPanel settings={businessSettings} />
+              <ApiKeysPanel />
+            </CardBody>
+          </Card>
 
-      <Card>
-        <CardHeader>
-          <h2 className="font-semibold text-zinc-900">Modules</h2>
-        </CardHeader>
-        <CardBody>
-          <ModuleTogglesPanel settings={businessSettings} />
-        </CardBody>
-      </Card>
+          <Card>
+            <CardHeader>
+              <h2 className="font-semibold text-zinc-900">Modules</h2>
+            </CardHeader>
+            <CardBody>
+              <ModuleTogglesPanel settings={businessSettings} />
+            </CardBody>
+          </Card>
+        </>
+      )}
 
       <Card>
         <CardHeader>

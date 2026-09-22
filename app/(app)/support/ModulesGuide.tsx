@@ -4,11 +4,10 @@ import type { ModuleAvailability, ModuleUnavailableReason } from "@/lib/nav-serv
 import { Badge } from "@/components/ui/Badge";
 import { ModuleCard } from "./ModuleCard";
 
-const UNAVAILABLE_MESSAGES: Record<ModuleUnavailableReason, string> = {
+const UNAVAILABLE_MESSAGES: Record<Exclude<ModuleUnavailableReason, "activity">, string> = {
   permission: "Votre rôle actuel n'a pas accès à ce module.",
   feature: "Cette fonctionnalité n'est pas encore activée pour votre compte.",
   plan: "Non inclus dans votre formule d'abonnement actuelle.",
-  activity: "Ce module ne s'applique pas à votre type d'activité.",
   module: "Masqué depuis Paramètres — réactivez-le dans la section Modules.",
 };
 
@@ -184,7 +183,14 @@ export const DESCRIPTIONS: Record<string, { short: string; long: string }> = {
 };
 
 export function ModulesGuide({ availability }: { availability: Record<string, ModuleAvailability> }) {
-  const modules = NAV_ITEMS.filter((item) => item.href !== "/support" && DESCRIPTIONS[item.href]);
+  // Un module dont l'activité (lib/activities.ts) ne correspond pas à celle
+  // du commerce ne « marche » pas du tout sur ce compte (ex. Vente Engin
+  // pour un cabinet médical, Consultations pour une boutique générale) : on
+  // ne l'affiche même pas grisé, plutôt que d'encombrer le guide de modules
+  // qui ne concerneront jamais ce commerce.
+  const modules = NAV_ITEMS.filter(
+    (item) => item.href !== "/support" && DESCRIPTIONS[item.href] && availability[item.href]?.reason !== "activity"
+  );
 
   return (
     <div>
@@ -198,6 +204,10 @@ export function ModulesGuide({ availability }: { availability: Record<string, Mo
           const Icon = NAV_ICONS[item.icon];
           const { short, long } = DESCRIPTIONS[item.href];
           const moduleAvailability = availability[item.href] ?? { allowed: true, reason: null };
+          const unavailableMessage =
+            moduleAvailability.reason && moduleAvailability.reason !== "activity"
+              ? UNAVAILABLE_MESSAGES[moduleAvailability.reason]
+              : undefined;
           return (
             <ModuleCard
               key={item.href}
@@ -207,7 +217,7 @@ export function ModulesGuide({ availability }: { availability: Record<string, Mo
               shortDescription={short}
               longDescription={long}
               available={moduleAvailability.allowed}
-              unavailableMessage={moduleAvailability.reason ? UNAVAILABLE_MESSAGES[moduleAvailability.reason] : undefined}
+              unavailableMessage={unavailableMessage}
               badge={
                 <>
                   {item.badge && (

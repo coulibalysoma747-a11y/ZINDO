@@ -197,3 +197,36 @@ produits de son catalogue avec quantité et posologie → imprimer/partager le
 reçu et l'ordonnance → suivre ses statistiques épidémiologiques et son bilan
 financier par période — en choisissant lui-même, consultation par
 consultation, de rester anonyme ou non.
+
+## 7. Interface épurée : Aide/Support et Paramètres
+
+Demande explicite : un cabinet médical ne doit pas voir, dans **Aide &
+support** et **Paramètres**, des fonctionnalités qui « ne marchent pas »
+chez lui (pensées pour une boutique avec caisse/stock/vente, sans lien avec
+le fonctionnement d'un cabinet).
+
+- **Aide & support** (`ModulesGuide`) : un module dont l'activité requise
+  (`requireActivity`, `lib/nav.ts`) ne correspond pas à celle du commerce
+  n'apparaît plus du tout dans le guide — auparavant il restait visible,
+  grisé, avec la mention « Ce module ne s'applique pas à votre type
+  d'activité ». Ce changement est générique (pas seulement pour le cabinet
+  médical) : une boutique générale ne voit plus non plus, par exemple, Vente
+  Engin ou Péremption (DLC) dans son guide.
+- **Paramètres** : pour l'activité `cabinet_medical` spécifiquement (le
+  reste de ZINDO n'est pas concerné) :
+  - la carte "Intégration FasoStock" est masquée (synchronisation de stock
+    boutique, sans objet) ;
+  - la carte "Règles de vente" est remplacée par une carte "Dépenses" qui ne
+    garde que les catégories de dépenses (seul réglage de cette section
+    réellement utilisé, par le bilan financier de
+    `/consultations/statistiques`) — le reste (leaderboard vendeurs, mode de
+    saisie quantité à la caisse, packaging, IA panier...) disparaît ;
+  - la carte "Modules" (activables/désactivables : devis, prix de revient,
+    photos produits, rappels crédit, réassort, approvisionnement rapide,
+    enlèvements, expéditions, caisse à deux) est masquée : aucun de ces
+    interrupteurs n'a de sens pour le parcours consultation.
+  - Restent visibles pour tous, y compris le cabinet médical : Mon activité,
+    Commerce, Moyens de paiement, Devise, Rôles et permissions, zone de
+    danger — réglages génériques toujours pertinents, y compris si le
+    cabinet utilise malgré tout les modules génériques Vente/Stock/Achats
+    (§5, "Déduction de stock à la prescription").
