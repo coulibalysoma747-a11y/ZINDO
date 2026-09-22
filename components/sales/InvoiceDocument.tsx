@@ -1,6 +1,7 @@
 import { Facture, type FactureData } from "./Facture";
 import { FactureModerne } from "./FactureModerne";
 import { FactureBoutique } from "./FactureBoutique";
+import { FactureAtelier } from "./FactureAtelier";
 
 /**
  * Point d'aiguillage unique entre les modèles de Facture A4 (voir
@@ -15,6 +16,8 @@ export function InvoiceDocument({ data }: { data: FactureData }) {
       return <FactureModerne data={data} />;
     case "boutique":
       return <FactureBoutique data={data} />;
+    case "atelier":
+      return <FactureAtelier data={data} />;
     case "classique":
     default:
       return <Facture data={data} />;

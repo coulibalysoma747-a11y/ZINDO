@@ -22,6 +22,13 @@ export function FactureBoutique({ data }: { data: FactureData }) {
           html, body { margin: 0 !important; padding: 0 !important; background: #fff !important; }
           #zindo-facture-boutique { width: 100%; margin: 0; box-shadow: none; border: none; border-radius: 0; }
           #zindo-facture-boutique .fb-block { border-radius: 0; }
+          /* Sans ça, la plupart des navigateurs n'impriment pas les couleurs
+             de fond par défaut (case "graphiques d'arrière-plan" décochée) —
+             le bandeau et la pastille de total ressortiraient blancs. */
+          #zindo-facture-boutique, #zindo-facture-boutique * {
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+          }
         }
       `}</style>
 
