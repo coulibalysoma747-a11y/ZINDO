@@ -25,14 +25,14 @@ export function SidebarLink({ item }: { item: NavItem }) {
         "group flex items-center justify-between rounded-xl px-3.5 py-2.5 text-sm font-medium transition-all duration-200",
         active
           ? "bg-gradient-to-r from-zindo-green-600 to-zindo-green-500 text-white shadow-md shadow-zindo-green-800/25"
-          : "text-slate-400 hover:bg-slate-800/60 hover:text-slate-100"
+          : "text-zindo-ink-500 hover:bg-zindo-ink-50 hover:text-zindo-ink-900"
       )}
     >
       <div className="flex items-center gap-3">
         <Icon
           className={cn(
             "h-4.5 w-4.5 transition-transform duration-200 group-hover:scale-110",
-            active ? "text-white" : "text-slate-400 group-hover:text-zindo-green-400"
+            active ? "text-white" : "text-zindo-ink-500 group-hover:text-zindo-green-600"
           )}
         />
         <span>{item.label}</span>
