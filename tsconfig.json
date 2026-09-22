@@ -30,5 +30,14 @@
     ".next/dev/types/**/*.ts",
     "**/*.mts"
   ],
-  "exclude": ["node_modules"]
+  "exclude": [
+    "node_modules",
+    // Compilé séparément par electron/tsconfig.json (npm run electron:build) —
+    // dépend de electron/env.generated.ts, généré localement et jamais
+    // commité (voir scripts/generate-electron-env.mjs), donc absent de
+    // l'environnement de build Vercel. Sans cette exclusion, le contrôle
+    // TypeScript de `next build` échoue sur ce fichier et bloque tout
+    // déploiement, y compris pour du code sans rapport avec Electron.
+    "electron"
+  ]
 }
