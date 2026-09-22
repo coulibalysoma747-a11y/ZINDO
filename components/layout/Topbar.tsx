@@ -31,62 +31,68 @@ export function Topbar({
   const [pending, startTransition] = useTransition();
 
   return (
-    <header className="relative flex h-16 items-center justify-between border-b border-zinc-200 bg-white/95 px-4 shadow-sm shadow-zinc-900/[0.02] backdrop-blur-sm dark:border-slate-800 dark:bg-slate-900/95 md:px-6">
-      <div className="zindo-flag-stripe absolute inset-x-0 top-0 h-1" />
-      <button
-        className="rounded-lg p-2 text-zinc-500 hover:bg-zinc-100 md:hidden"
-        onClick={() => setMobileNavOpen(true)}
-        aria-label="Ouvrir le menu"
-      >
-        <Menu className="h-5 w-5" />
-      </button>
-      <div className="hidden md:block">
-        <LocationSwitcher locations={locations} currentLocationId={currentLocationId} />
-      </div>
-      <div className="flex items-center gap-2">
-        <InstallAppButton
-          iconOnly
-          className="flex items-center gap-1.5 rounded-lg border border-zinc-200 px-2.5 py-1.5 text-xs font-semibold text-zinc-600 hover:border-zinc-300 dark:border-slate-700 dark:text-slate-300 sm:px-3"
-        />
-        <div className="relative">
+    <>
+      <header className="relative flex h-16 items-center justify-between border-b border-zinc-200 bg-white/95 px-4 shadow-sm shadow-zinc-900/[0.02] backdrop-blur-sm dark:border-slate-800 dark:bg-slate-900/95 md:px-6">
+        <div className="zindo-flag-stripe absolute inset-x-0 top-0 h-1" />
         <button
-          onClick={() => setMenuOpen((v) => !v)}
-          className="flex items-center gap-2 rounded-lg px-2 py-1.5 transition-colors hover:bg-zinc-100 dark:hover:bg-slate-800"
+          className="rounded-lg p-2 text-zinc-500 hover:bg-zinc-100 md:hidden"
+          onClick={() => setMobileNavOpen(true)}
+          aria-label="Ouvrir le menu"
         >
-          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-zindo-green-100 text-sm font-semibold text-zindo-green-700 ring-1 ring-zindo-green-600/10 dark:bg-zindo-green-500/15 dark:text-zindo-green-400">
-            {userName.slice(0, 1).toUpperCase()}
-          </div>
-          <div className="hidden text-left sm:block">
-            <p className="text-sm font-medium text-zinc-900">{userName}</p>
-            <p className="text-xs text-zinc-500">{role}</p>
-          </div>
+          <Menu className="h-5 w-5" />
         </button>
-        {menuOpen && (
-          <div className="animate-zindo-fade-in absolute right-0 z-20 mt-2 w-48 rounded-xl border border-zinc-200 bg-white py-1 shadow-lg shadow-zinc-900/10 ring-1 ring-zinc-900/5 dark:border-slate-700 dark:bg-slate-900">
-            <Link
-              href="/profil"
-              className="flex items-center gap-2 px-3 py-2 text-sm text-zinc-700 hover:bg-zinc-50 dark:hover:bg-slate-800"
-              onClick={() => setMenuOpen(false)}
-            >
-              <UserIcon className="h-4 w-4" /> Mon profil
-            </Link>
-            <button
-              disabled={pending}
-              onClick={() => startTransition(() => logoutAction())}
-              className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-950/40"
-            >
-              <LogOut className="h-4 w-4" /> Déconnexion
-            </button>
-          </div>
-        )}
+        <div className="hidden md:block">
+          <LocationSwitcher locations={locations} currentLocationId={currentLocationId} />
         </div>
-      </div>
+        <div className="flex items-center gap-2">
+          <InstallAppButton
+            iconOnly
+            className="flex items-center gap-1.5 rounded-lg border border-zinc-200 px-2.5 py-1.5 text-xs font-semibold text-zinc-600 hover:border-zinc-300 dark:border-slate-700 dark:text-slate-300 sm:px-3"
+          />
+          <div className="relative">
+            <button
+              onClick={() => setMenuOpen((v) => !v)}
+              className="flex items-center gap-2 rounded-lg px-2 py-1.5 transition-colors hover:bg-zinc-100 dark:hover:bg-slate-800"
+            >
+              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-zindo-green-100 text-sm font-semibold text-zindo-green-700 ring-1 ring-zindo-green-600/10 dark:bg-zindo-green-500/15 dark:text-zindo-green-400">
+                {userName.slice(0, 1).toUpperCase()}
+              </div>
+              <div className="hidden text-left sm:block">
+                <p className="text-sm font-medium text-zinc-900">{userName}</p>
+                <p className="text-xs text-zinc-500">{role}</p>
+              </div>
+            </button>
+            {menuOpen && (
+              <div className="animate-zindo-fade-in absolute right-0 z-20 mt-2 w-48 rounded-xl border border-zinc-200 bg-white py-1 shadow-lg shadow-zinc-900/10 ring-1 ring-zinc-900/5 dark:border-slate-700 dark:bg-slate-900">
+                <Link
+                  href="/profil"
+                  className="flex items-center gap-2 px-3 py-2 text-sm text-zinc-700 hover:bg-zinc-50 dark:hover:bg-slate-800"
+                  onClick={() => setMenuOpen(false)}
+                >
+                  <UserIcon className="h-4 w-4" /> Mon profil
+                </Link>
+                <button
+                  disabled={pending}
+                  onClick={() => startTransition(() => logoutAction())}
+                  className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-950/40"
+                >
+                  <LogOut className="h-4 w-4" /> Déconnexion
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      </header>
+      {/* En dehors du <header> : `backdrop-blur-sm` ci-dessus crée un containing
+          block pour les descendants `position: fixed`, ce qui confinait le
+          tiroir plein écran de MobileNav à la hauteur du header (64px) au lieu
+          du viewport entier. */}
       <MobileNav
         open={mobileNavOpen}
         onClose={() => setMobileNavOpen(false)}
         items={navItems}
         businessName={businessName}
       />
-    </header>
+    </>
   );
 }
