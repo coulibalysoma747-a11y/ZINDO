@@ -5,6 +5,8 @@ import { PERMISSIONS } from "@/lib/permissions";
 import { getCurrentLocation } from "@/lib/location";
 import { createChatCompletion, isAssistantConfigured, DeepSeekError, type DeepSeekMessage } from "@/lib/ai/deepseek";
 import { ASSISTANT_TOOLS, createToolExecutor } from "@/lib/ai/tools";
+import { MEDICAL_ASSISTANT_TOOLS, createMedicalToolExecutor } from "@/lib/ai/medical-tools";
+import { MEDICAL_ACTIVITY_KEY } from "@/lib/nav";
 
 export type ChatMessage = { role: "user" | "assistant"; content: string };
 
@@ -25,18 +27,40 @@ export async function askAssistantAction(
     };
   }
 
-  const currentLocation = await getCurrentLocation(user.businessId);
-  if (!currentLocation) {
-    return { success: false, error: "Configurez d'abord une boutique pour utiliser l'assistant." };
-  }
-
   if (!question.trim()) {
     return { success: false, error: "Posez une question à l'assistant." };
   }
 
-  const executeTool = createToolExecutor(user.businessId, currentLocation.id, user.business.currency);
+  // Cabinet médical/clinique n'a ni caisse ni stock au sens des autres
+  // activités (les consultations ne sont pas rattachées à une boutique) :
+  // outils et message système dédiés plutôt que ceux pensés pour une
+  // boutique — voir docs/cahier-des-charges-cabinet-medical.md §8.
+  const isMedical = user.business.activityKey === MEDICAL_ACTIVITY_KEY;
 
-  const systemPrompt = `Tu es l'assistant commercial intelligent de ZINDO, une application de gestion de stock et de ventes pour les commerces au Burkina Faso.
+  let tools = ASSISTANT_TOOLS;
+  let executeTool: (name: string, input: Record<string, unknown>) => Promise<string>;
+  let systemPrompt: string;
+
+  if (isMedical) {
+    tools = MEDICAL_ASSISTANT_TOOLS;
+    executeTool = createMedicalToolExecutor(user.businessId);
+    systemPrompt = `Tu es l'assistant intelligent de ZINDO, une application de gestion pour les commerces et cabinets au Burkina Faso.
+Tu aides ${user.firstName}, du cabinet "${user.business.name}", à comprendre l'activité de son cabinet médical (consultations, pathologies, actes, patientèle, bilan financier).
+
+Règles :
+- Réponds toujours en français, de façon concise et actionnable (quelques phrases, jamais un essai).
+- Utilise systématiquement les outils fournis pour obtenir des données réelles avant de répondre — ne devine jamais de chiffres.
+- Les montants sont en ${user.business.currency}. Formate-les avec des espaces comme séparateurs de milliers (ex : 125 000 ${user.business.currency}).
+- Ne mentionne jamais de nom ni de donnée nominative de patient : les outils ne renvoient que des statistiques agrégées, respecte cette anonymisation dans tes réponses aussi (secret médical).
+- Si une question sort du cadre de l'activité du cabinet (consultations, diagnostics, actes, patientèle, bilan financier), réponds poliment que tu es limité à ces sujets.
+- Sois précis et cite des chiffres concrets issus des outils plutôt que des généralités.`;
+  } else {
+    const currentLocation = await getCurrentLocation(user.businessId);
+    if (!currentLocation) {
+      return { success: false, error: "Configurez d'abord une boutique pour utiliser l'assistant." };
+    }
+    executeTool = createToolExecutor(user.businessId, currentLocation.id, user.business.currency);
+    systemPrompt = `Tu es l'assistant commercial intelligent de ZINDO, une application de gestion de stock et de ventes pour les commerces au Burkina Faso.
 Tu aides ${user.firstName}, gérant de "${user.business.name}", à comprendre les performances de sa boutique "${currentLocation.name}".
 
 Règles :
@@ -45,6 +69,7 @@ Règles :
 - Les montants sont en ${user.business.currency}. Formate-les avec des espaces comme séparateurs de milliers (ex : 125 000 ${user.business.currency}).
 - Si une question sort du cadre de la gestion du commerce (stock, ventes, clients, marges, crédits), réponds poliment que tu es limité à ces sujets.
 - Sois précis et cite des chiffres concrets issus des outils plutôt que des généralités.`;
+  }
 
   const messages: DeepSeekMessage[] = [
     { role: "system", content: systemPrompt },
@@ -56,7 +81,7 @@ Règles :
     for (let i = 0; i < MAX_TOOL_ITERATIONS; i++) {
       const response = await createChatCompletion({
         messages,
-        tools: ASSISTANT_TOOLS,
+        tools,
         maxTokens: 2000,
       });
 

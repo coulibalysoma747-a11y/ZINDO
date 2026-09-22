@@ -13,7 +13,15 @@ const SUGGESTIONS = [
   "Comment se comparent mes ventes ce mois-ci ?",
 ];
 
-export function AssistantChat({ configured }: { configured: boolean }) {
+const MEDICAL_SUGGESTIONS = [
+  "Quel est mon bilan ce mois-ci ?",
+  "Quelles sont les pathologies les plus fréquentes ?",
+  "Quels sont mes actes les plus pratiqués ?",
+  "Quel est le profil de ma patientèle cette semaine ?",
+];
+
+export function AssistantChat({ configured, medical = false }: { configured: boolean; medical?: boolean }) {
+  const suggestions = medical ? MEDICAL_SUGGESTIONS : SUGGESTIONS;
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -48,12 +56,14 @@ export function AssistantChat({ configured }: { configured: boolean }) {
               <Sparkles className="h-6 w-6 text-emerald-600" />
             </div>
             <div>
-              <p className="font-medium text-zinc-900">Posez une question sur votre commerce</p>
+              <p className="font-medium text-zinc-900">
+                {medical ? "Posez une question sur votre cabinet" : "Posez une question sur votre commerce"}
+              </p>
               <p className="text-sm text-zinc-500">L&apos;assistant analyse vos données ZINDO en temps réel.</p>
             </div>
             {configured && (
               <div className="flex flex-wrap justify-center gap-2">
-                {SUGGESTIONS.map((s) => (
+                {suggestions.map((s) => (
                   <button
                     key={s}
                     onClick={() => send(s)}

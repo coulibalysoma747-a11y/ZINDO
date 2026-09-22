@@ -249,3 +249,38 @@ le fonctionnement d'un cabinet).
     danger — réglages génériques toujours pertinents, y compris si le
     cabinet utilise malgré tout les modules génériques Vente/Stock/Achats
     (§5, "Déduction de stock à la prescription").
+
+## 8. Assistant IA adapté au cabinet
+
+Demande explicite : l'Assistant IA (`/assistant`) était entièrement pensé
+pour une boutique avec caisse/stock — ses 6 outils (`get_dashboard_summary`,
+`get_top_selling_products`, `get_stock_levels`, `get_sales_trend_by_category`,
+`get_credit_summary`, `get_low_margin_products`, voir `lib/ai/tools.ts`) et
+son message système ("comprendre les performances de sa boutique") ne
+renvoyaient rien d'utile à un cabinet médical, qui n'a ni vente ni stock ni
+crédit client au même sens.
+
+- Nouveau jeu d'outils dédié (`lib/ai/medical-tools.ts`,
+  `MEDICAL_ASSISTANT_TOOLS`) interrogeant les mêmes données que
+  `/consultations/statistiques` en langage naturel : bilan (consultations,
+  recettes, charges, bénéfice), pathologies les plus fréquentes, actes les
+  plus pratiqués, profil de la patientèle (sexe/tranche d'âge), produits les
+  plus prescrits en ordonnance (§3.5) — tous paramétrables par période
+  (aujourd'hui/semaine/mois/tout).
+- `lib/actions/assistant.ts` choisit le jeu d'outils, le message système et
+  la vérification préalable ("boutique configurée" n'a pas de sens pour des
+  consultations, qui ne sont pas rattachées à une boutique) selon que
+  `business.activityKey === "cabinet_medical"` ou non.
+- Le message système du cabinet rappelle explicitement de ne jamais citer de
+  donnée nominative de patient — cohérent avec l'anonymisation du reste du
+  module (§1) même si les outils ne renvoient de toute façon que des
+  statistiques agrégées, jamais une consultation individuelle.
+- Écran `/assistant` : la carte "Ce que l'assistant a remarqué" (alertes de
+  rupture de stock/marge/tendance de ventes, `lib/actions/insights.ts`) est
+  masquée pour le cabinet médical — toujours vide et hors-sujet chez lui —
+  et les suggestions de questions affichées changent en conséquence
+  (`app/(app)/assistant/AssistantChat.tsx`).
+- Compromis assumé : deux jeux d'outils à maintenir plutôt qu'un seul
+  générique. Retenu parce que les deux domaines (commerce vs cabinet) n'ont
+  presque aucune donnée en commun — un outil générique serait resté boiteux
+  pour l'un des deux.

@@ -21,8 +21,8 @@ export const DESCRIPTIONS: Record<string, { short: string; long: string }> = {
     long: "Votre écran d'accueil. Vous y voyez en un coup d'œil les ventes du jour, la variation par rapport à hier, vos raccourcis vers les actions les plus fréquentes et vos alertes de stock (ruptures, stock faible). Sur ordinateur, des statistiques plus détaillées (bénéfice du jour, chiffre d'affaires du mois, produits les plus vendus, stock par boutique) s'affichent en plus, en dessous.",
   },
   "/assistant": {
-    short: "Posez des questions en langage naturel sur votre commerce (ventes, stock, clients...) et obtenez une réponse instantanée.",
-    long: "Un assistant à qui vous pouvez poser des questions en français normal — par exemple « combien ai-je vendu aujourd'hui ? » ou « quels produits sont bientôt en rupture ? ». Il consulte les données réelles de votre commerce pour répondre, sans que vous ayez à fouiller dans les rapports vous-même. Réservé aux formules qui incluent l'assistant IA.",
+    short: "Posez des questions en langage naturel sur votre activité et obtenez une réponse instantanée.",
+    long: "Un assistant à qui vous pouvez poser des questions en français normal — par exemple « combien ai-je vendu aujourd'hui ? » ou « quels produits sont bientôt en rupture ? » (pathologies les plus fréquentes ou bilan du mois pour un cabinet médical). Il consulte les données réelles de votre compte pour répondre, sans que vous ayez à fouiller dans les rapports vous-même — les questions et les données consultées s'adaptent à votre type d'activité. Réservé aux formules qui incluent l'assistant IA.",
   },
   "/ventes": {
     short: "L'écran de caisse : composez un panier, encaissez et imprimez le ticket ou la facture.",

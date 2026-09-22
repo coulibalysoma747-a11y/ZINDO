@@ -3,6 +3,7 @@ import { PERMISSIONS } from "@/lib/permissions";
 import { getCurrentLocation } from "@/lib/location";
 import { getBusinessInsights } from "@/lib/actions/insights";
 import { isAssistantConfigured } from "@/lib/ai/deepseek";
+import { MEDICAL_ACTIVITY_KEY } from "@/lib/nav";
 import { Card, CardBody, CardHeader } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/Empty";
 import { ButtonLink } from "@/components/ui/Button";
@@ -11,8 +12,44 @@ import { AssistantChat } from "./AssistantChat";
 
 export default async function AssistantPage() {
   const user = await requirePermission(PERMISSIONS.ASSISTANT_USE);
-  const currentLocation = await getCurrentLocation(user.businessId);
   const configured = isAssistantConfigured();
+  // Cabinet médical : les consultations ne sont pas rattachées à une
+  // boutique et "Ce que l'assistant a remarqué" (rupture de stock, marge,
+  // tendance de ventes — lib/actions/insights.ts) est entièrement pensé
+  // pour une activité avec caisse/stock, donc toujours vide et hors-sujet
+  // ici. Voir docs/cahier-des-charges-cabinet-medical.md §8.
+  const isMedical = user.business.activityKey === MEDICAL_ACTIVITY_KEY;
+
+  if (isMedical) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-xl font-bold text-zinc-900">Assistant IA</h1>
+          <p className="text-sm text-zinc-500">Réponses à vos questions sur l&apos;activité de votre cabinet.</p>
+        </div>
+
+        {!configured && (
+          <Card className="border-amber-200 bg-amber-50">
+            <CardBody>
+              <p className="text-sm font-medium text-amber-800">Assistant non configuré</p>
+              <p className="mt-1 text-sm text-amber-700">
+                Ajoutez une clé <code className="rounded bg-amber-100 px-1">DEEPSEEK_API_KEY</code> dans le
+                fichier <code className="rounded bg-amber-100 px-1">.env</code> à la racine du projet, puis
+                redémarrez le serveur pour activer les réponses aux questions.
+              </p>
+            </CardBody>
+          </Card>
+        )}
+
+        <div>
+          <h2 className="mb-2 font-semibold text-zinc-900">Poser une question</h2>
+          <AssistantChat configured={configured} medical />
+        </div>
+      </div>
+    );
+  }
+
+  const currentLocation = await getCurrentLocation(user.businessId);
 
   if (!currentLocation) {
     return (
