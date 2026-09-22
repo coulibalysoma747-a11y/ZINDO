@@ -6,6 +6,7 @@ import { X } from "lucide-react";
 import { cn } from "@/lib/cn";
 import type { NavItem } from "@/lib/nav";
 import { ZindoLogo } from "@/components/auth/ZindoLogo";
+import { NAV_ICONS, ICON_BADGE_COLORS } from "./nav-icons";
 
 export function MobileNav({
   open,
@@ -50,6 +51,7 @@ export function MobileNav({
           <nav className="space-y-1 p-3">
             {mainItems.map((item) => {
               const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
+              const Icon = NAV_ICONS[item.icon];
               return (
                 <Link
                   key={item.href}
@@ -62,7 +64,17 @@ export function MobileNav({
                       : "text-zindo-ink-500 hover:bg-zindo-ink-50 hover:text-zindo-ink-900"
                   )}
                 >
-                  {item.label}
+                  <span className="flex items-center gap-3">
+                    <span
+                      className={cn(
+                        "flex h-8 w-8 shrink-0 items-center justify-center rounded-lg",
+                        ICON_BADGE_COLORS[item.icon]
+                      )}
+                    >
+                      <Icon className="h-4.5 w-4.5 text-white" />
+                    </span>
+                    {item.label}
+                  </span>
                   {item.badge && (
                     <span
                       className={cn(

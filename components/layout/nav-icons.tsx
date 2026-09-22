@@ -48,6 +48,73 @@ import {
 // composant/objet exporté depuis un module "use client" devient une
 // référence client opaque, illisible (indexation cassée à l'exécution) une
 // fois importé côté serveur — d'où ce fichier neutre séparé.
+// Couleur du badge derrière chaque icône de module (accent visuel façon
+// FasoStock — un point de couleur distinct par module pour repérer vite un
+// module dans une longue liste). Purement décoratif : le rouge/l'amber
+// restent réservés aux états sémantiques danger/attention, donc absents ici.
+const BADGE_PALETTE = [
+  "bg-orange-500",
+  "bg-purple-500",
+  "bg-teal-500",
+  "bg-sky-500",
+  "bg-emerald-500",
+  "bg-pink-500",
+  "bg-indigo-500",
+  "bg-cyan-500",
+  "bg-rose-500",
+  "bg-lime-600",
+  "bg-violet-500",
+  "bg-fuchsia-500",
+  "bg-blue-500",
+] as const;
+
+const ICON_KEYS_ORDER: NavItem["icon"][] = [
+  "dashboard",
+  "assistant",
+  "sales",
+  "invoices",
+  "products",
+  "categories",
+  "brands",
+  "stock",
+  "transfers",
+  "purchases",
+  "expenses",
+  "customers",
+  "credits",
+  "suppliers",
+  "inventory",
+  "history",
+  "cash-sessions",
+  "history-global",
+  "reports",
+  "locations",
+  "users",
+  "settings",
+  "support",
+  "online-store",
+  "vehicle-sales",
+  "quotes",
+  "vehicle-registration",
+  "subscription",
+  "notifications",
+  "credit-reminders",
+  "restock",
+  "cost-price",
+  "product-photos",
+  "rentals",
+  "quick-supply",
+  "pickups",
+  "shipments",
+  "cashier",
+  "consultations",
+  "medical-stats",
+];
+
+export const ICON_BADGE_COLORS: Record<NavItem["icon"], string> = Object.fromEntries(
+  ICON_KEYS_ORDER.map((key, index) => [key, BADGE_PALETTE[index % BADGE_PALETTE.length]])
+) as Record<NavItem["icon"], string>;
+
 export const NAV_ICONS: Record<NavItem["icon"], React.ComponentType<{ className?: string }>> = {
   dashboard: LayoutDashboard,
   assistant: Bot,

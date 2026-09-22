@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/cn";
 import type { NavItem } from "@/lib/nav";
-import { NAV_ICONS } from "./nav-icons";
+import { NAV_ICONS, ICON_BADGE_COLORS } from "./nav-icons";
 
 export function SidebarLink({ item }: { item: NavItem }) {
   const pathname = usePathname();
@@ -29,12 +29,14 @@ export function SidebarLink({ item }: { item: NavItem }) {
       )}
     >
       <div className="flex items-center gap-3">
-        <Icon
+        <span
           className={cn(
-            "h-4.5 w-4.5 transition-transform duration-200 group-hover:scale-110",
-            active ? "text-white" : "text-zindo-ink-500 group-hover:text-zindo-green-600"
+            "flex h-8 w-8 shrink-0 items-center justify-center rounded-lg transition-transform duration-200 group-hover:scale-110",
+            ICON_BADGE_COLORS[item.icon]
           )}
-        />
+        >
+          <Icon className="h-4.5 w-4.5 text-white" />
+        </span>
         <span>{item.label}</span>
       </div>
       {item.badge && (
