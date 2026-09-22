@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { Plus, BarChart3, Download, Stethoscope, Microscope, Receipt as ReceiptIcon } from "lucide-react";
+import { Plus, BarChart3, Download, Stethoscope, Microscope, Receipt as ReceiptIcon, Pill } from "lucide-react";
 import { requirePermission } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
 import { supabase } from "@/lib/supabase";
@@ -23,6 +23,7 @@ type ConsultationRow = {
   fee: number;
   createdAt: string;
   act: { name: string } | null;
+  items: { id: string }[];
 };
 
 export default async function ConsultationsPage() {
@@ -35,7 +36,7 @@ export default async function ConsultationsPage() {
   const { data } = await supabase
     .from("consultations")
     .select(
-      "id, patientCode:patient_code, patientName:patient_name, patientAge:patient_age, sex, ageGroup:age_group, diagnosis, fee, createdAt:created_at, act:medical_acts(name)"
+      "id, patientCode:patient_code, patientName:patient_name, patientAge:patient_age, sex, ageGroup:age_group, diagnosis, fee, createdAt:created_at, act:medical_acts(name), items:consultation_items(id)"
     )
     .eq("business_id", user.businessId)
     .order("created_at", { ascending: false })
@@ -103,12 +104,22 @@ export default async function ConsultationsPage() {
                   <TableCell className="text-zinc-600 dark:text-slate-400">{c.diagnosis}</TableCell>
                   <TableCell className="font-semibold text-zindo-green-600">{formatMoney(c.fee, currency)}</TableCell>
                   <TableCell>
-                    <a
-                      href={`/consultations/${c.id}/recu`}
-                      className="inline-flex items-center gap-1 text-sm font-medium text-zindo-green-700 hover:underline"
-                    >
-                      <ReceiptIcon className="h-3.5 w-3.5" /> Reçu
-                    </a>
+                    <div className="flex flex-col gap-1">
+                      <a
+                        href={`/consultations/${c.id}/recu`}
+                        className="inline-flex items-center gap-1 text-sm font-medium text-zindo-green-700 hover:underline"
+                      >
+                        <ReceiptIcon className="h-3.5 w-3.5" /> Reçu
+                      </a>
+                      {c.items.length > 0 && (
+                        <a
+                          href={`/consultations/${c.id}/ordonnance`}
+                          className="inline-flex items-center gap-1 text-sm font-medium text-zindo-green-700 hover:underline"
+                        >
+                          <Pill className="h-3.5 w-3.5" /> Ordonnance
+                        </a>
+                      )}
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}

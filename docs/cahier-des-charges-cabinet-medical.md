@@ -98,6 +98,31 @@ fiche produit). Renommer une catégorie réaligne rétroactivement les
 consultations déjà enregistrées portant l'ancien libellé exact, pour ne pas
 fausser le classement des pathologies fréquentes.
 
+### 3.5 Ordonnance : prescription de produits directement en consultation
+
+Demande explicite : le médecin doit pouvoir prescrire directement des
+produits (médicaments/consommables de son catalogue Produits existant)
+pendant la saisie de la consultation, plutôt que de les décrire en texte
+libre dans "Traitement".
+
+- Nouvelle table `consultation_items` (produit, quantité, posologie libre),
+  rattachée à une consultation.
+- Dans l'écran Nouvelle consultation, une section "Ordonnance" permet de
+  rechercher un produit (réutilise `ProductPicker`, déjà utilisé par
+  Approvisionnement rapide/Achats/Transferts...) et d'ajouter autant de
+  lignes que nécessaire, chacune avec sa quantité et sa posologie.
+- Écran imprimable dédié `/consultations/[id]/ordonnance` (mise en page A4
+  façon document officiel, calquée sur `components/sales/Facture.tsx`) : nom
+  du cabinet, patient, diagnostic, tableau des produits prescrits, ligne de
+  signature/cachet. Accessible depuis le registre dès qu'une consultation a
+  au moins une ligne d'ordonnance.
+- **Choix assumé : l'ordonnance ne touche jamais le stock.** C'est un
+  document informatif que le patient emporte (achat en pharmacie externe),
+  pas une vente. Un cabinet qui dispense lui-même ses médicaments et veut
+  déduire son propre stock au moment de la consultation devra le faire via
+  le module Stock/Vente générique déjà existant — sujet distinct, à traiter
+  séparément si le besoin est confirmé (voir §5).
+
 ## 4. Permissions et activation
 
 - Reste sous la permission unique `consultations.gerer` et le flag existant
@@ -117,16 +142,17 @@ explicite du porteur du produit :
 - **Rendez-vous / agenda** : prise de rendez-vous par créneau, rappels SMS.
   Nécessite une identité minimale (nom + téléphone) — pourrait réutiliser le
   module `Clients` existant plutôt qu'un nouveau modèle "patient".
-- **Ordonnances imprimables** structurées (posologie, durée du traitement),
-  au-delà du champ libre "traitement" actuel.
 - **Dossier patient longitudinal** (historique multi-consultations lié à un
   même patient identifié) — contradictoire avec l'anonymisation actuelle,
   demanderait une refonte du modèle de données et un cadre légal dédié.
 - **Multi-praticiens avec agenda partagé** et **tiers payant / assurance
   maladie**.
-- **Stock de médicaments/consommables du cabinet** : le module `Péremption
-  (DLC)` et le stock générique de ZINDO peuvent déjà couvrir ce besoin pour
-  un cabinet qui vend/dispense des produits, sans développement dédié.
+- **Déduction de stock à la prescription** (dispensation directe par le
+  cabinet) : l'ordonnance (§3.5) reste volontairement informative et ne
+  déduit rien du stock. Le module Stock/Vente générique de ZINDO couvre déjà
+  ce besoin pour un cabinet qui vend/dispense lui-même ses produits, sans
+  développement dédié — le module `Péremption (DLC)` reste aussi disponible
+  pour le suivi des dates de péremption de ce stock.
 
 ## 6. Résultat attendu de cette itération
 
@@ -134,7 +160,8 @@ Un cabinet médical/clinique qui active le flag `consultations_cabinet_medical`
 peut : définir son catalogue d'actes et leurs tarifs, ainsi que sa liste de
 diagnostics courants → enregistrer une consultation en 30 secondes (numéro de
 patient auto-généré, acte et diagnostic choisis dans une liste, frais
-pré-rempli, nom/âge du patient facultatifs) → imprimer/partager un reçu →
-suivre ses statistiques épidémiologiques et son bilan financier par période —
-en choisissant lui-même, consultation par consultation, de rester anonyme ou
-non.
+pré-rempli, nom/âge du patient facultatifs) → prescrire directement des
+produits de son catalogue avec quantité et posologie → imprimer/partager le
+reçu et l'ordonnance → suivre ses statistiques épidémiologiques et son bilan
+financier par période — en choisissant lui-même, consultation par
+consultation, de rester anonyme ou non.

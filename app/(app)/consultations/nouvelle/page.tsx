@@ -4,6 +4,7 @@ import { PERMISSIONS } from "@/lib/permissions";
 import { isConsultationsModuleEnabled } from "@/lib/actions/consultations";
 import { getMedicalActsAction } from "@/lib/actions/medical-acts";
 import { getDiagnosisCategoriesAction } from "@/lib/actions/diagnosis-categories";
+import { getCurrentLocation } from "@/lib/location";
 import { MEDICAL_ACTIVITY_KEY } from "@/lib/nav";
 import { Card, CardBody } from "@/components/ui/Card";
 import { ConsultationForm } from "../ConsultationForm";
@@ -13,10 +14,14 @@ export default async function NouvelleConsultationPage() {
   if (user.business.activityKey !== MEDICAL_ACTIVITY_KEY) redirect("/dashboard");
   if (!(await isConsultationsModuleEnabled(user.businessId))) redirect("/dashboard");
 
-  const [medicalActs, diagnosisCategories] = await Promise.all([getMedicalActsAction(), getDiagnosisCategoriesAction()]);
+  const [medicalActs, diagnosisCategories, currentLocation] = await Promise.all([
+    getMedicalActsAction(),
+    getDiagnosisCategoriesAction(),
+    getCurrentLocation(user.businessId),
+  ]);
 
   return (
-    <div className="max-w-lg space-y-6">
+    <div className="max-w-2xl space-y-6">
       <div>
         <h1 className="text-xl font-bold text-zinc-900">Nouvelle consultation</h1>
         <p className="text-sm text-zinc-500">
@@ -25,7 +30,12 @@ export default async function NouvelleConsultationPage() {
       </div>
       <Card>
         <CardBody>
-          <ConsultationForm medicalActs={medicalActs} diagnosisCategories={diagnosisCategories} />
+          <ConsultationForm
+            medicalActs={medicalActs}
+            diagnosisCategories={diagnosisCategories}
+            locationId={currentLocation?.id as string}
+            currency={user.business.currency}
+          />
         </CardBody>
       </Card>
     </div>

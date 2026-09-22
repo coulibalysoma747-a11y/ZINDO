@@ -173,6 +173,18 @@ CREATE TABLE IF NOT EXISTS diagnosis_categories (
 );
 CREATE INDEX IF NOT EXISTS diagnosis_categories_business_id_idx ON diagnosis_categories (business_id);
 
+-- Ordonnance (lignes de produits prescrits pendant la consultation) — voir
+-- docs/cahier-des-charges-cabinet-medical.md §3.5. Ne touche jamais le stock.
+CREATE TABLE IF NOT EXISTS consultation_items (
+  id text primary key default gen_random_uuid()::text,
+  consultation_id text not null references consultations(id) on delete cascade,
+  product_id text references products(id) on delete set null,
+  quantity int not null default 1,
+  posology text,
+  created_at timestamptz not null default now()
+);
+CREATE INDEX IF NOT EXISTS consultation_items_consultation_id_idx ON consultation_items (consultation_id);
+
 -- --- Fonctions manquantes ---------------------------------------------------
 CREATE OR REPLACE FUNCTION claim_promo_code_usage(p_promo_code_id text)
 RETURNS boolean AS $$
