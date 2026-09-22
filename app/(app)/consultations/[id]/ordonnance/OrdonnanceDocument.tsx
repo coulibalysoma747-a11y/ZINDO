@@ -227,6 +227,7 @@ function OrdonnanceTicket({ data, width }: { data: OrdonnanceDocumentData; width
         <DashLine width={width} />
 
         <p className="pt-2 text-center">Signature / cachet</p>
+        <div className="h-16" />
       </div>
     </>
   );
