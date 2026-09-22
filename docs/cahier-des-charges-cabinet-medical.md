@@ -9,9 +9,13 @@ feuille de route.
 
 ZINDO n'est **pas un dossier médical électronique (DME)**. Par défaut, le
 module Cabinet médical enregistre un **registre anonymisé** : sexe, tranche
-d'âge, diagnostic, traitement, acte pratiqué, frais perçus, plus un
-`patientCode` facultatif choisi librement par le praticien (ex. `PAT-001`),
-qui ne doit jamais être une donnée d'identification directe.
+d'âge, diagnostic, traitement, acte pratiqué, frais perçus, plus un numéro de
+patient (`patientCode`, ex. `PAT-00001`) qui n'est jamais une donnée
+d'identification directe. Depuis la V2 (§3.3), ce numéro est **généré
+automatiquement** par le système (séquence par commerce, voir
+`lib/reference.ts`) — le praticien ne le saisit plus lui-même, ce qui
+garantit qu'il reste unique et cohérent même si le nom du patient n'est pas
+renseigné.
 
 **Exception explicitement demandée** : le praticien peut, s'il le souhaite,
 renseigner le **nom** et l'**âge exact** du patient — deux champs facultatifs,
@@ -71,6 +75,29 @@ peut être imprimé ou partagé, en réutilisant le composant `Receipt` déjà
 utilisé pour les ventes (formats 58 mm / 80 mm / A4). Le nom du patient n'y
 figure que si le praticien l'a saisi (§1) — sinon le reçu reste anonyme.
 
+### 3.3 Numéro de patient auto-généré
+
+Demande explicite : le numéro de patient (ex. `PAT-00001`) n'est plus saisi
+manuellement. Il est généré par une séquence par commerce (`businesses.
+next_patient_seq`, incrémentée atomiquement par la fonction Postgres
+`increment_business_seq` déjà utilisée pour les références produit/vente —
+voir `lib/reference.ts` `generatePatientCode`), ce qui garantit l'unicité et
+la continuité même quand le nom du patient (facultatif) n'est pas renseigné.
+
+### 3.4 Diagnostic sous forme de catégories
+
+Demande explicite : le médecin doit pouvoir choisir le diagnostic dans une
+liste plutôt que de le retaper en texte libre à chaque consultation. Table
+`diagnosis_categories` (nom, par commerce) gérée depuis
+`/consultations/diagnostics`, sur le même principe que `medical_acts` (§3.1)
+et que les marques produit (`brands`) : `consultations.diagnosis` reste un
+simple champ texte (utilisé tel quel pour les statistiques épidémiologiques,
+§2), la table ne fait qu'alimenter le sélecteur avec création à la volée
+(composant `EntityQuickSelect`, déjà utilisé pour Catégorie/Marque sur la
+fiche produit). Renommer une catégorie réaligne rétroactivement les
+consultations déjà enregistrées portant l'ancien libellé exact, pour ne pas
+fausser le classement des pathologies fréquentes.
+
 ## 4. Permissions et activation
 
 - Reste sous la permission unique `consultations.gerer` et le flag existant
@@ -104,8 +131,10 @@ explicite du porteur du produit :
 ## 6. Résultat attendu de cette itération
 
 Un cabinet médical/clinique qui active le flag `consultations_cabinet_medical`
-peut : définir son catalogue d'actes et leurs tarifs → enregistrer une
-consultation en 30 secondes (acte présélectionné, frais pré-rempli, nom/âge du
-patient facultatifs) → imprimer/partager un reçu → suivre ses statistiques
-épidémiologiques et son bilan financier par période — en choisissant
-lui-même, consultation par consultation, de rester anonyme ou non.
+peut : définir son catalogue d'actes et leurs tarifs, ainsi que sa liste de
+diagnostics courants → enregistrer une consultation en 30 secondes (numéro de
+patient auto-généré, acte et diagnostic choisis dans une liste, frais
+pré-rempli, nom/âge du patient facultatifs) → imprimer/partager un reçu →
+suivre ses statistiques épidémiologiques et son bilan financier par période —
+en choisissant lui-même, consultation par consultation, de rester anonyme ou
+non.

@@ -162,12 +162,16 @@ export const DESCRIPTIONS: Record<string, { short: string; long: string }> = {
     long: "Avec « Caisse à deux » activé (Paramètres > Modules), un vendeur prépare un panier sur Vente et clique « Envoyer à la caisse » sans encaisser. Ici, récupérez ce panier dans la file d'attente (retiré dès qu'il est récupéré, pour ne jamais être pris deux fois) et finalisez le paiement — c'est seulement à ce moment que le stock est déduit. Nécessite la permission « Encaisser depuis la file d'attente », à accorder dans Rôles et permissions.",
   },
   "/consultations": {
-    short: "Registre des consultations : sexe, âge, diagnostic et frais — nom du patient facultatif.",
-    long: "Enregistrez chaque consultation en quelques secondes (sexe, tranche d'âge, acte, diagnostic, frais). Le nom et l'âge exact du patient sont facultatifs : laissez-les vides pour garder un registre anonyme, ou renseignez-les si vous tenez un vrai registre nominatif. Chaque ligne peut être réimprimée en reçu et l'ensemble du registre s'exporte en CSV. Réservé à l'activité « Cabinet médical / Clinique ».",
+    short: "Registre des consultations : numéro patient auto-généré, sexe, âge, diagnostic et frais.",
+    long: "Enregistrez chaque consultation en quelques secondes. Le numéro du patient (ex. PAT-00001) est généré automatiquement ; le nom et l'âge exact du patient restent facultatifs, à laisser vides pour garder un registre anonyme. Chaque ligne peut être réimprimée en reçu et l'ensemble du registre s'exporte en CSV. Réservé à l'activité « Cabinet médical / Clinique ».",
   },
   "/consultations/actes": {
     short: "Votre catalogue d'actes médicaux et leur tarif par défaut, pour accélérer la saisie.",
     long: "Définissez vos actes (consultation générale, pansement, injection, suivi de grossesse...) avec un tarif par défaut. Une fois créés, ils apparaissent dans un sélecteur sur l'écran Nouvelle consultation qui pré-remplit les frais — modifiables à la volée si besoin.",
+  },
+  "/consultations/diagnostics": {
+    short: "Votre liste de diagnostics/pathologies courantes, pour saisir le diagnostic comme une catégorie.",
+    long: "Au lieu de retaper chaque diagnostic en texte libre, choisissez-le dans une liste que vous construisez au fil du temps (Paludisme, Grippe, Hypertension...). Un nouveau diagnostic peut aussi être ajouté directement depuis le sélecteur de l'écran Nouvelle consultation, sans repasser par cet écran.",
   },
   "/consultations/statistiques": {
     short: "Chiffre d'affaires, charges et bénéfice du cabinet, pathologies et actes les plus fréquents.",

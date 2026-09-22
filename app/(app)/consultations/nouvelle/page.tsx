@@ -3,6 +3,7 @@ import { requirePermission } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
 import { isConsultationsModuleEnabled } from "@/lib/actions/consultations";
 import { getMedicalActsAction } from "@/lib/actions/medical-acts";
+import { getDiagnosisCategoriesAction } from "@/lib/actions/diagnosis-categories";
 import { MEDICAL_ACTIVITY_KEY } from "@/lib/nav";
 import { Card, CardBody } from "@/components/ui/Card";
 import { ConsultationForm } from "../ConsultationForm";
@@ -12,7 +13,7 @@ export default async function NouvelleConsultationPage() {
   if (user.business.activityKey !== MEDICAL_ACTIVITY_KEY) redirect("/dashboard");
   if (!(await isConsultationsModuleEnabled(user.businessId))) redirect("/dashboard");
 
-  const medicalActs = await getMedicalActsAction();
+  const [medicalActs, diagnosisCategories] = await Promise.all([getMedicalActsAction(), getDiagnosisCategoriesAction()]);
 
   return (
     <div className="max-w-lg space-y-6">
@@ -24,7 +25,7 @@ export default async function NouvelleConsultationPage() {
       </div>
       <Card>
         <CardBody>
-          <ConsultationForm medicalActs={medicalActs} />
+          <ConsultationForm medicalActs={medicalActs} diagnosisCategories={diagnosisCategories} />
         </CardBody>
       </Card>
     </div>

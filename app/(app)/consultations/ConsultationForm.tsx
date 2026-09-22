@@ -3,10 +3,19 @@
 import { useActionState, useState } from "react";
 import { createConsultationAction } from "@/lib/actions/consultations";
 import type { MedicalAct } from "@/lib/actions/medical-acts";
+import type { DiagnosisCategory } from "@/lib/actions/diagnosis-categories";
+import { getOrCreateDiagnosisCategoryByNameAction } from "@/lib/actions/diagnosis-categories";
+import { EntityQuickSelect } from "@/components/products/EntityQuickSelect";
 import { Field, Input, Select, Textarea } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 
-export function ConsultationForm({ medicalActs }: { medicalActs: MedicalAct[] }) {
+export function ConsultationForm({
+  medicalActs,
+  diagnosisCategories,
+}: {
+  medicalActs: MedicalAct[];
+  diagnosisCategories: DiagnosisCategory[];
+}) {
   const [state, action, pending] = useActionState(createConsultationAction, undefined);
   const [fee, setFee] = useState(0);
 
@@ -17,9 +26,9 @@ export function ConsultationForm({ medicalActs }: { medicalActs: MedicalAct[] })
 
   return (
     <form action={action} className="space-y-4">
-      <Field label="Code / numéro du patient (facultatif)" htmlFor="patientCode">
-        <Input id="patientCode" name="patientCode" placeholder="Ex: PAT-001" />
-      </Field>
+      <p className="text-xs text-zinc-500">
+        Le numéro du patient (ex. PAT-00001) est généré automatiquement à l&apos;enregistrement.
+      </p>
       <div className="grid grid-cols-2 gap-3">
         <Field label="Nom du patient (facultatif)" htmlFor="patientName">
           <Input id="patientName" name="patientName" placeholder="Ex: Awa Ouédraogo" />
@@ -62,7 +71,16 @@ export function ConsultationForm({ medicalActs }: { medicalActs: MedicalAct[] })
         </Field>
       )}
       <Field label="Diagnostic / pathologie" htmlFor="diagnosis">
-        <Input id="diagnosis" name="diagnosis" placeholder="Ex: Paludisme" required />
+        <EntityQuickSelect
+          id="diagnosis"
+          name="diagnosis"
+          options={diagnosisCategories}
+          onCreate={getOrCreateDiagnosisCategoryByNameAction}
+          submitValue="name"
+          emptyLabel="Choisir un diagnostic"
+          newPlaceholder="Nouveau diagnostic..."
+          required
+        />
       </Field>
       <Field label="Traitement (facultatif)" htmlFor="treatment">
         <Textarea id="treatment" name="treatment" rows={3} placeholder="Ordonnance ou soins administrés" />

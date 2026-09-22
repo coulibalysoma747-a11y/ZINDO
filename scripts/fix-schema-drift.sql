@@ -21,6 +21,7 @@ END $$;
 ALTER TABLE businesses ADD COLUMN IF NOT EXISTS next_barcode_seq int not null default 1;
 ALTER TABLE businesses ADD COLUMN IF NOT EXISTS next_pickup_seq int not null default 1;
 ALTER TABLE businesses ADD COLUMN IF NOT EXISTS next_shipment_seq int not null default 1;
+ALTER TABLE businesses ADD COLUMN IF NOT EXISTS next_patient_seq int not null default 1;
 
 ALTER TABLE users ADD COLUMN IF NOT EXISTS totp_secret text;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS totp_enabled boolean not null default false;
@@ -160,6 +161,17 @@ CREATE INDEX IF NOT EXISTS consultations_act_id_idx ON consultations (act_id);
 -- voir docs/cahier-des-charges-cabinet-medical.md §1.
 ALTER TABLE consultations ADD COLUMN IF NOT EXISTS patient_name text;
 ALTER TABLE consultations ADD COLUMN IF NOT EXISTS patient_age int;
+
+-- Catégories de diagnostic proposées au praticien (texte dénormalisé sur
+-- consultations.diagnosis, comme products.brand).
+CREATE TABLE IF NOT EXISTS diagnosis_categories (
+  id text primary key default gen_random_uuid()::text,
+  business_id text not null references businesses(id) on delete cascade,
+  name text not null,
+  created_at timestamptz not null default now(),
+  unique (business_id, name)
+);
+CREATE INDEX IF NOT EXISTS diagnosis_categories_business_id_idx ON diagnosis_categories (business_id);
 
 -- --- Fonctions manquantes ---------------------------------------------------
 CREATE OR REPLACE FUNCTION claim_promo_code_usage(p_promo_code_id text)

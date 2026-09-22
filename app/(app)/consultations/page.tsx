@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { Plus, BarChart3, Download, Stethoscope, Receipt as ReceiptIcon } from "lucide-react";
+import { Plus, BarChart3, Download, Stethoscope, Microscope, Receipt as ReceiptIcon } from "lucide-react";
 import { requirePermission } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
 import { supabase } from "@/lib/supabase";
@@ -54,6 +54,9 @@ export default async function ConsultationsPage() {
           <ButtonLink href="/consultations/actes" variant="outline">
             <Stethoscope className="h-4 w-4" /> Actes médicaux
           </ButtonLink>
+          <ButtonLink href="/consultations/diagnostics" variant="outline">
+            <Microscope className="h-4 w-4" /> Diagnostics
+          </ButtonLink>
           <ButtonLink href="/consultations/statistiques" variant="outline">
             <BarChart3 className="h-4 w-4" /> Statistiques
           </ButtonLink>
@@ -91,7 +94,8 @@ export default async function ConsultationsPage() {
                 <TableRow key={c.id} interactive={false}>
                   <TableCell className="text-zinc-600 dark:text-slate-400">{formatLongDate(c.createdAt)}</TableCell>
                   <TableCell className="font-medium text-zinc-900 dark:text-slate-100">
-                    {c.patientName ?? c.patientCode ?? "—"}
+                    {c.patientCode ?? "—"}
+                    {c.patientName && <span className="block font-normal text-zinc-500">{c.patientName}</span>}
                   </TableCell>
                   <TableCell>{c.sex}</TableCell>
                   <TableCell>{c.patientAge != null ? `${c.patientAge} ans` : AGE_GROUP_LABELS[c.ageGroup]}</TableCell>

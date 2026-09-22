@@ -18,6 +18,7 @@ async function nextSeq(
     | "next_rental_seq"
     | "next_pickup_seq"
     | "next_shipment_seq"
+    | "next_patient_seq"
 ) {
   const { data, error } = await supabase.rpc("increment_business_seq", {
     p_business_id: businessId,
@@ -79,6 +80,12 @@ export async function generatePickupNumber(businessId: string) {
 export async function generateShipmentNumber(businessId: string) {
   const seq = await nextSeq(businessId, "next_shipment_seq");
   return `ZND-EXP-${pad(seq)}`;
+}
+
+/** Code patient auto-généré (cabinet médical) — ex. PAT-00001. Voir lib/actions/consultations.ts. */
+export async function generatePatientCode(businessId: string) {
+  const seq = await nextSeq(businessId, "next_patient_seq");
+  return `PAT-${String(seq).padStart(5, "0")}`;
 }
 
 /** Chiffre de contrôle EAN-13 standard (modulo 10, poids 1/3 alternés). */

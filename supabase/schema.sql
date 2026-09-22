@@ -72,6 +72,7 @@ create table businesses (
   next_rental_seq int not null default 1,
   next_pickup_seq int not null default 1,
   next_shipment_seq int not null default 1,
+  next_patient_seq int not null default 1,
   -- Intégration FasoStock (lib/integrations/faso-stock.ts) : synchronisation
   -- à sens unique FasoStock → ZINDO (leur API est en lecture seule). La clé
   -- n'est jamais renvoyée au navigateur, uniquement lue côté serveur.
@@ -932,6 +933,19 @@ create table medical_acts (
   unique (business_id, name)
 );
 create index on medical_acts (business_id);
+
+-- Catégories de diagnostic proposées au praticien (champ texte dénormalisé
+-- sur consultations.diagnosis, comme products.brand — pas de clé étrangère,
+-- pour ne rien changer aux consultations déjà enregistrées si une catégorie
+-- est supprimée).
+create table diagnosis_categories (
+  id text primary key default gen_random_uuid()::text,
+  business_id text not null references businesses(id) on delete cascade,
+  name text not null,
+  created_at timestamptz not null default now(),
+  unique (business_id, name)
+);
+create index on diagnosis_categories (business_id);
 
 create table consultations (
   id text primary key default gen_random_uuid()::text,

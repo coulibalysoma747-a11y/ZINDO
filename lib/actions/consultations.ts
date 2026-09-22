@@ -9,6 +9,7 @@ import { PERMISSIONS } from "@/lib/permissions";
 import { registerFeatureFlag, isFeatureEnabled } from "@/lib/feature-flags";
 import { CONSULTATIONS_FLAG } from "@/lib/nav";
 import { SEX_OPTIONS, AGE_GROUP_OPTIONS } from "@/lib/consultation-constants";
+import { generatePatientCode } from "@/lib/reference";
 
 export type ActionState = { error?: string } | undefined;
 
@@ -31,7 +32,6 @@ export async function isConsultationsModuleEnabled(businessId: string) {
 }
 
 const consultationSchema = z.object({
-  patientCode: z.string().optional(),
   patientName: z.string().optional(),
   patientAge: z.coerce.number().int().min(0, "Âge invalide").max(130, "Âge invalide").optional(),
   sex: z.enum(SEX_OPTIONS, { message: "Sexe requis" }),
@@ -49,7 +49,6 @@ export async function createConsultationAction(
   const user = await requirePermission(PERMISSIONS.CONSULTATIONS_MANAGE);
 
   const parsed = consultationSchema.safeParse({
-    patientCode: formData.get("patientCode") || undefined,
     patientName: formData.get("patientName") || undefined,
     patientAge: formData.get("patientAge") || undefined,
     sex: formData.get("sex"),
@@ -75,10 +74,12 @@ export async function createConsultationAction(
     actId = act.id as string;
   }
 
+  const patientCode = await generatePatientCode(user.businessId);
+
   const { error } = await supabase.from("consultations").insert({
     business_id: user.businessId,
     user_id: user.id,
-    patient_code: parsed.data.patientCode || null,
+    patient_code: patientCode,
     patient_name: parsed.data.patientName || null,
     patient_age: parsed.data.patientAge ?? null,
     sex: parsed.data.sex,

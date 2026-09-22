@@ -20,6 +20,7 @@ export function EntityQuickSelect({
   submitValue = "id",
   emptyLabel = "Aucune",
   newPlaceholder = "Nouvelle...",
+  required = false,
 }: {
   id: string;
   name: string;
@@ -29,6 +30,7 @@ export function EntityQuickSelect({
   submitValue?: "id" | "name";
   emptyLabel?: string;
   newPlaceholder?: string;
+  required?: boolean;
 }) {
   const [items, setItems] = useState(options);
   const [selected, setSelected] = useState(defaultValue ?? "");
@@ -54,8 +56,10 @@ export function EntityQuickSelect({
 
   return (
     <div className="space-y-1.5">
-      <Select id={id} name={name} value={selected} onChange={(e) => setSelected(e.target.value)}>
-        <option value="">{emptyLabel}</option>
+      <Select id={id} name={name} value={selected} onChange={(e) => setSelected(e.target.value)} required={required}>
+        <option value="" disabled={required}>
+          {emptyLabel}
+        </option>
         {items.map((o) => (
           <option key={o.id} value={submitValue === "name" ? o.name : o.id}>
             {o.name}
