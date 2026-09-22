@@ -98,6 +98,15 @@
   }
 }
 
+/* Fond à pois discret (menu mobile) : crème de marque + petits points verts,
+   inspiré de références commerçantes locales (FasoStock) mais recoloré avec
+   la palette ZINDO (vert au lieu d'orange). */
+.zindo-dotted-bg {
+  background-color: var(--color-zindo-cream);
+  background-image: radial-gradient(rgba(16, 132, 74, 0.14) 1px, transparent 1px);
+  background-size: 14px 14px;
+}
+
 /* Thème Noir : redéfinit l'échelle neutre "zinc" (fonds discrets, textes,
    bordures) utilisée dans tout le tableau de bord commerçant, pour que les
    très nombreuses classes zinc (fonds, textes, bordures) déjà présentes dans

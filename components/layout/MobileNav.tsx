@@ -13,11 +13,13 @@ export function MobileNav({
   onClose,
   items,
   businessName,
+  userName,
 }: {
   open: boolean;
   onClose: () => void;
   items: NavItem[];
   businessName: string;
+  userName: string;
 }) {
   const pathname = usePathname();
   if (!open) return null;
@@ -31,10 +33,10 @@ export function MobileNav({
   return (
     <div className="fixed inset-0 z-40 md:hidden">
       <div className="absolute inset-0 bg-black/40" onClick={onClose} />
-      <div className="absolute left-0 top-0 flex h-full w-72 flex-col justify-between bg-white text-zindo-ink-700 shadow-xl">
+      <div className="zindo-dotted-bg absolute left-0 top-0 flex h-full w-72 flex-col justify-between text-zindo-ink-700 shadow-xl">
         <div className="zindo-flag-stripe h-1 w-full shrink-0" />
         <div className="min-h-0 flex-1 overflow-y-auto">
-          <div className="flex items-center justify-between gap-2 border-b-2 border-dashed border-zindo-green-200 p-4">
+          <div className="flex items-center justify-between gap-2 border-b-2 border-dashed border-zindo-green-200 bg-white/70 p-4 backdrop-blur-sm">
             <div className="flex min-w-0 items-center gap-3">
               <ZindoLogo size={36} />
               <div className="min-w-0">
@@ -58,10 +60,10 @@ export function MobileNav({
                   href={item.href}
                   onClick={onClose}
                   className={cn(
-                    "flex items-center justify-between rounded-xl px-3.5 py-2.5 text-sm font-medium transition-colors",
+                    "flex items-center justify-between rounded-xl border-l-4 py-2.5 pl-2.5 pr-3.5 text-sm font-medium transition-colors",
                     active
-                      ? "bg-gradient-to-r from-zindo-green-600 to-zindo-green-500 text-white shadow-md shadow-zindo-green-800/25"
-                      : "text-zindo-ink-500 hover:bg-zindo-ink-50 hover:text-zindo-ink-900"
+                      ? "border-zindo-green-500 bg-white/80 text-zindo-ink-900 shadow-sm"
+                      : "border-transparent text-zindo-ink-700 hover:bg-white/50"
                   )}
                 >
                   <span className="flex items-center gap-3">
@@ -76,12 +78,7 @@ export function MobileNav({
                     {item.label}
                   </span>
                   {item.badge && (
-                    <span
-                      className={cn(
-                        "rounded-md px-1.5 py-0.5 text-[10px] font-bold",
-                        active ? "bg-white/20 text-white" : "bg-zindo-gold-500/20 text-zindo-gold-400"
-                      )}
-                    >
+                    <span className="rounded-md bg-zindo-gold-500/20 px-1.5 py-0.5 text-[10px] font-bold text-zindo-gold-600">
                       {item.badge}
                     </span>
                   )}
@@ -92,7 +89,7 @@ export function MobileNav({
         </div>
 
         {footerItems.length > 0 && (
-          <div className="space-y-1 border-t-2 border-dashed border-zindo-green-200 bg-zindo-ink-50/60 p-3">
+          <div className="space-y-1 border-t-2 border-dashed border-zindo-green-200 bg-white/70 p-3 backdrop-blur-sm">
             {footerItems.map((item) => (
               <Link
                 key={item.href}
@@ -103,10 +100,10 @@ export function MobileNav({
                 }
                 onClick={onClose}
                 className={cn(
-                  "flex items-center rounded-xl px-3.5 py-2.5 text-sm font-medium transition-colors",
+                  "flex items-center rounded-xl border-l-4 py-2.5 pl-2.5 pr-3.5 text-sm font-medium transition-colors",
                   pathname === item.href
-                    ? "bg-gradient-to-r from-zindo-green-600 to-zindo-green-500 text-white shadow-md shadow-zindo-green-800/25"
-                    : "text-zindo-ink-500 hover:bg-zindo-ink-50 hover:text-zindo-ink-900"
+                    ? "border-zindo-green-500 bg-white/80 text-zindo-ink-900 shadow-sm"
+                    : "border-transparent text-zindo-ink-700 hover:bg-white/50"
                 )}
               >
                 {item.label}
@@ -114,6 +111,20 @@ export function MobileNav({
             ))}
           </div>
         )}
+
+        <Link
+          href="/profil"
+          onClick={onClose}
+          className="flex shrink-0 items-center gap-3 border-t-2 border-dashed border-zindo-green-200 bg-white/80 p-3 backdrop-blur-sm"
+        >
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-zindo-green-100 text-sm font-semibold text-zindo-green-700">
+            {userName.slice(0, 1).toUpperCase()}
+          </div>
+          <div className="min-w-0">
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-zindo-ink-500">Compte</p>
+            <p className="truncate text-sm font-medium text-zindo-ink-900">{userName}</p>
+          </div>
+        </Link>
       </div>
     </div>
   );

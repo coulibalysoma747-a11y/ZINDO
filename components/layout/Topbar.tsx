@@ -92,6 +92,7 @@ export function Topbar({
         onClose={() => setMobileNavOpen(false)}
         items={navItems}
         businessName={businessName}
+        userName={userName}
       />
     </>
   );
