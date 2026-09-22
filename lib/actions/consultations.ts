@@ -43,14 +43,24 @@ const consultationSchema = z.object({
   items: z.string().optional(),
 });
 
-const prescriptionItemSchema = z.object({
-  productId: z.string().min(1),
-  quantity: z.coerce.number().int().positive(),
-  posology: z.string().optional(),
-});
+// Une ligne d'ordonnance référence SOIT un produit du catalogue (productId),
+// SOIT une description libre (customName, ex. "Paracétamol 1000 mg") quand le
+// médecin prescrit un médicament qui n'existe pas dans son catalogue Produits
+// — les deux façons de prescrire cohabitent, au choix du médecin (voir
+// docs/cahier-des-charges-cabinet-medical.md §3.5).
+const prescriptionItemSchema = z
+  .object({
+    productId: z.string().optional(),
+    customName: z.string().optional(),
+    quantity: z.coerce.number().int().positive(),
+    posology: z.string().optional(),
+  })
+  .refine((i) => !!i.productId || !!i.customName?.trim(), { message: "Produit ou description requis" });
+
+type PrescriptionItem = { productId?: string; customName?: string; quantity: number; posology?: string };
 
 /** Parse le champ caché "items" (JSON) du formulaire — voir ConsultationForm. */
-function parsePrescriptionItems(raw: string | undefined): { productId: string; quantity: number; posology?: string }[] | { error: string } {
+function parsePrescriptionItems(raw: string | undefined): PrescriptionItem[] | { error: string } {
   if (!raw) return [];
   let json: unknown;
   try {
@@ -59,7 +69,7 @@ function parsePrescriptionItems(raw: string | undefined): { productId: string; q
     return { error: "Ordonnance invalide" };
   }
   if (!Array.isArray(json)) return { error: "Ordonnance invalide" };
-  const items: { productId: string; quantity: number; posology?: string }[] = [];
+  const items: PrescriptionItem[] = [];
   for (const entry of json) {
     const parsed = prescriptionItemSchema.safeParse(entry);
     if (!parsed.success) return { error: "Ordonnance invalide" };
@@ -104,16 +114,14 @@ export async function createConsultationAction(
     actId = act.id as string;
   }
 
-  if (items.length > 0) {
+  const catalogProductIds = [...new Set(items.map((i) => i.productId).filter((id): id is string => !!id))];
+  if (catalogProductIds.length > 0) {
     const { count: productCount } = await supabase
       .from("products")
       .select("id", { count: "exact", head: true })
       .eq("business_id", user.businessId)
-      .in(
-        "id",
-        items.map((i) => i.productId)
-      );
-    if (productCount !== items.length) return { error: "Un des produits de l'ordonnance est introuvable" };
+      .in("id", catalogProductIds);
+    if (productCount !== catalogProductIds.length) return { error: "Un des produits de l'ordonnance est introuvable" };
   }
 
   const patientCode = await generatePatientCode(user.businessId);
@@ -144,7 +152,8 @@ export async function createConsultationAction(
     const { error: itemsError } = await supabase.from("consultation_items").insert(
       items.map((i) => ({
         consultation_id: consultation.id,
-        product_id: i.productId,
+        product_id: i.productId || null,
+        custom_name: i.productId ? null : i.customName!.trim(),
         quantity: i.quantity,
         posology: i.posology || null,
       }))
@@ -212,12 +221,15 @@ export type Ordonnance = {
   sex: "M" | "F";
   diagnosis: string;
   doctorName: string;
-  items: { productName: string; unit: string; quantity: number; posology: string | null }[];
+  items: { productName: string; unit: string | null; quantity: number; posology: string | null }[];
 };
 
 /**
  * Ordonnance imprimable (§3.5 du cahier des charges) : purement informative,
  * ne touche jamais le stock — voir supabase/schema.sql::consultation_items.
+ * Chaque ligne vient soit du catalogue Produits (product), soit d'une
+ * description libre (custom_name) quand le médecin décrit un médicament hors
+ * catalogue.
  */
 export async function getConsultationOrdonnanceAction(id: string): Promise<Ordonnance | { error: string }> {
   const user = await requirePermission(PERMISSIONS.CONSULTATIONS_MANAGE);
@@ -227,7 +239,7 @@ export async function getConsultationOrdonnanceAction(id: string): Promise<Ordon
     .select(
       "id, diagnosis, createdAt:created_at, patientCode:patient_code, patientName:patient_name, patientAge:patient_age, sex, " +
         "user:users(firstName:first_name, lastName:last_name), " +
-        "items:consultation_items(quantity, posology, product:products(name, unit))"
+        "items:consultation_items(quantity, posology, customName:custom_name, product:products(name, unit))"
     )
     .eq("id", id)
     .eq("business_id", user.businessId)
@@ -243,7 +255,7 @@ export async function getConsultationOrdonnanceAction(id: string): Promise<Ordon
     patientAge: number | null;
     sex: "M" | "F";
     user: { firstName: string; lastName: string } | null;
-    items: { quantity: number; posology: string | null; product: { name: string; unit: string } | null }[];
+    items: { quantity: number; posology: string | null; customName: string | null; product: { name: string; unit: string } | null }[];
   };
 
   return {
@@ -256,10 +268,10 @@ export async function getConsultationOrdonnanceAction(id: string): Promise<Ordon
     diagnosis: row.diagnosis,
     doctorName: row.user ? `${row.user.firstName} ${row.user.lastName}` : "",
     items: row.items
-      .filter((i) => i.product)
+      .filter((i) => i.product || i.customName)
       .map((i) => ({
-        productName: i.product!.name,
-        unit: i.product!.unit,
+        productName: i.product?.name ?? i.customName!,
+        unit: i.product?.unit ?? null,
         quantity: i.quantity,
         posology: i.posology,
       })),

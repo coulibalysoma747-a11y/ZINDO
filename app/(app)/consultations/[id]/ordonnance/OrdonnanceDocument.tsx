@@ -87,7 +87,8 @@ export function OrdonnanceDocument({ data }: { data: OrdonnanceDocumentData }) {
                 <tr key={i}>
                   <td className="border border-zinc-300 px-3 py-3 font-medium text-zinc-900">{item.productName}</td>
                   <td className="border border-zinc-300 px-3 py-3 text-right">
-                    {item.quantity} {item.unit}
+                    {item.quantity}
+                    {item.unit ? ` ${item.unit}` : ""}
                   </td>
                   <td className="border border-zinc-300 px-3 py-3 text-zinc-700">{item.posology ?? "—"}</td>
                 </tr>

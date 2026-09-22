@@ -185,6 +185,15 @@ CREATE TABLE IF NOT EXISTS consultation_items (
 );
 CREATE INDEX IF NOT EXISTS consultation_items_consultation_id_idx ON consultation_items (consultation_id);
 
+-- Ligne d'ordonnance libre (médicament décrit par le médecin, ex. "Paracétamol
+-- 1000 mg") quand il n'existe pas dans le catalogue Produits — cohabite avec
+-- product_id, au choix du médecin, voir docs/cahier-des-charges-cabinet-medical.md §3.5.
+ALTER TABLE consultation_items ADD COLUMN IF NOT EXISTS custom_name text;
+DO $$ BEGIN
+  ALTER TABLE consultation_items ADD CONSTRAINT consultation_items_name_check CHECK (product_id IS NOT NULL OR custom_name IS NOT NULL);
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
+
 -- --- Fonctions manquantes ---------------------------------------------------
 CREATE OR REPLACE FUNCTION claim_promo_code_usage(p_promo_code_id text)
 RETURNS boolean AS $$

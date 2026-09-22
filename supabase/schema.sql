@@ -968,19 +968,24 @@ create table consultations (
 create index on consultations (business_id, created_at desc);
 create index on consultations (act_id);
 
--- Ordonnance : lignes de produits (médicaments/consommables du catalogue
--- Produits) prescrits pendant la consultation — voir
--- docs/cahier-des-charges-cabinet-medical.md §3.5. Purement informatif :
--- contrairement à une vente, ça ne touche jamais le stock (le patient
--- achète en pharmacie, ou le cabinet gère sa propre sortie de stock via le
--- module Stock existant si besoin).
+-- Ordonnance : lignes prescrites pendant la consultation — voir
+-- docs/cahier-des-charges-cabinet-medical.md §3.5. Chaque ligne référence
+-- SOIT un produit du catalogue (product_id), SOIT une description libre
+-- (custom_name, ex. "Paracétamol 1000 mg") pour un médicament que le
+-- médecin décrit sans qu'il existe dans le catalogue Produits — les deux
+-- façons d'ajouter une ligne cohabitent, au choix du médecin. Purement
+-- informatif : contrairement à une vente, ça ne touche jamais le stock (le
+-- patient achète en pharmacie, ou le cabinet gère sa propre sortie de stock
+-- via le module Stock existant si besoin).
 create table consultation_items (
   id text primary key default gen_random_uuid()::text,
   consultation_id text not null references consultations(id) on delete cascade,
   product_id text references products(id) on delete set null,
+  custom_name text,
   quantity int not null default 1,
   posology text,
-  created_at timestamptz not null default now()
+  created_at timestamptz not null default now(),
+  constraint consultation_items_name_check check (product_id is not null or custom_name is not null)
 );
 create index on consultation_items (consultation_id);
 

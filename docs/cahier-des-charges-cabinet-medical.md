@@ -98,24 +98,36 @@ fiche produit). Renommer une catégorie réaligne rétroactivement les
 consultations déjà enregistrées portant l'ancien libellé exact, pour ne pas
 fausser le classement des pathologies fréquentes.
 
-### 3.5 Ordonnance : prescription de produits directement en consultation
+### 3.5 Ordonnance : prescription directement en consultation
 
-Demande explicite : le médecin doit pouvoir prescrire directement des
-produits (médicaments/consommables de son catalogue Produits existant)
-pendant la saisie de la consultation, plutôt que de les décrire en texte
-libre dans "Traitement".
+Demande explicite : le médecin doit pouvoir prescrire directement pendant la
+saisie de la consultation, plutôt que de tout décrire en texte libre dans
+"Traitement". **Correction explicite reçue après une première version** :
+une ordonnance n'est pas forcément un produit du catalogue Produits — le
+médecin décrit très souvent librement un médicament et son dosage (ex.
+« Paracétamol 1000 mg ») sans que ce médicament existe dans son catalogue de
+gestion de stock. Les deux façons de prescrire **cohabitent**, au choix du
+médecin, ligne par ligne :
 
-- Nouvelle table `consultation_items` (produit, quantité, posologie libre),
-  rattachée à une consultation.
-- Dans l'écran Nouvelle consultation, une section "Ordonnance" permet de
-  rechercher un produit (réutilise `ProductPicker`, déjà utilisé par
-  Approvisionnement rapide/Achats/Transferts...) et d'ajouter autant de
-  lignes que nécessaire, chacune avec sa quantité et sa posologie.
+1. **Description libre** (nom + dosage tapés directement, ex. « Paracétamol
+   1000 mg ») — le cas le plus courant, aucun lien avec le catalogue Produits.
+2. **Choix dans le catalogue Produits** existant (réutilise `ProductPicker`,
+   déjà utilisé par Approvisionnement rapide/Achats/Transferts...) — pour un
+   cabinet qui gère aussi son propre stock de médicaments/consommables.
+
+Dans les deux cas, chaque ligne a sa quantité et sa posologie (facultative,
+ex. « 2x/jour pendant 5 jours »).
+
+- Table `consultation_items` (produit **ou** description libre, quantité,
+  posologie), rattachée à une consultation — `product_id` et `custom_name`
+  sont tous les deux nullables, une contrainte SQL impose qu'au moins l'un
+  des deux soit renseigné.
 - Écran imprimable dédié `/consultations/[id]/ordonnance` (mise en page A4
   façon document officiel, calquée sur `components/sales/Facture.tsx`) : nom
-  du cabinet, patient, diagnostic, tableau des produits prescrits, ligne de
-  signature/cachet. Accessible depuis le registre dès qu'une consultation a
-  au moins une ligne d'ordonnance.
+  du cabinet, patient, diagnostic, tableau des lignes prescrites (catalogue
+  ou libres, affichées de façon identique), ligne de signature/cachet.
+  Accessible depuis le registre dès qu'une consultation a au moins une ligne
+  d'ordonnance.
 - **Choix assumé : l'ordonnance ne touche jamais le stock.** C'est un
   document informatif que le patient emporte (achat en pharmacie externe),
   pas une vente. Un cabinet qui dispense lui-même ses médicaments et veut
