@@ -166,6 +166,7 @@ export async function createConsultationAction(
 }
 
 export type Ordonnance = {
+  id: string;
   number: string;
   date: string;
   patientCode: string | null;
@@ -212,6 +213,7 @@ export async function getConsultationOrdonnanceAction(id: string): Promise<Ordon
   };
 
   return {
+    id: row.id,
     number: `ORD-${row.id.slice(0, 8).toUpperCase()}`,
     date: row.createdAt,
     patientCode: row.patientCode,

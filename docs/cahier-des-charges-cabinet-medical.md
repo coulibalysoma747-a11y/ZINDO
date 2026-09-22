@@ -125,12 +125,28 @@ ex. « 2x/jour pendant 5 jours »).
   posologie), rattachée à une consultation — `product_id` et `custom_name`
   sont tous les deux nullables, une contrainte SQL impose qu'au moins l'un
   des deux soit renseigné.
-- Écran imprimable dédié `/consultations/[id]/ordonnance` (mise en page A4
-  façon document officiel, calquée sur `components/sales/Facture.tsx`) : nom
-  du cabinet, patient, diagnostic, tableau des lignes prescrites (catalogue
-  ou libres, affichées de façon identique), ligne de signature/cachet.
-  Accessible depuis le registre dès qu'une consultation a au moins une ligne
-  d'ordonnance.
+- Écran imprimable dédié `/consultations/[id]/ordonnance`, dans les **trois
+  mêmes formats que le reste de ZINDO** (58 mm / 80 mm / A4, sélecteur à
+  l'écran, format par défaut = réglage imprimante du commerce) — nécessaire
+  car beaucoup de cabinets n'ont qu'une imprimante thermique de caisse, pas
+  d'imprimante A4. En A4 : mise en page document officiel calquée sur
+  `components/sales/Facture.tsx` (tableau). En 58/80 mm : ticket compact
+  calqué sur `components/sales/Receipt.tsx` (une ligne par produit). Dans les
+  deux cas : nom du cabinet, patient, diagnostic, produits prescrits
+  (catalogue ou libres, affichés de façon identique), ligne de
+  signature/cachet. Accessible depuis le registre dès qu'une consultation a
+  au moins une ligne d'ordonnance.
+- **QR code de vérification**, même principe que le ticket de vente
+  existant (`lib/verification.ts`, `/verifier/[id]`) : scanné par un
+  pharmacien, il ouvre `/verifier-ordonnance/[id]` — une page publique, sans
+  compte ZINDO requis — qui confirme que l'ordonnance existe bien dans ZINDO
+  et réaffiche la liste des produits/quantités/posologies exactement comme
+  enregistrée. Objectif : repérer une ordonnance falsifiée (ex. quantité
+  modifiée à la main après impression) en comparant le papier à ce que la
+  page publique affiche. Cette page ne montre volontairement **ni le nom du
+  patient ni le diagnostic** (secret médical, §1) — seulement le code
+  patient, la date, le médecin et les produits prescrits, suffisant pour
+  l'usage visé.
 - **Choix assumé : l'ordonnance ne touche jamais le stock.** C'est un
   document informatif que le patient emporte (achat en pharmacie externe),
   pas une vente. Un cabinet qui dispense lui-même ses médicaments et veut

@@ -2,7 +2,10 @@ import { notFound, redirect } from "next/navigation";
 import { requirePermission } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
 import { getConsultationOrdonnanceAction } from "@/lib/actions/consultations";
+import { getOrdonnanceVerificationUrl } from "@/lib/verification";
+import { generateQrDataUrl } from "@/lib/qrcode";
 import { MEDICAL_ACTIVITY_KEY } from "@/lib/nav";
+import type { ReceiptWidth } from "@/components/sales/Receipt";
 import { OrdonnanceView } from "./OrdonnanceView";
 
 export default async function ConsultationOrdonnancePage({ params }: { params: Promise<{ id: string }> }) {
@@ -13,6 +16,9 @@ export default async function ConsultationOrdonnancePage({ params }: { params: P
   const ordonnance = await getConsultationOrdonnanceAction(id);
   if ("error" in ordonnance) notFound();
 
+  const verificationUrl = await getOrdonnanceVerificationUrl(ordonnance.id);
+  const qrCodeDataUrl = await generateQrDataUrl(verificationUrl);
+
   const business = user.business;
   return (
     <OrdonnanceView
@@ -22,7 +28,9 @@ export default async function ConsultationOrdonnancePage({ params }: { params: P
         businessPhone: business.phone,
         businessAddress: business.address,
         logoUrl: business.logoUrl,
+        qrCodeDataUrl,
       }}
+      defaultWidth={(user.printerTicketWidth ?? business.ticketWidth) as ReceiptWidth}
     />
   );
 }

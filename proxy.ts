@@ -10,6 +10,7 @@ const PUBLIC_PATHS = [
   "/inscription-google",
   "/mot-de-passe-oublie",
   "/verifier",
+  "/verifier-ordonnance",
   "/compte-suspendu",
   "/maintenance",
   "/boutique",
@@ -26,6 +27,7 @@ const PUBLIC_PATHS = [
 const PUBLIC_PATHS_ALLOWED_WHEN_LOGGED_IN = [
   "/mot-de-passe-oublie",
   "/verifier",
+  "/verifier-ordonnance",
   "/compte-suspendu",
   "/maintenance",
   "/boutique",
