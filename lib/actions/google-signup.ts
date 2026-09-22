@@ -41,7 +41,7 @@ const profileSchema = z.object({
   phone: z.string().min(6, "Numéro de téléphone invalide"),
   businessName: z.string().min(1, "Nom du commerce requis"),
   city: z.string().optional(),
-  country: z.string().optional(),
+  country: z.string().min(1, "Pays requis"),
 });
 
 export async function submitGoogleSignupProfileAction(
@@ -55,12 +55,15 @@ export async function submitGoogleSignupProfileAction(
     phone: formData.get("phone"),
     businessName: formData.get("businessName"),
     city: formData.get("city") || undefined,
-    country: formData.get("country") || undefined,
+    country: formData.get("country") || "",
   });
   if (!parsed.success) {
     return { error: parsed.error.issues[0]?.message ?? "Champs invalides" };
   }
   const { phone, businessName, city, country } = parsed.data;
+  if (!isCountryCode(country)) {
+    return { error: "Pays invalide" };
+  }
 
   if (!isEmailConfigured()) {
     console.error("[submitGoogleSignupProfileAction] RESEND_API_KEY manquant");

@@ -19,7 +19,7 @@ import {
 } from "@/lib/adminSession";
 import { verifyTotp, consumeBackupCode } from "@/lib/totp";
 import type { Role } from "@/lib/db-types";
-import { isCountryCode, countryNameFr, DEFAULT_COUNTRY_CODE } from "@/lib/countries";
+import { isCountryCode, countryNameFr } from "@/lib/countries";
 
 export type ActionState = { error?: string } | undefined;
 
@@ -280,7 +280,7 @@ const registerSchema = z.object({
   password: z.string().min(6, "6 caractères minimum"),
   businessName: z.string().min(1, "Nom du commerce requis"),
   city: z.string().optional(),
-  country: z.string().optional(),
+  country: z.string().min(1, "Pays requis"),
 });
 
 export async function registerAction(
@@ -300,7 +300,7 @@ export async function registerAction(
     password: formData.get("password"),
     businessName: formData.get("businessName"),
     city: formData.get("city") || undefined,
-    country: formData.get("country") || undefined,
+    country: formData.get("country") || "",
   });
 
   if (!parsed.success) {
@@ -308,7 +308,10 @@ export async function registerAction(
   }
 
   const { firstName, lastName, phone, email, password, businessName, city, country } = parsed.data;
-  const countryCode = isCountryCode(country) ? country : DEFAULT_COUNTRY_CODE;
+  if (!isCountryCode(country)) {
+    return { error: "Pays invalide" };
+  }
+  const countryCode = country;
 
   const { data: existing } = await supabase.from("users").select("id").eq("phone", phone).maybeSingle();
   if (existing) {
