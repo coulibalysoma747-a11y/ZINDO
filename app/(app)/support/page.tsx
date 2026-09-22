@@ -3,6 +3,7 @@ import { requireUser } from "@/lib/auth";
 import { supabase } from "@/lib/supabase";
 import { formatDateTime } from "@/lib/format";
 import { getNavItemsAvailability } from "@/lib/nav-server";
+import { getCurrentLocation } from "@/lib/location";
 import { isAssistantConfigured } from "@/lib/ai/deepseek";
 import { Card, CardBody, CardHeader } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
@@ -40,6 +41,7 @@ type TicketRow = {
 
 export default async function SupportPage() {
   const user = await requireUser();
+  const currentLocation = await getCurrentLocation(user.businessId);
 
   const [{ data }, availability] = await Promise.all([
     supabase
@@ -50,7 +52,7 @@ export default async function SupportPage() {
       .eq("business_id", user.businessId)
       .order("created_at", { ascending: false })
       .limit(100),
-    getNavItemsAvailability(user.businessId, user.role, user.id, user.business.activityKey),
+    getNavItemsAvailability(user.businessId, user.role, user.id, user.business.activityKey, currentLocation?.id),
   ]);
   const tickets = (data ?? []) as unknown as TicketRow[];
 

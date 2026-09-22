@@ -128,6 +128,19 @@ CREATE INDEX IF NOT EXISTS promo_codes_store_id_idx ON promo_codes (store_id);
 ALTER TABLE online_orders ADD COLUMN IF NOT EXISTS promo_code_id text references promo_codes(id);
 ALTER TABLE online_orders ADD COLUMN IF NOT EXISTS discount double precision not null default 0;
 
+-- Dérogation par boutique/dépôt (Location) pour le déploiement progressif des
+-- fonctionnalités — priorité la plus haute, au-dessus de feature_flag_businesses
+-- et de enabled_globally. Permet à un commerce multi-boutiques d'avoir une
+-- interface différente par boutique.
+CREATE TABLE IF NOT EXISTS feature_flag_locations (
+  id text primary key default gen_random_uuid()::text,
+  feature_flag_id text not null references feature_flags(id) on delete cascade,
+  location_id text not null references locations(id) on delete cascade,
+  enabled boolean not null default true,
+  unique (feature_flag_id, location_id)
+);
+CREATE INDEX IF NOT EXISTS feature_flag_locations_location_id_idx ON feature_flag_locations (location_id);
+
 -- --- Fonctions manquantes ---------------------------------------------------
 CREATE OR REPLACE FUNCTION claim_promo_code_usage(p_promo_code_id text)
 RETURNS boolean AS $$

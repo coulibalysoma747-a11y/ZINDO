@@ -11,15 +11,34 @@ import { supabase } from "@/lib/supabase";
  * Règle impérative : toute nouvelle fonctionnalité ajoutée à ZINDO doit être
  * enregistrée ici et rester désactivée pour tout le monde tant que le
  * propriétaire de la plateforme n'a pas explicitement demandé de l'activer
- * (globalement ou pour un commerce précis) depuis /admin/fonctionnalites.
+ * (globalement, pour un commerce précis, ou pour une boutique précise d'un
+ * commerce multi-boutiques) depuis /admin/fonctionnalites.
+ *
+ * Priorité (la plus spécifique gagne) : dérogation par boutique (locationId)
+ * > dérogation par commerce > activation globale > désactivé par défaut.
  */
-export async function isFeatureEnabled(key: string, businessId: string): Promise<boolean> {
+export async function isFeatureEnabled(
+  key: string,
+  businessId: string,
+  locationId?: string | null
+): Promise<boolean> {
   const { data: flag } = await supabase
     .from("feature_flags")
     .select("id, enabledGlobally:enabled_globally")
     .eq("key", key)
     .maybeSingle();
   if (!flag) return true;
+
+  if (locationId) {
+    const { data: locationOverride } = await supabase
+      .from("feature_flag_locations")
+      .select("enabled")
+      .eq("feature_flag_id", flag.id)
+      .eq("location_id", locationId)
+      .maybeSingle();
+    if (locationOverride) return locationOverride.enabled;
+  }
+
   if (flag.enabledGlobally) return true;
 
   const { data: override } = await supabase

@@ -25,7 +25,8 @@ export async function getNavItemsAvailability(
   businessId: string,
   role: Role,
   userId: string,
-  activityKey?: string | null
+  activityKey?: string | null,
+  locationId?: string | null
 ): Promise<Record<string, ModuleAvailability>> {
   const [activityConfig, planLimits, businessSettings] = await Promise.all([
     getActivityConfig(activityKey),
@@ -37,7 +38,7 @@ export async function getNavItemsAvailability(
     NAV_ITEMS.map(async (item) => {
       const [permissionOk, featureOk] = await Promise.all([
         item.permission ? hasPermission(businessId, role, item.permission, userId) : true,
-        item.featureFlag ? isFeatureEnabled(item.featureFlag, businessId) : true,
+        item.featureFlag ? isFeatureEnabled(item.featureFlag, businessId, locationId) : true,
       ]);
       const planOk = item.planFeature ? planLimits.features.includes(item.planFeature) : true;
       const moduleOk = item.moduleToggle ? businessSettings.modulesEnabled[item.moduleToggle] : true;
@@ -62,7 +63,8 @@ export async function getVisibleNavItems(
   businessId: string,
   role: Role,
   userId: string,
-  activityKey?: string | null
+  activityKey?: string | null,
+  locationId?: string | null
 ): Promise<NavItem[]> {
   const [activityConfig, planLimits, businessSettings] = await Promise.all([
     getActivityConfig(activityKey),
@@ -74,7 +76,7 @@ export async function getVisibleNavItems(
     NAV_ITEMS.map(async (item) => {
       const [permissionOk, featureOk] = await Promise.all([
         item.permission ? hasPermission(businessId, role, item.permission, userId) : true,
-        item.featureFlag ? isFeatureEnabled(item.featureFlag, businessId) : true,
+        item.featureFlag ? isFeatureEnabled(item.featureFlag, businessId, locationId) : true,
       ]);
       const planOk = item.planFeature ? planLimits.features.includes(item.planFeature) : true;
       const moduleOk = item.moduleToggle ? businessSettings.modulesEnabled[item.moduleToggle] : true;

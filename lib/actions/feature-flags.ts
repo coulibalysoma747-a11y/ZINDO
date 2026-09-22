@@ -105,6 +105,55 @@ export async function setFeatureFlagBusinessAction(flagId: string, businessId: s
   return { success: "Mis à jour pour ce commerce" };
 }
 
+export async function setFeatureFlagLocationAction(flagId: string, locationId: string, enabled: boolean) {
+  const admin = await requireSuperAdmin();
+  const { error } = await supabase
+    .from("feature_flag_locations")
+    .upsert(
+      { feature_flag_id: flagId, location_id: locationId, enabled },
+      { onConflict: "feature_flag_id,location_id", ignoreDuplicates: false }
+    );
+  if (error) {
+    console.error("[setFeatureFlagLocationAction] Échec de la mise à jour :", error.message);
+    return { error: "Impossible de mettre à jour pour cette boutique" };
+  }
+
+  await logAdminAction({
+    superAdminId: admin.id,
+    actorName: admin.name,
+    action: "SET",
+    entity: "FeatureFlagLocation",
+    entityId: locationId,
+    details: `${flagId} -> ${enabled}`,
+  });
+  revalidatePath("/admin/fonctionnalites");
+  return { success: "Mis à jour pour cette boutique" };
+}
+
+export async function clearFeatureFlagLocationAction(flagId: string, locationId: string) {
+  const admin = await requireSuperAdmin();
+  const { error } = await supabase
+    .from("feature_flag_locations")
+    .delete()
+    .eq("feature_flag_id", flagId)
+    .eq("location_id", locationId);
+  if (error) {
+    console.error("[clearFeatureFlagLocationAction] Échec de la suppression :", error.message);
+    return { error: "Impossible de réinitialiser cette boutique" };
+  }
+
+  await logAdminAction({
+    superAdminId: admin.id,
+    actorName: admin.name,
+    action: "CLEAR",
+    entity: "FeatureFlagLocation",
+    entityId: locationId,
+    details: flagId,
+  });
+  revalidatePath("/admin/fonctionnalites");
+  return { success: "Réglage par boutique réinitialisé (suit le réglage du commerce)" };
+}
+
 export async function deleteFeatureFlagAction(flagId: string) {
   const admin = await requireSuperAdmin();
   const { data: flag } = await supabase.from("feature_flags").select("key").eq("id", flagId).maybeSingle();

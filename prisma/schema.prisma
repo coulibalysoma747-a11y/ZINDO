@@ -97,6 +97,7 @@ model Location {
   expenses       Expense[]
   cashSessions   CashSession[]
   onlineStores   OnlineStore[]
+  featureFlags   FeatureFlagLocation[]
 
   @@unique([businessId, name])
   @@index([businessId])
@@ -807,7 +808,8 @@ model FeatureFlag {
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
-  overrides FeatureFlagBusiness[]
+  overrides         FeatureFlagBusiness[]
+  locationOverrides FeatureFlagLocation[]
 }
 
 model FeatureFlagBusiness {
@@ -820,6 +822,24 @@ model FeatureFlagBusiness {
 
   @@unique([featureFlagId, businessId])
   @@index([businessId])
+}
+
+// Dérogation par boutique/dépôt (Location), gérée depuis la console
+// administrateur : permet à un commerce ayant plusieurs boutiques d'avoir une
+// interface différente par boutique (ex. la boutique en ligne activée pour
+// l'une mais pas l'autre). Priorité la plus haute de toutes les couches de
+// déploiement progressif : FeatureFlagLocation > FeatureFlagBusiness >
+// FeatureFlag.enabledGlobally > désactivé par défaut.
+model FeatureFlagLocation {
+  id            String      @id @default(cuid())
+  featureFlagId String
+  featureFlag   FeatureFlag @relation(fields: [featureFlagId], references: [id], onDelete: Cascade)
+  locationId    String
+  location      Location    @relation(fields: [locationId], references: [id], onDelete: Cascade)
+  enabled       Boolean     @default(true)
+
+  @@unique([featureFlagId, locationId])
+  @@index([locationId])
 }
 
 // ---------------------------------------------------------------------------

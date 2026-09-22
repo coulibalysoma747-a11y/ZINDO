@@ -40,16 +40,15 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   // problème qui se retrouverait elle-même redirigée vers elle-même.
   if (!isBillingPage && subscriptionBlocked) redirect("/abonnement");
 
-  const [navItems, locations, currentLocation, canSell, canManageProducts, canManageStock, canManagePurchases] =
-    await Promise.all([
-      getVisibleNavItems(user.businessId, user.role, user.id, user.business.activityKey),
-      getLocations(user.businessId),
-      getCurrentLocation(user.businessId),
-      hasPermission(user.businessId, user.role, PERMISSIONS.SALES_CREATE, user.id),
-      hasPermission(user.businessId, user.role, PERMISSIONS.PRODUCTS_MANAGE, user.id),
-      hasPermission(user.businessId, user.role, PERMISSIONS.STOCK_MANAGE, user.id),
-      hasPermission(user.businessId, user.role, PERMISSIONS.PURCHASES_MANAGE, user.id),
-    ]);
+  const [locations, currentLocation] = await Promise.all([getLocations(user.businessId), getCurrentLocation(user.businessId)]);
+
+  const [navItems, canSell, canManageProducts, canManageStock, canManagePurchases] = await Promise.all([
+    getVisibleNavItems(user.businessId, user.role, user.id, user.business.activityKey, currentLocation?.id),
+    hasPermission(user.businessId, user.role, PERMISSIONS.SALES_CREATE, user.id),
+    hasPermission(user.businessId, user.role, PERMISSIONS.PRODUCTS_MANAGE, user.id),
+    hasPermission(user.businessId, user.role, PERMISSIONS.STOCK_MANAGE, user.id),
+    hasPermission(user.businessId, user.role, PERMISSIONS.PURCHASES_MANAGE, user.id),
+  ]);
 
   return (
     <div className="flex min-h-screen bg-zinc-50 print:block print:min-h-0 print:bg-white">
