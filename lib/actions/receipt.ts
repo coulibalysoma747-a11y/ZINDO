@@ -6,6 +6,8 @@ import { supabase } from "@/lib/supabase";
 import { getVerificationUrl } from "@/lib/verification";
 import { generateQrDataUrl } from "@/lib/qrcode";
 import { getInvoiceCustomization } from "@/lib/invoice-customization";
+import { getBusinessSettings } from "@/lib/business-settings";
+import { isInvoiceTemplatesModuleEnabled } from "@/lib/actions/invoice-templates";
 import type { ReceiptData, ReceiptWidth } from "@/components/sales/Receipt";
 import type { FactureData } from "@/components/sales/Facture";
 import type { FactureEnginData } from "@/components/sales/FactureEngin";
@@ -153,7 +155,15 @@ export async function getSaleDocumentAction(saleId: string, formatOverride?: "TI
   const effectiveType = formatOverride ?? sale.documentType;
 
   if (effectiveType === "FACTURE") {
-    const customization = await getInvoiceCustomization(user.businessId);
+    const [customization, invoiceTemplatesEnabled, businessSettings] = await Promise.all([
+      getInvoiceCustomization(user.businessId),
+      isInvoiceTemplatesModuleEnabled(user.businessId),
+      getBusinessSettings(user.businessId),
+    ]);
+    // Le réglage n'a d'effet que si le flag est activé pour ce commerce —
+    // sinon tout le monde reste sur "classique", même si la valeur stockée a
+    // changé (ex. flag désactivé après avoir été testé).
+    const templateId = invoiceTemplatesEnabled ? businessSettings.invoiceTemplate : "classique";
 
     // Une vente d'engin (module Vente Engin) porte toujours une ligne
     // vehicle_sale_details — dans ce cas, la facture imprimée est la
@@ -267,6 +277,9 @@ export async function getSaleDocumentAction(saleId: string, formatOverride?: "TI
       signerName: customization.invoiceSignerName,
       returnPolicy: customization.invoiceReturnPolicy,
       statusLabel: STATUS_LABELS[sale.status] ?? null,
+      ifu: customization.ifu,
+      rccm: customization.rccm,
+      templateId,
     };
     return { success: true, saleId: sale.id, documentType: "FACTURE", data: factureData, isCancelled, canEdit };
   }

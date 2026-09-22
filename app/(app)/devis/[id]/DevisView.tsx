@@ -4,7 +4,8 @@ import { useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Printer, Trash2 } from "lucide-react";
-import { Facture, type FactureData } from "@/components/sales/Facture";
+import type { FactureData } from "@/components/sales/Facture";
+import { InvoiceDocument } from "@/components/sales/InvoiceDocument";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Field, Input, Select } from "@/components/ui/Input";
@@ -147,7 +148,7 @@ export function DevisView({
 
       {error && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700 print:hidden">{error}</p>}
 
-      <Facture data={data} />
+      <InvoiceDocument data={data} />
 
       <Modal open={showConvert} onClose={() => setShowConvert(false)} title="Convertir le devis en vente">
         <div className="space-y-3">

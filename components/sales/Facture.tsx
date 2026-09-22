@@ -53,6 +53,12 @@ export type FactureData = {
   returnPolicy?: string | null;
   /** Ex : "Facture intégralement réglée" — dérivé du statut de la vente. */
   statusLabel?: string | null;
+  /** Identifiant Financier Unique (/parametres) — affiché seulement si renseigné. */
+  ifu?: string | null;
+  /** Registre du Commerce et du Crédit Mobilier (/parametres) — affiché seulement si renseigné. */
+  rccm?: string | null;
+  /** Modèle visuel choisi (/parametres) — lu par components/sales/InvoiceDocument.tsx, ignoré par ce composant lui-même. */
+  templateId?: string | null;
 };
 
 /**
@@ -114,6 +120,11 @@ export function Facture({ data }: { data: FactureData }) {
           )}
           {data.mobileMoneyInfo && (
             <p className="text-sm leading-relaxed text-zinc-600">Mobile money {data.mobileMoneyInfo}</p>
+          )}
+          {(data.ifu || data.rccm) && (
+            <p className="mt-1.5 text-xs text-zinc-500">
+              {[data.ifu ? `IFU ${data.ifu}` : null, data.rccm ? `RCCM ${data.rccm}` : null].filter(Boolean).join("  ·  ")}
+            </p>
           )}
         </div>
 

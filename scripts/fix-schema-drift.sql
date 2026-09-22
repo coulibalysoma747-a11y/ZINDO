@@ -22,6 +22,8 @@ ALTER TABLE businesses ADD COLUMN IF NOT EXISTS next_barcode_seq int not null de
 ALTER TABLE businesses ADD COLUMN IF NOT EXISTS next_pickup_seq int not null default 1;
 ALTER TABLE businesses ADD COLUMN IF NOT EXISTS next_shipment_seq int not null default 1;
 ALTER TABLE businesses ADD COLUMN IF NOT EXISTS next_patient_seq int not null default 1;
+ALTER TABLE businesses ADD COLUMN IF NOT EXISTS ifu text;
+ALTER TABLE businesses ADD COLUMN IF NOT EXISTS rccm text;
 
 ALTER TABLE users ADD COLUMN IF NOT EXISTS totp_secret text;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS totp_enabled boolean not null default false;

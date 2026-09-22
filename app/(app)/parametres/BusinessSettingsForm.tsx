@@ -22,6 +22,8 @@ type Business = {
   mobileMoneyInfo: string | null;
   invoiceSignerName: string | null;
   invoiceReturnPolicy: string | null;
+  ifu: string | null;
+  rccm: string | null;
 };
 
 const QR_SIZE_OPTIONS = [
@@ -115,6 +117,12 @@ export function BusinessSettingsForm({ business }: { business: Business }) {
           </Field>
           <Field label="Nom du responsable (facultatif)" htmlFor="invoiceSignerName" hint="Affiché sous la signature">
             <Input id="invoiceSignerName" name="invoiceSignerName" defaultValue={business.invoiceSignerName ?? ""} />
+          </Field>
+          <Field label="IFU (si disponible)" htmlFor="ifu" hint="Identifiant Financier Unique — laissez vide si vous n'en avez pas">
+            <Input id="ifu" name="ifu" defaultValue={business.ifu ?? ""} />
+          </Field>
+          <Field label="RCCM (si disponible)" htmlFor="rccm" hint="Registre du Commerce et du Crédit Mobilier — laissez vide si vous n'en avez pas">
+            <Input id="rccm" name="rccm" defaultValue={business.rccm ?? ""} />
           </Field>
         </div>
         <Field

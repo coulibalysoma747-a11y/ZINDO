@@ -9,6 +9,8 @@ import { generateQuoteNumber } from "@/lib/reference";
 import { registerFeatureFlag, isFeatureEnabled } from "@/lib/feature-flags";
 import { rethrowIfNavigationSignal } from "@/lib/action-errors";
 import { getInvoiceCustomization } from "@/lib/invoice-customization";
+import { getBusinessSettings } from "@/lib/business-settings";
+import { isInvoiceTemplatesModuleEnabled } from "@/lib/actions/invoice-templates";
 import { createSaleAction } from "@/lib/actions/sales";
 import type { FactureData } from "@/components/sales/Facture";
 import type { PaymentMethod } from "@/lib/db-types";
@@ -208,7 +210,12 @@ export async function getQuoteDocumentAction(quoteId: string): Promise<QuoteDocu
 
   const business = user.business;
   const canEdit = await hasPermission(user.businessId, user.role, PERMISSIONS.SALES_CREATE, user.id);
-  const customization = await getInvoiceCustomization(user.businessId);
+  const [customization, invoiceTemplatesEnabled, businessSettings] = await Promise.all([
+    getInvoiceCustomization(user.businessId),
+    isInvoiceTemplatesModuleEnabled(user.businessId),
+    getBusinessSettings(user.businessId),
+  ]);
+  const templateId = invoiceTemplatesEnabled ? businessSettings.invoiceTemplate : "classique";
 
   const factureData: FactureData = {
     businessName: business.name,
@@ -238,6 +245,9 @@ export async function getQuoteDocumentAction(quoteId: string): Promise<QuoteDocu
     tagline: customization.invoiceTagline,
     mobileMoneyInfo: customization.mobileMoneyInfo,
     signerName: customization.invoiceSignerName,
+    ifu: customization.ifu,
+    rccm: customization.rccm,
+    templateId,
   };
 
   return {

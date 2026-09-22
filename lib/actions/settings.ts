@@ -27,6 +27,8 @@ const businessSchema = z.object({
   mobileMoneyInfo: z.string().optional(),
   invoiceSignerName: z.string().optional(),
   invoiceReturnPolicy: z.string().optional(),
+  ifu: z.string().optional(),
+  rccm: z.string().optional(),
 });
 
 export async function updateBusinessSettingsAction(
@@ -49,6 +51,8 @@ export async function updateBusinessSettingsAction(
     mobileMoneyInfo: formData.get("mobileMoneyInfo") || undefined,
     invoiceSignerName: formData.get("invoiceSignerName") || undefined,
     invoiceReturnPolicy: formData.get("invoiceReturnPolicy") || undefined,
+    ifu: formData.get("ifu") || undefined,
+    rccm: formData.get("rccm") || undefined,
   });
   if (!parsed.success) return { error: parsed.error.issues[0]?.message };
 
@@ -82,6 +86,8 @@ export async function updateBusinessSettingsAction(
       mobile_money_info: parsed.data.mobileMoneyInfo ?? null,
       invoice_signer_name: parsed.data.invoiceSignerName ?? null,
       invoice_return_policy: parsed.data.invoiceReturnPolicy ?? null,
+      ifu: parsed.data.ifu ?? null,
+      rccm: parsed.data.rccm ?? null,
       ...(logoUrl !== undefined ? { logo_url: logoUrl } : {}),
     })
     .eq("id", user.businessId);

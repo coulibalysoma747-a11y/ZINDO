@@ -103,6 +103,12 @@ create table businesses (
   mobile_money_info text,
   invoice_signer_name text,
   invoice_return_policy text,
+  -- Identifiants fiscaux/registre du commerce, facultatifs (tous les
+  -- commerçants n'en ont pas) — affichés sur la Facture A4 uniquement s'ils
+  -- sont renseignés. IFU = Identifiant Financier Unique, RCCM = Registre du
+  -- Commerce et du Crédit Mobilier.
+  ifu text,
+  rccm text,
   -- Réglages de comportement façon FasoStock (lib/business-settings.ts) :
   -- JSON libre plutôt qu'une colonne par réglage, pour ajouter de nouveaux
   -- interrupteurs sans migration à chaque fois — voir BusinessSettings.
@@ -223,7 +229,11 @@ create table suppliers (
   email text,
   address text,
   notes text,
-  created_at timestamptz not null default now()
+  -- Clé d'idempotence pour un fournisseur créé hors ligne (application
+  -- Windows, voir lib/offline/) — même principe que sales.client_ref.
+  client_ref text,
+  created_at timestamptz not null default now(),
+  unique (business_id, client_ref)
 );
 create index on suppliers (business_id);
 
@@ -259,10 +269,15 @@ create table products (
   -- exemplaire), pour que le reste de l'app (alertes, rapports, caisse) n'ait
   -- rien à connaître de cette distinction.
   track_units boolean not null default false,
+  -- Clé d'idempotence pour un produit créé hors ligne (application Windows,
+  -- voir lib/offline/) — même principe que sales.client_ref ci-dessous. NULL
+  -- pour tout produit créé normalement en ligne.
+  client_ref text,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
   unique (business_id, reference),
-  unique (business_id, faso_stock_id)
+  unique (business_id, faso_stock_id),
+  unique (business_id, client_ref)
 );
 create index on products (business_id);
 create index on products (business_id, barcode);
@@ -402,7 +417,11 @@ create table stock_movements (
   new_stock int not null,
   note text,
   user_id text not null references users(id),
-  created_at timestamptz not null default now()
+  -- Clé d'idempotence pour un mouvement enregistré hors ligne (application
+  -- Windows, voir lib/offline/) — même principe que sales.client_ref.
+  client_ref text,
+  created_at timestamptz not null default now(),
+  unique (business_id, client_ref)
 );
 create index on stock_movements (business_id, created_at);
 create index on stock_movements (location_id);
@@ -419,7 +438,11 @@ create table customers (
   email text,
   address text,
   credit_limit double precision not null default 0,
-  created_at timestamptz not null default now()
+  -- Clé d'idempotence pour un client créé hors ligne (application Windows,
+  -- voir lib/offline/) — même principe que sales.client_ref.
+  client_ref text,
+  created_at timestamptz not null default now(),
+  unique (business_id, client_ref)
 );
 create index on customers (business_id);
 
@@ -731,8 +754,12 @@ create table purchases (
   amount_paid double precision not null default 0,
   status purchase_status not null default 'RECUE',
   note text,
+  -- Clé d'idempotence pour un achat enregistré hors ligne (application
+  -- Windows, voir lib/offline/) — même principe que sales.client_ref.
+  client_ref text,
   created_at timestamptz not null default now(),
-  unique (business_id, number)
+  unique (business_id, number),
+  unique (business_id, client_ref)
 );
 create index on purchases (business_id, created_at);
 create index on purchases (location_id);
@@ -1046,9 +1073,13 @@ create table inventories (
   status inventory_status not null default 'EN_COURS',
   note text,
   user_id text not null references users(id),
+  -- Clé d'idempotence pour un inventaire créé hors ligne (application
+  -- Windows, voir lib/offline/) — même principe que sales.client_ref.
+  client_ref text,
   created_at timestamptz not null default now(),
   validated_at timestamptz,
-  unique (business_id, reference)
+  unique (business_id, reference),
+  unique (business_id, client_ref)
 );
 create index on inventories (business_id, created_at);
 create index on inventories (location_id);

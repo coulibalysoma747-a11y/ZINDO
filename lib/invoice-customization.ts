@@ -6,6 +6,10 @@ export type InvoiceCustomization = {
   mobileMoneyInfo: string | null;
   invoiceSignerName: string | null;
   invoiceReturnPolicy: string | null;
+  /** Identifiant Financier Unique — facultatif, affiché sur la Facture A4 seulement s'il est renseigné. */
+  ifu: string | null;
+  /** Registre du Commerce et du Crédit Mobilier — facultatif, idem. */
+  rccm: string | null;
 };
 
 const EMPTY: InvoiceCustomization = {
@@ -13,6 +17,8 @@ const EMPTY: InvoiceCustomization = {
   mobileMoneyInfo: null,
   invoiceSignerName: null,
   invoiceReturnPolicy: null,
+  ifu: null,
+  rccm: null,
 };
 
 /**
@@ -27,7 +33,9 @@ export async function getInvoiceCustomization(businessId: string): Promise<Invoi
   try {
     const { data, error } = await supabase
       .from("businesses")
-      .select("invoiceTagline:invoice_tagline, mobileMoneyInfo:mobile_money_info, invoiceSignerName:invoice_signer_name, invoiceReturnPolicy:invoice_return_policy")
+      .select(
+        "invoiceTagline:invoice_tagline, mobileMoneyInfo:mobile_money_info, invoiceSignerName:invoice_signer_name, invoiceReturnPolicy:invoice_return_policy, ifu, rccm"
+      )
       .eq("id", businessId)
       .maybeSingle();
     if (error || !data) return EMPTY;

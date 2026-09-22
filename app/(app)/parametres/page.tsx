@@ -8,6 +8,7 @@ import { MEDICAL_ACTIVITY_KEY } from "@/lib/nav";
 import { getLocations } from "@/lib/location";
 import { getInvoiceCustomization } from "@/lib/invoice-customization";
 import { getBusinessSettings } from "@/lib/business-settings";
+import { ensureInvoiceTemplatesFlagRegistered, isInvoiceTemplatesModuleEnabled } from "@/lib/actions/invoice-templates";
 import { listFasoStockStores, type FasoStockStore } from "@/lib/integrations/faso-stock";
 import { Card, CardBody, CardHeader } from "@/components/ui/Card";
 import { BusinessSettingsForm } from "./BusinessSettingsForm";
@@ -24,6 +25,7 @@ import { PackagingPriceModePanel } from "./PackagingPriceModePanel";
 import { BulkStockFillPanel } from "./BulkStockFillPanel";
 import { HideCustomerPanel } from "./HideCustomerPanel";
 import { DualFormatPrintingPanel } from "./DualFormatPrintingPanel";
+import { InvoiceTemplatePanel } from "./InvoiceTemplatePanel";
 import { QuantityInputModePanel } from "./QuantityInputModePanel";
 import { DangerZonePanel } from "./DangerZonePanel";
 import { MobileMoneyPanel } from "./MobileMoneyPanel";
@@ -46,9 +48,17 @@ const ALL_METHODS: { method: PaymentMethod; defaultLabel: string }[] = [
 
 export default async function SettingsPage() {
   const user = await requirePermission(PERMISSIONS.SETTINGS_MANAGE);
+  await ensureInvoiceTemplatesFlagRegistered();
 
-  const [{ data: configs }, { data: overrides }, { data: businessRow }, locations, invoiceCustomization, businessSettings] =
-    await Promise.all([
+  const [
+    { data: configs },
+    { data: overrides },
+    { data: businessRow },
+    locations,
+    invoiceCustomization,
+    businessSettings,
+    invoiceTemplatesEnabled,
+  ] = await Promise.all([
       supabase.from("payment_method_configs").select("method, label, enabled").eq("business_id", user.businessId),
       supabase.from("role_permissions").select("role, permission, allowed").eq("business_id", user.businessId),
       supabase
@@ -61,6 +71,7 @@ export default async function SettingsPage() {
       getLocations(user.businessId),
       getInvoiceCustomization(user.businessId),
       getBusinessSettings(user.businessId),
+      isInvoiceTemplatesModuleEnabled(user.businessId),
     ]);
 
   const configMap = new Map((configs ?? []).map((c) => [c.method as string, c]));
@@ -212,6 +223,7 @@ export default async function SettingsPage() {
               <BulkStockFillPanel settings={businessSettings} />
               <HideCustomerPanel settings={businessSettings} />
               <DualFormatPrintingPanel settings={businessSettings} />
+              {invoiceTemplatesEnabled && <InvoiceTemplatePanel settings={businessSettings} />}
               <QuantityInputModePanel settings={businessSettings} />
               <MobileMoneyPanel settings={businessSettings} />
               <AiCartPanel settings={businessSettings} />

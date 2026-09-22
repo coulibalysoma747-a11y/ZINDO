@@ -4,7 +4,8 @@ import { useEffect } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { ArrowLeft, Pencil } from "lucide-react";
-import { Facture, type FactureData } from "@/components/sales/Facture";
+import type { FactureData } from "@/components/sales/Facture";
+import { InvoiceDocument } from "@/components/sales/InvoiceDocument";
 import { Badge } from "@/components/ui/Badge";
 import { ReceiptActions } from "./ReceiptActions";
 import { CancelSaleButton } from "./CancelSaleButton";
@@ -62,7 +63,7 @@ export function FactureView({
 
       {isCancelled && <Badge tone="red" className="print:hidden">Facture annulée — stock réintégré</Badge>}
 
-      <Facture data={data} />
+      <InvoiceDocument data={data} />
 
       {canOfferInstallments && (
         <InstallmentSection saleId={saleId} remaining={data.remaining ?? 0} currency={data.currency ?? "XOF"} plan={installmentPlan} />

@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { X, Printer } from "lucide-react";
 import { Receipt, type ReceiptWidth } from "@/components/sales/Receipt";
-import { Facture } from "@/components/sales/Facture";
+import { InvoiceDocument } from "@/components/sales/InvoiceDocument";
 import { FactureEngin } from "@/components/sales/FactureEngin";
 import { Button } from "@/components/ui/Button";
 import type { SaleDocument } from "@/lib/actions/receipt";
@@ -98,7 +98,7 @@ export function ReceiptPrintPanel({
 
         <div className="flex-1 print:block">
           {doc.documentType === "TICKET" && <Receipt data={doc.data} width={width} />}
-          {doc.documentType === "FACTURE" && <Facture data={doc.data} />}
+          {doc.documentType === "FACTURE" && <InvoiceDocument data={doc.data} />}
           {doc.documentType === "FACTURE_ENGIN" && <FactureEngin data={doc.data} />}
         </div>
 

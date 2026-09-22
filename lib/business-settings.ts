@@ -49,6 +49,8 @@ export type BusinessSettings = {
     /** "Caisse à deux" — ajoute la page /caisse (permission CASHIER_QUEUE_MANAGE) : un vendeur envoie un panier à la file d'attente sans encaisser, un caissier le récupère et finalise le paiement. Le stock n'est déduit qu'au paiement. Désactivé par défaut. */
     cashierQueue: boolean;
   };
+  /** Modèle visuel de la Facture A4 (voir lib/invoice-templates.ts) — derrière le flag "facture_multi_templates", voir components/sales/InvoiceTemplatePanel.tsx. */
+  invoiceTemplate: string;
 };
 
 // Comportement par défaut si la colonne n'est pas encore migrée ou vide :
@@ -83,6 +85,7 @@ const DEFAULTS: BusinessSettings = {
     shipments: true,
     cashierQueue: false,
   },
+  invoiceTemplate: "classique",
 };
 
 export type BusinessSettingsPatch = Partial<Omit<BusinessSettings, "modulesEnabled">> & {
