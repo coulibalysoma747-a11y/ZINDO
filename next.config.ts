@@ -2,6 +2,9 @@ import type { NextConfig } from "next";
 import { withSentryConfig } from "@sentry/nextjs/config";
 
 const nextConfig: NextConfig = {
+  // Requis pour empaqueter un serveur Node autonome dans l'application
+  // Windows (Electron lance .next/standalone/server.js) — voir electron/main.ts.
+  output: "standalone",
   experimental: {
     // Par défaut Next.js limite le corps des Server Actions à 1 Mo — trop
     // petit pour un catalogue PDF fournisseur avec photos (import de

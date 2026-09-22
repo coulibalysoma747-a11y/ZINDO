@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
-import { Clock, Loader2, RefreshCw, User } from "lucide-react";
+import { useCallback, useEffect, useState, useTransition } from "react";
+import { Clock, Loader2, RefreshCw, User, WifiOff } from "lucide-react";
 import { Card, CardBody, CardHeader } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Field, Input, Select } from "@/components/ui/Input";
@@ -16,6 +16,9 @@ import {
 } from "@/lib/actions/cashier-queue";
 import { ReceiptPrintPanel } from "@/app/(app)/ventes/ReceiptPrintPanel";
 import type { PaymentMethod } from "@/lib/db-types";
+import { queueOfflineSale, getPendingSales, type CachedBusinessInfo, type PendingSale } from "@/lib/offline/db";
+import { syncPendingSales } from "@/lib/offline/sync";
+import { buildOfflineDocument } from "@/lib/offline/build-document";
 
 const PAYMENT_LABELS: Record<PaymentMethod, string> = {
   ESPECES: "Espèces",
@@ -47,6 +50,8 @@ export function CaissePOS({
   mobileMoneyOperators = ["ORANGE", "MOOV", "WAVE"],
   allowMixedPayment = false,
   autoPrintReceipt,
+  cashierName,
+  businessInfo,
 }: {
   locationId: string;
   locationName: string;
@@ -55,6 +60,8 @@ export function CaissePOS({
   mobileMoneyOperators?: ("ORANGE" | "MOOV" | "WAVE")[];
   allowMixedPayment?: boolean;
   autoPrintReceipt: boolean;
+  cashierName: string;
+  businessInfo: CachedBusinessInfo;
 }) {
   const [carts, setCarts] = useState<PendingCartSummary[] | null>(null);
   const [claimed, setClaimed] = useState<ClaimedCart | null>(null);
@@ -71,8 +78,55 @@ export function CaissePOS({
   const [cashPortionInput, setCashPortionInput] = useState("");
   const [mobilePortionInput, setMobilePortionInput] = useState("");
 
+  // Mode hors ligne : voir POS.tsx pour le même mécanisme. La "file
+  // d'attente" (paniers envoyés par un vendeur) ne peut en revanche pas être
+  // consultée hors ligne — elle vit côté serveur, alimentée par un AUTRE
+  // appareil ; seul l'encaissement d'un panier déjà récupéré reste possible.
+  const [isOnline, setIsOnline] = useState(true);
+  const [pendingSales, setPendingSales] = useState<PendingSale[]>([]);
+  const [syncing, setSyncing] = useState(false);
+
+  const refreshPendingSales = useCallback(() => {
+    getPendingSales().then(setPendingSales);
+  }, []);
+
+  const runSync = useCallback(async () => {
+    setSyncing(true);
+    try {
+      await syncPendingSales();
+    } finally {
+      setSyncing(false);
+      refreshPendingSales();
+      getPendingCartsAction(locationId)
+        .then(setCarts)
+        .catch(() => {});
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [locationId, refreshPendingSales]);
+
+  useEffect(() => {
+    setIsOnline(navigator.onLine);
+    refreshPendingSales();
+    function handleOnline() {
+      setIsOnline(true);
+      runSync();
+    }
+    function handleOffline() {
+      setIsOnline(false);
+    }
+    window.addEventListener("online", handleOnline);
+    window.addEventListener("offline", handleOffline);
+    return () => {
+      window.removeEventListener("online", handleOnline);
+      window.removeEventListener("offline", handleOffline);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   function refreshQueue() {
-    getPendingCartsAction(locationId).then(setCarts);
+    getPendingCartsAction(locationId)
+      .then(setCarts)
+      .catch(() => setCarts([]));
   }
 
   useEffect(() => {
@@ -99,6 +153,32 @@ export function CaissePOS({
       .finally(() => setClaimingId(null));
   }
 
+  const offlineBanner = (!isOnline || pendingSales.length > 0) && (
+    <div
+      className={`flex flex-wrap items-center justify-between gap-2 rounded-xl border px-3 py-2 text-xs ${
+        !isOnline
+          ? "border-amber-200 bg-amber-50 text-amber-800 dark:border-amber-900 dark:bg-amber-500/10 dark:text-amber-300"
+          : "border-zinc-200 bg-zinc-50 text-zinc-600 dark:border-slate-700 dark:bg-slate-800 dark:text-zinc-300"
+      }`}
+    >
+      <div className="flex items-center gap-2">
+        {!isOnline ? <WifiOff className="h-4 w-4 shrink-0" /> : <RefreshCw className="h-4 w-4 shrink-0" />}
+        <span>
+          {!isOnline
+            ? `Hors ligne — l'encaissement d'un panier déjà récupéré reste possible et se synchronisera au retour de la connexion (la file d'attente des vendeurs ne peut pas être actualisée).${
+                pendingSales.length > 0 ? ` (${pendingSales.length} en attente)` : ""
+              }`
+            : `${pendingSales.length} vente(s) en attente de synchronisation.`}
+        </span>
+      </div>
+      {isOnline && pendingSales.length > 0 && (
+        <Button size="sm" variant="outline" onClick={runSync} disabled={syncing}>
+          {syncing ? "Synchronisation..." : "Synchroniser maintenant"}
+        </Button>
+      )}
+    </div>
+  );
+
   if (!claimed) {
     return (
       <div className="max-w-2xl space-y-4">
@@ -113,6 +193,8 @@ export function CaissePOS({
             <RefreshCw className="h-4 w-4" /> Actualiser
           </Button>
         </div>
+
+        {offlineBanner}
 
         <Card>
           <CardHeader>
@@ -196,19 +278,81 @@ export function CaissePOS({
       setError("Ce panier n'a pas de client — impossible d'accepter un crédit ou un paiement partiel");
       return;
     }
+
+    const items = claimed.items.map((i) => ({
+      productId: i.productId,
+      quantity: i.quantity,
+      unitPrice: i.unitPrice,
+      discount: i.discount,
+      vehicleUnitId: i.vehicleUnitId ?? undefined,
+      packagingUnitId: i.packagingUnitId ?? undefined,
+      packagingLabel: i.unitLabel ?? undefined,
+      multiplier: i.multiplier,
+    }));
+
+    if (!isOnline && claimed.items.some((i) => i.vehicleUnitId || i.packagingUnitId)) {
+      setError("La vente d'un engin ou d'un conditionnement nécessite une connexion. Réessayez une fois en ligne.");
+      return;
+    }
+
+    if (!isOnline) {
+      startTransition(async () => {
+        const clientRef = crypto.randomUUID();
+        await queueOfflineSale({
+          clientRef,
+          createdAt: new Date().toISOString(),
+          input: {
+            locationId,
+            items,
+            customerId: claimed.customerId ?? undefined,
+            discount: claimed.discount,
+            paymentMethod,
+            amountPaid,
+            documentType: "TICKET",
+            clientRef,
+            mobileMoneyOperator: paymentMethod === "MOBILE_MONEY" ? mobileMoneyOperator || undefined : undefined,
+            cashPortion: isMixed ? cashPortion : undefined,
+            mobilePortion: isMixed ? mobilePortion : undefined,
+          },
+          cashierName,
+          customerName: claimed.customerName,
+        });
+
+        const doc = buildOfflineDocument({
+          documentType: "TICKET",
+          clientRef,
+          items: claimed.items.map((i) => ({
+            productId: i.productId,
+            quantity: i.quantity,
+            unitPrice: i.unitPrice,
+            discount: i.discount,
+            vehicleUnitId: i.vehicleUnitId ?? undefined,
+            packagingUnitId: i.packagingUnitId ?? undefined,
+            packagingLabel: i.unitLabel ?? undefined,
+            multiplier: i.multiplier,
+            name: i.productName,
+            unit: i.unitLabel ?? "unité",
+          })),
+          cashierName,
+          customer: claimed.customerId ? { id: claimed.customerId, name: claimed.customerName ?? "", phone: null } : null,
+          business: businessInfo,
+          paymentMethod,
+          discount: claimed.discount,
+          amountPaid,
+          defaultWidth: "80mm",
+        });
+
+        setReceiptDoc(doc);
+        setClaimed(null);
+        refreshPendingSales();
+      });
+      return;
+    }
+
     startTransition(async () => {
       const result = await createSaleAction({
         locationId,
-        items: claimed.items.map((i) => ({
-          productId: i.productId,
-          quantity: i.quantity,
-          unitPrice: i.unitPrice,
-          discount: i.discount,
-          vehicleUnitId: i.vehicleUnitId ?? undefined,
-          packagingUnitId: i.packagingUnitId ?? undefined,
-          packagingLabel: i.unitLabel ?? undefined,
-          multiplier: i.multiplier,
-        })),
+        items,
         customerId: claimed.customerId ?? undefined,
         discount: claimed.discount,
         paymentMethod,
@@ -237,6 +381,8 @@ export function CaissePOS({
           Boutique : <span className="font-medium text-zinc-700">{locationName}</span>
         </p>
       </div>
+
+      {offlineBanner}
 
       <Card>
         <CardHeader>

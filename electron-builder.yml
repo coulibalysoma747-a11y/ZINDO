@@ -1,0 +1,19 @@
+appId: com.zindo.desktop
+productName: ZINDO
+directories:
+  output: dist-desktop
+files:
+  - dist-electron/**/*
+  - package.json
+extraResources:
+  - from: .next/standalone
+    to: standalone
+    filter:
+      - "**/*"
+win:
+  target: nsis
+  icon: public/icons/icon-512.png
+nsis:
+  oneClick: false
+  allowToChangeInstallationDirectory: true
+  createDesktopShortcut: true

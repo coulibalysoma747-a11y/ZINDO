@@ -2,6 +2,7 @@
   "name": "zindo",
   "version": "0.1.0",
   "private": true,
+  "main": "dist-electron/main.js",
   "scripts": {
     "dev": "next dev",
     "build": "prisma generate && next build",
@@ -10,7 +11,13 @@
     "postinstall": "echo 'skipping postinstall'",
     "db:push": "prisma db push",
     "db:seed": "tsx prisma/seed.ts",
-    "db:studio": "prisma studio"
+    "db:studio": "prisma studio",
+    "electron:env": "node scripts/generate-electron-env.mjs",
+    "electron:build": "tsc -p electron/tsconfig.json",
+    "electron:dev": "cross-env ELECTRON_DEV_SERVER_URL=http://localhost:3000 concurrently -k \"next dev\" \"npm:electron:build -- --watch\" \"wait-on http://localhost:3000 && electron .\"",
+    "build:desktop": "next build && node scripts/copy-standalone-assets.mjs",
+    "electron:rebuild": "electron-builder install-app-deps",
+    "electron:pack": "npm run build:desktop && npm run electron:env && npm run electron:build && npm run electron:rebuild && electron-builder --win"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.124.0",
@@ -43,10 +50,15 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "@types/web-push": "^3.6.4",
+    "concurrently": "^9.1.2",
+    "cross-env": "^7.0.3",
+    "electron": "^33.4.11",
+    "electron-builder": "^25.1.8",
     "eslint": "^9",
     "eslint-config-next": "16.3.4",
     "tailwindcss": "^4",
     "tsx": "^4.23.13",
-    "typescript": "^5"
+    "typescript": "^5",
+    "wait-on": "^8.0.2"
   }
 }

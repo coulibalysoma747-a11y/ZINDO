@@ -50,3 +50,8 @@ next-env.d.ts
 
 .vercel
 .env*
+
+# application Windows (Electron)
+/dist-electron/
+/dist-desktop/
+electron/env.generated.ts

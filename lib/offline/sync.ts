@@ -1,38 +1,81 @@
 "use client";
 
-import { createSaleAction } from "@/lib/actions/sales";
-import { getPendingSales, removePendingSale, markPendingSaleError, type PendingSale } from "@/lib/offline/db";
+import {
+  getPendingWrites,
+  removePendingWrite,
+  markPendingWriteError,
+  markPendingWriteBlocked,
+  resolveLocalId,
+  getResolvedId,
+  type PendingWrite,
+} from "@/lib/offline/db";
+import { getReplayAction } from "@/lib/offline/actions-registry";
 
-export type SyncOutcome = { synced: number; failed: number; failedSales: PendingSale[] };
+export type SyncOutcome = { synced: number; failed: number; blocked: number; failedWrites: PendingWrite[] };
 
 /**
- * Rejoue les ventes enregistrées hors ligne vers le serveur, une par une
- * (pas en parallèle : plus simple à suivre, et le volume reste faible en
- * pratique). Chaque vente porte sa clientRef d'origine — createSaleAction
- * est idempotent dessus, donc rejouer une synchro interrompue ne duplique
- * jamais une vente déjà passée.
+ * Rejoue les écritures enregistrées hors ligne vers le serveur, une par une
+ * et dans l'ordre chronologique (pas en parallèle : le volume reste faible en
+ * pratique, et l'ordre importe pour les dépendances entre écritures — ex. un
+ * client créé hors ligne puis utilisé sur une vente hors ligne). Chaque
+ * écriture porte sa clientRef d'origine ; les actions serveur de
+ * lib/offline/actions-registry.ts dédoublonnent dessus, donc rejouer une
+ * synchronisation interrompue ne duplique jamais une écriture déjà passée.
  */
-export async function syncPendingSales(): Promise<SyncOutcome> {
-  const pending = await getPendingSales();
+export async function syncPendingWrites(): Promise<SyncOutcome> {
+  const pending = await getPendingWrites();
   let synced = 0;
-  const failedSales: PendingSale[] = [];
+  let blocked = 0;
+  const failedWrites: PendingWrite[] = [];
 
-  for (const sale of pending) {
+  for (const write of pending) {
+    const resolvedInput = await resolveDependencies(write);
+    if (!resolvedInput) {
+      await markPendingWriteBlocked(write.clientRef);
+      blocked++;
+      continue;
+    }
+
+    const replay = getReplayAction(write.kind);
+    if (!replay) {
+      // Pas encore câblé côté client (kind ajouté à Phase 5 mais UI pas
+      // encore migrée) — on laisse l'écriture en file plutôt que de la perdre.
+      continue;
+    }
+
     try {
-      const result = await createSaleAction(sale.input);
+      const result = await replay(resolvedInput);
       if (result.success) {
-        await removePendingSale(sale.clientRef);
+        await resolveLocalId(write.clientRef, result.id);
+        await removePendingWrite(write.clientRef);
         synced++;
       } else {
-        await markPendingSaleError(sale.clientRef, result.error);
-        failedSales.push({ ...sale, syncStatus: "error", syncError: result.error });
+        await markPendingWriteError(write.clientRef, result.error);
+        failedWrites.push({ ...write, syncStatus: "error", syncError: result.error });
       }
     } catch (e) {
       const message = e instanceof Error ? e.message : "Erreur réseau — nouvelle tentative au prochain retour de connexion.";
-      await markPendingSaleError(sale.clientRef, message);
-      failedSales.push({ ...sale, syncStatus: "error", syncError: message });
+      await markPendingWriteError(write.clientRef, message);
+      failedWrites.push({ ...write, syncStatus: "error", syncError: message });
     }
   }
 
-  return { synced, failed: failedSales.length, failedSales };
+  return { synced, failed: failedWrites.length, blocked, failedWrites };
+}
+
+/** Réécrit les champs de `input` référençant un id local par l'id serveur résolu ; `null` si une dépendance manque encore. */
+async function resolveDependencies(write: PendingWrite): Promise<unknown | null> {
+  if (!write.localRefs || write.localRefs.length === 0) return write.input;
+  const input = { ...(write.input as Record<string, unknown>) };
+  for (const ref of write.localRefs) {
+    const serverId = await getResolvedId(ref.localId);
+    if (!serverId) return null;
+    input[ref.field] = serverId;
+  }
+  return input;
+}
+
+/** @deprecated utiliser syncPendingWrites() — conservé pour l'appelant existant (app/(app)/ventes/POS.tsx). */
+export async function syncPendingSales(): Promise<SyncOutcome> {
+  return syncPendingWrites();
 }
