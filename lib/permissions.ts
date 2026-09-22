@@ -29,6 +29,8 @@ export const PERMISSIONS = {
   QUICK_SUPPLY_MANAGE: "appro_rapide.gerer",
   CONSULTATIONS_MANAGE: "consultations.gerer",
   EXPIRY_MANAGE: "peremption.gerer",
+  REPAIRS_MANAGE: "reparations.gerer",
+  TABLES_MANAGE: "tables.gerer",
 } as const;
 
 export type Permission = (typeof PERMISSIONS)[keyof typeof PERMISSIONS];
@@ -49,6 +51,7 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<Role, Permission[]> = {
     // explicitement à qui doit encaisser depuis la file d'attente, une fois
     // "Caisse à deux" activé — voir Paramètres > Modules > Rôles et permissions.
     PERMISSIONS.SHIPMENTS_MANAGE,
+    PERMISSIONS.TABLES_MANAGE,
   ],
   GESTIONNAIRE_STOCK: [
     PERMISSIONS.PRODUCTS_VIEW,
@@ -63,6 +66,7 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<Role, Permission[]> = {
     PERMISSIONS.PICKUPS_MANAGE,
     PERMISSIONS.QUICK_SUPPLY_MANAGE,
     PERMISSIONS.EXPIRY_MANAGE,
+    PERMISSIONS.REPAIRS_MANAGE,
   ],
 };
 
@@ -99,4 +103,6 @@ export const PERMISSION_LABELS: Record<string, string> = {
   [PERMISSIONS.QUICK_SUPPLY_MANAGE]: "Utiliser l'approvisionnement rapide",
   [PERMISSIONS.CONSULTATIONS_MANAGE]: "Gérer les consultations (cabinet médical)",
   [PERMISSIONS.EXPIRY_MANAGE]: "Gérer le suivi des dates de péremption (supermarché / pharmacie)",
+  [PERMISSIONS.REPAIRS_MANAGE]: "Gérer les bons de réparation (atelier / pièces détachées)",
+  [PERMISSIONS.TABLES_MANAGE]: "Gérer les tables (restaurant / bar)",
 };

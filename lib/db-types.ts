@@ -17,7 +17,8 @@ export type MovementReason =
   | "RETOUR_FOURNISSEUR"
   | "TRANSFERT"
   | "AUTRE"
-  | "ENLEVEMENT";
+  | "ENLEVEMENT"
+  | "REPARATION";
 export type PaymentMethod = "ESPECES" | "MOBILE_MONEY" | "CARTE" | "CREDIT" | "AUTRE" | "MIXTE";
 export type SaleStatus = "PAYEE" | "PARTIELLE" | "CREDIT" | "ANNULEE";
 export type CashSessionStatus = "OUVERTE" | "FERMEE";
@@ -39,3 +40,6 @@ export type ShipmentStatus = "ENVOYE" | "ARRIVE" | "RETIRE";
 export type InvoiceStatus = "EN_ATTENTE" | "PAYEE" | "ANNULEE";
 export type InvoicePaymentMethod = "MANUEL" | "CINETPAY";
 export type PromoDiscountType = "PERCENTAGE" | "FIXED";
+export type RepairStatus = "RECU" | "DIAGNOSTIC" | "EN_COURS" | "ATTENTE_PIECES" | "TERMINE" | "LIVRE" | "ANNULE";
+export type TableStatus = "LIBRE" | "OCCUPEE";
+export type TableOrderStatus = "OUVERTE" | "ENCAISSEE" | "ANNULEE";

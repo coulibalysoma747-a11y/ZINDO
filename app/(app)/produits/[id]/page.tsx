@@ -9,6 +9,7 @@ import { MOTO_ACTIVITY_KEY } from "@/lib/activities";
 import { getLocations, getCurrentLocation } from "@/lib/location";
 import { getVehicleUnitsAction } from "@/lib/actions/vehicle-units";
 import { getPackagingUnitsAction, isPackagingUnitsModuleEnabled } from "@/lib/actions/packaging-units";
+import { getPriceTiersAction, isPriceTiersModuleEnabled, isWholesaleActivity } from "@/lib/actions/price-tiers";
 import { getBusinessSettings } from "@/lib/business-settings";
 import { formatMoney, formatDateTime } from "@/lib/format";
 import { Card, CardBody, CardHeader } from "@/components/ui/Card";
@@ -18,6 +19,7 @@ import { Table, TableHead, TableBody, TableRow, TableHeaderCell, TableCell } fro
 import { ProductThumbnail } from "@/components/products/ProductThumbnail";
 import { VehicleUnitsPanel } from "@/components/products/VehicleUnitsPanel";
 import { PackagingUnitsPanel } from "@/components/products/PackagingUnitsPanel";
+import { PriceTiersPanel } from "@/components/products/PriceTiersPanel";
 import { ToggleActiveButton } from "./ToggleActiveButton";
 
 const REASON_LABELS: Record<string, string> = {
@@ -107,23 +109,38 @@ export default async function ProductDetailPage({
   const isMotoActivity = user.business.activityKey === MOTO_ACTIVITY_KEY;
   const showVehicleUnits = product.trackUnits && isMotoActivity;
 
-  const [canManageStock, canTransfer, canSell, activityConfig, vehicleUnits, locations, currentLocation, packagingUnits, packagingModuleEnabled, businessSettings] =
-    await Promise.all([
-      hasPermission(user.businessId, user.role, PERMISSIONS.STOCK_MANAGE, user.id),
-      hasPermission(user.businessId, user.role, PERMISSIONS.TRANSFERS_MANAGE, user.id),
-      hasPermission(user.businessId, user.role, PERMISSIONS.SALES_CREATE, user.id),
-      getActivityConfig(user.business.activityKey),
-      showVehicleUnits ? getVehicleUnitsAction(id) : Promise.resolve([]),
-      getLocations(user.businessId),
-      getCurrentLocation(user.businessId),
-      getPackagingUnitsAction(id),
-      isPackagingUnitsModuleEnabled(user.businessId),
-      getBusinessSettings(user.businessId),
-    ]);
+  const [
+    canManageStock,
+    canTransfer,
+    canSell,
+    activityConfig,
+    vehicleUnits,
+    locations,
+    currentLocation,
+    packagingUnits,
+    packagingModuleEnabled,
+    businessSettings,
+    priceTiers,
+    priceTiersModuleEnabled,
+  ] = await Promise.all([
+    hasPermission(user.businessId, user.role, PERMISSIONS.STOCK_MANAGE, user.id),
+    hasPermission(user.businessId, user.role, PERMISSIONS.TRANSFERS_MANAGE, user.id),
+    hasPermission(user.businessId, user.role, PERMISSIONS.SALES_CREATE, user.id),
+    getActivityConfig(user.business.activityKey),
+    showVehicleUnits ? getVehicleUnitsAction(id) : Promise.resolve([]),
+    getLocations(user.businessId),
+    getCurrentLocation(user.businessId),
+    getPackagingUnitsAction(id),
+    isPackagingUnitsModuleEnabled(user.businessId),
+    getBusinessSettings(user.businessId),
+    getPriceTiersAction(id),
+    isPriceTiersModuleEnabled(user.businessId),
+  ]);
   // Un produit à suivi individuel (moto/engin) se vend à l'exemplaire, pas
   // par colis — voir la caisse (ProductGrid/POS) qui n'a aucune notion de
   // conditionnement pour ce cas.
   const showPackaging = packagingModuleEnabled && !product.trackUnits;
+  const showPriceTiers = priceTiersModuleEnabled && isWholesaleActivity(user.business.activityKey);
 
   let customFieldValues: Record<string, string> = {};
   if (product.customFields) {
@@ -303,6 +320,23 @@ export default async function ProductDetailPage({
               baseUnit={product.unit}
               basePrice={product.salePrice}
               priceMode={businessSettings.packagingUnitPriceMode}
+            />
+          </CardBody>
+        </Card>
+      )}
+
+      {showPriceTiers && (
+        <Card>
+          <CardHeader>
+            <h2 className="font-semibold text-zinc-900">Tarification par palier (prix de gros)</h2>
+          </CardHeader>
+          <CardBody>
+            <PriceTiersPanel
+              productId={product.id}
+              tiers={priceTiers}
+              currency={currency}
+              baseUnit={product.unit}
+              basePrice={product.salePrice}
             />
           </CardBody>
         </Card>

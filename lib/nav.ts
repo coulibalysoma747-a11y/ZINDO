@@ -9,6 +9,18 @@ export const EXPIRY_FLAG = "peremption_dlc";
 /** Activités concernées par le suivi des dates de péremption (DLC) — voir requireActivity sur l'entrée "Péremption (DLC)" ci-dessous. */
 export const EXPIRY_ACTIVITIES = [SUPERMARKET_ACTIVITY_KEY, PHARMACY_ACTIVITY_KEY];
 
+export const REPAIR_ACTIVITY_KEY = "atelier_reparation";
+export const SPARE_PARTS_ACTIVITY_KEY = "pieces_detachees";
+export const REPAIR_FLAG = "bons_reparation";
+/** Activités concernées par les bons de réparation — voir requireActivity sur l'entrée "Bons de réparation" ci-dessous. */
+export const REPAIR_ACTIVITIES = [REPAIR_ACTIVITY_KEY, SPARE_PARTS_ACTIVITY_KEY];
+
+export const RESTAURANT_ACTIVITY_KEY = "restaurant_maquis";
+export const BAR_ACTIVITY_KEY = "bar_buvette";
+export const TABLES_FLAG = "gestion_tables";
+/** Activités concernées par la gestion des tables (comptes ouverts en salle) — voir requireActivity sur l'entrée "Tables" ci-dessous. */
+export const TABLE_ACTIVITIES = [RESTAURANT_ACTIVITY_KEY, BAR_ACTIVITY_KEY];
+
 export type NavItem = {
   label: string;
   href: string;
@@ -56,7 +68,9 @@ export type NavItem = {
     | "diagnostics"
     | "posologies"
     | "medical-stats"
-    | "expiry";
+    | "expiry"
+    | "repairs"
+    | "tables";
   permission?: Permission;
   featureFlag?: string;
   planFeature?: string;
@@ -162,6 +176,22 @@ export const NAV_ITEMS: NavItem[] = [
     permission: PERMISSIONS.EXPIRY_MANAGE,
     requireActivity: EXPIRY_ACTIVITIES,
     featureFlag: EXPIRY_FLAG,
+  },
+  {
+    label: "Bons de réparation",
+    href: "/reparations",
+    icon: "repairs",
+    permission: PERMISSIONS.REPAIRS_MANAGE,
+    requireActivity: REPAIR_ACTIVITIES,
+    featureFlag: REPAIR_FLAG,
+  },
+  {
+    label: "Tables",
+    href: "/tables",
+    icon: "tables",
+    permission: PERMISSIONS.TABLES_MANAGE,
+    requireActivity: TABLE_ACTIVITIES,
+    featureFlag: TABLES_FLAG,
   },
   { label: "Transferts", href: "/transferts", icon: "transfers", permission: PERMISSIONS.TRANSFERS_MANAGE, planFeature: "advanced_stock" },
   { label: "Approvisionnement rapide", href: "/approvisionnement", icon: "quick-supply", permission: PERMISSIONS.STOCK_MANAGE, moduleToggle: "quickSupply" },

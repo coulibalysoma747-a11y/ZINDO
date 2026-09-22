@@ -6,6 +6,9 @@ export type ActivityCategory = {
 /** Seule activité pour laquelle le suivi individuel des engins (châssis/moteur/couleur/CMC) est proposé — voir lib/actions/vehicle-units.ts. */
 export const MOTO_ACTIVITY_KEY = "boutique_moto";
 
+/** Activités concernées par la tarification par palier ("prix de gros") — voir lib/actions/price-tiers.ts. */
+export const WHOLESALE_ACTIVITY_KEYS = ["grossiste", "depot_entrepot", "quincaillerie"];
+
 export type Activity = {
   key: string;
   emoji: string;

@@ -12,7 +12,7 @@ create extension if not exists pgcrypto;
 create type location_type as enum ('BOUTIQUE', 'DEPOT');
 create type role as enum ('ADMIN', 'VENDEUR', 'GESTIONNAIRE_STOCK');
 create type movement_direction as enum ('IN', 'OUT');
-create type movement_reason as enum ('ACHAT','RETOUR_CLIENT','CORRECTION','INVENTAIRE','VENTE','PRODUIT_ENDOMMAGE','PERTE','RETOUR_FOURNISSEUR','TRANSFERT','AUTRE','ENLEVEMENT');
+create type movement_reason as enum ('ACHAT','RETOUR_CLIENT','CORRECTION','INVENTAIRE','VENTE','PRODUIT_ENDOMMAGE','PERTE','RETOUR_FOURNISSEUR','TRANSFERT','AUTRE','ENLEVEMENT','REPARATION');
 -- MIXTE : paiement scindé entre espèces et mobile money sur la même vente
 -- (voir sales.cash_portion/mobile_portion) — Paramètres > "Autoriser le
 -- paiement mixte".
@@ -38,6 +38,15 @@ create type quote_status as enum ('BROUILLON','ENVOYE','ACCEPTE','REFUSE','EXPIR
 create type shipment_status as enum ('ENVOYE','ARRIVE','RETIRE');
 create type rental_status as enum ('EN_COURS','RETOURNEE','ANNULEE');
 create type promo_discount_type as enum ('PERCENTAGE', 'FIXED');
+-- Bons de réparation (atelier de réparation / pièces détachées) — voir
+-- lib/actions/repairs.ts. RECU : pris en charge, en attente de diagnostic.
+-- DIAGNOSTIC : panne identifiée, devis en cours. ATTENTE_PIECES : diagnostic
+-- fait, pièce(s) commandée(s)/manquante(s).
+create type repair_status as enum ('RECU','DIAGNOSTIC','EN_COURS','ATTENTE_PIECES','TERMINE','LIVRE','ANNULE');
+-- Tables de salle (restaurant/bar, voir lib/nav.ts::TABLE_ACTIVITIES) et le
+-- compte ouvert dessus le temps du service — voir lib/actions/tables.ts.
+create type table_status as enum ('LIBRE','OCCUPEE');
+create type table_order_status as enum ('OUVERTE','ENCAISSEE','ANNULEE');
 
 -- ---------------------------------------------------------------------------
 -- Commerce / compte
@@ -73,6 +82,8 @@ create table businesses (
   next_pickup_seq int not null default 1,
   next_shipment_seq int not null default 1,
   next_patient_seq int not null default 1,
+  next_repair_seq int not null default 1,
+  next_table_order_seq int not null default 1,
   -- Intégration FasoStock (lib/integrations/faso-stock.ts) : synchronisation
   -- à sens unique FasoStock → ZINDO (leur API est en lecture seule). La clé
   -- n'est jamais renvoyée au navigateur, uniquement lue côté serveur.
@@ -298,6 +309,24 @@ create table product_packaging_units (
   unique (business_id, barcode)
 );
 create index on product_packaging_units (business_id, product_id);
+
+-- Tarification par palier ("prix de gros"), activités grossiste/dépôt/
+-- quincaillerie (voir lib/activities.ts::WHOLESALE_ACTIVITY_KEYS) : à partir
+-- de min_quantity unités achetées, le prix unitaire de vente devient
+-- unit_price au lieu de products.sale_price — voir lib/pricing.ts et
+-- lib/actions/price-tiers.ts. Ne s'applique pas aux conditionnements
+-- (product_packaging_units), qui ont déjà leur propre prix.
+create table product_price_tiers (
+  id text primary key default gen_random_uuid()::text,
+  business_id text not null references businesses(id) on delete cascade,
+  product_id text not null references products(id) on delete cascade,
+  min_quantity int not null,
+  unit_price double precision not null,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  unique (product_id, min_quantity)
+);
+create index on product_price_tiers (business_id, product_id);
 
 -- Suivi des dates de péremption (DLC), activité "supermarche_alimentation"
 -- (voir lib/activities.ts) : un lot = une quantité reçue avec sa propre date
@@ -793,6 +822,101 @@ create table shipments (
   unique (business_id, number)
 );
 create index on shipments (business_id, created_at);
+
+-- Bons de réparation (atelier de réparation / pièces détachées, voir
+-- lib/activities.ts et lib/nav.ts::REPAIR_ACTIVITIES) : suivi d'un appareil/
+-- engin pris en charge jusqu'à sa restitution. Le total facturé au client
+-- est calculé à la lecture (somme des repair_ticket_items + labor_cost -
+-- discount), jamais stocké, pour rester toujours cohérent avec les pièces
+-- ajoutées/retirées — voir lib/actions/repairs.ts.
+create table repair_tickets (
+  id text primary key default gen_random_uuid()::text,
+  business_id text not null references businesses(id) on delete cascade,
+  location_id text not null references locations(id),
+  number text not null,
+  customer_id text references customers(id),
+  device_type text not null,
+  device_description text,
+  reported_issue text not null,
+  diagnosis text,
+  status repair_status not null default 'RECU',
+  technician_id text references users(id),
+  labor_cost double precision not null default 0,
+  discount double precision not null default 0,
+  amount_paid double precision not null default 0,
+  payment_method payment_method,
+  note text,
+  user_id text not null references users(id),
+  created_at timestamptz not null default now(),
+  started_at timestamptz,
+  completed_at timestamptz,
+  delivered_at timestamptz,
+  unique (business_id, number)
+);
+create index on repair_tickets (business_id, created_at);
+create index on repair_tickets (business_id, status);
+
+-- Pièce utilisée sur un bon de réparation — décrémente le stock à l'ajout
+-- (mouvement de stock motif 'REPARATION') et le restaure à la suppression,
+-- comme un article de vente. Jamais modifiable après coup : on retire puis
+-- on rajoute pour corriger une quantité.
+create table repair_ticket_items (
+  id text primary key default gen_random_uuid()::text,
+  repair_ticket_id text not null references repair_tickets(id) on delete cascade,
+  product_id text not null references products(id),
+  quantity int not null,
+  unit_price double precision not null,
+  total double precision not null,
+  created_at timestamptz not null default now()
+);
+create index on repair_ticket_items (repair_ticket_id);
+
+-- Tables de salle (restaurant/maquis, bar/buvette — voir lib/nav.ts::TABLE_ACTIVITIES).
+create table restaurant_tables (
+  id text primary key default gen_random_uuid()::text,
+  business_id text not null references businesses(id) on delete cascade,
+  location_id text not null references locations(id),
+  name text not null,
+  status table_status not null default 'LIBRE',
+  created_at timestamptz not null default now(),
+  unique (location_id, name)
+);
+create index on restaurant_tables (business_id, location_id);
+
+-- Compte ouvert sur une table le temps du service : les articles s'ajoutent
+-- au fil du service (table_order_items, sans jamais toucher le stock — comme
+-- un devis) puis, à l'encaissement, se transforment en une vraie Sale via
+-- lib/actions/sales.ts::createSaleAction (qui gère alors stock, session de
+-- caisse, ticket) — voir lib/actions/tables.ts::closeTableOrderAction. Le
+-- stock n'est donc décrémenté qu'à ce moment-là, jamais pendant le service.
+create table table_orders (
+  id text primary key default gen_random_uuid()::text,
+  business_id text not null references businesses(id) on delete cascade,
+  location_id text not null references locations(id),
+  table_id text not null references restaurant_tables(id) on delete cascade,
+  number text not null,
+  status table_order_status not null default 'OUVERTE',
+  customer_id text references customers(id),
+  sale_id text references sales(id),
+  note text,
+  user_id text not null references users(id),
+  opened_at timestamptz not null default now(),
+  closed_at timestamptz,
+  unique (business_id, number)
+);
+create index on table_orders (business_id, table_id);
+create index on table_orders (table_id, status);
+
+create table table_order_items (
+  id text primary key default gen_random_uuid()::text,
+  table_order_id text not null references table_orders(id) on delete cascade,
+  product_id text not null references products(id),
+  quantity int not null,
+  unit_price double precision not null,
+  note text,
+  created_at timestamptz not null default now()
+);
+create index on table_order_items (table_order_id);
 
 create table supplier_payments (
   id text primary key default gen_random_uuid()::text,

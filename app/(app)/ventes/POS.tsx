@@ -35,6 +35,7 @@ import { syncPendingSales } from "@/lib/offline/sync";
 import { buildOfflineDocument } from "@/lib/offline/build-document";
 import { getAvailableVehicleUnitsAction } from "@/lib/actions/vehicle-units";
 import { playAddToCartSound } from "@/lib/sound";
+import { resolveTieredPrice } from "@/lib/pricing";
 
 type CartLine = {
   product: PosProduct;
@@ -382,14 +383,23 @@ export function POS({
     setCart((prev) => {
       const existing = prev.find((l) => !l.vehicleUnitId && l.product.id === product.id && l.packagingUnitId === packaging?.id);
       if (existing) {
-        return prev.map((l) => (l === existing ? { ...l, quantity: Math.min(l.quantity + 1, maxQty) } : l));
+        const nextQuantity = Math.min(existing.quantity + 1, maxQty);
+        return prev.map((l) =>
+          l === existing
+            ? {
+                ...l,
+                quantity: nextQuantity,
+                unitPrice: packaging ? l.unitPrice : resolveTieredPrice(product.salePrice, nextQuantity, product.priceTiers),
+              }
+            : l
+        );
       }
       return [
         ...prev,
         {
           product,
           quantity: 1,
-          unitPrice: packaging ? packaging.salePrice : product.salePrice,
+          unitPrice: packaging ? packaging.salePrice : resolveTieredPrice(product.salePrice, 1, product.priceTiers),
           discount: 0,
           packagingUnitId: packaging?.id,
           packagingLabel: packaging?.name,
@@ -401,6 +411,27 @@ export function POS({
 
   function updateLine(key: string, patch: Partial<CartLine>) {
     setCart((prev) => prev.map((l) => (lineKey(l) === key ? { ...l, ...patch } : l)));
+  }
+
+  /**
+   * Met à jour la quantité d'une ligne et, si le produit a des paliers de
+   * prix ("prix de gros" — voir lib/pricing.ts), recalcule automatiquement le
+   * prix unitaire — sauf pour un conditionnement ou un exemplaire à suivi
+   * unitaire, qui ont déjà leur propre prix fixe.
+   */
+  function setLineQuantity(key: string, quantity: number) {
+    setCart((prev) =>
+      prev.map((l) =>
+        lineKey(l) === key
+          ? {
+              ...l,
+              quantity,
+              unitPrice:
+                l.packagingUnitId || l.vehicleUnitId ? l.unitPrice : resolveTieredPrice(l.product.salePrice, quantity, l.product.priceTiers),
+            }
+          : l
+      )
+    );
   }
 
   function removeLine(key: string) {
@@ -862,7 +893,7 @@ export function POS({
                                 {quantityInputMode !== "input" && (
                                   <button
                                     type="button"
-                                    onClick={() => updateLine(lineKey(line), { quantity: Math.max(1, line.quantity - 1) })}
+                                    onClick={() => setLineQuantity(lineKey(line), Math.max(1, line.quantity - 1))}
                                     className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-zinc-200 text-zinc-600 transition-colors hover:border-zinc-300 hover:bg-zinc-100 active:scale-95 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
                                   >
                                     <Minus className="h-3.5 w-3.5" />
@@ -875,12 +906,10 @@ export function POS({
                                     max={lineMaxQty(line)}
                                     value={line.quantity}
                                     onChange={(e) =>
-                                      updateLine(lineKey(line), {
-                                        quantity: Math.min(
-                                          lineMaxQty(line),
-                                          Math.max(1, Number(e.target.value) || 1)
-                                        ),
-                                      })
+                                      setLineQuantity(
+                                        lineKey(line),
+                                        Math.min(lineMaxQty(line), Math.max(1, Number(e.target.value) || 1))
+                                      )
                                     }
                                     className="h-8 w-14 rounded-lg border border-zinc-200 text-center text-sm tabular-nums focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zindo-green-500/40 dark:border-slate-700 dark:bg-slate-900"
                                   />
@@ -891,11 +920,7 @@ export function POS({
                                 {quantityInputMode !== "input" && (
                                   <button
                                     type="button"
-                                    onClick={() =>
-                                      updateLine(lineKey(line), {
-                                        quantity: Math.min(lineMaxQty(line), line.quantity + 1),
-                                      })
-                                    }
+                                    onClick={() => setLineQuantity(lineKey(line), Math.min(lineMaxQty(line), line.quantity + 1))}
                                     className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-zinc-200 text-zinc-600 transition-colors hover:border-zinc-300 hover:bg-zinc-100 active:scale-95 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
                                   >
                                     <Plus className="h-3.5 w-3.5" />
@@ -981,7 +1006,7 @@ export function POS({
                             {quantityInputMode !== "input" && (
                               <button
                                 type="button"
-                                onClick={() => updateLine(lineKey(line), { quantity: Math.max(1, line.quantity - 1) })}
+                                onClick={() => setLineQuantity(lineKey(line), Math.max(1, line.quantity - 1))}
                                 className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-zinc-200 text-zinc-600 transition-colors hover:border-zinc-300 hover:bg-zinc-100 active:scale-95 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
                               >
                                 <Minus className="h-4 w-4" />
@@ -994,9 +1019,10 @@ export function POS({
                                 max={lineMaxQty(line)}
                                 value={line.quantity}
                                 onChange={(e) =>
-                                  updateLine(lineKey(line), {
-                                    quantity: Math.min(lineMaxQty(line), Math.max(1, Number(e.target.value) || 1)),
-                                  })
+                                  setLineQuantity(
+                                    lineKey(line),
+                                    Math.min(lineMaxQty(line), Math.max(1, Number(e.target.value) || 1))
+                                  )
                                 }
                                 className="h-10 w-16 rounded-lg border border-zinc-200 text-center text-sm tabular-nums dark:border-slate-700 dark:bg-slate-900"
                               />
@@ -1007,11 +1033,7 @@ export function POS({
                             {quantityInputMode !== "input" && (
                               <button
                                 type="button"
-                                onClick={() =>
-                                  updateLine(lineKey(line), {
-                                    quantity: Math.min(lineMaxQty(line), line.quantity + 1),
-                                  })
-                                }
+                                onClick={() => setLineQuantity(lineKey(line), Math.min(lineMaxQty(line), line.quantity + 1))}
                                 className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-zinc-200 text-zinc-600 transition-colors hover:border-zinc-300 hover:bg-zinc-100 active:scale-95 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
                               >
                                 <Plus className="h-4 w-4" />

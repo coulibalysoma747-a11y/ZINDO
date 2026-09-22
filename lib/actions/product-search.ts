@@ -3,7 +3,9 @@
 import { supabase } from "@/lib/supabase";
 import { requireUser } from "@/lib/auth";
 import { isPackagingUnitsModuleEnabled } from "@/lib/actions/packaging-units";
+import { isPriceTiersModuleEnabled } from "@/lib/actions/price-tiers";
 import { getNearestExpiryByProduct } from "@/lib/actions/expiry";
+import type { PriceTierOption } from "@/lib/pricing";
 
 const PRODUCT_FIELDS =
   "id, businessId:business_id, reference, name, categoryId:category_id, brand, description, unit, purchasePrice:purchase_price, salePrice:sale_price, minStock:min_stock, shelfLocation:shelf_location, supplierId:supplier_id, photoUrl:photo_url, barcode, customFields:custom_fields, active, createdAt:created_at, updatedAt:updated_at, trackUnits:track_units";
@@ -51,6 +53,24 @@ async function fetchPackagingUnitsByProduct(businessId: string, productIds: stri
   return map;
 }
 
+/** Paliers de prix (voir lib/actions/price-tiers.ts) pour un lot de produits, regroupés par produit. */
+async function fetchPriceTiersByProduct(businessId: string, productIds: string[]): Promise<Map<string, PriceTierOption[]>> {
+  const map = new Map<string, PriceTierOption[]>();
+  if (productIds.length === 0) return map;
+  if (!(await isPriceTiersModuleEnabled(businessId))) return map;
+  const { data } = await supabase
+    .from("product_price_tiers")
+    .select("id, productId:product_id, minQuantity:min_quantity, unitPrice:unit_price")
+    .eq("business_id", businessId)
+    .in("product_id", productIds);
+  for (const row of (data ?? []) as unknown as (PriceTierOption & { productId: string })[]) {
+    const list = map.get(row.productId) ?? [];
+    list.push(row);
+    map.set(row.productId, list);
+  }
+  return map;
+}
+
 export async function searchProductsAction(query: string, locationId: string) {
   const user = await requireUser();
 
@@ -83,11 +103,12 @@ export async function searchProductsAction(query: string, locationId: string) {
   const { data } = await q;
   const products = (data ?? []) as unknown as ProductRow[];
   const ids = products.map((p) => p.id);
-  const [{ data: stocks }, packagingByProduct, nearestExpiryByProduct] = await Promise.all([
+  const [{ data: stocks }, packagingByProduct, priceTiersByProduct, nearestExpiryByProduct] = await Promise.all([
     ids.length
       ? supabase.from("product_stocks").select("productId:product_id, quantity").in("product_id", ids).eq("location_id", locationId)
       : Promise.resolve({ data: [] as { productId: string; quantity: number }[] }),
     fetchPackagingUnitsByProduct(user.businessId, ids),
+    fetchPriceTiersByProduct(user.businessId, ids),
     getNearestExpiryByProduct(user.businessId, locationId, ids, user.business.activityKey),
   ]);
 
@@ -96,6 +117,7 @@ export async function searchProductsAction(query: string, locationId: string) {
     ...p,
     quantity: stockMap.get(p.id) ?? 0,
     packagingUnits: packagingByProduct.get(p.id) ?? [],
+    priceTiers: priceTiersByProduct.get(p.id) ?? [],
     nearestExpiry: nearestExpiryByProduct.get(p.id) ?? null,
   }));
 }
@@ -119,8 +141,9 @@ export async function getPosProductsAction(locationId: string) {
 
   const rows = (stocks ?? []) as unknown as Array<{ quantity: number; product: ProductRow }>;
   const productIds = rows.map((r) => r.product.id);
-  const [packagingByProduct, nearestExpiryByProduct] = await Promise.all([
+  const [packagingByProduct, priceTiersByProduct, nearestExpiryByProduct] = await Promise.all([
     fetchPackagingUnitsByProduct(user.businessId, productIds),
+    fetchPriceTiersByProduct(user.businessId, productIds),
     getNearestExpiryByProduct(user.businessId, locationId, productIds, user.business.activityKey),
   ]);
   return rows
@@ -128,6 +151,7 @@ export async function getPosProductsAction(locationId: string) {
       ...s.product,
       quantity: s.quantity,
       packagingUnits: packagingByProduct.get(s.product.id) ?? [],
+      priceTiers: priceTiersByProduct.get(s.product.id) ?? [],
       nearestExpiry: nearestExpiryByProduct.get(s.product.id) ?? null,
     }))
     .sort((a, b) => a.name.localeCompare(b.name));
@@ -183,12 +207,15 @@ export async function findProductByExactCodeAction(code: string, locationId: str
   }
   if (!product) return null;
 
-  const { data: stock } = await supabase
-    .from("product_stocks")
-    .select("quantity")
-    .eq("product_id", product.id as string)
-    .eq("location_id", locationId)
-    .maybeSingle();
+  const [{ data: stock }, priceTiersByProduct] = await Promise.all([
+    supabase.from("product_stocks").select("quantity").eq("product_id", product.id as string).eq("location_id", locationId).maybeSingle(),
+    fetchPriceTiersByProduct(user.businessId, [product.id as string]),
+  ]);
 
-  return { ...product, quantity: (stock?.quantity as number | undefined) ?? 0, matchedPackaging };
+  return {
+    ...product,
+    quantity: (stock?.quantity as number | undefined) ?? 0,
+    priceTiers: priceTiersByProduct.get(product.id as string) ?? [],
+    matchedPackaging,
+  };
 }

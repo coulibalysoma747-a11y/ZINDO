@@ -5,6 +5,7 @@ import { formatMoney } from "@/lib/format";
 import { EmptyState } from "@/components/ui/Empty";
 import { ProductCardMenu } from "@/components/products/ProductCardMenu";
 import type { PackagingUnitOption } from "@/lib/actions/product-search";
+import type { PriceTierOption } from "@/lib/pricing";
 
 export type { PackagingUnitOption };
 
@@ -20,6 +21,8 @@ export type PosProduct = {
   unit: string;
   trackUnits: boolean;
   packagingUnits?: PackagingUnitOption[];
+  /** Paliers de prix ("prix de gros" — grossiste/dépôt/quincaillerie), voir lib/pricing.ts. */
+  priceTiers?: PriceTierOption[];
   /** Date du lot le plus proche de péremption (module Péremption, pharmacie/supermarché) — voir lib/actions/expiry.ts::getNearestExpiryByProduct. */
   nearestExpiry?: string | null;
 };
@@ -89,6 +92,12 @@ export function ProductGrid({
             <p className="mt-auto pt-1 text-sm font-bold text-emerald-600">
               {formatMoney(product.salePrice, currency)}
             </p>
+            {product.priceTiers && product.priceTiers.length > 0 && (
+              <p className="text-[10px] font-medium text-zindo-green-700">
+                Dès {Math.min(...product.priceTiers.map((t) => t.minQuantity))} {product.unit} :{" "}
+                {formatMoney(Math.min(...product.priceTiers.map((t) => t.unitPrice)), currency)}
+              </p>
+            )}
             {product.nearestExpiry && (
               <p
                 className={`text-[10px] font-medium ${

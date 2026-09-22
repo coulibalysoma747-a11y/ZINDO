@@ -205,6 +205,123 @@ CREATE TABLE IF NOT EXISTS posology_presets (
 );
 CREATE INDEX IF NOT EXISTS posology_presets_business_id_idx ON posology_presets (business_id);
 
+-- Bons de réparation (atelier de réparation / pièces détachées) — voir
+-- lib/actions/repairs.ts et lib/nav.ts::REPAIR_ACTIVITIES.
+ALTER TYPE movement_reason ADD VALUE IF NOT EXISTS 'REPARATION';
+
+DO $$ BEGIN
+  CREATE TYPE repair_status AS ENUM ('RECU','DIAGNOSTIC','EN_COURS','ATTENTE_PIECES','TERMINE','LIVRE','ANNULE');
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
+
+ALTER TABLE businesses ADD COLUMN IF NOT EXISTS next_repair_seq int not null default 1;
+
+CREATE TABLE IF NOT EXISTS repair_tickets (
+  id text primary key default gen_random_uuid()::text,
+  business_id text not null references businesses(id) on delete cascade,
+  location_id text not null references locations(id),
+  number text not null,
+  customer_id text references customers(id),
+  device_type text not null,
+  device_description text,
+  reported_issue text not null,
+  diagnosis text,
+  status repair_status not null default 'RECU',
+  technician_id text references users(id),
+  labor_cost double precision not null default 0,
+  discount double precision not null default 0,
+  amount_paid double precision not null default 0,
+  payment_method payment_method,
+  note text,
+  user_id text not null references users(id),
+  created_at timestamptz not null default now(),
+  started_at timestamptz,
+  completed_at timestamptz,
+  delivered_at timestamptz,
+  unique (business_id, number)
+);
+CREATE INDEX IF NOT EXISTS repair_tickets_business_id_created_at_idx ON repair_tickets (business_id, created_at);
+CREATE INDEX IF NOT EXISTS repair_tickets_business_id_status_idx ON repair_tickets (business_id, status);
+
+CREATE TABLE IF NOT EXISTS repair_ticket_items (
+  id text primary key default gen_random_uuid()::text,
+  repair_ticket_id text not null references repair_tickets(id) on delete cascade,
+  product_id text not null references products(id),
+  quantity int not null,
+  unit_price double precision not null,
+  total double precision not null,
+  created_at timestamptz not null default now()
+);
+CREATE INDEX IF NOT EXISTS repair_ticket_items_repair_ticket_id_idx ON repair_ticket_items (repair_ticket_id);
+
+-- Tables de salle (restaurant/maquis, bar/buvette) — voir
+-- lib/actions/tables.ts et lib/nav.ts::TABLE_ACTIVITIES.
+DO $$ BEGIN
+  CREATE TYPE table_status AS ENUM ('LIBRE','OCCUPEE');
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
+
+DO $$ BEGIN
+  CREATE TYPE table_order_status AS ENUM ('OUVERTE','ENCAISSEE','ANNULEE');
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
+
+ALTER TABLE businesses ADD COLUMN IF NOT EXISTS next_table_order_seq int not null default 1;
+
+CREATE TABLE IF NOT EXISTS restaurant_tables (
+  id text primary key default gen_random_uuid()::text,
+  business_id text not null references businesses(id) on delete cascade,
+  location_id text not null references locations(id),
+  name text not null,
+  status table_status not null default 'LIBRE',
+  created_at timestamptz not null default now(),
+  unique (location_id, name)
+);
+CREATE INDEX IF NOT EXISTS restaurant_tables_business_id_location_id_idx ON restaurant_tables (business_id, location_id);
+
+CREATE TABLE IF NOT EXISTS table_orders (
+  id text primary key default gen_random_uuid()::text,
+  business_id text not null references businesses(id) on delete cascade,
+  location_id text not null references locations(id),
+  table_id text not null references restaurant_tables(id) on delete cascade,
+  number text not null,
+  status table_order_status not null default 'OUVERTE',
+  customer_id text references customers(id),
+  sale_id text references sales(id),
+  note text,
+  user_id text not null references users(id),
+  opened_at timestamptz not null default now(),
+  closed_at timestamptz,
+  unique (business_id, number)
+);
+CREATE INDEX IF NOT EXISTS table_orders_business_id_table_id_idx ON table_orders (business_id, table_id);
+CREATE INDEX IF NOT EXISTS table_orders_table_id_status_idx ON table_orders (table_id, status);
+
+CREATE TABLE IF NOT EXISTS table_order_items (
+  id text primary key default gen_random_uuid()::text,
+  table_order_id text not null references table_orders(id) on delete cascade,
+  product_id text not null references products(id),
+  quantity int not null,
+  unit_price double precision not null,
+  note text,
+  created_at timestamptz not null default now()
+);
+CREATE INDEX IF NOT EXISTS table_order_items_table_order_id_idx ON table_order_items (table_order_id);
+
+-- Tarification par palier ("prix de gros") — grossiste/dépôt/quincaillerie,
+-- voir docs/... et lib/actions/price-tiers.ts.
+CREATE TABLE IF NOT EXISTS product_price_tiers (
+  id text primary key default gen_random_uuid()::text,
+  business_id text not null references businesses(id) on delete cascade,
+  product_id text not null references products(id) on delete cascade,
+  min_quantity int not null,
+  unit_price double precision not null,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  unique (product_id, min_quantity)
+);
+CREATE INDEX IF NOT EXISTS product_price_tiers_business_id_product_id_idx ON product_price_tiers (business_id, product_id);
+
 -- --- Fonctions manquantes ---------------------------------------------------
 CREATE OR REPLACE FUNCTION claim_promo_code_usage(p_promo_code_id text)
 RETURNS boolean AS $$

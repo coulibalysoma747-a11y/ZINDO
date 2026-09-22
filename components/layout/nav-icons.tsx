@@ -44,6 +44,8 @@ import {
   HeartPulse,
   Microscope,
   AlarmClock,
+  Wrench,
+  UtensilsCrossed,
 } from "lucide-react";
 
 // Module simple (sans "use client") pour que cette table icône-par-module
@@ -117,6 +119,8 @@ const ICON_KEYS_ORDER: NavItem["icon"][] = [
   "posologies",
   "medical-stats",
   "expiry",
+  "repairs",
+  "tables",
 ];
 
 export const ICON_BADGE_COLORS: Record<NavItem["icon"], string> = Object.fromEntries(
@@ -168,4 +172,6 @@ export const NAV_ICONS: Record<NavItem["icon"], React.ComponentType<{ className?
   posologies: AlarmClock,
   "medical-stats": Activity,
   expiry: CalendarX2,
+  repairs: Wrench,
+  tables: UtensilsCrossed,
 };
