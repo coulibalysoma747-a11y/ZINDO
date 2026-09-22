@@ -31,6 +31,9 @@ export const PERMISSIONS = {
   EXPIRY_MANAGE: "peremption.gerer",
   REPAIRS_MANAGE: "reparations.gerer",
   TABLES_MANAGE: "tables.gerer",
+  CUSTOM_ORDERS_MANAGE: "commandes_sur_mesure.gerer",
+  WARRANTY_MANAGE: "garantie.gerer",
+  APPOINTMENTS_MANAGE: "rendez_vous.gerer",
 } as const;
 
 export type Permission = (typeof PERMISSIONS)[keyof typeof PERMISSIONS];
@@ -52,6 +55,8 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<Role, Permission[]> = {
     // "Caisse à deux" activé — voir Paramètres > Modules > Rôles et permissions.
     PERMISSIONS.SHIPMENTS_MANAGE,
     PERMISSIONS.TABLES_MANAGE,
+    PERMISSIONS.WARRANTY_MANAGE,
+    PERMISSIONS.APPOINTMENTS_MANAGE,
   ],
   GESTIONNAIRE_STOCK: [
     PERMISSIONS.PRODUCTS_VIEW,
@@ -67,6 +72,7 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<Role, Permission[]> = {
     PERMISSIONS.QUICK_SUPPLY_MANAGE,
     PERMISSIONS.EXPIRY_MANAGE,
     PERMISSIONS.REPAIRS_MANAGE,
+    PERMISSIONS.CUSTOM_ORDERS_MANAGE,
   ],
 };
 
@@ -105,4 +111,7 @@ export const PERMISSION_LABELS: Record<string, string> = {
   [PERMISSIONS.EXPIRY_MANAGE]: "Gérer le suivi des dates de péremption (supermarché / pharmacie)",
   [PERMISSIONS.REPAIRS_MANAGE]: "Gérer les bons de réparation (atelier / pièces détachées)",
   [PERMISSIONS.TABLES_MANAGE]: "Gérer les tables (restaurant / bar)",
+  [PERMISSIONS.CUSTOM_ORDERS_MANAGE]: "Gérer les commandes sur mesure (atelier artisanal)",
+  [PERMISSIONS.WARRANTY_MANAGE]: "Gérer les garanties produits (électronique / téléphonie)",
+  [PERMISSIONS.APPOINTMENTS_MANAGE]: "Gérer les rendez-vous (cosmétique / beauté)",
 };

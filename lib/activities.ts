@@ -8,6 +8,9 @@ export const MOTO_ACTIVITY_KEY = "boutique_moto";
 
 /** Activités concernées par la tarification par palier ("prix de gros") — voir lib/actions/price-tiers.ts. */
 export const WHOLESALE_ACTIVITY_KEYS = ["grossiste", "depot_entrepot", "quincaillerie"];
+export function isWholesaleActivity(activityKey: string | null | undefined): boolean {
+  return !!activityKey && WHOLESALE_ACTIVITY_KEYS.includes(activityKey);
+}
 
 export type Activity = {
   key: string;

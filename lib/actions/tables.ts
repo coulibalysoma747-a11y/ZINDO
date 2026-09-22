@@ -35,10 +35,6 @@ export async function isTablesModuleEnabled(businessId: string): Promise<boolean
   return isFeatureEnabled(TABLES_FLAG, businessId);
 }
 
-export function isTableActivity(activityKey: string | null | undefined): boolean {
-  return !!activityKey && TABLE_ACTIVITIES.includes(activityKey);
-}
-
 export type TableRow = {
   id: string;
   name: string;

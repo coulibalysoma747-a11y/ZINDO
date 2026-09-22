@@ -6,7 +6,6 @@ import { supabase } from "@/lib/supabase";
 import { requirePermission, requireUser } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
 import { isFeatureEnabled, registerFeatureFlag } from "@/lib/feature-flags";
-import { WHOLESALE_ACTIVITY_KEYS } from "@/lib/activities";
 import type { PriceTierOption } from "@/lib/pricing";
 
 export type PriceTier = PriceTierOption & { productId: string };
@@ -36,10 +35,6 @@ export async function ensurePriceTiersFlagRegistered() {
 export async function isPriceTiersModuleEnabled(businessId: string): Promise<boolean> {
   await ensurePriceTiersFlagRegistered();
   return isFeatureEnabled(PRICE_TIERS_FLAG, businessId);
-}
-
-export function isWholesaleActivity(activityKey: string | null | undefined): boolean {
-  return !!activityKey && WHOLESALE_ACTIVITY_KEYS.includes(activityKey);
 }
 
 /** Paliers de prix d'un produit (ex. "10 pièces et + : 450 FCFA/pièce") — voir supabase/schema.sql::product_price_tiers. */

@@ -14,12 +14,36 @@ export const SPARE_PARTS_ACTIVITY_KEY = "pieces_detachees";
 export const REPAIR_FLAG = "bons_reparation";
 /** Activités concernées par les bons de réparation — voir requireActivity sur l'entrée "Bons de réparation" ci-dessous. */
 export const REPAIR_ACTIVITIES = [REPAIR_ACTIVITY_KEY, SPARE_PARTS_ACTIVITY_KEY];
+export function isRepairActivity(activityKey: string | null | undefined): boolean {
+  return !!activityKey && REPAIR_ACTIVITIES.includes(activityKey);
+}
 
 export const RESTAURANT_ACTIVITY_KEY = "restaurant_maquis";
 export const BAR_ACTIVITY_KEY = "bar_buvette";
 export const TABLES_FLAG = "gestion_tables";
 /** Activités concernées par la gestion des tables (comptes ouverts en salle) — voir requireActivity sur l'entrée "Tables" ci-dessous. */
 export const TABLE_ACTIVITIES = [RESTAURANT_ACTIVITY_KEY, BAR_ACTIVITY_KEY];
+export function isTableActivity(activityKey: string | null | undefined): boolean {
+  return !!activityKey && TABLE_ACTIVITIES.includes(activityKey);
+}
+
+export const ARTISAN_ACTIVITY_KEY = "atelier_artisanat";
+export const CUSTOM_ORDERS_FLAG = "commandes_sur_mesure";
+export function isArtisanActivity(activityKey: string | null | undefined): boolean {
+  return activityKey === ARTISAN_ACTIVITY_KEY;
+}
+
+export const ELECTRONICS_ACTIVITY_KEY = "electronique_telephonie";
+export const WARRANTY_FLAG = "garantie_produits";
+export function isElectronicsActivity(activityKey: string | null | undefined): boolean {
+  return activityKey === ELECTRONICS_ACTIVITY_KEY;
+}
+
+export const BEAUTY_ACTIVITY_KEY = "cosmetique_beaute";
+export const APPOINTMENTS_FLAG = "rendez_vous";
+export function isBeautyActivity(activityKey: string | null | undefined): boolean {
+  return activityKey === BEAUTY_ACTIVITY_KEY;
+}
 
 export type NavItem = {
   label: string;
@@ -70,7 +94,11 @@ export type NavItem = {
     | "medical-stats"
     | "expiry"
     | "repairs"
-    | "tables";
+    | "tables"
+    | "custom-orders"
+    | "warranty"
+    | "appointments"
+    | "services";
   permission?: Permission;
   featureFlag?: string;
   planFeature?: string;
@@ -192,6 +220,38 @@ export const NAV_ITEMS: NavItem[] = [
     permission: PERMISSIONS.TABLES_MANAGE,
     requireActivity: TABLE_ACTIVITIES,
     featureFlag: TABLES_FLAG,
+  },
+  {
+    label: "Commandes sur mesure",
+    href: "/commandes-sur-mesure",
+    icon: "custom-orders",
+    permission: PERMISSIONS.CUSTOM_ORDERS_MANAGE,
+    requireActivity: ARTISAN_ACTIVITY_KEY,
+    featureFlag: CUSTOM_ORDERS_FLAG,
+  },
+  {
+    label: "Garantie produits",
+    href: "/garantie",
+    icon: "warranty",
+    permission: PERMISSIONS.WARRANTY_MANAGE,
+    requireActivity: ELECTRONICS_ACTIVITY_KEY,
+    featureFlag: WARRANTY_FLAG,
+  },
+  {
+    label: "Rendez-vous",
+    href: "/rendez-vous",
+    icon: "appointments",
+    permission: PERMISSIONS.APPOINTMENTS_MANAGE,
+    requireActivity: BEAUTY_ACTIVITY_KEY,
+    featureFlag: APPOINTMENTS_FLAG,
+  },
+  {
+    label: "Services & prestations",
+    href: "/rendez-vous/services",
+    icon: "services",
+    permission: PERMISSIONS.APPOINTMENTS_MANAGE,
+    requireActivity: BEAUTY_ACTIVITY_KEY,
+    featureFlag: APPOINTMENTS_FLAG,
   },
   { label: "Transferts", href: "/transferts", icon: "transfers", permission: PERMISSIONS.TRANSFERS_MANAGE, planFeature: "advanced_stock" },
   { label: "Approvisionnement rapide", href: "/approvisionnement", icon: "quick-supply", permission: PERMISSIONS.STOCK_MANAGE, moduleToggle: "quickSupply" },

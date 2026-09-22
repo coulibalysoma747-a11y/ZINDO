@@ -308,6 +308,104 @@ CREATE TABLE IF NOT EXISTS table_order_items (
 );
 CREATE INDEX IF NOT EXISTS table_order_items_table_order_id_idx ON table_order_items (table_order_id);
 
+-- Commandes sur mesure (atelier artisanal), garantie produits (électronique/
+-- téléphonie) et rendez-vous (cosmétique/beauté) — voir lib/nav.ts et
+-- lib/actions/custom-orders.ts, warranty.ts, appointments.ts.
+DO $$ BEGIN
+  CREATE TYPE custom_order_status AS ENUM ('EN_COURS','PRET','LIVRE','ANNULE');
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
+
+DO $$ BEGIN
+  CREATE TYPE appointment_status AS ENUM ('CONFIRME','TERMINE','ANNULE','ABSENT');
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
+
+ALTER TABLE businesses ADD COLUMN IF NOT EXISTS next_custom_order_seq int not null default 1;
+
+CREATE TABLE IF NOT EXISTS custom_orders (
+  id text primary key default gen_random_uuid()::text,
+  business_id text not null references businesses(id) on delete cascade,
+  location_id text not null references locations(id),
+  number text not null,
+  customer_id text not null references customers(id),
+  item_description text not null,
+  specifications text,
+  status custom_order_status not null default 'EN_COURS',
+  technician_id text references users(id),
+  agreed_price double precision not null default 0,
+  discount double precision not null default 0,
+  amount_paid double precision not null default 0,
+  payment_method payment_method,
+  delivery_date date,
+  note text,
+  user_id text not null references users(id),
+  created_at timestamptz not null default now(),
+  delivered_at timestamptz,
+  unique (business_id, number)
+);
+CREATE INDEX IF NOT EXISTS custom_orders_business_id_created_at_idx ON custom_orders (business_id, created_at);
+CREATE INDEX IF NOT EXISTS custom_orders_business_id_status_idx ON custom_orders (business_id, status);
+
+CREATE TABLE IF NOT EXISTS custom_order_items (
+  id text primary key default gen_random_uuid()::text,
+  custom_order_id text not null references custom_orders(id) on delete cascade,
+  product_id text not null references products(id),
+  quantity int not null,
+  unit_price double precision not null,
+  total double precision not null,
+  created_at timestamptz not null default now()
+);
+CREATE INDEX IF NOT EXISTS custom_order_items_custom_order_id_idx ON custom_order_items (custom_order_id);
+
+CREATE TABLE IF NOT EXISTS warranty_records (
+  id text primary key default gen_random_uuid()::text,
+  business_id text not null references businesses(id) on delete cascade,
+  product_id text not null references products(id),
+  customer_id text references customers(id),
+  serial_number text not null,
+  sold_at date not null,
+  warranty_months int not null,
+  warranty_expires_at date not null,
+  note text,
+  user_id text not null references users(id),
+  created_at timestamptz not null default now(),
+  unique (business_id, serial_number)
+);
+CREATE INDEX IF NOT EXISTS warranty_records_business_id_serial_number_idx ON warranty_records (business_id, serial_number);
+
+CREATE TABLE IF NOT EXISTS services (
+  id text primary key default gen_random_uuid()::text,
+  business_id text not null references businesses(id) on delete cascade,
+  name text not null,
+  duration_minutes int not null default 30,
+  price double precision not null default 0,
+  active boolean not null default true,
+  created_at timestamptz not null default now(),
+  unique (business_id, name)
+);
+CREATE INDEX IF NOT EXISTS services_business_id_idx ON services (business_id);
+
+CREATE TABLE IF NOT EXISTS appointments (
+  id text primary key default gen_random_uuid()::text,
+  business_id text not null references businesses(id) on delete cascade,
+  location_id text not null references locations(id),
+  customer_id text references customers(id),
+  customer_name text,
+  customer_phone text,
+  service_id text references services(id) on delete set null,
+  staff_id text references users(id),
+  scheduled_at timestamptz not null,
+  duration_minutes int not null default 30,
+  price double precision not null default 0,
+  status appointment_status not null default 'CONFIRME',
+  note text,
+  user_id text not null references users(id),
+  created_at timestamptz not null default now()
+);
+CREATE INDEX IF NOT EXISTS appointments_business_id_scheduled_at_idx ON appointments (business_id, scheduled_at);
+CREATE INDEX IF NOT EXISTS appointments_business_id_staff_id_scheduled_at_idx ON appointments (business_id, staff_id, scheduled_at);
+
 -- Tarification par palier ("prix de gros") — grossiste/dépôt/quincaillerie,
 -- voir docs/... et lib/actions/price-tiers.ts.
 CREATE TABLE IF NOT EXISTS product_price_tiers (

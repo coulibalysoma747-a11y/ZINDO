@@ -47,10 +47,6 @@ export async function isRepairModuleEnabled(businessId: string): Promise<boolean
   return isFeatureEnabled(REPAIR_FLAG, businessId);
 }
 
-export function isRepairActivity(activityKey: string | null | undefined): boolean {
-  return !!activityKey && REPAIR_ACTIVITIES.includes(activityKey);
-}
-
 export type RepairTicketItemRow = {
   id: string;
   productId: string;

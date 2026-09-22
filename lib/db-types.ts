@@ -43,3 +43,5 @@ export type PromoDiscountType = "PERCENTAGE" | "FIXED";
 export type RepairStatus = "RECU" | "DIAGNOSTIC" | "EN_COURS" | "ATTENTE_PIECES" | "TERMINE" | "LIVRE" | "ANNULE";
 export type TableStatus = "LIBRE" | "OCCUPEE";
 export type TableOrderStatus = "OUVERTE" | "ENCAISSEE" | "ANNULEE";
+export type CustomOrderStatus = "EN_COURS" | "PRET" | "LIVRE" | "ANNULE";
+export type AppointmentStatus = "CONFIRME" | "TERMINE" | "ANNULE" | "ABSENT";

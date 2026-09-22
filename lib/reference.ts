@@ -21,6 +21,7 @@ async function nextSeq(
     | "next_patient_seq"
     | "next_repair_seq"
     | "next_table_order_seq"
+    | "next_custom_order_seq"
 ) {
   const { data, error } = await supabase.rpc("increment_business_seq", {
     p_business_id: businessId,
@@ -92,6 +93,11 @@ export async function generateRepairNumber(businessId: string) {
 export async function generateTableOrderNumber(businessId: string) {
   const seq = await nextSeq(businessId, "next_table_order_seq");
   return `ZND-TBL-${pad(seq)}`;
+}
+
+export async function generateCustomOrderNumber(businessId: string) {
+  const seq = await nextSeq(businessId, "next_custom_order_seq");
+  return `ZND-CMS-${pad(seq)}`;
 }
 
 /** Code patient auto-généré (cabinet médical) — ex. PAT-00001. Voir lib/actions/consultations.ts. */

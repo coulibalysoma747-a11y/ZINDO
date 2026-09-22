@@ -46,6 +46,10 @@ import {
   AlarmClock,
   Wrench,
   UtensilsCrossed,
+  Scissors,
+  ShieldCheck,
+  CalendarCheck2,
+  Sparkles,
 } from "lucide-react";
 
 // Module simple (sans "use client") pour que cette table icône-par-module
@@ -121,6 +125,10 @@ const ICON_KEYS_ORDER: NavItem["icon"][] = [
   "expiry",
   "repairs",
   "tables",
+  "custom-orders",
+  "warranty",
+  "appointments",
+  "services",
 ];
 
 export const ICON_BADGE_COLORS: Record<NavItem["icon"], string> = Object.fromEntries(
@@ -174,4 +182,8 @@ export const NAV_ICONS: Record<NavItem["icon"], React.ComponentType<{ className?
   expiry: CalendarX2,
   repairs: Wrench,
   tables: UtensilsCrossed,
+  "custom-orders": Scissors,
+  warranty: ShieldCheck,
+  appointments: CalendarCheck2,
+  services: Sparkles,
 };

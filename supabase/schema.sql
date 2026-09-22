@@ -47,6 +47,10 @@ create type repair_status as enum ('RECU','DIAGNOSTIC','EN_COURS','ATTENTE_PIECE
 -- compte ouvert dessus le temps du service — voir lib/actions/tables.ts.
 create type table_status as enum ('LIBRE','OCCUPEE');
 create type table_order_status as enum ('OUVERTE','ENCAISSEE','ANNULEE');
+-- Commandes sur mesure (atelier artisanal) — voir lib/actions/custom-orders.ts.
+create type custom_order_status as enum ('EN_COURS','PRET','LIVRE','ANNULE');
+-- Rendez-vous (cosmétique/beauté) — voir lib/actions/appointments.ts.
+create type appointment_status as enum ('CONFIRME','TERMINE','ANNULE','ABSENT');
 
 -- ---------------------------------------------------------------------------
 -- Commerce / compte
@@ -84,6 +88,7 @@ create table businesses (
   next_patient_seq int not null default 1,
   next_repair_seq int not null default 1,
   next_table_order_seq int not null default 1,
+  next_custom_order_seq int not null default 1,
   -- Intégration FasoStock (lib/integrations/faso-stock.ts) : synchronisation
   -- à sens unique FasoStock → ZINDO (leur API est en lecture seule). La clé
   -- n'est jamais renvoyée au navigateur, uniquement lue côté serveur.
@@ -917,6 +922,106 @@ create table table_order_items (
   created_at timestamptz not null default now()
 );
 create index on table_order_items (table_order_id);
+
+-- Commandes sur mesure (atelier artisanal — couture, menuiserie...) — voir
+-- lib/nav.ts::ARTISAN_ACTIVITY_KEY. Le total facturé (comme pour
+-- repair_tickets) se calcule à la lecture : agreed_price - discount +
+-- somme(custom_order_items), jamais stocké.
+create table custom_orders (
+  id text primary key default gen_random_uuid()::text,
+  business_id text not null references businesses(id) on delete cascade,
+  location_id text not null references locations(id),
+  number text not null,
+  customer_id text not null references customers(id),
+  item_description text not null,
+  specifications text,
+  status custom_order_status not null default 'EN_COURS',
+  technician_id text references users(id),
+  agreed_price double precision not null default 0,
+  discount double precision not null default 0,
+  amount_paid double precision not null default 0,
+  payment_method payment_method,
+  delivery_date date,
+  note text,
+  user_id text not null references users(id),
+  created_at timestamptz not null default now(),
+  delivered_at timestamptz,
+  unique (business_id, number)
+);
+create index on custom_orders (business_id, created_at);
+create index on custom_orders (business_id, status);
+
+-- Matière/fourniture consommée pour la pièce — décrémente le stock à l'ajout
+-- (motif 'REPARATION', même logique de matière première que les pièces d'un
+-- bon de réparation) et le restaure à la suppression.
+create table custom_order_items (
+  id text primary key default gen_random_uuid()::text,
+  custom_order_id text not null references custom_orders(id) on delete cascade,
+  product_id text not null references products(id),
+  quantity int not null,
+  unit_price double precision not null,
+  total double precision not null,
+  created_at timestamptz not null default now()
+);
+create index on custom_order_items (custom_order_id);
+
+-- Suivi de garantie (électronique/téléphonie — voir
+-- lib/nav.ts::ELECTRONICS_ACTIVITY_KEY) : indépendant du circuit de vente,
+-- pour permettre d'enregistrer un numéro de série/IMEI même sans repasser
+-- par la vente d'origine, et de le retrouver ensuite au service après-vente.
+create table warranty_records (
+  id text primary key default gen_random_uuid()::text,
+  business_id text not null references businesses(id) on delete cascade,
+  product_id text not null references products(id),
+  customer_id text references customers(id),
+  serial_number text not null,
+  sold_at date not null,
+  warranty_months int not null,
+  warranty_expires_at date not null,
+  note text,
+  user_id text not null references users(id),
+  created_at timestamptz not null default now(),
+  unique (business_id, serial_number)
+);
+create index on warranty_records (business_id, serial_number);
+
+-- Prestations proposées (cosmétique/beauté — voir
+-- lib/nav.ts::BEAUTY_ACTIVITY_KEY), catalogue distinct des Produits puisque
+-- sans stock : sert de modèle de durée/prix par défaut pour un rendez-vous.
+create table services (
+  id text primary key default gen_random_uuid()::text,
+  business_id text not null references businesses(id) on delete cascade,
+  name text not null,
+  duration_minutes int not null default 30,
+  price double precision not null default 0,
+  active boolean not null default true,
+  created_at timestamptz not null default now(),
+  unique (business_id, name)
+);
+create index on services (business_id);
+
+-- Rendez-vous : purement un outil d'agenda (éviter les doubles réservations,
+-- savoir qui reçoit qui et quand) — l'encaissement de la prestation se fait
+-- normalement via l'écran de vente habituel, séparément.
+create table appointments (
+  id text primary key default gen_random_uuid()::text,
+  business_id text not null references businesses(id) on delete cascade,
+  location_id text not null references locations(id),
+  customer_id text references customers(id),
+  customer_name text,
+  customer_phone text,
+  service_id text references services(id) on delete set null,
+  staff_id text references users(id),
+  scheduled_at timestamptz not null,
+  duration_minutes int not null default 30,
+  price double precision not null default 0,
+  status appointment_status not null default 'CONFIRME',
+  note text,
+  user_id text not null references users(id),
+  created_at timestamptz not null default now()
+);
+create index on appointments (business_id, scheduled_at);
+create index on appointments (business_id, staff_id, scheduled_at);
 
 create table supplier_payments (
   id text primary key default gen_random_uuid()::text,
