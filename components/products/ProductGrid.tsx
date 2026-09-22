@@ -20,7 +20,20 @@ export type PosProduct = {
   unit: string;
   trackUnits: boolean;
   packagingUnits?: PackagingUnitOption[];
+  /** Date du lot le plus proche de péremption (module Péremption, pharmacie/supermarché) — voir lib/actions/expiry.ts::getNearestExpiryByProduct. */
+  nearestExpiry?: string | null;
 };
+
+const EXPIRY_WARNING_DAYS = 60;
+
+function formatExpiryBadge(dateStr: string): { label: string; urgent: boolean } {
+  const date = new Date(dateStr);
+  const daysLeft = Math.ceil((date.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+  return {
+    label: `Lot : ${date.toLocaleDateString("fr-FR")}`,
+    urgent: daysLeft <= EXPIRY_WARNING_DAYS,
+  };
+}
 
 export function ProductGrid({
   products,
@@ -76,6 +89,15 @@ export function ProductGrid({
             <p className="mt-auto pt-1 text-sm font-bold text-emerald-600">
               {formatMoney(product.salePrice, currency)}
             </p>
+            {product.nearestExpiry && (
+              <p
+                className={`text-[10px] font-medium ${
+                  formatExpiryBadge(product.nearestExpiry).urgent ? "text-amber-600" : "text-zinc-400"
+                }`}
+              >
+                {formatExpiryBadge(product.nearestExpiry).label}
+              </p>
+            )}
             {product.packagingUnits && product.packagingUnits.length > 0 && (
               <div className="pointer-events-auto relative z-10 -mx-0.5 mt-1 flex flex-wrap gap-1">
                 {product.packagingUnits.map((pu) => (

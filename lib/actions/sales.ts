@@ -11,6 +11,7 @@ import { rethrowIfNavigationSignal } from "@/lib/action-errors";
 import { getBusinessSettings } from "@/lib/business-settings";
 import { sendPushToBusiness } from "@/lib/push";
 import { formatMoney } from "@/lib/format";
+import { consumeExpiryBatchesFefo } from "@/lib/actions/expiry";
 import type { PaymentMethod } from "@/lib/db-types";
 
 export type CartItemInput = {
@@ -356,6 +357,14 @@ async function createSaleImpl(input: CreateSaleInput): Promise<CreateSaleResult>
       reason: "VENTE",
       note: `Vente ${number}`,
     }
+  );
+
+  // Best-effort : décrémente le lot qui expire le plus tôt (FEFO) pour les
+  // commerces avec le module Péremption actif (pharmacie/supermarché) — voir
+  // lib/actions/expiry.ts. Ne bloque et ne fait jamais échouer la vente.
+  await consumeExpiryBatchesFefo(
+    input.items.map((i) => ({ productId: i.productId, quantity: i.quantity * (i.multiplier ?? 1) })),
+    { businessId: user.businessId, locationId: input.locationId, activityKey: user.business.activityKey }
   );
 
   await logAction({

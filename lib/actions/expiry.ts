@@ -6,7 +6,7 @@ import { supabase } from "@/lib/supabase";
 import { requirePermission } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
 import { registerFeatureFlag, isFeatureEnabled } from "@/lib/feature-flags";
-import { EXPIRY_FLAG } from "@/lib/nav";
+import { EXPIRY_FLAG, EXPIRY_ACTIVITIES } from "@/lib/nav";
 
 export type ActionState = { error?: string; success?: string } | undefined;
 
@@ -141,4 +141,93 @@ export async function deleteExpiryBatchAction(batchId: string): Promise<ActionSt
 
   revalidatePath("/peremption");
   return { success: "Lot retiré du suivi" };
+}
+
+/**
+ * Date de péremption la plus proche par produit, à un emplacement donné —
+ * simple indication affichée à la caisse (voir POS.tsx) pour que le vendeur
+ * sache qu'un lot arrive à échéance, sans lui imposer de choix. Ne renvoie
+ * rien pour un commerce hors EXPIRY_ACTIVITIES ou sans le module activé, sur
+ * le même modèle que fetchPackagingUnitsByProduct
+ * (lib/actions/product-search.ts).
+ */
+export async function getNearestExpiryByProduct(
+  businessId: string,
+  locationId: string,
+  productIds: string[],
+  activityKey: string | null
+): Promise<Map<string, string>> {
+  const map = new Map<string, string>();
+  if (productIds.length === 0) return map;
+  if (!EXPIRY_ACTIVITIES.includes(activityKey ?? "")) return map;
+  if (!(await isExpiryModuleEnabled(businessId))) return map;
+
+  const { data } = await supabase
+    .from("product_expiry_batches")
+    .select("productId:product_id, expiryDate:expiry_date")
+    .eq("business_id", businessId)
+    .eq("location_id", locationId)
+    .in("product_id", productIds)
+    .order("expiry_date", { ascending: true });
+
+  for (const row of (data ?? []) as unknown as { productId: string; expiryDate: string }[]) {
+    if (!map.has(row.productId)) map.set(row.productId, row.expiryDate);
+  }
+  return map;
+}
+
+/**
+ * Décrément FEFO (First Expired, First Out) best-effort au moment d'une
+ * vente : consomme en priorité le lot dont la date de péremption est la
+ * plus proche. Purement déclaratif comme le reste du module Péremption
+ * (product_expiry_batches n'est pas la source de vérité du stock —
+ * product_stocks l'est, déjà ajusté séparément par recordStockMovements) :
+ * n'échoue jamais, ne bloque jamais une vente, et s'arrête simplement si les
+ * lots connus ne couvrent pas toute la quantité vendue (stock non
+ * entièrement "loti"). Voir lib/actions/sales.ts::createSaleImpl.
+ */
+export async function consumeExpiryBatchesFefo(
+  items: { productId: string; quantity: number }[],
+  params: { businessId: string; locationId: string; activityKey: string | null }
+) {
+  if (!EXPIRY_ACTIVITIES.includes(params.activityKey ?? "")) return;
+  if (!(await isExpiryModuleEnabled(params.businessId))) return;
+
+  await Promise.all(
+    items.filter((i) => i.quantity > 0).map((i) => consumeOneProductFefo(i, params))
+  );
+}
+
+async function consumeOneProductFefo(
+  item: { productId: string; quantity: number },
+  params: { businessId: string; locationId: string }
+) {
+  let remaining = item.quantity;
+
+  const { data: batches, error } = await supabase
+    .from("product_expiry_batches")
+    .select("id, quantity")
+    .eq("business_id", params.businessId)
+    .eq("location_id", params.locationId)
+    .eq("product_id", item.productId)
+    .order("expiry_date", { ascending: true });
+  if (error) {
+    console.error("[consumeOneProductFefo] Échec de la lecture des lots :", error.message);
+    return;
+  }
+
+  for (const batch of (batches ?? []) as { id: string; quantity: number }[]) {
+    if (remaining <= 0) break;
+    const taken = Math.min(batch.quantity, remaining);
+    remaining -= taken;
+    const newQuantity = batch.quantity - taken;
+
+    const { error: writeError } =
+      newQuantity > 0
+        ? await supabase.from("product_expiry_batches").update({ quantity: newQuantity }).eq("id", batch.id)
+        : await supabase.from("product_expiry_batches").delete().eq("id", batch.id);
+    if (writeError) {
+      console.error("[consumeOneProductFefo] Échec de la mise à jour du lot :", writeError.message);
+    }
+  }
 }

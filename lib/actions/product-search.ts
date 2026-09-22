@@ -3,6 +3,7 @@
 import { supabase } from "@/lib/supabase";
 import { requireUser } from "@/lib/auth";
 import { isPackagingUnitsModuleEnabled } from "@/lib/actions/packaging-units";
+import { getNearestExpiryByProduct } from "@/lib/actions/expiry";
 
 const PRODUCT_FIELDS =
   "id, businessId:business_id, reference, name, categoryId:category_id, brand, description, unit, purchasePrice:purchase_price, salePrice:sale_price, minStock:min_stock, shelfLocation:shelf_location, supplierId:supplier_id, photoUrl:photo_url, barcode, customFields:custom_fields, active, createdAt:created_at, updatedAt:updated_at, trackUnits:track_units";
@@ -82,15 +83,21 @@ export async function searchProductsAction(query: string, locationId: string) {
   const { data } = await q;
   const products = (data ?? []) as unknown as ProductRow[];
   const ids = products.map((p) => p.id);
-  const [{ data: stocks }, packagingByProduct] = await Promise.all([
+  const [{ data: stocks }, packagingByProduct, nearestExpiryByProduct] = await Promise.all([
     ids.length
       ? supabase.from("product_stocks").select("productId:product_id, quantity").in("product_id", ids).eq("location_id", locationId)
       : Promise.resolve({ data: [] as { productId: string; quantity: number }[] }),
     fetchPackagingUnitsByProduct(user.businessId, ids),
+    getNearestExpiryByProduct(user.businessId, locationId, ids, user.business.activityKey),
   ]);
 
   const stockMap = new Map((stocks ?? []).map((s) => [s.productId as string, s.quantity as number]));
-  return products.map((p) => ({ ...p, quantity: stockMap.get(p.id) ?? 0, packagingUnits: packagingByProduct.get(p.id) ?? [] }));
+  return products.map((p) => ({
+    ...p,
+    quantity: stockMap.get(p.id) ?? 0,
+    packagingUnits: packagingByProduct.get(p.id) ?? [],
+    nearestExpiry: nearestExpiryByProduct.get(p.id) ?? null,
+  }));
 }
 
 /**
@@ -111,12 +118,18 @@ export async function getPosProductsAction(locationId: string) {
     .limit(300);
 
   const rows = (stocks ?? []) as unknown as Array<{ quantity: number; product: ProductRow }>;
-  const packagingByProduct = await fetchPackagingUnitsByProduct(
-    user.businessId,
-    rows.map((r) => r.product.id)
-  );
+  const productIds = rows.map((r) => r.product.id);
+  const [packagingByProduct, nearestExpiryByProduct] = await Promise.all([
+    fetchPackagingUnitsByProduct(user.businessId, productIds),
+    getNearestExpiryByProduct(user.businessId, locationId, productIds, user.business.activityKey),
+  ]);
   return rows
-    .map((s) => ({ ...s.product, quantity: s.quantity, packagingUnits: packagingByProduct.get(s.product.id) ?? [] }))
+    .map((s) => ({
+      ...s.product,
+      quantity: s.quantity,
+      packagingUnits: packagingByProduct.get(s.product.id) ?? [],
+      nearestExpiry: nearestExpiryByProduct.get(s.product.id) ?? null,
+    }))
     .sort((a, b) => a.name.localeCompare(b.name));
 }
 
