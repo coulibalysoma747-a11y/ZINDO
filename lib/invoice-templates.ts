@@ -8,7 +8,7 @@
  * Pas de directive "use server" ici : fichier de données neutre, importé à
  * la fois par des composants client (le sélecteur) et des actions serveur.
  */
-export type InvoiceTemplateId = "classique" | "moderne";
+export type InvoiceTemplateId = "classique" | "moderne" | "boutique";
 
 export type InvoiceTemplateMeta = {
   id: InvoiceTemplateId;
@@ -30,6 +30,12 @@ export const INVOICE_TEMPLATES: InvoiceTemplateMeta[] = [
     label: "Moderne",
     description: "Épuré, sans filets décoratifs, une seule couleur d'accent réservée au total.",
     suggestedFor: ["Électronique & Téléphonie", "Services"],
+  },
+  {
+    id: "boutique",
+    label: "Boutique",
+    description: "Bandeau couleur, articles en lignes arrondies — un document plus chaleureux pour la mode et les commerces de détail.",
+    suggestedFor: ["Vêtements & Chaussures", "Cosmétique & Beauté"],
   },
 ];
 
