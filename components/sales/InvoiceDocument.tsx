@@ -5,6 +5,7 @@ import { FactureAtelier } from "./FactureAtelier";
 import { FacturePharmacie } from "./FacturePharmacie";
 import { FactureGrossiste } from "./FactureGrossiste";
 import { FactureMoto } from "./FactureMoto";
+import { FactureRestaurant } from "./FactureRestaurant";
 
 /**
  * Point d'aiguillage unique entre les modèles de Facture A4 (voir
@@ -27,6 +28,8 @@ export function InvoiceDocument({ data }: { data: FactureData }) {
       return <FactureGrossiste data={data} />;
     case "moto":
       return <FactureMoto data={data} />;
+    case "restaurant":
+      return <FactureRestaurant data={data} />;
     case "classique":
     default:
       return <Facture data={data} />;
