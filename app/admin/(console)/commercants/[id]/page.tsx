@@ -113,12 +113,15 @@ export default async function AdminBusinessDetailPage({
             <p className="text-lg font-bold text-zinc-900">{productCount ?? 0}</p>
           </CardBody>
         </Card>
-        <Card>
-          <CardBody>
-            <p className="text-xs text-zinc-500">Ventes</p>
-            <p className="text-lg font-bold text-zinc-900">{salesCount ?? 0}</p>
-          </CardBody>
-        </Card>
+        <Link href={`/admin/commercants/${business.id}/ventes`}>
+          <Card className="transition-colors hover:border-zindo-green-300">
+            <CardBody>
+              <p className="text-xs text-zinc-500">Ventes</p>
+              <p className="text-lg font-bold text-zinc-900">{salesCount ?? 0}</p>
+              <p className="mt-0.5 text-xs text-zindo-green-600">Voir / corriger →</p>
+            </CardBody>
+          </Card>
+        </Link>
         <Card>
           <CardBody>
             <p className="text-xs text-zinc-500">Chiffre d&apos;affaires cumulé</p>

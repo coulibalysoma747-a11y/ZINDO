@@ -58,7 +58,7 @@ export type CreateSaleInput = {
 
 export type CreateSaleResult = { success: true; saleId: string } | { success: false; error: string };
 
-type SaleItemRow = {
+export type SaleItemRow = {
   sale_id: string;
   product_id: string;
   quantity: number;
@@ -78,7 +78,7 @@ type SaleItemRow = {
  * sans ces colonnes plutôt que de casser TOUTE vente — pas seulement celles
  * qui utilisent un conditionnement — le temps que la migration soit faite.
  */
-async function insertSaleItems(rows: SaleItemRow[]) {
+export async function insertSaleItems(rows: SaleItemRow[]) {
   const { error } = await supabase.from("sale_items").insert(rows);
   if (!error) return { error: null };
   if (!/packaging_unit_id|multiplier|unit_label/.test(error.message)) return { error };
@@ -103,7 +103,7 @@ async function insertSaleItems(rows: SaleItemRow[]) {
  * (l'ajustement du stock lui-même, via adjustStock, est déjà fait avant) —
  * limite connue de la migration hors transaction Prisma, voir le commit.
  */
-async function recordStockMovements(
+export async function recordStockMovements(
   items: { productId: string; quantity: number }[],
   params: { businessId: string; locationId: string; userId: string; direction: "IN" | "OUT"; reason: string; note: string }
 ) {
