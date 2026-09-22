@@ -947,6 +947,20 @@ create table diagnosis_categories (
 );
 create index on diagnosis_categories (business_id);
 
+-- Préréglages de posologie proposés au praticien (ex. "1 fois par jour",
+-- "1 le matin et 1 le soir") — même principe que diagnosis_categories/brands :
+-- consultation_items.posology reste un simple champ texte, cette table ne
+-- fait qu'alimenter un sélecteur pour éviter de retaper la même consigne à
+-- chaque ordonnance.
+create table posology_presets (
+  id text primary key default gen_random_uuid()::text,
+  business_id text not null references businesses(id) on delete cascade,
+  label text not null,
+  created_at timestamptz not null default now(),
+  unique (business_id, label)
+);
+create index on posology_presets (business_id);
+
 create table consultations (
   id text primary key default gen_random_uuid()::text,
   business_id text not null references businesses(id) on delete cascade,

@@ -173,6 +173,10 @@ export const DESCRIPTIONS: Record<string, { short: string; long: string }> = {
     short: "Votre liste de diagnostics/pathologies courantes, pour saisir le diagnostic comme une catégorie.",
     long: "Au lieu de retaper chaque diagnostic en texte libre, choisissez-le dans une liste que vous construisez au fil du temps (Paludisme, Grippe, Hypertension...). Un nouveau diagnostic peut aussi être ajouté directement depuis le sélecteur de l'écran Nouvelle consultation, sans repasser par cet écran.",
   },
+  "/consultations/posologies": {
+    short: "Vos consignes de prise courantes (1 fois par jour, matin et soir...), pour l'ordonnance.",
+    long: "Construisez votre liste de posologies fréquentes (« 1 fois par jour », « 2 fois par jour », « 1 le matin et 1 le soir »...) pour ne plus les retaper à chaque ordonnance. Proposées dans un sélecteur sur chaque ligne de l'ordonnance de l'écran Nouvelle consultation ; une nouvelle posologie peut aussi y être ajoutée directement.",
+  },
   "/consultations/statistiques": {
     short: "Chiffre d'affaires, charges et bénéfice du cabinet, pathologies et actes les plus fréquents.",
     long: "Le bilan financier du cabinet sur la période choisie (7 derniers jours, ce mois-ci, depuis le début) : recettes de consultation, charges (module Dépenses) et bénéfice, ainsi que le classement des pathologies et des actes les plus fréquents et le profil de la patientèle (sexe, tranche d'âge).",

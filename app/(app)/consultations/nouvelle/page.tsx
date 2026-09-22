@@ -4,6 +4,7 @@ import { PERMISSIONS } from "@/lib/permissions";
 import { isConsultationsModuleEnabled } from "@/lib/actions/consultations";
 import { getMedicalActsAction } from "@/lib/actions/medical-acts";
 import { getDiagnosisCategoriesAction } from "@/lib/actions/diagnosis-categories";
+import { getPosologyPresetsAction } from "@/lib/actions/posology-presets";
 import { getCurrentLocation } from "@/lib/location";
 import { MEDICAL_ACTIVITY_KEY } from "@/lib/nav";
 import { Card, CardBody } from "@/components/ui/Card";
@@ -14,9 +15,10 @@ export default async function NouvelleConsultationPage() {
   if (user.business.activityKey !== MEDICAL_ACTIVITY_KEY) redirect("/dashboard");
   if (!(await isConsultationsModuleEnabled(user.businessId))) redirect("/dashboard");
 
-  const [medicalActs, diagnosisCategories, currentLocation] = await Promise.all([
+  const [medicalActs, diagnosisCategories, posologyPresets, currentLocation] = await Promise.all([
     getMedicalActsAction(),
     getDiagnosisCategoriesAction(),
+    getPosologyPresetsAction(),
     getCurrentLocation(user.businessId),
   ]);
 
@@ -33,6 +35,7 @@ export default async function NouvelleConsultationPage() {
           <ConsultationForm
             medicalActs={medicalActs}
             diagnosisCategories={diagnosisCategories}
+            posologyPresets={posologyPresets}
             locationId={currentLocation?.id as string}
             currency={user.business.currency}
           />

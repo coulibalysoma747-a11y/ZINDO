@@ -194,6 +194,17 @@ DO $$ BEGIN
 EXCEPTION WHEN duplicate_object THEN NULL;
 END $$;
 
+-- Préréglages de posologie (ex. "1 fois par jour", "1 le matin et 1 le
+-- soir") — voir docs/cahier-des-charges-cabinet-medical.md §3.6.
+CREATE TABLE IF NOT EXISTS posology_presets (
+  id text primary key default gen_random_uuid()::text,
+  business_id text not null references businesses(id) on delete cascade,
+  label text not null,
+  created_at timestamptz not null default now(),
+  unique (business_id, label)
+);
+CREATE INDEX IF NOT EXISTS posology_presets_business_id_idx ON posology_presets (business_id);
+
 -- --- Fonctions manquantes ---------------------------------------------------
 CREATE OR REPLACE FUNCTION claim_promo_code_usage(p_promo_code_id text)
 RETURNS boolean AS $$

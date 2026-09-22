@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { Plus, BarChart3, Download, Stethoscope, Microscope, Receipt as ReceiptIcon, Pill } from "lucide-react";
+import { Plus, BarChart3, Download, Stethoscope, Microscope, AlarmClock, Receipt as ReceiptIcon, Pill } from "lucide-react";
 import { requirePermission } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
 import { supabase } from "@/lib/supabase";
@@ -57,6 +57,9 @@ export default async function ConsultationsPage() {
           </ButtonLink>
           <ButtonLink href="/consultations/diagnostics" variant="outline">
             <Microscope className="h-4 w-4" /> Diagnostics
+          </ButtonLink>
+          <ButtonLink href="/consultations/posologies" variant="outline">
+            <AlarmClock className="h-4 w-4" /> Posologies
           </ButtonLink>
           <ButtonLink href="/consultations/statistiques" variant="outline">
             <BarChart3 className="h-4 w-4" /> Statistiques

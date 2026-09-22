@@ -1,11 +1,13 @@
 "use client";
 
 import { useActionState, useState } from "react";
-import { X } from "lucide-react";
+import { X, BookmarkPlus } from "lucide-react";
 import { createConsultationAction } from "@/lib/actions/consultations";
 import type { MedicalAct } from "@/lib/actions/medical-acts";
 import type { DiagnosisCategory } from "@/lib/actions/diagnosis-categories";
 import { getOrCreateDiagnosisCategoryByNameAction } from "@/lib/actions/diagnosis-categories";
+import type { PosologyPreset } from "@/lib/actions/posology-presets";
+import { getOrCreatePosologyPresetByNameAction } from "@/lib/actions/posology-presets";
 import { EntityQuickSelect } from "@/components/products/EntityQuickSelect";
 import { ProductPicker } from "@/components/products/ProductPicker";
 import { Field, Input, Select, Textarea } from "@/components/ui/Input";
@@ -21,11 +23,13 @@ type PrescriptionItem = { key: string; productId?: string; label: string; unit?:
 export function ConsultationForm({
   medicalActs,
   diagnosisCategories,
+  posologyPresets: initialPosologyPresets,
   locationId,
   currency,
 }: {
   medicalActs: MedicalAct[];
   diagnosisCategories: DiagnosisCategory[];
+  posologyPresets: PosologyPreset[];
   locationId: string;
   currency: string;
 }) {
@@ -33,6 +37,8 @@ export function ConsultationForm({
   const [fee, setFee] = useState(0);
   const [items, setItems] = useState<PrescriptionItem[]>([]);
   const [customName, setCustomName] = useState("");
+  const [posologyPresets, setPosologyPresets] = useState(initialPosologyPresets);
+  const [savingPosologyKey, setSavingPosologyKey] = useState<string | null>(null);
 
   function handleActChange(actId: string) {
     const act = medicalActs.find((a) => a.id === actId);
@@ -57,6 +63,17 @@ export function ConsultationForm({
 
   function removeItem(key: string) {
     setItems((cur) => cur.filter((i) => i.key !== key));
+  }
+
+  async function savePosologyPreset(key: string, label: string) {
+    const trimmed = label.trim();
+    if (!trimmed || posologyPresets.some((p) => p.label.toLowerCase() === trimmed.toLowerCase())) return;
+    setSavingPosologyKey(key);
+    const result = await getOrCreatePosologyPresetByNameAction(trimmed);
+    setSavingPosologyKey(null);
+    if ("id" in result) {
+      setPosologyPresets((cur) => [...cur, { id: result.id, label: trimmed }].sort((a, b) => a.label.localeCompare(b.label)));
+    }
   }
 
   return (
@@ -162,33 +179,66 @@ export function ConsultationForm({
         {items.length > 0 && (
           <div className="space-y-2 pt-1">
             {items.map((i) => (
-              <div key={i.key} className="flex flex-wrap items-center gap-2 rounded-lg bg-zinc-50 p-2">
-                <span className="min-w-0 flex-1 truncate text-sm font-medium text-zinc-900">{i.label}</span>
-                <Input
-                  type="number"
-                  min={1}
-                  step={1}
-                  value={i.quantity}
-                  onChange={(e) => updateItem(i.key, { quantity: Number(e.target.value) })}
-                  className="w-16"
-                  aria-label={`Quantité de ${i.label}`}
-                />
-                {i.unit && <span className="text-xs text-zinc-500">{i.unit}</span>}
-                <Input
-                  value={i.posology}
-                  onChange={(e) => updateItem(i.key, { posology: e.target.value })}
-                  placeholder="Posologie (ex: 2x/jour, 5 jours)"
-                  className="min-w-[180px] flex-1"
-                  aria-label={`Posologie de ${i.label}`}
-                />
-                <button
-                  type="button"
-                  onClick={() => removeItem(i.key)}
-                  className="rounded-lg p-1.5 text-zinc-400 hover:bg-red-50 hover:text-red-600"
-                  aria-label={`Retirer ${i.label}`}
-                >
-                  <X className="h-4 w-4" />
-                </button>
+              <div key={i.key} className="space-y-1.5 rounded-lg bg-zinc-50 p-2">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="min-w-0 flex-1 truncate text-sm font-medium text-zinc-900">{i.label}</span>
+                  <Input
+                    type="number"
+                    min={1}
+                    step={1}
+                    value={i.quantity}
+                    onChange={(e) => updateItem(i.key, { quantity: Number(e.target.value) })}
+                    className="w-16"
+                    aria-label={`Quantité de ${i.label}`}
+                  />
+                  {i.unit && <span className="text-xs text-zinc-500">{i.unit}</span>}
+                  <button
+                    type="button"
+                    onClick={() => removeItem(i.key)}
+                    className="rounded-lg p-1.5 text-zinc-400 hover:bg-red-50 hover:text-red-600"
+                    aria-label={`Retirer ${i.label}`}
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+                <div className="flex flex-wrap items-center gap-2">
+                  {posologyPresets.length > 0 && (
+                    <Select
+                      value=""
+                      onChange={(e) => e.target.value && updateItem(i.key, { posology: e.target.value })}
+                      className="w-auto min-w-[160px] flex-1"
+                      aria-label={`Posologie fréquente pour ${i.label}`}
+                    >
+                      <option value="">Posologie fréquente...</option>
+                      {posologyPresets.map((p) => (
+                        <option key={p.id} value={p.label}>
+                          {p.label}
+                        </option>
+                      ))}
+                    </Select>
+                  )}
+                  <Input
+                    value={i.posology}
+                    onChange={(e) => updateItem(i.key, { posology: e.target.value })}
+                    placeholder="Ex: 1 le matin et 1 le soir"
+                    className="min-w-[180px] flex-1"
+                    aria-label={`Posologie de ${i.label}`}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => savePosologyPreset(i.key, i.posology)}
+                    disabled={
+                      !i.posology.trim() ||
+                      savingPosologyKey === i.key ||
+                      posologyPresets.some((p) => p.label.toLowerCase() === i.posology.trim().toLowerCase())
+                    }
+                    className="rounded-lg p-1.5 text-zinc-400 hover:bg-emerald-50 hover:text-emerald-600 disabled:cursor-not-allowed disabled:opacity-30"
+                    aria-label={`Enregistrer "${i.posology}" comme posologie fréquente`}
+                    title="Enregistrer comme posologie fréquente"
+                  >
+                    <BookmarkPlus className="h-4 w-4" />
+                  </button>
+                </div>
               </div>
             ))}
           </div>

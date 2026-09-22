@@ -135,6 +135,26 @@ ex. « 2x/jour pendant 5 jours »).
   le module Stock/Vente générique déjà existant — sujet distinct, à traiter
   séparément si le besoin est confirmé (voir §5).
 
+### 3.6 Préréglages de posologie
+
+Demande explicite : le médecin doit pouvoir "ajouter comme marque" (même
+principe que le sélecteur Marque de la fiche produit) la façon dont le
+patient doit prendre chaque produit — ex. « 1 par jour », « 2 par jour »,
+« 1 le matin et 1 le soir » — au lieu de retaper la même consigne à chaque
+ordonnance.
+
+- Table `posology_presets` (libellé, par commerce), même principe que
+  `diagnosis_categories` (§3.4) : `consultation_items.posology` reste un
+  simple champ texte, la table ne fait qu'alimenter un sélecteur.
+- Écran `/consultations/posologies` pour gérer la liste complète.
+- Sur chaque ligne d'ordonnance du formulaire de consultation, un sélecteur
+  "Posologie fréquente" pré-remplit le champ texte ; un bouton dédié permet
+  aussi d'enregistrer la posologie tapée à la volée comme nouveau préréglage
+  (utilisable immédiatement sur les autres lignes, sans quitter le
+  formulaire). Aucun préréglage n'est fourni par défaut — comme les autres
+  catalogues du module (actes, diagnostics), la liste se construit par le
+  médecin au fil de l'usage.
+
 ## 4. Permissions et activation
 
 - Reste sous la permission unique `consultations.gerer` et le flag existant
