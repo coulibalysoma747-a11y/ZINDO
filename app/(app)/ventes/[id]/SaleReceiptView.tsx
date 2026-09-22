@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { ArrowLeft, Pencil } from "lucide-react";
-import { Receipt, type ReceiptData, type ReceiptWidth } from "@/components/sales/Receipt";
+import { Receipt, type ReceiptData, type ReceiptStyle, type ReceiptWidth } from "@/components/sales/Receipt";
 import { Badge } from "@/components/ui/Badge";
 import { ReceiptActions } from "./ReceiptActions";
 import { CancelSaleButton } from "./CancelSaleButton";
@@ -15,6 +15,12 @@ const WIDTH_OPTIONS: { value: ReceiptWidth; label: string }[] = [
   { value: "58mm", label: "58 mm" },
   { value: "80mm", label: "80 mm" },
   { value: "A4", label: "A4" },
+];
+
+const STYLE_OPTIONS: { value: ReceiptStyle; label: string }[] = [
+  { value: "classique", label: "Classique" },
+  { value: "moderne", label: "Moderne" },
+  { value: "compact", label: "Compact" },
 ];
 
 export function SaleReceiptView({
@@ -39,6 +45,7 @@ export function SaleReceiptView({
   otherFormatLabel?: string;
 }) {
   const [width, setWidth] = useState<ReceiptWidth>(defaultWidth);
+  const [style, setStyle] = useState<ReceiptStyle>("classique");
   const searchParams = useSearchParams();
 
   // Réimpression rapide depuis l'historique : ?print=1 déclenche l'impression
@@ -70,6 +77,20 @@ export function SaleReceiptView({
               </button>
             ))}
           </div>
+          <div className="flex gap-1 rounded-lg border border-zinc-200 bg-white p-1">
+            {STYLE_OPTIONS.map((opt) => (
+              <button
+                key={opt.value}
+                type="button"
+                onClick={() => setStyle(opt.value)}
+                className={`rounded-md px-2.5 py-1 text-xs font-medium transition-colors ${
+                  style === opt.value ? "bg-emerald-600 text-white" : "text-zinc-600 hover:bg-zinc-100"
+                }`}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
           {!isCancelled && canEdit && (
             <Link
               href={`/ventes/${saleId}/modifier`}
@@ -85,7 +106,7 @@ export function SaleReceiptView({
 
       {isCancelled && <Badge tone="red" className="print:hidden">Vente annulée — stock réintégré</Badge>}
 
-      <Receipt data={data} width={width} />
+      <Receipt data={data} width={width} style={style} />
 
       {canOfferInstallments && (
         <InstallmentSection saleId={saleId} remaining={data.remaining ?? 0} currency={data.currency ?? "XOF"} plan={installmentPlan} />

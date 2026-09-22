@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { X, Printer } from "lucide-react";
-import { Receipt, type ReceiptWidth } from "@/components/sales/Receipt";
+import { Receipt, type ReceiptStyle, type ReceiptWidth } from "@/components/sales/Receipt";
 import { InvoiceDocument } from "@/components/sales/InvoiceDocument";
 import { FactureEngin } from "@/components/sales/FactureEngin";
 import { Button } from "@/components/ui/Button";
@@ -12,6 +12,12 @@ const WIDTH_OPTIONS: { value: ReceiptWidth; label: string }[] = [
   { value: "58mm", label: "58 mm" },
   { value: "80mm", label: "80 mm" },
   { value: "A4", label: "A4" },
+];
+
+const STYLE_OPTIONS: { value: ReceiptStyle; label: string }[] = [
+  { value: "classique", label: "Classique" },
+  { value: "moderne", label: "Moderne" },
+  { value: "compact", label: "Compact" },
 ];
 
 /**
@@ -30,6 +36,7 @@ export function ReceiptPrintPanel({
   onClose: () => void;
 }) {
   const [width, setWidth] = useState<ReceiptWidth>(doc.documentType === "TICKET" ? doc.defaultWidth : "A4");
+  const [style, setStyle] = useState<ReceiptStyle>("classique");
 
   // Impression rapide : déclenchée automatiquement dès que le panneau est
   // monté si le commerce a activé l'impression auto, sans attendre un clic.
@@ -80,24 +87,40 @@ export function ReceiptPrintPanel({
         </div>
 
         {doc.documentType === "TICKET" && (
-          <div className="flex gap-1 self-start rounded-lg border border-zinc-200 bg-white p-1 print:hidden">
-            {WIDTH_OPTIONS.map((opt) => (
-              <button
-                key={opt.value}
-                type="button"
-                onClick={() => setWidth(opt.value)}
-                className={`rounded-md px-2.5 py-1 text-xs font-medium transition-colors ${
-                  width === opt.value ? "bg-zindo-green-600 text-white" : "text-zinc-600 hover:bg-zinc-100"
-                }`}
-              >
-                {opt.label}
-              </button>
-            ))}
+          <div className="flex flex-wrap gap-2 print:hidden">
+            <div className="flex gap-1 self-start rounded-lg border border-zinc-200 bg-white p-1">
+              {WIDTH_OPTIONS.map((opt) => (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => setWidth(opt.value)}
+                  className={`rounded-md px-2.5 py-1 text-xs font-medium transition-colors ${
+                    width === opt.value ? "bg-zindo-green-600 text-white" : "text-zinc-600 hover:bg-zinc-100"
+                  }`}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+            <div className="flex gap-1 self-start rounded-lg border border-zinc-200 bg-white p-1">
+              {STYLE_OPTIONS.map((opt) => (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => setStyle(opt.value)}
+                  className={`rounded-md px-2.5 py-1 text-xs font-medium transition-colors ${
+                    style === opt.value ? "bg-zindo-green-600 text-white" : "text-zinc-600 hover:bg-zinc-100"
+                  }`}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
           </div>
         )}
 
         <div className="flex-1 print:block">
-          {doc.documentType === "TICKET" && <Receipt data={doc.data} width={width} />}
+          {doc.documentType === "TICKET" && <Receipt data={doc.data} width={width} style={style} />}
           {doc.documentType === "FACTURE" && <InvoiceDocument data={doc.data} />}
           {doc.documentType === "FACTURE_ENGIN" && <FactureEngin data={doc.data} />}
         </div>
