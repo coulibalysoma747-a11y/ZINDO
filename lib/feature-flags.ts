@@ -15,7 +15,10 @@ import { supabase } from "@/lib/supabase";
  * commerce multi-boutiques) depuis /admin/fonctionnalites.
  *
  * Priorité (la plus spécifique gagne) : dérogation par boutique (locationId)
- * > dérogation par commerce > activation globale > désactivé par défaut.
+ * > activation globale > dérogation par commerce précis > règle par activité
+ * (feature_flag_activities — persistante : couvre aussi les commerces créés
+ * après coup avec cette activité, contrairement à une simple activation en
+ * masse ponctuelle) > désactivé par défaut.
  */
 export async function isFeatureEnabled(
   key: string,
@@ -41,13 +44,26 @@ export async function isFeatureEnabled(
 
   if (flag.enabledGlobally) return true;
 
-  const { data: override } = await supabase
+  const { data: businessOverride } = await supabase
     .from("feature_flag_businesses")
     .select("enabled")
     .eq("feature_flag_id", flag.id)
     .eq("business_id", businessId)
     .maybeSingle();
-  return override?.enabled ?? false;
+  if (businessOverride) return businessOverride.enabled;
+
+  const { data: business } = await supabase.from("businesses").select("activityKey:activity_key").eq("id", businessId).maybeSingle();
+  if (business?.activityKey) {
+    const { data: activityRule } = await supabase
+      .from("feature_flag_activities")
+      .select("enabled")
+      .eq("feature_flag_id", flag.id)
+      .eq("activity_key", business.activityKey)
+      .maybeSingle();
+    if (activityRule) return activityRule.enabled;
+  }
+
+  return false;
 }
 
 /**

@@ -19,32 +19,36 @@ type LocationRow = { id: string; businessId: string; name: string; type: "BOUTIQ
 type Override = { businessId: string; enabled: boolean };
 type LocationOverride = { locationId: string; enabled: boolean };
 
+type ActivityRule = { activityKey: string; enabled: boolean };
+
 export function FeatureFlagCard({
   flag,
   businesses,
   locations,
   overrides,
   locationOverrides,
+  activityRules,
 }: {
   flag: { id: string; key: string; label: string; description: string | null; enabledGlobally: boolean };
   businesses: Business[];
   locations: LocationRow[];
   overrides: Override[];
   locationOverrides: LocationOverride[];
+  activityRules: ActivityRule[];
 }) {
   const [expanded, setExpanded] = useState(false);
+  const [activityExpanded, setActivityExpanded] = useState(false);
   const [openBusinessId, setOpenBusinessId] = useState<string | null>(null);
-  const [activityKey, setActivityKey] = useState(ACTIVITIES[0]?.key ?? "");
-  const [activityMessage, setActivityMessage] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
   const router = useRouter();
 
-  function handleActivityToggle(enabled: boolean) {
-    if (!activityKey) return;
-    setActivityMessage(null);
+  function isActivityEnabled(activityKey: string) {
+    return activityRules.find((r) => r.activityKey === activityKey)?.enabled ?? false;
+  }
+
+  function handleActivityChange(activityKey: string, checked: boolean) {
     startTransition(async () => {
-      const result = await setFeatureFlagActivityAction(flag.id, activityKey, enabled);
-      setActivityMessage(result?.error ?? result?.success ?? null);
+      await setFeatureFlagActivityAction(flag.id, activityKey, checked);
       router.refresh();
     });
   }
@@ -112,6 +116,13 @@ export function FeatureFlagCard({
           />
           <button
             type="button"
+            onClick={() => setActivityExpanded((v) => !v)}
+            className="flex items-center gap-1 rounded-lg border border-zinc-200 px-2.5 py-1.5 text-xs font-medium text-zinc-600 hover:bg-zinc-50"
+          >
+            Par activité {activityExpanded ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
+          </button>
+          <button
+            type="button"
             onClick={() => setExpanded((v) => !v)}
             className="flex items-center gap-1 rounded-lg border border-zinc-200 px-2.5 py-1.5 text-xs font-medium text-zinc-600 hover:bg-zinc-50"
           >
@@ -120,38 +131,29 @@ export function FeatureFlagCard({
         </div>
       </div>
 
-      <div className="flex flex-wrap items-center gap-2 border-t border-zinc-100 px-4 py-3">
-        <span className="text-xs font-medium text-zinc-500">Par activité :</span>
-        <select
-          value={activityKey}
-          disabled={pending || flag.enabledGlobally}
-          onChange={(e) => setActivityKey(e.target.value)}
-          className="rounded-lg border border-zinc-200 bg-white px-2 py-1.5 text-xs text-zinc-700 disabled:opacity-40"
-        >
-          {ACTIVITIES.map((a) => (
-            <option key={a.key} value={a.key}>
-              {a.emoji} {a.label}
-            </option>
-          ))}
-        </select>
-        <button
-          type="button"
-          disabled={pending || flag.enabledGlobally || !activityKey}
-          onClick={() => handleActivityToggle(true)}
-          className="rounded-lg border border-zindo-green-200 px-2.5 py-1.5 text-xs font-medium text-zindo-green-700 hover:bg-zindo-green-50 disabled:opacity-40"
-        >
-          Activer
-        </button>
-        <button
-          type="button"
-          disabled={pending || flag.enabledGlobally || !activityKey}
-          onClick={() => handleActivityToggle(false)}
-          className="rounded-lg border border-red-200 px-2.5 py-1.5 text-xs font-medium text-red-600 hover:bg-red-50 disabled:opacity-40"
-        >
-          Désactiver
-        </button>
-        {activityMessage && <span className="text-xs text-zinc-500">{activityMessage}</span>}
-      </div>
+      {activityExpanded && (
+        <div className="border-t border-zinc-100 px-4 py-3">
+          <p className="mb-2 text-xs text-zinc-500">
+            Règle persistante : couvre aussi les commerces qui choisiront cette activité plus tard, sans avoir à
+            revenir ici. Une dérogation cochée pour un commerce précis (« Par commerce » ci-dessous) reste
+            prioritaire sur ce réglage.
+          </p>
+          <div className="grid grid-cols-1 gap-x-4 gap-y-1.5 sm:grid-cols-2">
+            {ACTIVITIES.map((a) => (
+              <label key={a.key} className="flex items-center gap-2 text-sm text-zinc-700">
+                <input
+                  type="checkbox"
+                  checked={isActivityEnabled(a.key)}
+                  disabled={pending || flag.enabledGlobally}
+                  onChange={(e) => handleActivityChange(a.key, e.target.checked)}
+                  className="h-4 w-4 rounded accent-zindo-green-500 disabled:opacity-40"
+                />
+                {a.emoji} {a.label}
+              </label>
+            ))}
+          </div>
+        </div>
+      )}
 
       {expanded && (
         <div className="divide-y divide-zinc-100 border-t border-zinc-100">

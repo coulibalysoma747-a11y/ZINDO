@@ -1424,6 +1424,22 @@ create table feature_flag_locations (
 );
 create index on feature_flag_locations (location_id);
 
+-- Règle persistante par activité (voir lib/activities.ts) : contrairement à
+-- une activation en masse ponctuelle sur les commerces existants, une ligne
+-- ici s'applique aussi à tout commerce créé plus tard avec cette activité,
+-- sans intervention du super-admin — voir lib/feature-flags.ts::isFeatureEnabled.
+-- Priorité : en dessous d'une dérogation par commerce précis (feature_flag_businesses),
+-- au-dessus du désactivé par défaut.
+create table feature_flag_activities (
+  id text primary key default gen_random_uuid()::text,
+  feature_flag_id text not null references feature_flags(id) on delete cascade,
+  activity_key text not null,
+  enabled boolean not null default true,
+  created_at timestamptz not null default now(),
+  unique (feature_flag_id, activity_key)
+);
+create index on feature_flag_activities (activity_key);
+
 -- ---------------------------------------------------------------------------
 -- Boutique en ligne
 -- ---------------------------------------------------------------------------

@@ -131,28 +131,22 @@ export async function setFeatureFlagLocationAction(flagId: string, locationId: s
 }
 
 /**
- * Active/désactive une fonctionnalité pour TOUS les commerces d'une même
- * activité (ex. tous les "Supermarché / Alimentation") en une seule action —
- * pratique pour un module conçu pour une activité précise (voir
- * lib/nav.ts `requireActivity`), sans avoir à cocher commerce par commerce.
- * Réutilise simplement feature_flag_businesses (pas de nouvelle table/priorité).
+ * Active/désactive une fonctionnalité pour TOUTE une activité (ex. tous les
+ * "Atelier de réparation") de façon persistante — contrairement à une
+ * activation en masse ponctuelle, cette règle s'applique aussi à un commerce
+ * qui choisirait cette activité plus tard, sans réintervention du
+ * super-admin. Voir feature_flag_activities et
+ * lib/feature-flags.ts::isFeatureEnabled pour la priorité exacte (une
+ * dérogation par commerce précis reste prioritaire sur cette règle).
  */
 export async function setFeatureFlagActivityAction(flagId: string, activityKey: string, enabled: boolean) {
   const admin = await requireSuperAdmin();
-  const { data: businesses, error: fetchError } = await supabase
-    .from("businesses")
-    .select("id")
-    .eq("activity_key", activityKey);
-  if (fetchError) {
-    console.error("[setFeatureFlagActivityAction] Échec de la lecture des commerces :", fetchError.message);
-    return { error: "Impossible de lire les commerces de cette activité" };
-  }
-  const rows = (businesses ?? []).map((b) => ({ feature_flag_id: flagId, business_id: b.id as string, enabled }));
-  if (rows.length === 0) return { error: "Aucun commerce n'a cette activité pour le moment" };
-
   const { error } = await supabase
-    .from("feature_flag_businesses")
-    .upsert(rows, { onConflict: "feature_flag_id,business_id", ignoreDuplicates: false });
+    .from("feature_flag_activities")
+    .upsert(
+      { feature_flag_id: flagId, activity_key: activityKey, enabled },
+      { onConflict: "feature_flag_id,activity_key", ignoreDuplicates: false }
+    );
   if (error) {
     console.error("[setFeatureFlagActivityAction] Échec de la mise à jour :", error.message);
     return { error: "Impossible de mettre à jour pour cette activité" };
@@ -164,10 +158,10 @@ export async function setFeatureFlagActivityAction(flagId: string, activityKey: 
     action: "SET",
     entity: "FeatureFlagActivity",
     entityId: activityKey,
-    details: `${flagId} -> ${enabled} (${rows.length} commerce(s))`,
+    details: `${flagId} -> ${enabled}`,
   });
   revalidatePath("/admin/fonctionnalites");
-  return { success: `${enabled ? "Activée" : "Désactivée"} pour ${rows.length} commerce(s) de cette activité` };
+  return { success: enabled ? "Activée pour cette activité (y compris les futurs commerces)" : "Désactivée pour cette activité" };
 }
 
 export async function clearFeatureFlagLocationAction(flagId: string, locationId: string) {

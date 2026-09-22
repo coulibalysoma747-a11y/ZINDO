@@ -420,6 +420,19 @@ CREATE TABLE IF NOT EXISTS product_price_tiers (
 );
 CREATE INDEX IF NOT EXISTS product_price_tiers_business_id_product_id_idx ON product_price_tiers (business_id, product_id);
 
+-- Règle persistante par activité pour un feature flag : couvre aussi les
+-- commerces créés plus tard avec cette activité, sans réintervention du
+-- super-admin — voir lib/feature-flags.ts::isFeatureEnabled.
+CREATE TABLE IF NOT EXISTS feature_flag_activities (
+  id text primary key default gen_random_uuid()::text,
+  feature_flag_id text not null references feature_flags(id) on delete cascade,
+  activity_key text not null,
+  enabled boolean not null default true,
+  created_at timestamptz not null default now(),
+  unique (feature_flag_id, activity_key)
+);
+CREATE INDEX IF NOT EXISTS feature_flag_activities_activity_key_idx ON feature_flag_activities (activity_key);
+
 -- --- Fonctions manquantes ---------------------------------------------------
 CREATE OR REPLACE FUNCTION claim_promo_code_usage(p_promo_code_id text)
 RETURNS boolean AS $$

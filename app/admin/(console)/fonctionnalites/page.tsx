@@ -15,7 +15,7 @@ type FlagRow = {
 export default async function AdminFeatureFlagsPage() {
   await requireSuperAdmin();
 
-  const [{ data: flagsData }, { data: overridesData }, { data: locationOverridesData }, { data: businesses }, { data: locations }] =
+  const [{ data: flagsData }, { data: overridesData }, { data: locationOverridesData }, { data: activityRulesData }, { data: businesses }, { data: locations }] =
     await Promise.all([
       supabase
         .from("feature_flags")
@@ -25,6 +25,7 @@ export default async function AdminFeatureFlagsPage() {
       supabase
         .from("feature_flag_locations")
         .select("id, featureFlagId:feature_flag_id, locationId:location_id, enabled"),
+      supabase.from("feature_flag_activities").select("id, featureFlagId:feature_flag_id, activityKey:activity_key, enabled"),
       supabase.from("businesses").select("id, name").order("name", { ascending: true }),
       supabase.from("locations").select("id, businessId:business_id, name, type").order("name", { ascending: true }),
     ]);
@@ -35,6 +36,7 @@ export default async function AdminFeatureFlagsPage() {
     locationId: string;
     enabled: boolean;
   }>;
+  const activityRules = (activityRulesData ?? []) as unknown as Array<{ featureFlagId: string; activityKey: string; enabled: boolean }>;
 
   return (
     <div className="space-y-6">
@@ -43,8 +45,9 @@ export default async function AdminFeatureFlagsPage() {
           <h1 className="text-xl font-bold text-zinc-900">Fonctionnalités</h1>
           <p className="max-w-2xl text-sm text-zinc-500">
             Déploiement progressif : une fonctionnalité enregistrée ici reste invisible pour tous les
-            commerçants jusqu&apos;à ce que vous l&apos;activiez — globalement, pour des commerces choisis, ou
-            même pour une seule boutique d&apos;un commerce qui en a plusieurs.
+            commerçants jusqu&apos;à ce que vous l&apos;activiez — globalement, pour une activité entière (y
+            compris les commerces qui la choisiront plus tard), pour des commerces choisis, ou même pour une
+            seule boutique d&apos;un commerce qui en a plusieurs.
           </p>
         </div>
         <CreateFeatureFlagForm />
@@ -69,6 +72,9 @@ export default async function AdminFeatureFlagsPage() {
               locationOverrides={locationOverrides
                 .filter((o) => o.featureFlagId === flag.id)
                 .map((o) => ({ locationId: o.locationId, enabled: o.enabled }))}
+              activityRules={activityRules
+                .filter((r) => r.featureFlagId === flag.id)
+                .map((r) => ({ activityKey: r.activityKey, enabled: r.enabled }))}
             />
           ))}
         </div>
