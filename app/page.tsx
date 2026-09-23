@@ -28,6 +28,9 @@ import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { FacebookIcon } from "@/components/icons/FacebookIcon";
 import { TikTokIcon } from "@/components/icons/TikTokIcon";
 import { PublicHelpChat } from "@/components/PublicHelpChat";
+import { HeroCarousel } from "@/components/landing/HeroCarousel";
+import { DemoVideo } from "@/components/landing/DemoVideo";
+import { WhatsAppFloat } from "@/components/landing/WhatsAppFloat";
 
 // Cycle tricolore (vert/or/rouge, drapeau du Burkina Faso et logo ZINDO)
 // appliqué aux puces d'icônes de la page publique pour une identité visuelle
@@ -245,15 +248,16 @@ export default async function RootPage() {
 
       {/* Hero */}
       <main className="relative z-10 mx-auto w-full max-w-6xl px-5 pb-24 pt-8 sm:px-8">
-        <section className="mx-auto max-w-3xl text-center">
-          <p className="inline-block rounded-full bg-zindo-green-100 px-3 py-1 text-xs font-bold uppercase tracking-wider text-zindo-green-700">
+        <HeroCarousel>
+        <div className="mx-auto max-w-3xl text-center">
+          <p className="inline-block rounded-full bg-zindo-gold-100 px-3 py-1 text-xs font-bold uppercase tracking-wider text-zindo-ink-900">
             Gestion de stock et de ventes
           </p>
-          <h1 className="mt-4 text-3xl font-extrabold leading-tight tracking-tight text-zindo-ink-900 sm:text-5xl">
+          <h1 className="mt-4 text-3xl font-extrabold leading-tight tracking-tight text-white sm:text-5xl">
             Remplacez vos cahiers et vos fichiers Excel par{" "}
-            <span className="text-zindo-green-600">ZINDO</span>
+            <span className="text-zindo-green-400">ZINDO</span>
           </h1>
-          <p className="mx-auto mt-4 max-w-xl text-base text-zinc-600 sm:text-lg">
+          <p className="mx-auto mt-4 max-w-xl text-base text-zinc-200 sm:text-lg">
             Suivez votre stock en temps réel, encaissez vos ventes et connaissez enfin vos bénéfices —
             depuis une seule application pensée pour les commerces d&apos;Afrique de l&apos;Ouest.
           </p>
@@ -280,6 +284,19 @@ export default async function RootPage() {
               Continuer avec Google
             </a>
           </div>
+        </div>
+        </HeroCarousel>
+
+        {/* Visuel ZINDO — affiché en entier, sans texte par-dessus */}
+        <section className="mt-10 overflow-hidden rounded-3xl shadow-xl">
+          <Image
+            src="/hero/zindo-hero.jpg"
+            alt="Commerçant utilisant ZINDO : gestion de stock, ventes, tickets et rapports"
+            width={1080}
+            height={720}
+            sizes="(min-width: 1152px) 1088px, 100vw"
+            className="h-auto w-full"
+          />
         </section>
 
         {/* Ce que ZINDO change */}
@@ -447,6 +464,8 @@ export default async function RootPage() {
           </div>
         </section>
 
+        <DemoVideo />
+
         {/* CTA final */}
         <section className="mt-24 rounded-3xl border border-zindo-green-100 bg-white px-6 py-14 text-center shadow-sm sm:px-12">
           <h2 className="text-2xl font-extrabold tracking-tight text-zindo-ink-900 sm:text-3xl">
@@ -505,6 +524,7 @@ export default async function RootPage() {
           </Link>
         </p>
       </footer>
+      <WhatsAppFloat href="https://wa.me/22604059929" />
     </div>
   );
 }
