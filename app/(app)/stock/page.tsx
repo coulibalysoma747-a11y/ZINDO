@@ -1,9 +1,10 @@
 import Link from "next/link";
-import { ArrowDownCircle, ArrowUpCircle, CheckSquare } from "lucide-react";
-import { requirePermission } from "@/lib/auth";
+import { ArrowDownCircle, ArrowUpCircle, CheckSquare, RefreshCw } from "lucide-react";
+import { requirePermission, hasPermission } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
 import { supabase } from "@/lib/supabase";
 import { getBusinessSettings } from "@/lib/business-settings";
+import { isFeatureEnabled } from "@/lib/feature-flags";
 import { formatDateTime, startOfToday, startOfYesterday, startOfWeek, startOfMonth } from "@/lib/format";
 import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
@@ -34,6 +35,9 @@ export default async function StockPage({
   const user = await requirePermission(PERMISSIONS.STOCK_VIEW);
   const { periode } = await searchParams;
   const businessSettings = await getBusinessSettings(user.businessId);
+  const showFasoSync =
+    (await isFeatureEnabled("synchro_fasostock_fichier", user.businessId)) &&
+    (await hasPermission(user.businessId, user.role, PERMISSIONS.STOCK_MANAGE, user.id));
 
   let query = supabase
     .from("stock_movements")
@@ -76,6 +80,11 @@ export default async function StockPage({
           {businessSettings.bulkStockFillEnabled && (
             <ButtonLink href="/stock/remplissage" variant="outline">
               <CheckSquare className="h-4 w-4" /> Remplir en un clic
+            </ButtonLink>
+          )}
+          {showFasoSync && (
+            <ButtonLink href="/stock/fasostock" variant="outline">
+              <RefreshCw className="h-4 w-4" /> Synchro FasoStock
             </ButtonLink>
           )}
           <ButtonLink href="/stock/entree" variant="secondary">
