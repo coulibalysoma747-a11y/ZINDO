@@ -120,8 +120,8 @@ export default async function MarketplacePage({
               Marché <span className="text-zindo-green-400">ZINDO</span>
             </span>
           </Link>
-          <Link href="/" className="text-sm font-semibold text-zinc-300 hover:text-white">
-            Vous êtes commerçant ?
+          <Link href="/marche/vendre" className="rounded-xl bg-zindo-green-500 px-3 py-2 text-sm font-bold text-white hover:bg-zindo-green-600">
+            Vendre sur le marché
           </Link>
         </div>
         <div className="mx-auto max-w-6xl px-4 pb-8 pt-2 sm:px-8">
