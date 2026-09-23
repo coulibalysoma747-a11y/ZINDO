@@ -15,6 +15,32 @@ import { MarketplaceShop } from "./MarketplaceShop";
  */
 const MARKETPLACE_FLAG = "marche_zindo";
 const MAX_RESULTS = 240;
+const FEATURED_MAX = 8;
+// Accès gratuit des vendeurs sans boutique (lib/actions/market-seller.ts) :
+// abonnement ACTIVE jusqu'en 2099, qui ne compte pas comme un abonnement payé.
+const FREE_FOREVER_YEAR = 2099;
+
+type SubRow = { businessId: string; status: string; currentPeriodEnd: string | null };
+
+function paidBusinessIds(subs: SubRow[]): Set<string> {
+  const now = Date.now();
+  return new Set(
+    subs
+      .filter((sub) => {
+        if (sub.status !== "ACTIVE" || !sub.currentPeriodEnd) return false;
+        const end = new Date(sub.currentPeriodEnd);
+        return end.getTime() > now && end.getUTCFullYear() < FREE_FOREVER_YEAR;
+      })
+      .map((sub) => sub.businessId)
+  );
+}
+
+function shuffle<T>(items: T[]): T[] {
+  return items
+    .map((item) => ({ item, r: Math.random() }))
+    .sort((a, b) => a.r - b.r)
+    .map((x) => x.item);
+}
 
 export const metadata: Metadata = {
   title: "Marché ZINDO — achetez chez les commerces du Burkina Faso",
@@ -84,6 +110,15 @@ export default async function MarketplacePage({
   const stores = allStores.filter((_, i) => enabled[i]);
   const storeByLocation = new Map(stores.map((s) => [s.locationId as string, s]));
 
+  // Mise en avant : réservée aux commerces avec un abonnement payé en cours.
+  const { data: subsData } = stores.length
+    ? await supabase
+        .from("business_subscriptions")
+        .select("businessId:business_id, status, currentPeriodEnd:current_period_end")
+        .in("business_id", stores.map((s) => s.businessId))
+    : { data: [] };
+  const paidBusinesses = paidBusinessIds((subsData ?? []) as SubRow[]);
+
   const { data: stocksData } = stores.length
     ? await supabase
         .from("product_stocks")
@@ -94,7 +129,10 @@ export default async function MarketplacePage({
     : { data: [] };
 
   const offers = ((stocksData ?? []) as unknown as StockRow[])
-    .map((s) => ({ ...s, store: storeByLocation.get(s.locationId)! }))
+    .map((s) => {
+      const store = storeByLocation.get(s.locationId)!;
+      return { ...s, store, featured: !!store && paidBusinesses.has(store.businessId) };
+    })
     .filter((s) => s.store && s.product.active && (s.quantity > 0 || s.store.showOutOfStock));
 
   const cities = [...new Set(stores.map((s) => s.city?.trim()).filter((c): c is string => !!c))].sort();
@@ -107,8 +145,21 @@ export default async function MarketplacePage({
     .filter((o) => !needle || normalize(o.product.name).includes(needle) || normalize(o.store.storeName).includes(needle))
     .filter((o) => !ville || o.store.city?.trim() === ville)
     .filter((o) => !categorie || o.product.category?.name === categorie)
-    .sort((a, b) => a.product.name.localeCompare(b.product.name));
+    .sort((a, b) => Number(b.featured) - Number(a.featured) || a.product.name.localeCompare(b.product.name));
   const shown = results.slice(0, MAX_RESULTS);
+  // Rangée « À la une » : produits avec photo des commerces abonnés, variés à chaque visite.
+  const spotlight = q || ville || categorie
+    ? []
+    : shuffle(offers.filter((o) => o.featured && o.product.photoUrl && o.quantity > 0)).slice(0, FEATURED_MAX);
+  const toOffer = (o: (typeof offers)[number]) => ({
+    productId: o.product.id,
+    name: o.product.name,
+    salePrice: o.product.salePrice,
+    photoUrl: o.product.photoUrl,
+    available: o.quantity,
+    storeSlug: o.store.slug,
+    featured: o.featured,
+  });
 
   return (
     <div className="theme-locked min-h-screen bg-zinc-50">
@@ -168,14 +219,8 @@ export default async function MarketplacePage({
         ) : (
           <>
             <MarketplaceShop
-              offers={shown.map((o) => ({
-                productId: o.product.id,
-                name: o.product.name,
-                salePrice: o.product.salePrice,
-                photoUrl: o.product.photoUrl,
-                available: o.quantity,
-                storeSlug: o.store.slug,
-              }))}
+              offers={shown.map(toOffer)}
+              spotlight={spotlight.map(toOffer)}
               stores={stores.map((st) => ({
                 slug: st.slug,
                 storeName: st.storeName,

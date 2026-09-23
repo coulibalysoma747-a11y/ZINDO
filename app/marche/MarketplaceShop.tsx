@@ -25,6 +25,8 @@ export type MarketOffer = {
   photoUrl: string | null;
   available: number;
   storeSlug: string;
+  /** Commerce avec abonnement payé : badge « À la une » et affiché en premier. */
+  featured: boolean;
 };
 
 type CartLine = { productId: string; storeSlug: string; name: string; salePrice: number; available: number; quantity: number };
@@ -49,7 +51,15 @@ function saveCart(cart: CartLine[]) {
   }
 }
 
-export function MarketplaceShop({ offers, stores }: { offers: MarketOffer[]; stores: MarketStore[] }) {
+export function MarketplaceShop({
+  offers,
+  spotlight,
+  stores,
+}: {
+  offers: MarketOffer[];
+  spotlight: MarketOffer[];
+  stores: MarketStore[];
+}) {
   const storeMap = useMemo(() => new Map(stores.map((s) => [s.slug, s])), [stores]);
   const [cart, setCart] = useState<CartLine[]>([]);
   const [open, setOpen] = useState(false);
@@ -151,14 +161,19 @@ export function MarketplaceShop({ offers, stores }: { offers: MarketOffer[]; sto
     setPending(false);
   }
 
-  return (
-    <>
-      <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-        {offers.map((o) => {
+  function renderCard(o: MarketOffer) {
           const store = storeMap.get(o.storeSlug)!;
           const qty = inCart.get(key(o)) ?? 0;
           return (
-            <li key={key(o)} className="flex flex-col overflow-hidden rounded-2xl border border-zinc-200 bg-white">
+            <li
+              key={key(o)}
+              className={`relative flex flex-col overflow-hidden rounded-2xl border bg-white ${o.featured ? "border-zindo-gold-500" : "border-zinc-200"}`}
+            >
+              {o.featured && (
+                <span className="absolute left-2 top-2 z-10 rounded-full bg-zindo-gold-500 px-2 py-0.5 text-[11px] font-bold text-white">
+                  ⭐ À la une
+                </span>
+              )}
               <div className="flex aspect-square items-center justify-center bg-zinc-100">
                 {o.photoUrl ? (
                   // eslint-disable-next-line @next/next/no-img-element
@@ -195,8 +210,17 @@ export function MarketplaceShop({ offers, stores }: { offers: MarketOffer[]; sto
               </div>
             </li>
           );
-        })}
-      </ul>
+  }
+
+  return (
+    <>
+      {spotlight.length > 0 && (
+        <section className="mb-8">
+          <h2 className="mb-3 text-lg font-extrabold text-zindo-ink-900">⭐ À la une</h2>
+          <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">{spotlight.map(renderCard)}</ul>
+        </section>
+      )}
+      <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">{offers.map(renderCard)}</ul>
 
       {count > 0 && !open && (
         <button
