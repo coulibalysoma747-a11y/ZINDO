@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { ZindoLogo } from "@/components/auth/ZindoLogo";
 import { formatMoney, formatLongDate } from "@/lib/format";
+import { printDocument } from "@/lib/print";
 
 const STATUS_TONE = { "En attente": "amber", Payée: "emerald", Annulée: "zinc" } as const;
 
@@ -36,7 +37,7 @@ export function FactureInvoiceView({
         <Link href="/abonnement" className="flex items-center gap-1 text-sm text-zinc-500 hover:text-zinc-700">
           <ArrowLeft className="h-4 w-4" /> Retour à l&apos;abonnement
         </Link>
-        <Button variant="outline" size="sm" onClick={() => window.print()}>
+        <Button variant="outline" size="sm" onClick={() => printDocument("A4")}>
           <Printer className="h-3.5 w-3.5" /> Imprimer / Télécharger
         </Button>
       </div>

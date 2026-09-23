@@ -53,5 +53,5 @@ next-env.d.ts
 
 # application Windows (Electron)
 /dist-electron/
-/dist-desktop/
+/dist-desktop*/
 electron/env.generated.ts

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { ArrowLeft, Printer, Share2 } from "lucide-react";
 import type { ReceiptWidth } from "@/components/sales/Receipt";
 import { Button } from "@/components/ui/Button";
+import { printDocument } from "@/lib/print";
 import { OrdonnanceDocument, type OrdonnanceDocumentData } from "./OrdonnanceDocument";
 
 const WIDTH_OPTIONS: { value: ReceiptWidth; label: string }[] = [
@@ -57,7 +58,7 @@ export function OrdonnanceView({ data, defaultWidth }: { data: OrdonnanceDocumen
           <Button variant="outline" onClick={handleShare}>
             <Share2 className="h-4 w-4" /> Partager
           </Button>
-          <Button onClick={() => window.print()}>
+          <Button onClick={() => printDocument(width)}>
             <Printer className="h-4 w-4" /> Imprimer / PDF
           </Button>
         </div>

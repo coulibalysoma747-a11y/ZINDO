@@ -11,6 +11,7 @@ import { ReceiptActions } from "./ReceiptActions";
 import { CancelSaleButton } from "./CancelSaleButton";
 import { InstallmentSection } from "./InstallmentSection";
 import type { InstallmentPlan } from "@/lib/actions/installments";
+import { printDocument } from "@/lib/print";
 
 export function FactureView({
   data,
@@ -37,7 +38,7 @@ export function FactureView({
   // automatiquement dès que la facture est affichée.
   useEffect(() => {
     if (searchParams.get("print") !== "1") return;
-    const timeout = setTimeout(() => window.print(), 300);
+    const timeout = setTimeout(() => printDocument("A4"), 300);
     return () => clearTimeout(timeout);
   }, [searchParams]);
 

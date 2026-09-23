@@ -8,6 +8,7 @@ import { Table, TableHead, TableBody, TableRow, TableHeaderCell, TableCell } fro
 import { ProductPicker } from "@/components/products/ProductPicker";
 import { ProductThumbnail } from "@/components/products/ProductThumbnail";
 import { formatMoney } from "@/lib/format";
+import { printDocument } from "@/lib/print";
 import { addTableOrderItemAction, removeTableOrderItemAction, type TableOrderItemRow } from "@/lib/actions/tables";
 
 type SelectedProduct = { id: string; name: string; photoUrl?: string | null; salePrice: number };
@@ -146,7 +147,7 @@ export function TableOrderItemsPanel({
       )}
 
       {items.length > 0 && (
-        <Button type="button" size="sm" variant="outline" onClick={() => window.print()} className="print:hidden">
+        <Button type="button" size="sm" variant="outline" onClick={() => printDocument("A4")} className="print:hidden">
           <Printer className="h-3.5 w-3.5" /> Imprimer l&apos;addition
         </Button>
       )}

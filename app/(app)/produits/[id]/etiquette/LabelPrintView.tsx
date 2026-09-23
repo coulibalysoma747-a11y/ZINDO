@@ -8,6 +8,7 @@ import { Select } from "@/components/ui/Input";
 import { ProductQrLabel, DEFAULT_LABEL_FIELDS, type LabelData } from "@/components/products/ProductQrLabel";
 import { LABEL_FORMATS, DEFAULT_FORMAT_ID, getLabelFormat, buildPrintCss } from "@/lib/label-formats";
 import { ensureProductBarcodeAction } from "@/lib/actions/products";
+import { printDocument } from "@/lib/print";
 
 export function LabelPrintView({
   data: initialData,
@@ -31,7 +32,9 @@ export function LabelPrintView({
       if ("barcode" in result) setData((d) => ({ ...d, code: result.barcode }));
       setGenerating(false);
     }
-    requestAnimationFrame(() => window.print());
+    requestAnimationFrame(() =>
+      printDocument(format.kind === "roll" ? { widthMm: format.widthMm, heightMm: format.heightMm } : "A4")
+    );
   }
 
   return (

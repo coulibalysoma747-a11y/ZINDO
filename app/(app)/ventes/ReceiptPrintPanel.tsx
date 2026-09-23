@@ -7,6 +7,7 @@ import { InvoiceDocument } from "@/components/sales/InvoiceDocument";
 import { FactureEngin } from "@/components/sales/FactureEngin";
 import { Button } from "@/components/ui/Button";
 import type { SaleDocument } from "@/lib/actions/receipt";
+import { printDocument } from "@/lib/print";
 
 const WIDTH_OPTIONS: { value: ReceiptWidth; label: string }[] = [
   { value: "58mm", label: "58 mm" },
@@ -42,7 +43,7 @@ export function ReceiptPrintPanel({
   // monté si le commerce a activé l'impression auto, sans attendre un clic.
   useEffect(() => {
     if (!autoPrint) return;
-    const timeout = setTimeout(() => window.print(), 250);
+    const timeout = setTimeout(() => printDocument(width), 250);
     return () => clearTimeout(timeout);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -126,7 +127,7 @@ export function ReceiptPrintPanel({
         </div>
 
         <div className="flex gap-2 pt-1 print:hidden">
-          <Button className="flex-1" onClick={() => window.print()}>
+          <Button className="flex-1" onClick={() => printDocument(width)}>
             <Printer className="h-4 w-4" /> Imprimer
           </Button>
           <Button variant="outline" onClick={onClose}>

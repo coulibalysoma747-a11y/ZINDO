@@ -4,6 +4,7 @@ import Link from "next/link";
 import { ArrowLeft, Printer } from "lucide-react";
 import { SessionReport, type SessionReportData } from "@/components/sales/SessionReport";
 import { Button } from "@/components/ui/Button";
+import { printDocument } from "@/lib/print";
 
 export function SessionReportView({ data }: { data: SessionReportData }) {
   return (
@@ -12,7 +13,7 @@ export function SessionReportView({ data }: { data: SessionReportData }) {
         <Link href="/ventes" className="flex items-center gap-1 text-sm text-zinc-500 hover:text-zinc-700">
           <ArrowLeft className="h-4 w-4" /> Retour à la caisse
         </Link>
-        <Button onClick={() => window.print()}>
+        <Button onClick={() => printDocument("A4")}>
           <Printer className="h-4 w-4" /> Imprimer
         </Button>
       </div>

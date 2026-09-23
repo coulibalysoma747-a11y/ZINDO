@@ -142,37 +142,6 @@ export async function createProductAction(
     return { error: "Un produit à suivi individuel ne peut pas avoir de conditionnement" };
   }
 
-  const limit = await checkLimit(user.businessId, "products");
-  if (!limit.ok) {
-    return {
-      error: `Limite de votre abonnement atteinte (${limit.current}/${limit.limit} produits) — passez à un palier supérieur pour en ajouter davantage.`,
-    };
-  }
-
-  if (data.quantity > 0 && !data.locationId) {
-    return { error: "Sélectionnez la boutique qui reçoit le stock initial" };
-  }
-
-  if (data.barcode) {
-    const { data: existingBarcode } = await supabase
-      .from("products")
-      .select("id")
-      .eq("business_id", user.businessId)
-      .eq("barcode", data.barcode)
-      .maybeSingle();
-    if (existingBarcode) return { error: "Ce code-barres est déjà utilisé par un autre produit" };
-  }
-
-  const reference = data.reference?.trim() || (await generateProductReference(user.businessId));
-
-  const { data: existingRef } = await supabase
-    .from("products")
-    .select("id")
-    .eq("business_id", user.businessId)
-    .eq("reference", reference)
-    .maybeSingle();
-  if (existingRef) return { error: "Cette référence est déjà utilisée" };
-
   let photoUrl: string | undefined;
   const photoFile = formData.get("photo");
   if (photoFile instanceof File && photoFile.size > 0) {
@@ -184,61 +153,27 @@ export async function createProductAction(
   const activityConfig = await getActivityConfig(user.business.activityKey);
   const customFields = parseCustomFields(formData, activityConfig.customFields);
 
-  const { data: product, error: createError } = await supabase
-    .from("products")
-    .insert({
-      business_id: user.businessId,
-      reference,
-      name: data.name,
-      category_id: data.categoryId || null,
-      brand: data.brand ?? null,
-      description: data.description ?? null,
-      unit: data.unit,
-      purchase_price: data.purchasePrice,
-      sale_price: data.salePrice,
-      min_stock: data.minStock,
-      shelf_location: data.shelfLocation ?? null,
-      supplier_id: data.supplierId || null,
-      barcode: data.barcode || null,
-      photo_url: photoUrl ?? null,
-      custom_fields: customFields,
-      // Réservé à l'activité "Boutique de motos" (lib/activities.ts) — même si
-      // le formulaire envoyait true par erreur/manipulation, on l'ignore pour
-      // toute autre activité.
-      track_units: effectiveTrackUnits,
-    })
-    .select("id")
-    .single();
-
-  if (createError || !product) {
-    console.error("[createProductAction] Échec de la création :", createError?.message);
-    return { error: "Impossible de créer le produit" };
-  }
-
-  if (data.quantity > 0 && data.locationId) {
-    const { error: stockError } = await supabase
-      .from("product_stocks")
-      .insert({ product_id: product.id, location_id: data.locationId, quantity: data.quantity });
-    if (stockError) {
-      console.error("[createProductAction] Échec de la création du stock initial :", stockError.message);
-    } else {
-      const { error: movementError } = await supabase.from("stock_movements").insert({
-        business_id: user.businessId,
-        location_id: data.locationId,
-        product_id: product.id,
-        direction: "IN",
-        reason: "CORRECTION",
-        quantity: data.quantity,
-        old_stock: 0,
-        new_stock: data.quantity,
-        user_id: user.id,
-        note: "Stock initial à la création du produit",
-      });
-      if (movementError) {
-        console.error("[createProductAction] Échec de l'écriture du mouvement de stock :", movementError.message);
-      }
-    }
-  }
+  const result = await createProductCore(user, {
+    name: data.name,
+    categoryId: data.categoryId,
+    brand: data.brand,
+    description: data.description,
+    unit: data.unit,
+    purchasePrice: data.purchasePrice,
+    salePrice: data.salePrice,
+    quantity: data.quantity,
+    locationId: data.locationId,
+    minStock: data.minStock,
+    shelfLocation: data.shelfLocation,
+    supplierId: data.supplierId,
+    barcode: data.barcode,
+    reference: data.reference,
+    photoUrl,
+    customFields,
+    trackUnits: effectiveTrackUnits,
+  });
+  if (!result.success) return { error: result.error };
+  const product = { id: result.productId };
 
   if (packagingRows.rows.length > 0 && (await isPackagingUnitsModuleEnabled(user.businessId))) {
     const { error: packagingError } = await supabase.from("product_packaging_units").insert(
@@ -258,6 +193,176 @@ export async function createProductAction(
   const aliases = parseAliases(formData, data.name);
   if (aliases.length > 0) await replaceProductAliases(product.id as string, aliases);
 
+  revalidatePath("/produits");
+  redirect(`/produits/${product.id}`);
+}
+
+export type CreateProductInput = {
+  name: string;
+  categoryId?: string;
+  brand?: string;
+  description?: string;
+  unit: string;
+  purchasePrice: number;
+  salePrice: number;
+  quantity?: number;
+  locationId?: string;
+  minStock?: number;
+  shelfLocation?: string;
+  supplierId?: string;
+  barcode?: string;
+  reference?: string;
+  /** Clé d'idempotence pour un produit créé hors ligne (voir lib/offline/) — absente pour un produit créé normalement en ligne. */
+  clientRef?: string;
+};
+
+export type CreateProductResult = { success: true; productId: string } | { success: false; error: string };
+
+/**
+ * Entrée JSON équivalente à createProductAction, pour le rejeu hors ligne
+ * (lib/offline/) — volontairement plus restreinte : pas de photo (nécessite
+ * un envoi réseau, impossible hors ligne), pas de conditionnements, pas de
+ * champs personnalisés par activité, pas d'alias, pas de suivi unitaire
+ * (moto). Ces raffinements restent à ajouter en ligne après synchronisation ;
+ * seuls les champs essentiels à la vente sont couverts hors ligne.
+ */
+export async function createProductJsonAction(input: CreateProductInput): Promise<CreateProductResult> {
+  const user = await requirePermission(PERMISSIONS.PRODUCTS_MANAGE);
+  if (input.purchasePrice > input.salePrice) {
+    return { success: false, error: "Le prix d'achat ne peut pas dépasser le prix de vente" };
+  }
+  return createProductCore(user, {
+    ...input,
+    quantity: input.quantity ?? 0,
+    minStock: input.minStock ?? 5,
+    photoUrl: undefined,
+    customFields: null,
+    trackUnits: false,
+  });
+}
+
+async function createProductCore(
+  user: Awaited<ReturnType<typeof requirePermission>>,
+  data: {
+    name: string;
+    categoryId?: string;
+    brand?: string;
+    description?: string;
+    unit: string;
+    purchasePrice: number;
+    salePrice: number;
+    quantity: number;
+    locationId?: string;
+    minStock: number;
+    shelfLocation?: string;
+    supplierId?: string;
+    barcode?: string;
+    reference?: string;
+    photoUrl?: string;
+    customFields: string | null;
+    trackUnits: boolean;
+    clientRef?: string;
+  }
+): Promise<CreateProductResult> {
+  if (data.clientRef) {
+    const { data: existing } = await supabase
+      .from("products")
+      .select("id")
+      .eq("business_id", user.businessId)
+      .eq("client_ref", data.clientRef)
+      .maybeSingle();
+    if (existing) return { success: true, productId: existing.id as string };
+  }
+
+  const limit = await checkLimit(user.businessId, "products");
+  if (!limit.ok) {
+    return {
+      success: false,
+      error: `Limite de votre abonnement atteinte (${limit.current}/${limit.limit} produits) — passez à un palier supérieur pour en ajouter davantage.`,
+    };
+  }
+
+  if (data.quantity > 0 && !data.locationId) {
+    return { success: false, error: "Sélectionnez la boutique qui reçoit le stock initial" };
+  }
+
+  if (data.barcode) {
+    const { data: existingBarcode } = await supabase
+      .from("products")
+      .select("id")
+      .eq("business_id", user.businessId)
+      .eq("barcode", data.barcode)
+      .maybeSingle();
+    if (existingBarcode) return { success: false, error: "Ce code-barres est déjà utilisé par un autre produit" };
+  }
+
+  const reference = data.reference?.trim() || (await generateProductReference(user.businessId));
+
+  const { data: existingRef } = await supabase
+    .from("products")
+    .select("id")
+    .eq("business_id", user.businessId)
+    .eq("reference", reference)
+    .maybeSingle();
+  if (existingRef) return { success: false, error: "Cette référence est déjà utilisée" };
+
+  const { data: product, error: createError } = await supabase
+    .from("products")
+    .insert({
+      business_id: user.businessId,
+      reference,
+      name: data.name,
+      category_id: data.categoryId || null,
+      brand: data.brand ?? null,
+      description: data.description ?? null,
+      unit: data.unit,
+      purchase_price: data.purchasePrice,
+      sale_price: data.salePrice,
+      min_stock: data.minStock,
+      shelf_location: data.shelfLocation ?? null,
+      supplier_id: data.supplierId || null,
+      barcode: data.barcode || null,
+      photo_url: data.photoUrl ?? null,
+      custom_fields: data.customFields,
+      // Réservé à l'activité "Boutique de motos" (lib/activities.ts) — même si
+      // le formulaire envoyait true par erreur/manipulation, on l'ignore pour
+      // toute autre activité.
+      track_units: data.trackUnits,
+      client_ref: data.clientRef ?? null,
+    })
+    .select("id")
+    .single();
+
+  if (createError || !product) {
+    console.error("[createProductCore] Échec de la création :", createError?.message);
+    return { success: false, error: "Impossible de créer le produit" };
+  }
+
+  if (data.quantity > 0 && data.locationId) {
+    const { error: stockError } = await supabase
+      .from("product_stocks")
+      .insert({ product_id: product.id, location_id: data.locationId, quantity: data.quantity });
+    if (stockError) {
+      console.error("[createProductCore] Échec de la création du stock initial :", stockError.message);
+    } else {
+      const { error: movementError } = await supabase.from("stock_movements").insert({
+        business_id: user.businessId,
+        location_id: data.locationId,
+        product_id: product.id,
+        direction: "IN",
+        reason: "CORRECTION",
+        quantity: data.quantity,
+        old_stock: 0,
+        new_stock: data.quantity,
+        user_id: user.id,
+        note: "Stock initial à la création du produit",
+      });
+      if (movementError) {
+        console.error("[createProductCore] Échec de l'écriture du mouvement de stock :", movementError.message);
+      }
+    }
+  }
+
   await logAction({
     businessId: user.businessId,
     userId: user.id,
@@ -266,8 +371,7 @@ export async function createProductAction(
     entityId: product.id as string,
   });
 
-  revalidatePath("/produits");
-  redirect(`/produits/${product.id}`);
+  return { success: true, productId: product.id as string };
 }
 
 export async function updateProductAction(

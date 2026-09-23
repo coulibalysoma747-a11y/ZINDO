@@ -12,6 +12,7 @@ import { ProductThumbnail } from "@/components/products/ProductThumbnail";
 import { ProductQrLabel, DEFAULT_LABEL_FIELDS, type LabelFieldOptions } from "@/components/products/ProductQrLabel";
 import { LABEL_FORMATS, DEFAULT_FORMAT_ID, getLabelFormat, buildPrintCss } from "@/lib/label-formats";
 import { ensureProductBarcodeAction, ensureAllProductBarcodesAction } from "@/lib/actions/products";
+import { printDocument } from "@/lib/print";
 
 type Product = { id: string; name: string; barcode: string | null; reference: string; salePrice: number; photoUrl: string | null };
 
@@ -107,7 +108,9 @@ export function BulkLabelPrintView({
       setGenerating(false);
     }
     // Laisse React repeindre les nouveaux codes avant d'ouvrir la boîte d'impression.
-    requestAnimationFrame(() => window.print());
+    requestAnimationFrame(() =>
+      printDocument(format.kind === "roll" ? { widthMm: format.widthMm, heightMm: format.heightMm } : "A4")
+    );
   }
 
   return (

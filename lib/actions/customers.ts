@@ -31,25 +31,73 @@ export async function createCustomerAction(
   _prevState: ActionState,
   formData: FormData
 ): Promise<ActionState> {
-  const user = await requirePermission(PERMISSIONS.CUSTOMERS_MANAGE);
   const parsed = parse(formData);
   if (!parsed.success) return { error: parsed.error.issues[0]?.message };
+  const result = await createCustomerCore(parsed.data);
+  if (!result.success) return { error: result.error };
+  return { success: "Client créé" };
+}
+
+export type CreateCustomerInput = {
+  name: string;
+  phone?: string;
+  email?: string;
+  address?: string;
+  creditLimit?: number;
+  /** Clé d'idempotence pour un client créé hors ligne (voir lib/offline/) — absente pour un client créé normalement en ligne. */
+  clientRef?: string;
+};
+
+export type CreateCustomerResult = { success: true; customerId: string } | { success: false; error: string };
+
+/** Entrée JSON équivalente à createCustomerAction, pour le rejeu hors ligne (lib/offline/) et pour exposer l'id créé (nécessaire aux écritures qui en dépendent, ex. une vente à crédit pour ce client). */
+export async function createCustomerJsonAction(input: CreateCustomerInput): Promise<CreateCustomerResult> {
+  return createCustomerCore({
+    name: input.name,
+    phone: input.phone,
+    email: input.email ?? "",
+    address: input.address,
+    creditLimit: input.creditLimit ?? 0,
+    clientRef: input.clientRef,
+  });
+}
+
+async function createCustomerCore(data: {
+  name: string;
+  phone?: string;
+  email?: string;
+  address?: string;
+  creditLimit: number;
+  clientRef?: string;
+}): Promise<CreateCustomerResult> {
+  const user = await requirePermission(PERMISSIONS.CUSTOMERS_MANAGE);
+
+  if (data.clientRef) {
+    const { data: existing } = await supabase
+      .from("customers")
+      .select("id")
+      .eq("business_id", user.businessId)
+      .eq("client_ref", data.clientRef)
+      .maybeSingle();
+    if (existing) return { success: true, customerId: existing.id as string };
+  }
 
   const { data: customer, error } = await supabase
     .from("customers")
     .insert({
       business_id: user.businessId,
-      name: parsed.data.name,
-      phone: parsed.data.phone ?? null,
-      email: parsed.data.email || null,
-      address: parsed.data.address ?? null,
-      credit_limit: parsed.data.creditLimit,
+      name: data.name,
+      phone: data.phone ?? null,
+      email: data.email || null,
+      address: data.address ?? null,
+      credit_limit: data.creditLimit,
+      client_ref: data.clientRef ?? null,
     })
     .select("id")
     .single();
   if (error || !customer) {
     console.error("[createCustomerAction] Échec de la création :", error?.message);
-    return { error: "Impossible de créer le client" };
+    return { success: false, error: "Impossible de créer le client" };
   }
 
   await logAction({
@@ -61,7 +109,7 @@ export async function createCustomerAction(
   });
 
   revalidatePath("/clients");
-  return { success: "Client créé" };
+  return { success: true, customerId: customer.id as string };
 }
 
 export async function updateCustomerAction(

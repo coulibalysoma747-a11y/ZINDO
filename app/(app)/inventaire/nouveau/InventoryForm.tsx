@@ -1,12 +1,15 @@
 "use client";
 
-import { useMemo, useState, useTransition } from "react";
+import { useCallback, useEffect, useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { RefreshCw, WifiOff } from "lucide-react";
 import { Card, CardBody } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Input, Field, Select } from "@/components/ui/Input";
 import { Table, TableHead, TableBody, TableRow, TableHeaderCell, TableCell } from "@/components/ui/Table";
 import { createInventoryAction } from "@/lib/actions/inventory";
+import { queueOfflineWrite, getPendingWrites, type PendingWrite } from "@/lib/offline/db";
+import { syncPendingWrites } from "@/lib/offline/sync";
 
 type Product = {
   id: string;
@@ -33,6 +36,44 @@ export function InventoryForm({
   const [pending, startTransition] = useTransition();
   const router = useRouter();
 
+  // Mode hors ligne : même mécanisme que app/(app)/ventes/POS.tsx.
+  const [isOnline, setIsOnline] = useState(true);
+  const [pendingCount, setPendingCount] = useState(0);
+  const [syncing, setSyncing] = useState(false);
+
+  const refreshPendingCount = useCallback(() => {
+    getPendingWrites().then((writes: PendingWrite[]) => setPendingCount(writes.filter((w) => w.kind === "inventory").length));
+  }, []);
+
+  const runSync = useCallback(async () => {
+    setSyncing(true);
+    try {
+      await syncPendingWrites();
+    } finally {
+      setSyncing(false);
+      refreshPendingCount();
+    }
+  }, [refreshPendingCount]);
+
+  useEffect(() => {
+    setIsOnline(navigator.onLine);
+    refreshPendingCount();
+    function handleOnline() {
+      setIsOnline(true);
+      runSync();
+    }
+    function handleOffline() {
+      setIsOnline(false);
+    }
+    window.addEventListener("online", handleOnline);
+    window.addEventListener("offline", handleOffline);
+    return () => {
+      window.removeEventListener("online", handleOnline);
+      window.removeEventListener("offline", handleOffline);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const withTheoreticalQty = useMemo(
     () =>
       products.map((p) => ({
@@ -58,6 +99,22 @@ export function InventoryForm({
 
     if (items.length === 0) {
       setError("Saisissez la quantité réelle d'au moins un produit");
+      return;
+    }
+
+    if (!isOnline) {
+      startTransition(async () => {
+        const clientRef = crypto.randomUUID();
+        await queueOfflineWrite({
+          clientRef,
+          kind: "inventory",
+          createdAt: new Date().toISOString(),
+          input: { locationId, items, note: note || undefined, clientRef },
+          label: `Inventaire — ${locations.find((l) => l.id === locationId)?.name ?? "Boutique"} (${items.length} produit(s))`,
+        });
+        refreshPendingCount();
+        router.push("/inventaire");
+      });
       return;
     }
 
@@ -152,6 +209,31 @@ export function InventoryForm({
             <Input id="note" value={note} onChange={(e) => setNote(e.target.value)} />
           </Field>
           {error && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
+          {(!isOnline || pendingCount > 0) && (
+            <div
+              className={`flex flex-wrap items-center justify-between gap-2 rounded-xl border px-3 py-2 text-xs ${
+                !isOnline
+                  ? "border-amber-200 bg-amber-50 text-amber-800 dark:border-amber-900 dark:bg-amber-500/10 dark:text-amber-300"
+                  : "border-zinc-200 bg-zinc-50 text-zinc-600 dark:border-slate-700 dark:bg-slate-800 dark:text-zinc-300"
+              }`}
+            >
+              <div className="flex items-center gap-2">
+                {!isOnline ? <WifiOff className="h-4 w-4 shrink-0" /> : <RefreshCw className="h-4 w-4 shrink-0" />}
+                <span>
+                  {!isOnline
+                    ? `Hors ligne — l'inventaire sera enregistré sur cet appareil et synchronisé au retour de la connexion.${
+                        pendingCount > 0 ? ` (${pendingCount} en attente)` : ""
+                      }`
+                    : `${pendingCount} inventaire(s) en attente de synchronisation.`}
+                </span>
+              </div>
+              {isOnline && pendingCount > 0 && (
+                <Button size="sm" variant="outline" onClick={runSync} disabled={syncing}>
+                  {syncing ? "Synchronisation..." : "Synchroniser"}
+                </Button>
+              )}
+            </div>
+          )}
           <Button disabled={pending} onClick={handleSubmit}>
             {pending ? "Enregistrement..." : "Enregistrer l'inventaire"}
           </Button>

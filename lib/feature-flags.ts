@@ -72,13 +72,22 @@ export async function isFeatureEnabled(
  * globale, les dérogations par commerce n'ayant pas de sens à ce stade.
  */
 export async function isFeatureEnabledGlobally(key: string): Promise<boolean> {
-  const { data: flag } = await supabase
-    .from("feature_flags")
-    .select("enabledGlobally:enabled_globally")
-    .eq("key", key)
-    .maybeSingle();
-  if (!flag) return true;
-  return Boolean(flag.enabledGlobally);
+  // Appelé notamment depuis /login et /inscription sur l'app Windows, donc
+  // potentiellement avant toute connexion — à ce stade aucun accès Supabase
+  // n'est possible depuis le desktop (voir lib/supabase.ts resolveClient).
+  // Même position de repli que pour un flag jamais enregistré : on ne bloque
+  // jamais une page publique faute de pouvoir vérifier un drapeau.
+  try {
+    const { data: flag } = await supabase
+      .from("feature_flags")
+      .select("enabledGlobally:enabled_globally")
+      .eq("key", key)
+      .maybeSingle();
+    if (!flag) return true;
+    return Boolean(flag.enabledGlobally);
+  } catch {
+    return true;
+  }
 }
 
 /**
@@ -88,8 +97,18 @@ export async function isFeatureEnabledGlobally(key: string): Promise<boolean> {
  * chose que l'administrateur a délibérément laissé désactivé).
  */
 export async function registerFeatureFlag(key: string, label: string, description?: string) {
-  const { data: existing } = await supabase.from("feature_flags").select("id").eq("key", key).maybeSingle();
-  if (existing) return;
-  const { error } = await supabase.from("feature_flags").insert({ key, label, description: description ?? null });
-  if (error) console.error("[registerFeatureFlag] Échec de la création :", error.message);
+  // Appelé notamment depuis /login (ensureGoogleSignupFlagRegistered), donc
+  // potentiellement avant toute connexion sur l'app Windows, où aucun accès
+  // Supabase n'est encore possible (voir lib/supabase.ts resolveClient) —
+  // ce bootstrap best-effort ne doit jamais faire planter une page publique ;
+  // il finira par s'exécuter lors d'un appel authentifié (web, ou desktop
+  // après connexion).
+  try {
+    const { data: existing } = await supabase.from("feature_flags").select("id").eq("key", key).maybeSingle();
+    if (existing) return;
+    const { error } = await supabase.from("feature_flags").insert({ key, label, description: description ?? null });
+    if (error) console.error("[registerFeatureFlag] Échec de la création :", error.message);
+  } catch (e) {
+    console.error("[registerFeatureFlag] Accès Supabase indisponible :", e instanceof Error ? e.message : e);
+  }
 }

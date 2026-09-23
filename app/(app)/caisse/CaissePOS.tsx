@@ -101,7 +101,6 @@ export function CaissePOS({
         .then(setCarts)
         .catch(() => {});
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [locationId, refreshPendingSales]);
 
   useEffect(() => {

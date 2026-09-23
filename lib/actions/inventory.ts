@@ -13,6 +13,8 @@ export type CreateInventoryInput = {
   locationId: string;
   items: { productId: string; realQty: number }[];
   note?: string;
+  /** Clé d'idempotence pour un inventaire enregistré hors ligne (voir lib/offline/) — absente pour un inventaire créé normalement en ligne. */
+  clientRef?: string;
 };
 
 export type CreateInventoryResult =
@@ -21,6 +23,16 @@ export type CreateInventoryResult =
 
 export async function createInventoryAction(input: CreateInventoryInput): Promise<CreateInventoryResult> {
   const user = await requirePermission(PERMISSIONS.INVENTORY_MANAGE);
+
+  if (input.clientRef) {
+    const { data: existing } = await supabase
+      .from("inventories")
+      .select("id")
+      .eq("business_id", user.businessId)
+      .eq("client_ref", input.clientRef)
+      .maybeSingle();
+    if (existing) return { success: true, inventoryId: existing.id as string };
+  }
 
   if (!input.locationId) return { success: false, error: "Sélectionnez une boutique" };
   if (!input.items || input.items.length === 0) {
@@ -52,6 +64,7 @@ export async function createInventoryAction(input: CreateInventoryInput): Promis
       status: "EN_COURS",
       note: input.note ?? null,
       user_id: user.id,
+      client_ref: input.clientRef ?? null,
     })
     .select("id")
     .single();

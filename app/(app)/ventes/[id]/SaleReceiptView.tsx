@@ -10,6 +10,7 @@ import { ReceiptActions } from "./ReceiptActions";
 import { CancelSaleButton } from "./CancelSaleButton";
 import { InstallmentSection } from "./InstallmentSection";
 import type { InstallmentPlan } from "@/lib/actions/installments";
+import { printDocument } from "@/lib/print";
 
 const WIDTH_OPTIONS: { value: ReceiptWidth; label: string }[] = [
   { value: "58mm", label: "58 mm" },
@@ -52,7 +53,7 @@ export function SaleReceiptView({
   // automatiquement dès que le ticket est affiché.
   useEffect(() => {
     if (searchParams.get("print") !== "1") return;
-    const timeout = setTimeout(() => window.print(), 300);
+    const timeout = setTimeout(() => printDocument(width), 300);
     return () => clearTimeout(timeout);
   }, [searchParams]);
 
@@ -100,7 +101,7 @@ export function SaleReceiptView({
             </Link>
           )}
           {!isCancelled && <CancelSaleButton saleId={saleId} />}
-          <ReceiptActions saleNumber={data.ticketNumber} otherFormatHref={otherFormatHref} otherFormatLabel={otherFormatLabel} />
+          <ReceiptActions saleNumber={data.ticketNumber} otherFormatHref={otherFormatHref} otherFormatLabel={otherFormatLabel} pageSize={width} />
         </div>
       </div>
 

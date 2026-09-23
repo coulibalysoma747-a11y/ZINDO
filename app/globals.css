@@ -1,4 +1,11 @@
-@import "tailwindcss";
+/* Détection automatique du contenu désactivée puis restreinte explicitement
+   (@source ci-dessous) : la détection automatique scannait aussi des dossiers
+   hors du code source (artefacts de build, dossiers de test) et provoquait
+   un plantage mémoire lors de la construction sur cette machine. */
+@import "tailwindcss" source(none);
+@source "../app";
+@source "../components";
+@source "../lib";
 
 /* Bascule le préfixe dark: sur une classe .dark posée sur <html> (pilotée par
    la préférence de thème du compte : Blanc / Noir / Système) plutôt que sur

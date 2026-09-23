@@ -9,6 +9,9 @@ export const EXPIRY_FLAG = "peremption_dlc";
 /** Activités concernées par le suivi des dates de péremption (DLC) — voir requireActivity sur l'entrée "Péremption (DLC)" ci-dessous. */
 export const EXPIRY_ACTIVITIES = [SUPERMARKET_ACTIVITY_KEY, PHARMACY_ACTIVITY_KEY];
 
+/** Application Windows (Electron) avec mode hors ligne — voir lib/offline/. Pas lié à une activité précise. */
+export const DESKTOP_OFFLINE_FLAG = "desktop_offline_mode";
+
 export const REPAIR_ACTIVITY_KEY = "atelier_reparation";
 export const SPARE_PARTS_ACTIVITY_KEY = "pieces_detachees";
 export const REPAIR_FLAG = "bons_reparation";

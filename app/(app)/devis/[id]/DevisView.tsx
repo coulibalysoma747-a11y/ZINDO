@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/Button";
 import { Field, Input, Select } from "@/components/ui/Input";
 import { Modal } from "@/components/ui/Modal";
 import { formatMoney } from "@/lib/format";
+import { printDocument } from "@/lib/print";
 import { updateQuoteStatusAction, deleteQuoteAction, convertQuoteToSaleAction } from "@/lib/actions/quotes";
 import type { PaymentMethod } from "@/lib/db-types";
 
@@ -135,7 +136,7 @@ export function DevisView({
               Convertir en vente
             </Button>
           )}
-          <Button variant="outline" size="sm" onClick={() => window.print()}>
+          <Button variant="outline" size="sm" onClick={() => printDocument("A4")}>
             <Printer className="h-3.5 w-3.5" /> Imprimer
           </Button>
           {canEdit && (

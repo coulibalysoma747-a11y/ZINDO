@@ -5,14 +5,32 @@ directories:
 files:
   - dist-electron/**/*
   - package.json
+  # Le process principal Electron n'utilise que des modules Node natifs (voir
+  # electron/main.ts) — l'application elle-même tourne dans le serveur Next.js
+  # standalone copié séparément via extraResources ci-dessous, pas via
+  # app.asar. Sans cette exclusion, electron-builder inclut par défaut tout
+  # node_modules de "dependencies" (Next, React, Prisma, sharp...) dans
+  # app.asar, ce qui est à la fois inutile et très lent à empaqueter.
+  - "!node_modules/**/*"
 extraResources:
   - from: .next/standalone
     to: standalone
     filter:
       - "**/*"
+  - from: public/icons/icon-512.png
+    to: icon.png
 win:
   target: nsis
   icon: public/icons/icon-512.png
+  # Application non signée (pas de certificat) : sans ce réglage,
+  # electron-builder tente quand même de "préparer" la signature de
+  # l'exécutable (et l'édition d'icône passe par le même chemin) et
+  # télécharge à cette occasion l'outillage winCodeSign (macOS) — qui échoue
+  # à s'extraire sur Windows sans le mode développeur activé (droit de créer
+  # des liens symboliques). L'icône de la fenêtre/barre des tâches est
+  # définie au runtime à la place (voir electron/main.ts, BrowserWindow
+  # icon) — seule l'icône du FICHIER .exe dans l'Explorateur reste générique.
+  signAndEditExecutable: false
 nsis:
   oneClick: false
   allowToChangeInstallationDirectory: true

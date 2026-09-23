@@ -33,26 +33,69 @@ export async function createSupplierAction(
   _prevState: ActionState,
   formData: FormData
 ): Promise<ActionState> {
-  const user = await requirePermission(PERMISSIONS.SUPPLIERS_MANAGE);
   const parsed = parse(formData);
   if (!parsed.success) return { error: parsed.error.issues[0]?.message };
+  const result = await createSupplierCore(parsed.data);
+  if (!result.success) return { error: result.error };
+  return { success: "Fournisseur créé" };
+}
+
+export type CreateSupplierInput = {
+  name: string;
+  company?: string;
+  phone?: string;
+  email?: string;
+  address?: string;
+  notes?: string;
+  /** Clé d'idempotence pour un fournisseur créé hors ligne (voir lib/offline/) — absente pour un fournisseur créé normalement en ligne. */
+  clientRef?: string;
+};
+
+export type CreateSupplierResult = { success: true; supplierId: string } | { success: false; error: string };
+
+/** Entrée JSON équivalente à createSupplierAction, pour le rejeu hors ligne (lib/offline/) et pour exposer l'id créé. */
+export async function createSupplierJsonAction(input: CreateSupplierInput): Promise<CreateSupplierResult> {
+  return createSupplierCore({ ...input, email: input.email ?? "" });
+}
+
+async function createSupplierCore(data: {
+  name: string;
+  company?: string;
+  phone?: string;
+  email?: string;
+  address?: string;
+  notes?: string;
+  clientRef?: string;
+}): Promise<CreateSupplierResult> {
+  const user = await requirePermission(PERMISSIONS.SUPPLIERS_MANAGE);
+
+  if (data.clientRef) {
+    const { data: existing } = await supabase
+      .from("suppliers")
+      .select("id")
+      .eq("business_id", user.businessId)
+      .eq("client_ref", data.clientRef)
+      .maybeSingle();
+    if (existing) return { success: true, supplierId: existing.id as string };
+  }
 
   const { data: supplier, error } = await supabase
     .from("suppliers")
     .insert({
       business_id: user.businessId,
-      name: parsed.data.name,
-      company: parsed.data.company ?? null,
-      phone: parsed.data.phone ?? null,
-      email: parsed.data.email || null,
-      address: parsed.data.address ?? null,
-      notes: parsed.data.notes ?? null,
+      name: data.name,
+      company: data.company ?? null,
+      phone: data.phone ?? null,
+      email: data.email || null,
+      address: data.address ?? null,
+      notes: data.notes ?? null,
+      client_ref: data.clientRef ?? null,
     })
     .select("id")
     .single();
   if (error || !supplier) {
     console.error("[createSupplierAction] Échec de la création :", error?.message);
-    return { error: "Impossible de créer le fournisseur" };
+    return { success: false, error: "Impossible de créer le fournisseur" };
   }
 
   await logAction({
@@ -64,7 +107,7 @@ export async function createSupplierAction(
   });
 
   revalidatePath("/fournisseurs");
-  return { success: "Fournisseur créé" };
+  return { success: true, supplierId: supplier.id as string };
 }
 
 export async function updateSupplierAction(

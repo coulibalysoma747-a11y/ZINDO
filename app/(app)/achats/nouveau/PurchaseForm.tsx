@@ -1,8 +1,8 @@
 "use client";
 
-import { useMemo, useState, useTransition } from "react";
+import { useCallback, useEffect, useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Trash2 } from "lucide-react";
+import { Trash2, RefreshCw, WifiOff } from "lucide-react";
 import { ProductPicker } from "@/components/products/ProductPicker";
 import { Card, CardBody, CardHeader } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
@@ -10,6 +10,8 @@ import { Field, Input, Select } from "@/components/ui/Input";
 import { Table, TableHead, TableBody, TableRow, TableHeaderCell, TableCell } from "@/components/ui/Table";
 import { formatMoney } from "@/lib/format";
 import { createPurchaseAction } from "@/lib/actions/purchases";
+import { queueOfflineWrite, getPendingWrites, type PendingWrite } from "@/lib/offline/db";
+import { syncPendingWrites } from "@/lib/offline/sync";
 
 type Product = {
   id: string;
@@ -44,6 +46,44 @@ export function PurchaseForm({
   const total = useMemo(() => lines.reduce((s, l) => s + l.quantity * l.unitPrice, 0), [lines]);
   const amountPaid = amountPaidInput === "" ? total : Number(amountPaidInput);
 
+  // Mode hors ligne : même mécanisme que app/(app)/ventes/POS.tsx.
+  const [isOnline, setIsOnline] = useState(true);
+  const [pendingCount, setPendingCount] = useState(0);
+  const [syncing, setSyncing] = useState(false);
+
+  const refreshPendingCount = useCallback(() => {
+    getPendingWrites().then((writes: PendingWrite[]) => setPendingCount(writes.filter((w) => w.kind === "purchase").length));
+  }, []);
+
+  const runSync = useCallback(async () => {
+    setSyncing(true);
+    try {
+      await syncPendingWrites();
+    } finally {
+      setSyncing(false);
+      refreshPendingCount();
+    }
+  }, [refreshPendingCount]);
+
+  useEffect(() => {
+    setIsOnline(navigator.onLine);
+    refreshPendingCount();
+    function handleOnline() {
+      setIsOnline(true);
+      runSync();
+    }
+    function handleOffline() {
+      setIsOnline(false);
+    }
+    window.addEventListener("online", handleOnline);
+    window.addEventListener("offline", handleOffline);
+    return () => {
+      window.removeEventListener("online", handleOnline);
+      window.removeEventListener("offline", handleOffline);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   function addProduct(product: Product) {
     setLines((prev) => {
       const existing = prev.find((l) => l.product.id === product.id);
@@ -66,14 +106,26 @@ export function PurchaseForm({
     if (!locationId) return setError("Sélectionnez la boutique de destination");
     if (lines.length === 0) return setError("Ajoutez au moins un produit");
 
-    startTransition(async () => {
-      const result = await createPurchaseAction({
-        supplierId,
-        locationId,
-        items: lines.map((l) => ({ productId: l.product.id, quantity: l.quantity, unitPrice: l.unitPrice })),
-        amountPaid,
-        note: note || undefined,
+    const items = lines.map((l) => ({ productId: l.product.id, quantity: l.quantity, unitPrice: l.unitPrice }));
+
+    if (!isOnline) {
+      startTransition(async () => {
+        const clientRef = crypto.randomUUID();
+        await queueOfflineWrite({
+          clientRef,
+          kind: "purchase",
+          createdAt: new Date().toISOString(),
+          input: { supplierId, locationId, items, amountPaid, note: note || undefined, clientRef },
+          label: `Achat — ${suppliers.find((s) => s.id === supplierId)?.name ?? "Fournisseur"} (${formatMoney(total, currency)})`,
+        });
+        refreshPendingCount();
+        router.push("/achats");
       });
+      return;
+    }
+
+    startTransition(async () => {
+      const result = await createPurchaseAction({ supplierId, locationId, items, amountPaid, note: note || undefined });
       if (!result.success) return setError(result.error);
       router.push(`/achats/${result.purchaseId}`);
     });
@@ -202,6 +254,31 @@ export function PurchaseForm({
               <Input id="note" value={note} onChange={(e) => setNote(e.target.value)} />
             </Field>
             {error && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
+            {(!isOnline || pendingCount > 0) && (
+              <div
+                className={`flex flex-wrap items-center justify-between gap-2 rounded-xl border px-3 py-2 text-xs ${
+                  !isOnline
+                    ? "border-amber-200 bg-amber-50 text-amber-800 dark:border-amber-900 dark:bg-amber-500/10 dark:text-amber-300"
+                    : "border-zinc-200 bg-zinc-50 text-zinc-600 dark:border-slate-700 dark:bg-slate-800 dark:text-zinc-300"
+                }`}
+              >
+                <div className="flex items-center gap-2">
+                  {!isOnline ? <WifiOff className="h-4 w-4 shrink-0" /> : <RefreshCw className="h-4 w-4 shrink-0" />}
+                  <span>
+                    {!isOnline
+                      ? `Hors ligne — l'achat sera enregistré sur cet appareil et synchronisé au retour de la connexion.${
+                          pendingCount > 0 ? ` (${pendingCount} en attente)` : ""
+                        }`
+                      : `${pendingCount} achat(s) en attente de synchronisation.`}
+                  </span>
+                </div>
+                {isOnline && pendingCount > 0 && (
+                  <Button size="sm" variant="outline" onClick={runSync} disabled={syncing}>
+                    {syncing ? "Synchronisation..." : "Synchroniser"}
+                  </Button>
+                )}
+              </div>
+            )}
             <Button className="w-full" size="lg" disabled={pending} onClick={handleSubmit}>
               {pending ? "Enregistrement..." : "Valider l'achat"}
             </Button>

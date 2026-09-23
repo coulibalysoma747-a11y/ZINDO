@@ -3,15 +3,19 @@
 import Link from "next/link";
 import { Printer, Share2, Files } from "lucide-react";
 import { Button } from "@/components/ui/Button";
+import { printDocument, type PrintPageSize } from "@/lib/print";
 
 export function ReceiptActions({
   saleNumber,
   otherFormatHref,
   otherFormatLabel,
+  pageSize = "A4",
 }: {
   saleNumber: string;
   otherFormatHref?: string | null;
   otherFormatLabel?: string;
+  /** Taille passée à l'impression silencieuse de l'appli desktop (voir lib/print.ts) — "A4" pour une facture, la largeur du ticket sinon. */
+  pageSize?: PrintPageSize;
 }) {
   async function handleShare() {
     if (navigator.share) {
@@ -35,7 +39,7 @@ export function ReceiptActions({
       <Button variant="outline" onClick={handleShare}>
         <Share2 className="h-4 w-4" /> Partager
       </Button>
-      <Button onClick={() => window.print()}>
+      <Button onClick={() => printDocument(pageSize)}>
         <Printer className="h-4 w-4" /> Imprimer / PDF
       </Button>
       {otherFormatHref && (

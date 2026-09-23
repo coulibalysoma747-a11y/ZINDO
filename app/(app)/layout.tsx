@@ -15,9 +15,14 @@ import { ImpersonationBanner } from "@/components/layout/ImpersonationBanner";
 import { AnnouncementBanner } from "@/components/layout/AnnouncementBanner";
 import { HasPhysicalStoreBanner } from "@/components/layout/HasPhysicalStoreBanner";
 import { ROLE_LABELS, PERMISSIONS } from "@/lib/permissions";
+import { ensureDesktopOfflineFlagRegistered } from "@/lib/actions/desktop-offline";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const user = await requireUserForBilling();
+
+  // Enregistrement paresseux, sans attendre le résultat (idempotent, ne doit
+  // pas ajouter de latence à chaque page) — voir lib/actions/desktop-offline.ts.
+  void ensureDesktopOfflineFlagRegistered();
 
   // Un Fondateur "en tant que" ce commerçant (voir lib/actions/impersonation.ts)
   // garde son cookie admin en plus du cookie commerçant — sa présence indique

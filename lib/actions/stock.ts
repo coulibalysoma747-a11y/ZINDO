@@ -44,7 +44,6 @@ export async function createStockMovementAction(
 }
 
 async function createStockMovementImpl(direction: "IN" | "OUT", formData: FormData): Promise<ActionState> {
-  const user = await requirePermission(PERMISSIONS.STOCK_MANAGE);
   const parsed = movementSchema.safeParse({
     productId: formData.get("productId"),
     locationId: formData.get("locationId"),
@@ -54,45 +53,110 @@ async function createStockMovementImpl(direction: "IN" | "OUT", formData: FormDa
   });
   if (!parsed.success) return { error: parsed.error.issues[0]?.message };
 
+  const result = await createStockMovementCore(direction, parsed.data);
+  if (!result.success) return { error: result.error };
+
+  revalidatePath("/stock");
+  revalidatePath("/produits");
+  revalidatePath(`/produits/${result.productId}`);
+  redirect("/stock");
+}
+
+export type CreateStockMovementInput = {
+  productId: string;
+  locationId: string;
+  quantity: number;
+  reason: string;
+  note?: string;
+  /** Clé d'idempotence pour un mouvement enregistré hors ligne (voir lib/offline/) — absente pour un mouvement créé normalement en ligne. */
+  clientRef?: string;
+};
+
+export type CreateStockMovementResult =
+  | { success: true; movementId: string; productId: string }
+  | { success: false; error: string };
+
+/** Entrée JSON équivalente à createStockMovementAction, pour le rejeu hors ligne (lib/offline/) — ne redirige jamais, contrairement à la variante FormData ci-dessus. */
+export async function createStockMovementJsonAction(
+  direction: "IN" | "OUT",
+  input: CreateStockMovementInput
+): Promise<CreateStockMovementResult> {
+  try {
+    const result = await createStockMovementCore(direction, input);
+    if (result.success) {
+      revalidatePath("/stock");
+      revalidatePath("/produits");
+      revalidatePath(`/produits/${result.productId}`);
+    }
+    return result;
+  } catch (e) {
+    rethrowIfNavigationSignal(e);
+    console.error("[createStockMovementJsonAction] Erreur inattendue :", e);
+    return { success: false, error: "Une erreur inattendue est survenue. Réessayez dans un instant." };
+  }
+}
+
+async function createStockMovementCore(
+  direction: "IN" | "OUT",
+  input: { productId: string; locationId: string; quantity: number; reason: string; note?: string; clientRef?: string }
+): Promise<CreateStockMovementResult> {
+  const user = await requirePermission(PERMISSIONS.STOCK_MANAGE);
+
+  if (input.clientRef) {
+    const { data: existing } = await supabase
+      .from("stock_movements")
+      .select("id, product_id")
+      .eq("business_id", user.businessId)
+      .eq("client_ref", input.clientRef)
+      .maybeSingle();
+    if (existing) return { success: true, movementId: existing.id as string, productId: existing.product_id as string };
+  }
+
   const allowedReasons: readonly string[] = direction === "IN" ? IN_REASONS : OUT_REASONS;
-  if (!allowedReasons.includes(parsed.data.reason)) {
-    return { error: "Motif invalide" };
+  if (!allowedReasons.includes(input.reason)) {
+    return { success: false, error: "Motif invalide" };
   }
 
   const [{ data: product }, { data: location }] = await Promise.all([
-    supabase.from("products").select("id").eq("id", parsed.data.productId).eq("business_id", user.businessId).maybeSingle(),
-    supabase.from("locations").select("id, name").eq("id", parsed.data.locationId).eq("business_id", user.businessId).maybeSingle(),
+    supabase.from("products").select("id").eq("id", input.productId).eq("business_id", user.businessId).maybeSingle(),
+    supabase.from("locations").select("id, name").eq("id", input.locationId).eq("business_id", user.businessId).maybeSingle(),
   ]);
-  if (!product) return { error: "Produit introuvable" };
-  if (!location) return { error: "Boutique introuvable" };
+  if (!product) return { success: false, error: "Produit introuvable" };
+  if (!location) return { success: false, error: "Boutique introuvable" };
 
   if (direction === "OUT") {
     const current = await getStockQuantity(product.id as string, location.id as string);
-    if (current < parsed.data.quantity) {
-      return { error: `Stock insuffisant (disponible : ${current})` };
+    if (current < input.quantity) {
+      return { success: false, error: `Stock insuffisant (disponible : ${current})` };
     }
   }
 
   const { oldStock, newStock } = await adjustStock({
     productId: product.id as string,
     locationId: location.id as string,
-    delta: direction === "IN" ? parsed.data.quantity : -parsed.data.quantity,
+    delta: direction === "IN" ? input.quantity : -input.quantity,
   });
 
-  const { error: movementError } = await supabase.from("stock_movements").insert({
-    business_id: user.businessId,
-    location_id: location.id,
-    product_id: product.id,
-    direction,
-    reason: parsed.data.reason,
-    quantity: parsed.data.quantity,
-    old_stock: oldStock,
-    new_stock: newStock,
-    note: parsed.data.note ?? null,
-    user_id: user.id,
-  });
-  if (movementError) {
-    console.error("[createStockMovementAction] Échec de l'écriture du mouvement :", movementError.message);
+  const { data: movement, error: movementError } = await supabase
+    .from("stock_movements")
+    .insert({
+      business_id: user.businessId,
+      location_id: location.id,
+      product_id: product.id,
+      direction,
+      reason: input.reason,
+      quantity: input.quantity,
+      old_stock: oldStock,
+      new_stock: newStock,
+      note: input.note ?? null,
+      user_id: user.id,
+      client_ref: input.clientRef ?? null,
+    })
+    .select("id")
+    .single();
+  if (movementError || !movement) {
+    console.error("[createStockMovementCore] Échec de l'écriture du mouvement :", movementError?.message);
+    return { success: false, error: "Impossible d'enregistrer le mouvement de stock" };
   }
 
   await logAction({
@@ -101,13 +165,10 @@ async function createStockMovementImpl(direction: "IN" | "OUT", formData: FormDa
     action: direction === "IN" ? "STOCK_IN" : "STOCK_OUT",
     entity: "Product",
     entityId: product.id as string,
-    details: `${parsed.data.quantity} (${parsed.data.reason}) — ${location.name}`,
+    details: `${input.quantity} (${input.reason}) — ${location.name}`,
   });
 
-  revalidatePath("/stock");
-  revalidatePath("/produits");
-  revalidatePath(`/produits/${product.id}`);
-  redirect("/stock");
+  return { success: true, movementId: movement.id as string, productId: product.id as string };
 }
 
 const bulkEntrySchema = z.object({ productId: z.string().min(1), quantity: z.coerce.number().int().min(0) });

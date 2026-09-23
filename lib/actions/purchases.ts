@@ -21,6 +21,8 @@ export type CreatePurchaseInput = {
   items: PurchaseItemInput[];
   amountPaid: number;
   note?: string;
+  /** Clé d'idempotence pour un achat enregistré hors ligne (voir lib/offline/) — absente pour un achat créé normalement en ligne. */
+  clientRef?: string;
 };
 
 export type CreatePurchaseResult =
@@ -39,6 +41,16 @@ export async function createPurchaseAction(input: CreatePurchaseInput): Promise<
 
 async function createPurchaseImpl(input: CreatePurchaseInput): Promise<CreatePurchaseResult> {
   const user = await requirePermission(PERMISSIONS.PURCHASES_MANAGE);
+
+  if (input.clientRef) {
+    const { data: existing } = await supabase
+      .from("purchases")
+      .select("id")
+      .eq("business_id", user.businessId)
+      .eq("client_ref", input.clientRef)
+      .maybeSingle();
+    if (existing) return { success: true, purchaseId: existing.id as string };
+  }
 
   if (!input.supplierId) return { success: false, error: "Sélectionnez un fournisseur" };
   if (!input.locationId) return { success: false, error: "Sélectionnez la boutique de destination" };
@@ -79,6 +91,7 @@ async function createPurchaseImpl(input: CreatePurchaseInput): Promise<CreatePur
       amount_paid: amountPaid,
       status,
       note: input.note ?? null,
+      client_ref: input.clientRef ?? null,
     })
     .select("id")
     .single();
