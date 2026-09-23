@@ -2,11 +2,30 @@
 
 import { revalidatePath } from "next/cache";
 import { supabase } from "@/lib/supabase";
-import { requirePermission } from "@/lib/auth";
+import { requirePermission, hasPermission } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
 import { logAction } from "@/lib/audit";
 import { parseCsv } from "@/lib/csv";
 import { generateProductReference } from "@/lib/reference";
+import { isFeatureEnabled, registerFeatureFlag } from "@/lib/feature-flags";
+import { getCurrentLocation } from "@/lib/location";
+import { adjustStock } from "@/lib/stock";
+
+/**
+ * Colonne optionnelle "quantite" (reprise du stock depuis un autre logiciel,
+ * ex. export FasoStock) : nouvelle fonctionnalité, désactivée par défaut
+ * tant qu'elle n'est pas activée depuis /admin/fonctionnalites. Clé privée
+ * au module (un fichier "use server" n'exporte que des fonctions async).
+ */
+const CSV_QUANTITIES_FLAG = "import_csv_quantites";
+
+export async function ensureCsvQuantitiesFlagRegistered() {
+  await registerFeatureFlag(
+    CSV_QUANTITIES_FLAG,
+    "Import CSV : quantités en stock",
+    "Colonne optionnelle « quantite » dans l'import CSV du catalogue : fixe le stock de chaque produit dans la boutique courante (mouvement de correction tracé)."
+  );
+}
 
 const EXPECTED_HEADER = [
   "reference",
@@ -22,7 +41,7 @@ const EXPECTED_HEADER = [
 ];
 
 export type ImportCsvResult =
-  | { success: true; created: number; updated: number }
+  | { success: true; created: number; updated: number; stockUpdated: number }
   | { success: false; error: string; rowErrors?: string[] };
 
 type ParsedRow = {
@@ -37,6 +56,8 @@ type ParsedRow = {
   minStock: number;
   barcode: string | null;
   active: boolean;
+  // null = colonne absente ou cellule vide : stock laissé tel quel.
+  quantity: number | null;
 };
 
 /**
@@ -62,6 +83,17 @@ export async function importProductsCsvAction(_prevState: unknown, formData: For
     return { success: false, error: `Colonnes manquantes : ${missingColumns.join(", ")} (attendu : ${EXPECTED_HEADER.join(",")})` };
   }
   const colIndex = (col: string) => header.indexOf(col);
+
+  const hasQuantityColumn = header.includes("quantite");
+  if (hasQuantityColumn) {
+    await ensureCsvQuantitiesFlagRegistered();
+    if (!(await isFeatureEnabled(CSV_QUANTITIES_FLAG, user.businessId))) {
+      return { success: false, error: "La colonne « quantite » n'est pas activée pour votre commerce — retirez-la du fichier" };
+    }
+    if (!(await hasPermission(user.businessId, user.role, PERMISSIONS.STOCK_MANAGE, user.id))) {
+      return { success: false, error: "La colonne « quantite » nécessite le droit de gérer le stock" };
+    }
+  }
 
   const parsedRows: ParsedRow[] = [];
   const rowErrors: string[] = [];
@@ -97,6 +129,13 @@ export async function importProductsCsvAction(_prevState: unknown, formData: For
       continue;
     }
 
+    const quantityRaw = hasQuantityColumn ? cells[colIndex("quantite")]?.trim() || "" : "";
+    const quantity = quantityRaw ? Number(quantityRaw) : null;
+    if (quantity !== null && (!Number.isInteger(quantity) || quantity < 0 || quantity > 2_000_000_000)) {
+      rowErrors.push(`Ligne ${line} : quantité invalide ("${quantityRaw}")`);
+      continue;
+    }
+
     const effectiveReference = reference || null;
     if (effectiveReference) {
       const key = effectiveReference.toLowerCase();
@@ -122,6 +161,7 @@ export async function importProductsCsvAction(_prevState: unknown, formData: For
       minStock,
       barcode: colIndex("code_barres") >= 0 ? cells[colIndex("code_barres")]?.trim() || null : null,
       active,
+      quantity,
     });
   }
 
@@ -129,6 +169,11 @@ export async function importProductsCsvAction(_prevState: unknown, formData: For
     return { success: false, error: `${rowErrors.length} ligne(s) invalide(s) — aucune ligne n'a été importée`, rowErrors: rowErrors.slice(0, 30) };
   }
   if (parsedRows.length === 0) return { success: false, error: "Aucune ligne à importer" };
+
+  const location = parsedRows.some((r) => r.quantity !== null) ? await getCurrentLocation(user.businessId) : null;
+  if (parsedRows.some((r) => r.quantity !== null) && !location) {
+    return { success: false, error: "Aucune boutique trouvée pour enregistrer les quantités" };
+  }
 
   // Catégories/marques mentionnées : résolues (ou créées) une seule fois,
   // avant les upserts, plutôt qu'une requête par ligne.
@@ -176,11 +221,13 @@ export async function importProductsCsvAction(_prevState: unknown, formData: For
 
   let created = 0;
   let updated = 0;
+  let stockUpdated = 0;
+  const movements: Record<string, unknown>[] = [];
   for (const row of parsedRows) {
     const reference = row.reference || (await generateProductReference(user.businessId));
     const categoryId = row.categoryName ? categoryIdByName.get(row.categoryName.toLowerCase()) ?? null : null;
 
-    const { error } = await supabase.from("products").upsert(
+    const { data: product, error } = await supabase.from("products").upsert(
       {
         business_id: user.businessId,
         reference,
@@ -195,13 +242,45 @@ export async function importProductsCsvAction(_prevState: unknown, formData: For
         active: row.active,
       },
       { onConflict: "business_id,reference" }
-    );
+    ).select("id").single();
     if (error) {
       console.error(`[importProductsCsvAction] Échec ligne ${row.line} :`, error.message);
       continue;
     }
     if (existingRefSet.has(reference)) updated++;
     else created++;
+
+    if (row.quantity !== null && location && product) {
+      const { data: stockRow } = await supabase
+        .from("product_stocks")
+        .select("quantity")
+        .eq("product_id", product.id)
+        .eq("location_id", location.id)
+        .maybeSingle();
+      const delta = row.quantity - ((stockRow?.quantity as number | undefined) ?? 0);
+      if (delta !== 0) {
+        const { oldStock, newStock } = await adjustStock({ productId: product.id as string, locationId: location.id, delta });
+        movements.push({
+          business_id: user.businessId,
+          location_id: location.id,
+          product_id: product.id,
+          direction: delta > 0 ? "IN" : "OUT",
+          reason: "CORRECTION",
+          quantity: Math.abs(delta),
+          old_stock: oldStock,
+          new_stock: newStock,
+          note: "Import CSV (quantité)",
+          user_id: user.id,
+        });
+        stockUpdated++;
+      }
+    }
+  }
+
+  // Mouvements insérés par lots plutôt qu'un aller-retour par ligne.
+  for (let i = 0; i < movements.length; i += 500) {
+    const { error } = await supabase.from("stock_movements").insert(movements.slice(i, i + 500));
+    if (error) console.error("[importProductsCsvAction] Échec d'insertion des mouvements :", error.message);
   }
 
   await logAction({
@@ -209,9 +288,10 @@ export async function importProductsCsvAction(_prevState: unknown, formData: For
     userId: user.id,
     action: "CREATE",
     entity: "Product",
-    details: `Import CSV : ${created} créé(s), ${updated} mis à jour`,
+    details: `Import CSV : ${created} créé(s), ${updated} mis à jour${stockUpdated > 0 ? `, stock fixé pour ${stockUpdated} produit(s) — ${location?.name}` : ""}`,
   });
 
   revalidatePath("/produits");
-  return { success: true, created, updated };
+  if (stockUpdated > 0) revalidatePath("/stock");
+  return { success: true, created, updated, stockUpdated };
 }

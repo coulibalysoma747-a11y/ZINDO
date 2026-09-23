@@ -7,7 +7,7 @@ import { Card, CardBody } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { importProductsCsvAction, type ImportCsvResult } from "@/lib/actions/products-import-csv";
 
-export function ImportCsvForm() {
+export function ImportCsvForm({ quantitiesEnabled }: { quantitiesEnabled: boolean }) {
   const [state, formAction, pending] = useActionState<ImportCsvResult | undefined, FormData>(
     importProductsCsvAction,
     undefined
@@ -25,6 +25,12 @@ export function ImportCsvForm() {
             obligatoires. Une référence déjà existante met à jour le produit ; sinon un nouveau produit est créé
             (référence générée automatiquement si laissée vide).
           </p>
+          {quantitiesEnabled && (
+            <p>
+              Colonne optionnelle <code className="text-xs">quantite</code> : fixe le stock du produit dans la boutique
+              courante (tracé comme une correction de stock). Laissée vide, le stock n&apos;est pas modifié.
+            </p>
+          )}
           <p className="font-medium text-amber-700">
             Tout ou rien : si une seule ligne est invalide, rien n&apos;est importé.
           </p>
@@ -58,7 +64,8 @@ export function ImportCsvForm() {
         )}
         {state?.success && (
           <p className="rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-700">
-            {state.created} produit(s) créé(s), {state.updated} mis à jour.
+            {state.created} produit(s) créé(s), {state.updated} mis à jour
+            {state.stockUpdated > 0 && <>, stock fixé pour {state.stockUpdated} produit(s)</>}.
           </p>
         )}
 

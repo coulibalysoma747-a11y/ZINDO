@@ -1,11 +1,19 @@
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { requirePermission } from "@/lib/auth";
+import { isFeatureEnabled } from "@/lib/feature-flags";
+import { ensureCsvQuantitiesFlagRegistered } from "@/lib/actions/products-import-csv";
 import { PERMISSIONS } from "@/lib/permissions";
 import { ImportCsvForm } from "./ImportCsvForm";
 
+// Un import avec quantités fait un ajustement de stock par ligne — plusieurs
+// centaines de lignes dépassent vite la durée par défaut.
+export const maxDuration = 300;
+
 export default async function ImportProductsCsvPage() {
-  await requirePermission(PERMISSIONS.PRODUCTS_MANAGE);
+  const user = await requirePermission(PERMISSIONS.PRODUCTS_MANAGE);
+  await ensureCsvQuantitiesFlagRegistered();
+  const quantitiesEnabled = await isFeatureEnabled("import_csv_quantites", user.businessId);
 
   return (
     <div className="max-w-2xl space-y-6">
@@ -18,7 +26,7 @@ export default async function ImportProductsCsvPage() {
           Créez ou mettez à jour plusieurs produits d&apos;un coup depuis un fichier CSV (Excel, Google Sheets...).
         </p>
       </div>
-      <ImportCsvForm />
+      <ImportCsvForm quantitiesEnabled={quantitiesEnabled} />
     </div>
   );
 }
