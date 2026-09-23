@@ -12,7 +12,7 @@ import { getBusinessSettings } from "@/lib/business-settings";
 import { sendPushToBusiness } from "@/lib/push";
 import { formatMoney } from "@/lib/format";
 import { consumeExpiryBatchesFefo } from "@/lib/actions/expiry";
-import { checkBelowCost, checkMaxDiscount } from "@/lib/sale-rules";
+import { checkBelowCost, checkCancelRules, checkMaxDiscount } from "@/lib/sale-rules";
 import type { PaymentMethod } from "@/lib/db-types";
 
 export type CartItemInput = {
@@ -573,9 +573,9 @@ async function updateSaleImpl(input: UpdateSaleInput): Promise<CreateSaleResult>
   return { success: true, saleId: sale.id as string };
 }
 
-export async function cancelSaleAction(saleId: string) {
+export async function cancelSaleAction(saleId: string, reason?: string) {
   try {
-    return await cancelSaleImpl(saleId);
+    return await cancelSaleImpl(saleId, reason);
   } catch (e) {
     rethrowIfNavigationSignal(e);
     console.error("[cancelSaleAction] Erreur inattendue :", e);
@@ -583,8 +583,11 @@ export async function cancelSaleAction(saleId: string) {
   }
 }
 
-async function cancelSaleImpl(saleId: string) {
+async function cancelSaleImpl(saleId: string, reason?: string) {
   const user = await requirePermission(PERMISSIONS.SALES_VIEW);
+  const cancelRuleError = await checkCancelRules(user.businessId, user.role, reason);
+  if (cancelRuleError) return { error: cancelRuleError };
+  const motif = reason?.trim() ? ` — motif : ${reason.trim()}` : "";
 
   const { data: sale } = await supabase
     .from("sales")
@@ -603,7 +606,7 @@ async function cancelSaleImpl(saleId: string) {
     userId: user.id,
     direction: "IN",
     reason: "RETOUR_CLIENT",
-    note: `Annulation vente ${sale.number}`,
+    note: `Annulation vente ${sale.number}${motif}`,
   });
 
   const { error } = await supabase.from("sales").update({ status: "ANNULEE" }).eq("id", sale.id);
@@ -618,6 +621,7 @@ async function cancelSaleImpl(saleId: string) {
     action: "CANCEL",
     entity: "Sale",
     entityId: sale.id as string,
+    details: motif ? motif.slice(3) : undefined,
   });
 
   revalidatePath("/ventes/historique");
