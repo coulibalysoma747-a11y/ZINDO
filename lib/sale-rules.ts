@@ -1,5 +1,6 @@
 import { isFeatureEnabled, registerFeatureFlag } from "@/lib/feature-flags";
 import { formatMoney } from "@/lib/format";
+import { supabase } from "@/lib/supabase";
 import type { Role } from "@/lib/db-types";
 import { CANCEL_REASON_REQUIRED } from "@/lib/sale-rules-constants";
 
@@ -90,5 +91,44 @@ export async function checkCancelRules(businessId: string, role: Role, reason?: 
   if (!(await isFeatureEnabled(CANCEL_RULES_FLAG, businessId))) return null;
   if (role !== "ADMIN") return "Seul un administrateur peut annuler une vente.";
   if (!reason?.trim()) return CANCEL_REASON_REQUIRED;
+  return null;
+}
+
+/**
+ * Règle « plafond de crédit » : désactivée par défaut. Quand elle est active,
+ * la dette totale d'un client (ventes CREDIT/PARTIELLE non réglées + le reste
+ * dû de la nouvelle vente) ne peut pas dépasser CREDIT_LIMIT, sauf pour un
+ * ADMIN. Plus souple que le réglage « bloquer si dette en cours ».
+ */
+const CREDIT_LIMIT_FLAG = "customer_credit_limit";
+const CREDIT_LIMIT = 50000;
+
+export async function checkCreditLimit(
+  businessId: string,
+  role: Role,
+  customerId: string | null | undefined,
+  newDebt: number
+): Promise<string | null> {
+  if (role === "ADMIN" || !customerId || newDebt <= 0) return null;
+  await registerFeatureFlag(
+    CREDIT_LIMIT_FLAG,
+    `Plafond de crédit client ${formatMoney(CREDIT_LIMIT)}`,
+    `Bloque une vente à crédit si la dette totale du client dépasse ${formatMoney(CREDIT_LIMIT)}, sauf pour un administrateur.`
+  );
+  if (!(await isFeatureEnabled(CREDIT_LIMIT_FLAG, businessId))) return null;
+
+  const { data: pastSales } = await supabase
+    .from("sales")
+    .select("total, amountPaid:amount_paid")
+    .eq("business_id", businessId)
+    .eq("customer_id", customerId)
+    .in("status", ["CREDIT", "PARTIELLE"]);
+  const debt = ((pastSales ?? []) as Array<{ total: number; amountPaid: number }>).reduce(
+    (sum, s) => sum + Math.max(0, s.total - s.amountPaid),
+    0
+  );
+  if (debt + newDebt > CREDIT_LIMIT) {
+    return `Plafond de crédit dépassé : ce client doit déjà ${formatMoney(debt)} (maximum ${formatMoney(CREDIT_LIMIT)}). Demandez à un administrateur.`;
+  }
   return null;
 }

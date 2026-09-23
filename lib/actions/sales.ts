@@ -12,7 +12,7 @@ import { getBusinessSettings } from "@/lib/business-settings";
 import { sendPushToBusiness } from "@/lib/push";
 import { formatMoney } from "@/lib/format";
 import { consumeExpiryBatchesFefo } from "@/lib/actions/expiry";
-import { checkBelowCost, checkCancelRules, checkMaxDiscount } from "@/lib/sale-rules";
+import { checkBelowCost, checkCancelRules, checkCreditLimit, checkMaxDiscount } from "@/lib/sale-rules";
 import type { PaymentMethod } from "@/lib/db-types";
 
 export type CartItemInput = {
@@ -265,6 +265,9 @@ async function createSaleImpl(input: CreateSaleInput): Promise<CreateSaleResult>
   if (amountPaid < total && !input.customerId) {
     return { success: false, error: "Sélectionnez un client pour une vente à crédit ou partielle" };
   }
+
+  const creditLimitError = await checkCreditLimit(user.businessId, user.role, input.customerId, total - amountPaid);
+  if (creditLimitError) return { success: false, error: creditLimitError };
 
   if (businessSettings.blockSaleIfCustomerDebt && input.customerId) {
     const { data: pastSales } = await supabase
