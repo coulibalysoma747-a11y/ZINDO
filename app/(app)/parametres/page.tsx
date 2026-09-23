@@ -223,7 +223,28 @@ export default async function SettingsPage() {
               <BulkStockFillPanel settings={businessSettings} />
               <HideCustomerPanel settings={businessSettings} />
               <DualFormatPrintingPanel settings={businessSettings} />
-              {invoiceTemplatesEnabled && <InvoiceTemplatePanel settings={businessSettings} />}
+              {invoiceTemplatesEnabled && (
+                <InvoiceTemplatePanel
+                  settings={businessSettings}
+                  business={{
+                    businessName: user.business.name,
+                    businessActivity: user.business.activity,
+                    businessPhone: user.business.phone,
+                    businessAddress: user.business.address,
+                    businessEmail: user.business.email,
+                    businessCity: user.business.city,
+                    logoUrl: user.business.logoUrl,
+                    tagline: invoiceCustomization.invoiceTagline,
+                    mobileMoneyInfo: invoiceCustomization.mobileMoneyInfo,
+                    signerName: invoiceCustomization.invoiceSignerName,
+                    returnPolicy: invoiceCustomization.invoiceReturnPolicy,
+                    ifu: invoiceCustomization.ifu,
+                    rccm: invoiceCustomization.rccm,
+                    footerMessage: user.business.ticketFooter,
+                    currency: user.business.currency,
+                  }}
+                />
+              )}
               <QuantityInputModePanel settings={businessSettings} />
               <MobileMoneyPanel settings={businessSettings} />
               <AiCartPanel settings={businessSettings} />
