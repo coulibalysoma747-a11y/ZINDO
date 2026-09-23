@@ -10,15 +10,25 @@ const ROOT = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
 const ENV_FILE = path.join(ROOT, ".env.production");
 const OUT_FILE = path.join(ROOT, "electron", "env.generated.ts");
 
+// SUPABASE_SERVICE_ROLE_KEY n'est PLUS embarquée ici — voir la mémoire
+// "Electron desktop build" : une clé service_role embarquée contourne toutes
+// les policies RLS et donnait accès à TOUS les commerces de la plateforme,
+// pas seulement à celui du commerçant installant l'app. L'app Windows obtient
+// désormais un jeton Supabase limité à son propre commerce via
+// app/api/desktop/login/route.ts (voir lib/supabase.ts
+// setDesktopSupabaseClient) — d'où ZINDO_PRODUCTION_URL ci-dessous, qui n'est
+// qu'une URL (pas un secret) et non SUPABASE_SERVICE_ROLE_KEY.
 const REQUIRED_KEYS = [
-  "DATABASE_URL",
   "SESSION_SECRET",
   "ADMIN_SESSION_SECRET",
   "SUPABASE_URL",
-  "SUPABASE_SERVICE_ROLE_KEY",
+  "ZINDO_PRODUCTION_URL",
 ];
 
 const OPTIONAL_KEYS = [
+  // Non utilisée au runtime (Prisma sert seulement au CLI db push/seed — voir
+  // lib/supabase.ts) mais transmise si présente, au cas où.
+  "DATABASE_URL",
   "DEEPSEEK_API_KEY",
   "ANTHROPIC_API_KEY",
   "GOOGLE_CLIENT_ID",

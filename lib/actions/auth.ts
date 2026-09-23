@@ -3,7 +3,10 @@
 import { z } from "zod";
 import bcrypt from "bcryptjs";
 import { redirect } from "next/navigation";
-import { supabase } from "@/lib/supabase";
+import { supabase, setDesktopSupabaseClient } from "@/lib/supabase";
+import { verifyMerchantCredentials } from "@/lib/auth-credentials";
+import { isDesktopBuild, writeAuthCache } from "@/lib/offline/auth-cache";
+import { getCurrentUser } from "@/lib/auth";
 import {
   createSession,
   destroySession,
@@ -56,12 +59,6 @@ const loginSchema = z.object({
   password: z.string().min(1, "Mot de passe requis"),
 });
 
-// Verrouillage après tentatives échouées répétées — voir loginAction.
-// L'administrateur du commerce réactive ensuite le compte depuis
-// /utilisateurs (bouton "Réactiver", déjà existant pour la désactivation
-// manuelle — toggleUserActiveAction remet aussi le compteur à zéro).
-const MAX_FAILED_LOGIN_ATTEMPTS = 3;
-
 export async function loginAction(
   _prevState: ActionState,
   formData: FormData
@@ -76,76 +73,37 @@ export async function loginAction(
   }
   const { identifier, password } = parsed.data;
   const trimmedIdentifier = identifier.trim();
-  // L'email est comparé sans tenir compte de la casse (ex. clavier mobile qui
-  // met une majuscule automatique au premier caractère) — le téléphone reste
-  // en comparaison exacte. `%`/`_` sont échappés pour ne pas être interprétés
-  // comme des jokers ILIKE.
-  const emailPattern = trimmedIdentifier.replace(/[%_\\]/g, (m) => `\\${m}`);
 
-  const initialUserQuery = await supabase
-    .from("users")
-    .select(
-      "id, businessId:business_id, role, active, passwordHash:password_hash, totpEnabled:totp_enabled, failedLoginAttempts:failed_login_attempts"
-    )
-    .or(`phone.eq.${trimmedIdentifier},email.ilike.${emailPattern}`)
-    .maybeSingle();
-  let user = initialUserQuery.data;
-  let error = initialUserQuery.error;
-  // Repli si totp_enabled n'est pas encore migré côté base — voir
-  // lib/auth.ts getCurrentUser pour la même logique défensive.
-  if (error && /totp/.test(error.message)) {
-    const fallback = await supabase
-      .from("users")
-      .select("id, businessId:business_id, role, active, passwordHash:password_hash, failedLoginAttempts:failed_login_attempts")
-      .or(`phone.eq.${trimmedIdentifier},email.ilike.${emailPattern}`)
-      .maybeSingle();
-    user = fallback.data ? { ...fallback.data, totpEnabled: false } : null;
-    error = fallback.error;
+  if (isDesktopBuild()) {
+    return loginActionDesktop(trimmedIdentifier, password, t);
   }
 
-  if (error) {
-    // Erreur backend (config Supabase, réseau...) distincte d'un simple
-    // mauvais identifiant — journalisée côté serveur pour le diagnostic,
-    // sans détail exposé au client.
-    console.error("[loginAction] Échec de la requête Supabase :", error.message);
-  }
-
-  if (user && user.active) {
-    const valid = await bcrypt.compare(password, user.passwordHash as string);
-    if (valid) {
-      if ((user.failedLoginAttempts as number) > 0) {
-        await supabase.from("users").update({ failed_login_attempts: 0 }).eq("id", user.id as string);
-      }
-      if (user.totpEnabled) {
-        await createPending2FASession({
-          userId: user.id as string,
-          businessId: user.businessId as string,
-          role: user.role as string,
-          attempts: 0,
-        });
-        redirect("/verifier-2fa");
-      }
-      await createSession({
-        userId: user.id as string,
-        businessId: user.businessId as string,
-        role: user.role as string,
+  const merchantResult = await verifyMerchantCredentials(trimmedIdentifier, password);
+  if (merchantResult.ok) {
+    if (merchantResult.totpEnabled) {
+      await createPending2FASession({
+        userId: merchantResult.userId,
+        businessId: merchantResult.businessId,
+        role: merchantResult.role,
+        attempts: 0,
       });
-      redirect("/dashboard");
+      redirect("/verifier-2fa");
     }
-    const attempts = ((user.failedLoginAttempts as number) ?? 0) + 1;
-    await supabase
-      .from("users")
-      .update(
-        attempts >= MAX_FAILED_LOGIN_ATTEMPTS
-          ? { failed_login_attempts: attempts, active: false }
-          : { failed_login_attempts: attempts }
-      )
-      .eq("id", user.id as string);
+    await createSession({
+      userId: merchantResult.userId,
+      businessId: merchantResult.businessId,
+      role: merchantResult.role,
+    });
+    redirect("/dashboard");
   }
 
   // Aucun compte commerçant correspondant (ou mot de passe invalide) : on
   // tente le compte propriétaire de la plateforme, pour que le créateur
   // puisse se connecter depuis ce même formulaire sans passer par /admin/login.
+  // L'email est comparé sans tenir compte de la casse (ex. clavier mobile qui
+  // met une majuscule automatique au premier caractère) — `%`/`_` sont
+  // échappés pour ne pas être interprétés comme des jokers ILIKE.
+  const emailPattern = trimmedIdentifier.replace(/[%_\\]/g, (m) => `\\${m}`);
   const initialAdminQuery = await supabase
     .from("super_admins")
     .select("id, passwordHash:password_hash, totpEnabled:totp_enabled")
@@ -174,6 +132,61 @@ export async function loginAction(
   }
 
   return { error: t.wrongCredentials };
+}
+
+/**
+ * Connexion depuis l'application Windows : le serveur local n'a plus d'accès
+ * direct à Supabase (voir lib/supabase.ts), donc la vérification du mot de
+ * passe est déléguée à app/api/desktop/login/route.ts sur le déploiement web.
+ * En cas de succès, on reçoit un jeton Supabase limité au commerce du
+ * commerçant, utilisé pour toutes les requêtes suivantes de ce processus.
+ * Ne gère pas encore le 2FA (voir la route) ni le compte propriétaire de la
+ * plateforme — hors du périmètre de l'application desktop.
+ */
+async function loginActionDesktop(
+  identifier: string,
+  password: string,
+  t: (typeof AUTH_MESSAGES)[keyof typeof AUTH_MESSAGES]
+): Promise<ActionState> {
+  const baseUrl = process.env.ZINDO_PRODUCTION_URL;
+  if (!baseUrl) {
+    console.error("[loginActionDesktop] ZINDO_PRODUCTION_URL manquant");
+    return { error: t.wrongCredentials };
+  }
+
+  let response: Response;
+  try {
+    response = await fetch(`${baseUrl}/api/desktop/login`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ identifier, password }),
+    });
+  } catch (e) {
+    console.error("[loginActionDesktop] Serveur ZINDO injoignable :", e);
+    return { error: "Connexion au serveur ZINDO impossible. Vérifiez votre connexion Internet." };
+  }
+
+  if (response.status === 403) {
+    return {
+      error: "La double authentification (2FA) n'est pas encore prise en charge sur l'application Windows — connectez-vous depuis le site web.",
+    };
+  }
+  if (!response.ok) {
+    return { error: t.wrongCredentials };
+  }
+
+  const data = (await response.json()) as {
+    userId: string;
+    businessId: string;
+    role: string;
+    supabaseAccessToken: string;
+  };
+
+  setDesktopSupabaseClient(data.supabaseAccessToken);
+  await createSession({ userId: data.userId, businessId: data.businessId, role: data.role });
+  const user = await getCurrentUser();
+  if (user) await writeAuthCache(user.id, { user });
+  redirect("/dashboard");
 }
 
 const MAX_2FA_ATTEMPTS = 5;
