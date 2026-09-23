@@ -12,7 +12,7 @@ import { getBusinessSettings } from "@/lib/business-settings";
 import { sendPushToBusiness } from "@/lib/push";
 import { formatMoney } from "@/lib/format";
 import { consumeExpiryBatchesFefo } from "@/lib/actions/expiry";
-import { checkBelowCost } from "@/lib/sale-rules";
+import { checkBelowCost, checkMaxDiscount } from "@/lib/sale-rules";
 import type { PaymentMethod } from "@/lib/db-types";
 
 export type CartItemInput = {
@@ -255,6 +255,8 @@ async function createSaleImpl(input: CreateSaleInput): Promise<CreateSaleResult>
 
   const belowCostError = await checkBelowCost(user.businessId, user.role, input.items, productMap);
   if (belowCostError) return { success: false, error: belowCostError };
+  const discountError = await checkMaxDiscount(user.businessId, user.role, input.items, input.discount);
+  if (discountError) return { success: false, error: discountError };
 
   const subtotal = input.items.reduce((sum, i) => sum + i.unitPrice * i.quantity - i.discount, 0);
   const total = Math.max(0, subtotal - input.discount);
@@ -474,6 +476,8 @@ async function updateSaleImpl(input: UpdateSaleInput): Promise<CreateSaleResult>
 
   const belowCostError = await checkBelowCost(user.businessId, user.role, input.items, productMap);
   if (belowCostError) return { success: false, error: belowCostError };
+  const discountError = await checkMaxDiscount(user.businessId, user.role, input.items, input.discount);
+  if (discountError) return { success: false, error: discountError };
 
   const subtotal = input.items.reduce((sum, i) => sum + i.unitPrice * i.quantity - i.discount, 0);
   const total = Math.max(0, subtotal - input.discount);
