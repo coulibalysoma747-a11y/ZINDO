@@ -125,8 +125,10 @@ export async function registerMarketSellerAction(
   });
   if (storeError) console.error("[registerMarketSellerAction] Échec boutique en ligne :", storeError.message);
 
-  const { data: flag } = await supabase.from("feature_flags").select("id").eq("key", "boutique_en_ligne").maybeSingle();
-  if (flag) {
+  // Boutique en ligne + présence sur le marché : activées pour ce commerce seulement.
+  for (const key of ["boutique_en_ligne", "marche_listing"]) {
+    const { data: flag } = await supabase.from("feature_flags").select("id").eq("key", key).maybeSingle();
+    if (!flag) continue;
     await supabase
       .from("feature_flag_businesses")
       .upsert(

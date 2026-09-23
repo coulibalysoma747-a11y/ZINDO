@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { CheckCircle2, MapPin, Minus, Plus, ShoppingCart, Store, Trash2, X } from "lucide-react";
+import { BadgeCheck, CheckCircle2, MapPin, Minus, Plus, ShoppingCart, Store, Trash2, X } from "lucide-react";
 import { createOnlineOrderAction } from "@/lib/actions/online-store-public";
 import { formatMoney } from "@/lib/format";
 
@@ -25,8 +25,10 @@ export type MarketOffer = {
   photoUrl: string | null;
   available: number;
   storeSlug: string;
-  /** Commerce avec abonnement payé : badge « À la une » et affiché en premier. */
+  /** Commerce vérifié ET abonné : badge « À la une » et affiché en premier. */
   featured: boolean;
+  /** Commerce vérifié par l'admin ZINDO : badge « Vérifié ». */
+  verified: boolean;
 };
 
 type CartLine = { productId: string; storeSlug: string; name: string; salePrice: number; available: number; quantity: number };
@@ -187,6 +189,7 @@ export function MarketplaceShop({
                 <p className="mt-1 text-base font-extrabold text-zindo-green-600">{formatMoney(o.salePrice, store.currency)}</p>
                 <Link href={`/boutique/${store.slug}`} className="mt-1 text-xs text-zinc-500 hover:text-zindo-green-600">
                   {store.storeName}
+                  {o.verified && <BadgeCheck className="ml-0.5 inline h-3.5 w-3.5 text-sky-600" aria-label="Vérifié" />}
                   {store.city && (
                     <span className="ml-1 inline-flex items-center gap-0.5">
                       · <MapPin className="h-3 w-3" /> {store.city}

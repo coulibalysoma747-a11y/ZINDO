@@ -36,7 +36,7 @@ export default async function SellOnMarketPage() {
           ))}
         </ul>
         <p className="mt-4 rounded-xl bg-zindo-gold-100 px-3 py-2 text-sm text-zindo-ink-900">
-          ⭐ Envie d&apos;être <strong>à la une</strong> et affiché en premier ? Passez à l&apos;abonnement ZINDO depuis votre compte.
+          ⭐ Envie d&apos;être <strong>à la une</strong> et affiché en premier ? Prenez l&apos;abonnement ZINDO : après vérification de votre compte par notre équipe, vous recevez le badge <strong>Vérifié</strong>.
         </p>
         <div className="mt-6 rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm">
           <SellerSignupForm />

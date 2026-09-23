@@ -14,6 +14,13 @@ import { MarketplaceShop } from "./MarketplaceShop";
  * « Place de marché ZINDO » activé globalement depuis /admin/fonctionnalites.
  */
 const MARKETPLACE_FLAG = "marche_zindo";
+// Par commerce, depuis /admin/fonctionnalites : une boutique en ligne n'est PAS
+// listée sur le marché par défaut (accessible seulement par son adresse) —
+// l'admin l'y ajoute. Les vendeurs sans boutique y sont ajoutés à l'inscription.
+const LISTING_FLAG = "marche_listing";
+// Badge « Vérifié » accordé par l'admin après vérification ; combiné à un
+// abonnement payé, il donne la mise en avant « À la une ».
+const VERIFIED_FLAG = "marche_verifie";
 const MAX_RESULTS = 240;
 const FEATURED_MAX = 8;
 // Accès gratuit des vendeurs sans boutique (lib/actions/market-seller.ts) :
@@ -92,6 +99,16 @@ export default async function MarketplacePage({
     "Page publique /marche qui rassemble les produits de toutes les boutiques en ligne publiées. À activer globalement."
   );
   if (!(await isFeatureEnabledGlobally(MARKETPLACE_FLAG))) notFound();
+  await registerFeatureFlag(
+    LISTING_FLAG,
+    "Marché : boutique listée",
+    "À activer PAR COMMERCE : sa boutique en ligne apparaît sur le Marché ZINDO. Sinon elle reste accessible uniquement par son adresse. Ne pas activer globalement."
+  );
+  await registerFeatureFlag(
+    VERIFIED_FLAG,
+    "Marché : commerce vérifié",
+    "À activer PAR COMMERCE après vérification : badge « Vérifié » sur le marché, et mise « À la une » si son abonnement est payé."
+  );
 
   const { q = "", ville = "", categorie = "" } = await searchParams;
 
@@ -106,8 +123,14 @@ export default async function MarketplacePage({
   const allStores = (storesData ?? []) as unknown as StoreRow[];
 
   // Même condition que la vitrine : le module boutique en ligne doit être actif pour le commerce.
-  const enabled = await Promise.all(allStores.map((s) => isFeatureEnabled("boutique_en_ligne", s.businessId)));
+  const enabled = await Promise.all(
+    allStores.map(
+      async (s) => (await isFeatureEnabled("boutique_en_ligne", s.businessId)) && (await isFeatureEnabled(LISTING_FLAG, s.businessId))
+    )
+  );
   const stores = allStores.filter((_, i) => enabled[i]);
+  const verifiedFlags = await Promise.all(stores.map((s) => isFeatureEnabled(VERIFIED_FLAG, s.businessId)));
+  const verifiedBusinesses = new Set(stores.filter((_, i) => verifiedFlags[i]).map((s) => s.businessId));
   const storeByLocation = new Map(stores.map((s) => [s.locationId as string, s]));
 
   // Mise en avant : réservée aux commerces avec un abonnement payé en cours.
@@ -131,7 +154,8 @@ export default async function MarketplacePage({
   const offers = ((stocksData ?? []) as unknown as StockRow[])
     .map((s) => {
       const store = storeByLocation.get(s.locationId)!;
-      return { ...s, store, featured: !!store && paidBusinesses.has(store.businessId) };
+      const verified = !!store && verifiedBusinesses.has(store.businessId);
+      return { ...s, store, verified, featured: verified && paidBusinesses.has(store.businessId) };
     })
     .filter((s) => s.store && s.product.active && (s.quantity > 0 || s.store.showOutOfStock));
 
@@ -159,6 +183,7 @@ export default async function MarketplacePage({
     available: o.quantity,
     storeSlug: o.store.slug,
     featured: o.featured,
+    verified: o.verified,
   });
 
   return (
