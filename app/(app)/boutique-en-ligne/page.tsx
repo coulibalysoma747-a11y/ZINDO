@@ -1,11 +1,11 @@
 import { headers } from "next/headers";
 import Link from "next/link";
-import { ShoppingBasket } from "lucide-react";
+import { BadgeCheck, ShoppingBasket } from "lucide-react";
 import { requirePermission } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
 import { supabase } from "@/lib/supabase";
 import { getLocations } from "@/lib/location";
-import { isFeatureEnabled } from "@/lib/feature-flags";
+import { isFeatureEnabled, isFeatureEnabledGlobally } from "@/lib/feature-flags";
 import { Card, CardBody, CardHeader } from "@/components/ui/Card";
 import { ButtonLink } from "@/components/ui/Button";
 import { EmptyState } from "@/components/ui/Empty";
@@ -76,6 +76,8 @@ export default async function OnlineStorePage() {
   const protocol = host.startsWith("localhost") || host.startsWith("127.0.0.1") ? "http" : "https";
   const publicUrl = store ? `${protocol}://${host}/boutique/${store.slug}` : null;
 
+  const marketOpen = await isFeatureEnabledGlobally("marche_zindo");
+
   return (
     <div className="max-w-2xl space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -92,6 +94,18 @@ export default async function OnlineStorePage() {
       </div>
 
       <OnlineStoreTabs active="vitrine" pendingCount={pendingOrders ?? 0} />
+
+      {marketOpen && (
+        <Link
+          href="/verification"
+          className="flex items-center gap-3 rounded-2xl border border-sky-200 bg-sky-50 p-4 text-sm text-sky-800 hover:bg-sky-100"
+        >
+          <BadgeCheck className="h-6 w-6 shrink-0 text-sky-600" />
+          <span>
+            <strong>Faites vérifier votre compte</strong> pour obtenir le badge « Vérifié » sur le Marché ZINDO.
+          </span>
+        </Link>
+      )}
 
       {publicUrl && store?.published && (
         <Card className="border-emerald-200 bg-emerald-50">
