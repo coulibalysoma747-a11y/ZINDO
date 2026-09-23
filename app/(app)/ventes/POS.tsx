@@ -114,6 +114,7 @@ export function POS({
   locationId,
   locationName,
   canEditProducts = false,
+  canSeeMargin = false,
   autoPrintReceipt: initialAutoPrint,
   printerTicketWidth: initialPrinterWidth,
   session,
@@ -132,6 +133,8 @@ export function POS({
   locationId: string;
   locationName: string;
   canEditProducts?: boolean;
+  /** Affiche la marge du panier (révèle les prix d'achat — réservé à qui peut consulter les rapports). */
+  canSeeMargin?: boolean;
   autoPrintReceipt: boolean;
   printerTicketWidth: string | null;
   session: SessionInfo;
@@ -267,6 +270,9 @@ export function POS({
     [cart]
   );
   const total = Math.max(0, subtotal - discount);
+  // Coût d'achat du panier : une ligne en conditionnement compte `multiplier` unités de base par colis.
+  const cartCost = cart.reduce((s, line) => s + line.product.purchasePrice * (line.multiplier ?? 1) * line.quantity, 0);
+  const cartMargin = total - cartCost;
 
   function persistHeldSales(next: HeldSale[]) {
     setHeldSales(next);
@@ -1198,6 +1204,12 @@ export function POS({
                 <span className="font-semibold text-zinc-900">Total</span>
                 <span className="text-xl font-bold tabular-nums text-zinc-900">{formatMoney(total, currency)}</span>
               </div>
+              {canSeeMargin && cart.length > 0 && (
+                <div className={`flex justify-between text-xs font-medium ${cartMargin < 0 ? "text-red-600" : "text-emerald-700"}`}>
+                  <span>Marge estimée</span>
+                  <span className="tabular-nums">{formatMoney(cartMargin, currency)}</span>
+                </div>
+              )}
               {!queueOnlyMode && change > 0 && (
                 <div className="flex justify-between font-medium text-emerald-600">
                   <span>Monnaie à rendre</span>

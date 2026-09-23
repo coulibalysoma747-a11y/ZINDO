@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Printer } from "lucide-react";
-import { requirePermission } from "@/lib/auth";
+import { requirePermission, hasPermission } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
 import { supabase } from "@/lib/supabase";
 import { formatMoney, formatDateTime, startOfToday, startOfYesterday, startOfWeek, startOfMonth } from "@/lib/format";
@@ -30,7 +30,13 @@ type SaleRow = {
   location: { name: string };
   customer: { name: string } | null;
   user: { firstName: string; lastName: string };
+  items: Array<{ quantity: number; unitPrice: number; unitCost: number }>;
 };
+
+/** Marge réelle de la vente : prix d'achat figé au moment de la vente (sale_items.unit_cost). */
+function saleMargin(sale: SaleRow) {
+  return sale.items.reduce((s, i) => s + (i.unitPrice - i.unitCost) * i.quantity, 0);
+}
 
 export default async function SalesHistoryPage({
   searchParams,
@@ -40,11 +46,13 @@ export default async function SalesHistoryPage({
   const user = await requirePermission(PERMISSIONS.SALES_VIEW);
   const { periode } = await searchParams;
   const businessSettings = await getBusinessSettings(user.businessId);
+  // La marge révèle les prix d'achat : réservée à qui peut consulter les rapports (pas les vendeurs par défaut).
+  const canSeeMargin = await hasPermission(user.businessId, user.role, PERMISSIONS.REPORTS_VIEW, user.id);
 
   let query = supabase
     .from("sales")
     .select(
-      "id, number, createdAt:created_at, status, total, unclaimedAt:unclaimed_at, claimedAt:claimed_at, location:locations(name), customer:customers(name), user:users(firstName:first_name, lastName:last_name)"
+      "id, number, createdAt:created_at, status, total, unclaimedAt:unclaimed_at, claimedAt:claimed_at, location:locations(name), customer:customers(name), user:users(firstName:first_name, lastName:last_name), items:sale_items(quantity, unitPrice:unit_price, unitCost:unit_cost)"
     )
     .eq("business_id", user.businessId)
     .order("created_at", { ascending: false })
@@ -60,7 +68,9 @@ export default async function SalesHistoryPage({
   const sales = (data ?? []) as unknown as SaleRow[];
 
   const currency = user.business.currency;
-  const total = sales.filter((s) => s.status !== "ANNULEE").reduce((s, sale) => s + sale.total, 0);
+  const validSales = sales.filter((s) => s.status !== "ANNULEE");
+  const total = validSales.reduce((s, sale) => s + sale.total, 0);
+  const totalMargin = validSales.reduce((s, sale) => s + saleMargin(sale), 0);
 
   return (
     <div className="space-y-6">
@@ -69,6 +79,12 @@ export default async function SalesHistoryPage({
           <h1 className="text-xl font-bold text-zinc-900">Historique des ventes</h1>
           <p className="text-sm text-zinc-500">
             {sales.length} vente(s) · {formatMoney(total, currency)}
+            {canSeeMargin && (
+              <>
+                {" · "}
+                <span className="font-medium text-emerald-700">Marge : {formatMoney(totalMargin, currency)}</span>
+              </>
+            )}
           </p>
         </div>
         <HistoryFilters paramName="periode" />
@@ -89,6 +105,7 @@ export default async function SalesHistoryPage({
                   <TableHeaderCell>Vendeur</TableHeaderCell>
                   <TableHeaderCell>Statut</TableHeaderCell>
                   <TableHeaderCell align="right">Total</TableHeaderCell>
+                  {canSeeMargin && <TableHeaderCell align="right">Marge</TableHeaderCell>}
                   <TableHeaderCell />
                 </TableRow>
               </TableHead>
@@ -117,6 +134,11 @@ export default async function SalesHistoryPage({
                       <TableCell align="right" className="font-medium text-zinc-900 tabular-nums dark:text-slate-100">
                         {formatMoney(s.total, currency)}
                       </TableCell>
+                      {canSeeMargin && (
+                        <TableCell align="right" className="tabular-nums text-emerald-700">
+                          {s.status === "ANNULEE" ? "—" : formatMoney(saleMargin(s), currency)}
+                        </TableCell>
+                      )}
                       <TableCell align="right">
                         <div className="flex items-center justify-end gap-1.5">
                           {businessSettings.trackUnclaimedGoods && s.status !== "ANNULEE" && (
@@ -157,7 +179,14 @@ export default async function SalesHistoryPage({
                     {formatDateTime(new Date(s.createdAt))} · {s.location.name} · {s.user.firstName} {s.user.lastName}
                   </p>
                   <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
-                    <span className="font-semibold text-zinc-900">{formatMoney(s.total, currency)}</span>
+                    <span className="font-semibold text-zinc-900">
+                      {formatMoney(s.total, currency)}
+                      {canSeeMargin && s.status !== "ANNULEE" && (
+                        <span className="ml-2 text-xs font-medium text-emerald-700">
+                          Marge {formatMoney(saleMargin(s), currency)}
+                        </span>
+                      )}
+                    </span>
                     <div className="flex items-center gap-1.5">
                       {businessSettings.trackUnclaimedGoods && s.status !== "ANNULEE" && (
                         <UnclaimedToggle saleId={s.id} unclaimed={isUnclaimed} />

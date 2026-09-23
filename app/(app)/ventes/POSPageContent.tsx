@@ -49,10 +49,11 @@ export async function POSPageContent({ mode }: { mode: "pos" | "facture" }) {
     user: { firstName: string; lastName: string };
   };
 
-  const [{ data: customers }, paymentMethods, canEditProducts] = await Promise.all([
+  const [{ data: customers }, paymentMethods, canEditProducts, canSeeMargin] = await Promise.all([
     supabase.from("customers").select("id, name, phone").eq("business_id", user.businessId).order("name", { ascending: true }),
     getEnabledPaymentMethods(),
     hasPermission(user.businessId, user.role, PERMISSIONS.PRODUCTS_MANAGE, user.id),
+    hasPermission(user.businessId, user.role, PERMISSIONS.REPORTS_VIEW, user.id),
   ]);
 
   return (
@@ -64,6 +65,7 @@ export async function POSPageContent({ mode }: { mode: "pos" | "facture" }) {
       locationId={currentLocation.id}
       locationName={currentLocation.name}
       canEditProducts={canEditProducts}
+      canSeeMargin={canSeeMargin}
       hideCustomerInPos={businessSettings.hideCustomerInPos}
       quantityInputMode={businessSettings.posQuantityInputMode}
       mobileMoneyOperators={businessSettings.mobileMoneyOperators}
