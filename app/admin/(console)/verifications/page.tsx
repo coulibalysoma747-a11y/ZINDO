@@ -6,7 +6,7 @@ import { formatDateTime } from "@/lib/format";
 import { Card, CardBody } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { EmptyState } from "@/components/ui/Empty";
-import { ReviewButtons } from "./ReviewButtons";
+import { RenewalButtons, ReviewButtons } from "./ReviewButtons";
 
 const STATUS_LABELS = { EN_ATTENTE: "À examiner", VALIDEE: "Vérifié", REFUSEE: "Refusé" } as const;
 const STATUS_TONE = { EN_ATTENTE: "amber", VALIDEE: "emerald", REFUSEE: "red" } as const;
@@ -20,6 +20,9 @@ type Row = {
   idBack: string;
   selfie: string;
   rejectionReason: string | null;
+  paymentReference: string | null;
+  packPaidUntil: string | null;
+  renewalReference: string | null;
   submittedAt: string;
   reviewedBy: string | null;
   business: { name: string; phone: string | null; city: string | null };
@@ -31,13 +34,12 @@ export default async function AdminVerificationsPage() {
   const { data } = await supabase
     .from("market_verifications")
     .select(
-      "businessId:business_id, status, idFront:id_front_path, idBack:id_back_path, selfie:selfie_path, rejectionReason:rejection_reason, submittedAt:submitted_at, reviewedBy:reviewed_by, business:businesses(name, phone, city)"
+      "businessId:business_id, status, idFront:id_front_path, idBack:id_back_path, selfie:selfie_path, rejectionReason:rejection_reason, paymentReference:payment_reference, packPaidUntil:pack_paid_until, renewalReference:renewal_reference, submittedAt:submitted_at, reviewedBy:reviewed_by, business:businesses(name, phone, city)"
     )
     .order("submitted_at", { ascending: false })
     .limit(100);
-  const rows = ((data ?? []) as unknown as Row[]).sort(
-    (a, b) => Number(b.status === "EN_ATTENTE") - Number(a.status === "EN_ATTENTE")
-  );
+  const toDo = (r: Row) => r.status === "EN_ATTENTE" || !!r.renewalReference;
+  const rows = ((data ?? []) as unknown as Row[]).sort((a, b) => Number(toDo(b)) - Number(toDo(a)));
 
   // Liens signés uniquement pour les demandes à examiner (les autres n'ont plus besoin des pièces).
   const pending = rows.filter((r) => r.status === "EN_ATTENTE");
@@ -52,8 +54,9 @@ export default async function AdminVerificationsPage() {
       <div>
         <h1 className="text-xl font-bold text-zinc-900">Vérifications du Marché</h1>
         <p className="text-sm text-zinc-500">
-          {pending.length} demande(s) à examiner. Comparez le visage du selfie avec la photo de la pièce, et le nom de la
-          pièce avec celui du compte. Valider donne le badge « Vérifié » sur le marché.
+          Pack Vérifié : 1 000 FCFA / mois. {pending.length} demande(s) et {rows.filter((r) => r.renewalReference).length}{" "}
+          renouvellement(s) à traiter. Vérifiez d&apos;abord que la référence de paiement est bien arrivée sur votre
+          téléphone, puis comparez le visage du selfie avec la pièce.
         </p>
       </div>
 
@@ -78,6 +81,16 @@ export default async function AdminVerificationsPage() {
                       {r.reviewedBy && ` — traité par ${r.reviewedBy}`}
                     </p>
                     {r.rejectionReason && <p className="mt-1 text-xs text-red-600">Motif du refus : {r.rejectionReason}</p>}
+                    {r.paymentReference && (
+                      <p className="mt-1 text-xs text-zinc-600">
+                        Référence de paiement : <span className="font-mono font-semibold">{r.paymentReference}</span>
+                      </p>
+                    )}
+                    {r.status === "VALIDEE" && (
+                      <p className="mt-1 text-xs text-zinc-600">
+                        Pack payé jusqu&apos;au {r.packPaidUntil ? formatDateTime(new Date(r.packPaidUntil)) : "—"}
+                      </p>
+                    )}
                   </div>
                   <Badge tone={STATUS_TONE[r.status]}>{STATUS_LABELS[r.status]}</Badge>
                 </div>
@@ -103,6 +116,15 @@ export default async function AdminVerificationsPage() {
                     </div>
                     <ReviewButtons businessId={r.businessId} />
                   </>
+                )}
+
+                {r.renewalReference && (
+                  <div className="space-y-2 rounded-lg bg-amber-50 p-3">
+                    <p className="text-sm text-amber-800">
+                      Renouvellement : référence <span className="font-mono font-semibold">{r.renewalReference}</span>
+                    </p>
+                    <RenewalButtons businessId={r.businessId} />
+                  </div>
                 )}
               </CardBody>
             </Card>

@@ -98,6 +98,10 @@ export async function registerMarketSellerAction(
     .from("businesses")
     .update({ activity_key: "boutique_generale", activity: "Vendeur Marché ZINDO" })
     .eq("id", businessId);
+  // Espace vendeur uniquement (lib/market-seller.ts) — requête séparée : si la
+  // colonne n'existe pas encore, l'inscription ne doit pas échouer pour autant.
+  const { error: sellerFlagError } = await supabase.from("businesses").update({ market_seller: true }).eq("id", businessId);
+  if (sellerFlagError) console.error("[registerMarketSellerAction] market_seller non enregistré :", sellerFlagError.message);
 
   const { data: location } = await supabase
     .from("locations")
@@ -162,5 +166,5 @@ export async function registerMarketSellerAction(
   });
 
   await createSession({ userId: row.user_id, businessId, role: row.role as Role });
-  redirect("/produits/nouveau");
+  redirect("/vendeur");
 }

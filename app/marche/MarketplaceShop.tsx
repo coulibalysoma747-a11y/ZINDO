@@ -25,9 +25,9 @@ export type MarketOffer = {
   photoUrl: string | null;
   available: number;
   storeSlug: string;
-  /** Commerce vérifié ET abonné : badge « À la une » et affiché en premier. */
+  /** Pack Vérifié actif : badge « À la une » et affiché en premier. */
   featured: boolean;
-  /** Commerce vérifié par l'admin ZINDO : badge « Vérifié ». */
+  /** Pack Vérifié actif : badge « Vérifié » (identique à featured pour l'instant). */
   verified: boolean;
 };
 

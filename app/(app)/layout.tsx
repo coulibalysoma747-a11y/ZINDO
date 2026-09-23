@@ -16,6 +16,8 @@ import { AnnouncementBanner } from "@/components/layout/AnnouncementBanner";
 import { HasPhysicalStoreBanner } from "@/components/layout/HasPhysicalStoreBanner";
 import { ROLE_LABELS, PERMISSIONS } from "@/lib/permissions";
 import { ensureDesktopOfflineFlagRegistered } from "@/lib/actions/desktop-offline";
+import { MARKET_SELLER_HOME, isMarketSeller, isPathAllowedForMarketSeller } from "@/lib/market-seller";
+import { MarketSellerShell } from "@/components/layout/MarketSellerShell";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const user = await requireUserForBilling();
@@ -44,6 +46,13 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   // impayé) — sans quoi ce serait la seule page permettant de régler le
   // problème qui se retrouverait elle-même redirigée vers elle-même.
   if (!isBillingPage && subscriptionBlocked) redirect("/abonnement");
+
+  // Vendeur du Marché sans boutique : espace vendeur uniquement, jamais
+  // l'application complète (caisse, stock, rapports…), même par URL directe.
+  if (await isMarketSeller(user.businessId)) {
+    if (pathname && !isPathAllowedForMarketSeller(pathname)) redirect(MARKET_SELLER_HOME);
+    return <MarketSellerShell sellerName={user.business.name}>{children}</MarketSellerShell>;
+  }
 
   const [locations, currentLocation] = await Promise.all([getLocations(user.businessId), getCurrentLocation(user.businessId)]);
 

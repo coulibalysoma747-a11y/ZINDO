@@ -2,7 +2,22 @@
 
 import { useActionState, useState } from "react";
 import { Camera, IdCard, UserRound } from "lucide-react";
-import { submitVerificationAction } from "@/lib/actions/market-verification";
+import { submitRenewalAction, submitVerificationAction } from "@/lib/actions/market-verification";
+
+const refInput =
+  "w-full rounded-xl border border-zinc-200 bg-white px-3 py-3 text-sm outline-none focus:border-zindo-green-500";
+
+function ReferenceField() {
+  return (
+    <input
+      name="paymentReference"
+      required
+      minLength={4}
+      placeholder="Référence du paiement de 1 000 FCFA (ex. PP240923.1234.A12345)"
+      className={refInput}
+    />
+  );
+}
 
 const MAX_SIDE = 1600;
 
@@ -80,17 +95,38 @@ export function VerificationForm() {
       <PhotoField name="idFront" label="Pièce d'identité : recto" hint="Face avec votre photo, bien lisible" capture="environment" icon={IdCard} />
       <PhotoField name="idBack" label="Pièce d'identité : verso" hint="L'arrière de la même pièce" capture="environment" icon={IdCard} />
       <PhotoField name="selfie" label="Votre photo (selfie)" hint="Votre visage, bien éclairé, sans lunettes" capture="user" icon={UserRound} />
+      <ReferenceField />
       {state?.error && <p className="text-sm text-red-600">{state.error}</p>}
       <button
         type="submit"
         disabled={pending}
         className="w-full rounded-xl bg-zindo-green-500 py-3.5 text-sm font-bold text-white hover:bg-zindo-green-600 disabled:opacity-60"
       >
-        {pending ? "Envoi des photos…" : "Envoyer ma demande de vérification"}
+        {pending ? "Envoi des photos…" : "Envoyer ma demande (photos + paiement)"}
       </button>
       <p className="text-center text-xs text-zinc-500">
         Vos documents restent privés : seule l&apos;équipe ZINDO peut les voir, uniquement pour vous vérifier.
       </p>
+    </form>
+  );
+}
+
+export function RenewalForm() {
+  const [state, action, pending] = useActionState(submitRenewalAction, undefined);
+  if (state?.success) {
+    return <p className="rounded-2xl bg-zindo-green-100 p-4 text-sm font-semibold text-zindo-green-700">{state.success}</p>;
+  }
+  return (
+    <form action={action} className="space-y-3">
+      <ReferenceField />
+      {state?.error && <p className="text-sm text-red-600">{state.error}</p>}
+      <button
+        type="submit"
+        disabled={pending}
+        className="w-full rounded-xl bg-zindo-green-500 py-3.5 text-sm font-bold text-white hover:bg-zindo-green-600 disabled:opacity-60"
+      >
+        {pending ? "Envoi…" : "Renouveler mon pack (1 mois)"}
+      </button>
     </form>
   );
 }

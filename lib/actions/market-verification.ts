@@ -7,16 +7,26 @@ import { requireUser } from "@/lib/auth";
 import { requireSuperAdmin } from "@/lib/superadmin-auth";
 import { logAction } from "@/lib/audit";
 import { logAdminAction } from "@/lib/admin-audit";
-import { registerFeatureFlag } from "@/lib/feature-flags";
 
 /**
- * Vérification des vendeurs du Marché ZINDO (table market_verifications,
- * migration 2026-09-23_market_verifications.sql). Les pièces d'identité vont
- * dans le bucket PRIVÉ "verifications" : jamais d'URL publique.
+ * Pack Vérifié du Marché ZINDO (tables : migrations 2026-09-23_market_*.sql).
+ * 1 000 FCFA / mois, séparé de l'abonnement ZINDO : badge « Vérifié » + mise
+ * « À la une » tant que pack_paid_until est dans le futur. Les pièces
+ * d'identité vont dans le bucket PRIVÉ "verifications" : jamais d'URL publique.
  */
 const BUCKET = "verifications";
-const VERIFIED_FLAG = "marche_verifie";
 const MAX_BYTES = 8 * 1024 * 1024;
+const PACK_DAYS = 30;
+
+function extendPack(currentEnd: string | null): string {
+  const base = Math.max(Date.now(), currentEnd ? new Date(currentEnd).getTime() : 0);
+  return new Date(base + PACK_DAYS * 24 * 60 * 60 * 1000).toISOString();
+}
+
+function readReference(formData: FormData): string | null {
+  const ref = String(formData.get("paymentReference") ?? "").trim();
+  return ref.length >= 4 ? ref : null;
+}
 
 export type VerificationState = { error?: string; success?: string } | undefined;
 
@@ -33,6 +43,8 @@ async function uploadPrivate(businessId: string, file: File, label: string): Pro
 export async function submitVerificationAction(_prev: VerificationState, formData: FormData): Promise<VerificationState> {
   const user = await requireUser();
   if (user.role !== "ADMIN") return { error: "Seul le propriétaire du compte peut demander la vérification." };
+  const paymentReference = readReference(formData);
+  if (!paymentReference) return { error: "Indiquez la référence de votre paiement de 1 000 FCFA." };
 
   const files = {
     front: formData.get("idFront"),
@@ -73,6 +85,7 @@ export async function submitVerificationAction(_prev: VerificationState, formDat
     id_front_path: paths[0],
     id_back_path: paths[1],
     selfie_path: paths[2],
+    payment_reference: paymentReference,
     rejection_reason: null,
     submitted_at: new Date().toISOString(),
     reviewed_at: null,
@@ -95,9 +108,41 @@ export async function submitVerificationAction(_prev: VerificationState, formDat
   return { success: "Demande envoyée. Notre équipe vous répond sous 48 h." };
 }
 
+/** Renouvellement mensuel : le commerçant déjà vérifié envoie seulement la référence du nouveau paiement. */
+export async function submitRenewalAction(_prev: VerificationState, formData: FormData): Promise<VerificationState> {
+  const user = await requireUser();
+  if (user.role !== "ADMIN") return { error: "Seul le propriétaire du compte peut renouveler le pack." };
+  const reference = readReference(formData);
+  if (!reference) return { error: "Indiquez la référence de votre paiement de 1 000 FCFA." };
+
+  const { data: row } = await supabase
+    .from("market_verifications")
+    .select("status, renewalReference:renewal_reference")
+    .eq("business_id", user.businessId)
+    .maybeSingle();
+  if (row?.status !== "VALIDEE") return { error: "Votre compte doit d'abord être vérifié." };
+  if (row.renewalReference) return { error: "Un paiement est déjà en attente de confirmation." };
+
+  const { error } = await supabase
+    .from("market_verifications")
+    .update({ renewal_reference: reference, renewal_submitted_at: new Date().toISOString() })
+    .eq("business_id", user.businessId);
+  if (error) return { error: "Impossible d'enregistrer le paiement. Réessayez." };
+
+  revalidatePath("/verification");
+  return { success: "Paiement envoyé. Votre pack sera prolongé dès confirmation." };
+}
+
+/** Première demande : valide (pièces + paiement → pack de 30 jours) ou refuse. */
 export async function reviewVerificationAction(businessId: string, approve: boolean, reason?: string) {
   const admin = await requireSuperAdmin();
   if (!approve && !reason?.trim()) return { error: "Indiquez le motif du refus." };
+
+  const { data: row } = await supabase
+    .from("market_verifications")
+    .select("packPaidUntil:pack_paid_until")
+    .eq("business_id", businessId)
+    .maybeSingle();
 
   const { error } = await supabase
     .from("market_verifications")
@@ -106,24 +151,10 @@ export async function reviewVerificationAction(businessId: string, approve: bool
       rejection_reason: approve ? null : reason!.trim(),
       reviewed_at: new Date().toISOString(),
       reviewed_by: admin.name,
+      ...(approve ? { pack_paid_until: extendPack((row?.packPaidUntil as string | null) ?? null) } : {}),
     })
     .eq("business_id", businessId);
   if (error) return { error: "Impossible d'enregistrer la décision." };
-
-  await registerFeatureFlag(
-    VERIFIED_FLAG,
-    "Marché : commerce vérifié",
-    "À activer PAR COMMERCE après vérification : badge « Vérifié » sur le marché, et mise « À la une » si son abonnement est payé."
-  );
-  const { data: flag } = await supabase.from("feature_flags").select("id").eq("key", VERIFIED_FLAG).maybeSingle();
-  if (flag) {
-    await supabase
-      .from("feature_flag_businesses")
-      .upsert(
-        { feature_flag_id: flag.id, business_id: businessId, enabled: approve },
-        { onConflict: "feature_flag_id,business_id", ignoreDuplicates: false }
-      );
-  }
 
   await logAdminAction({
     superAdminId: admin.id,
@@ -131,8 +162,42 @@ export async function reviewVerificationAction(businessId: string, approve: bool
     action: approve ? "APPROVE" : "REJECT",
     entity: "MarketVerification",
     entityId: businessId,
-    details: approve ? "Vendeur vérifié" : `Refus : ${reason!.trim()}`,
+    details: approve ? `Vendeur vérifié, pack ${PACK_DAYS} jours` : `Refus : ${reason!.trim()}`,
   });
   revalidatePath("/admin/verifications");
   return { success: approve ? "Commerce vérifié" : "Demande refusée" };
+}
+
+/** Renouvellement : confirme le paiement (+30 jours) ou le rejette (référence introuvable…). */
+export async function reviewRenewalAction(businessId: string, approve: boolean) {
+  const admin = await requireSuperAdmin();
+  const { data: row } = await supabase
+    .from("market_verifications")
+    .select("packPaidUntil:pack_paid_until, renewalReference:renewal_reference")
+    .eq("business_id", businessId)
+    .maybeSingle();
+  if (!row?.renewalReference) return { error: "Aucun paiement en attente." };
+
+  const { error } = await supabase
+    .from("market_verifications")
+    .update({
+      renewal_reference: null,
+      renewal_submitted_at: null,
+      ...(approve
+        ? { pack_paid_until: extendPack(row.packPaidUntil as string | null), payment_reference: row.renewalReference }
+        : {}),
+    })
+    .eq("business_id", businessId);
+  if (error) return { error: "Impossible d'enregistrer la décision." };
+
+  await logAdminAction({
+    superAdminId: admin.id,
+    actorName: admin.name,
+    action: approve ? "APPROVE" : "REJECT",
+    entity: "MarketPackRenewal",
+    entityId: businessId,
+    details: `Référence ${row.renewalReference}`,
+  });
+  revalidatePath("/admin/verifications");
+  return { success: approve ? "Pack prolongé de 30 jours" : "Paiement rejeté" };
 }

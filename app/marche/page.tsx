@@ -18,27 +18,20 @@ const MARKETPLACE_FLAG = "marche_zindo";
 // listée sur le marché par défaut (accessible seulement par son adresse) —
 // l'admin l'y ajoute. Les vendeurs sans boutique y sont ajoutés à l'inscription.
 const LISTING_FLAG = "marche_listing";
-// Badge « Vérifié » accordé par l'admin après vérification ; combiné à un
-// abonnement payé, il donne la mise en avant « À la une ».
-const VERIFIED_FLAG = "marche_verifie";
 const MAX_RESULTS = 240;
 const FEATURED_MAX = 8;
-// Accès gratuit des vendeurs sans boutique (lib/actions/market-seller.ts) :
-// abonnement ACTIVE jusqu'en 2099, qui ne compte pas comme un abonnement payé.
-const FREE_FOREVER_YEAR = 2099;
+type PackRow = { businessId: string; status: string; packPaidUntil: string | null };
 
-type SubRow = { businessId: string; status: string; currentPeriodEnd: string | null };
-
-function paidBusinessIds(subs: SubRow[]): Set<string> {
+/**
+ * Pack Vérifié (lib/actions/market-verification.ts, 1 000 FCFA / mois) :
+ * vérifié par l'admin ET pack payé en cours = badge « Vérifié » + « À la une ».
+ */
+function activePackBusinessIds(rows: PackRow[]): Set<string> {
   const now = Date.now();
   return new Set(
-    subs
-      .filter((sub) => {
-        if (sub.status !== "ACTIVE" || !sub.currentPeriodEnd) return false;
-        const end = new Date(sub.currentPeriodEnd);
-        return end.getTime() > now && end.getUTCFullYear() < FREE_FOREVER_YEAR;
-      })
-      .map((sub) => sub.businessId)
+    rows
+      .filter((r) => r.status === "VALIDEE" && r.packPaidUntil && new Date(r.packPaidUntil).getTime() > now)
+      .map((r) => r.businessId)
   );
 }
 
@@ -104,11 +97,6 @@ export default async function MarketplacePage({
     "Marché : boutique listée",
     "À activer PAR COMMERCE : sa boutique en ligne apparaît sur le Marché ZINDO. Sinon elle reste accessible uniquement par son adresse. Ne pas activer globalement."
   );
-  await registerFeatureFlag(
-    VERIFIED_FLAG,
-    "Marché : commerce vérifié",
-    "À activer PAR COMMERCE après vérification : badge « Vérifié » sur le marché, et mise « À la une » si son abonnement est payé."
-  );
 
   const { q = "", ville = "", categorie = "" } = await searchParams;
 
@@ -129,18 +117,15 @@ export default async function MarketplacePage({
     )
   );
   const stores = allStores.filter((_, i) => enabled[i]);
-  const verifiedFlags = await Promise.all(stores.map((s) => isFeatureEnabled(VERIFIED_FLAG, s.businessId)));
-  const verifiedBusinesses = new Set(stores.filter((_, i) => verifiedFlags[i]).map((s) => s.businessId));
   const storeByLocation = new Map(stores.map((s) => [s.locationId as string, s]));
 
-  // Mise en avant : réservée aux commerces avec un abonnement payé en cours.
-  const { data: subsData } = stores.length
+  const { data: packData } = stores.length
     ? await supabase
-        .from("business_subscriptions")
-        .select("businessId:business_id, status, currentPeriodEnd:current_period_end")
+        .from("market_verifications")
+        .select("businessId:business_id, status, packPaidUntil:pack_paid_until")
         .in("business_id", stores.map((s) => s.businessId))
     : { data: [] };
-  const paidBusinesses = paidBusinessIds((subsData ?? []) as SubRow[]);
+  const packBusinesses = activePackBusinessIds((packData ?? []) as PackRow[]);
 
   const { data: stocksData } = stores.length
     ? await supabase
@@ -154,8 +139,8 @@ export default async function MarketplacePage({
   const offers = ((stocksData ?? []) as unknown as StockRow[])
     .map((s) => {
       const store = storeByLocation.get(s.locationId)!;
-      const verified = !!store && verifiedBusinesses.has(store.businessId);
-      return { ...s, store, verified, featured: verified && paidBusinesses.has(store.businessId) };
+      const verified = !!store && packBusinesses.has(store.businessId);
+      return { ...s, store, verified, featured: verified };
     })
     .filter((s) => s.store && s.product.active && (s.quantity > 0 || s.store.showOutOfStock));
 
