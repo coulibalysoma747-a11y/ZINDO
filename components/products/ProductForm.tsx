@@ -12,6 +12,7 @@ import { getOrCreateCategoryByNameAction } from "@/lib/actions/categories";
 import { getOrCreateBrandByNameAction } from "@/lib/actions/brands";
 import type { ActionState } from "@/lib/actions/products";
 import type { CustomFieldDef } from "@/lib/activity-config";
+import { formatMoney } from "@/lib/format";
 
 type Option = { id: string; name: string };
 
@@ -62,6 +63,8 @@ export function ProductForm({
   const [state, formAction, pending] = useActionState(action, undefined);
   const [barcode, setBarcode] = useState(initial?.barcode ?? "");
   const [trackUnits, setTrackUnits] = useState(initial?.trackUnits ?? false);
+  const [purchasePrice, setPurchasePrice] = useState(String(initial?.purchasePrice ?? ""));
+  const [salePrice, setSalePrice] = useState(String(initial?.salePrice ?? ""));
   const [packagingRows, setPackagingRows] = useState<number[]>([]);
   const nextPackagingRowId = useRef(0);
   const [aliases, setAliases] = useState<string[]>(initial?.aliases ?? []);
@@ -144,6 +147,7 @@ export function ProductForm({
             min={0}
             step="1"
             defaultValue={initial?.purchasePrice}
+            onChange={(e) => setPurchasePrice(e.target.value)}
             required
           />
         </Field>
@@ -155,9 +159,11 @@ export function ProductForm({
             min={0}
             step="1"
             defaultValue={initial?.salePrice}
+            onChange={(e) => setSalePrice(e.target.value)}
             required
           />
         </Field>
+        <MarginPreview purchasePrice={purchasePrice} salePrice={salePrice} />
         {!initial && (
           <>
             <Field label="Quantité initiale" htmlFor="quantity">
@@ -346,5 +352,31 @@ export function ProductForm({
         </Button>
       </div>
     </form>
+  );
+}
+
+/** Marge par unité, recalculée à chaque frappe dans les champs de prix. */
+function MarginPreview({ purchasePrice, salePrice }: { purchasePrice: string; salePrice: string }) {
+  if (purchasePrice === "" || salePrice === "") return null;
+  const buy = Number(purchasePrice);
+  const sell = Number(salePrice);
+  if (!Number.isFinite(buy) || !Number.isFinite(sell)) return null;
+  const margin = sell - buy;
+  const rate = sell > 0 ? Math.round((margin / sell) * 1000) / 10 : 0;
+  const invalid = margin < 0;
+  return (
+    <div
+      className={`rounded-xl border p-3 text-sm sm:col-span-2 ${
+        invalid ? "border-red-200 bg-red-50 text-red-700" : "border-emerald-200 bg-emerald-50 text-emerald-800"
+      }`}
+    >
+      {invalid ? (
+        "Le prix d'achat ne peut pas dépasser le prix de vente"
+      ) : (
+        <>
+          Marge par unité : <strong>{formatMoney(margin)}</strong> ({rate} % du prix de vente)
+        </>
+      )}
+    </div>
   );
 }
