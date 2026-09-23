@@ -32,6 +32,9 @@ const productSchema = z.object({
   barcode: z.string().optional(),
   reference: z.string().optional(),
   trackUnits: z.coerce.boolean().default(false),
+}).refine((d) => d.purchasePrice <= d.salePrice, {
+  message: "Le prix d'achat ne peut pas dépasser le prix de vente",
+  path: ["purchasePrice"],
 });
 
 type PackagingRowInput = { name: string; multiplier: number; salePrice: number };
