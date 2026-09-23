@@ -1,16 +1,16 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { MapPin, Search, Store } from "lucide-react";
+import { Search } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { isFeatureEnabled, isFeatureEnabledGlobally, registerFeatureFlag } from "@/lib/feature-flags";
-import { formatMoney } from "@/lib/format";
 import { ZindoLogo } from "@/components/auth/ZindoLogo";
+import { MarketplaceShop } from "./MarketplaceShop";
 
 /**
- * Place de marché ZINDO (étape 1) : catalogue commun de toutes les boutiques
- * en ligne publiées. La commande se fait ensuite sur la vitrine du commerçant
- * (/boutique/[slug]). Désactivée par défaut : visible seulement une fois
+ * Place de marché ZINDO : catalogue commun de toutes les boutiques
+ * en ligne publiées, avec un panier multi-boutiques (MarketplaceShop) qui crée
+ * une commande en ligne par boutique. Désactivée par défaut : visible seulement une fois
  * « Place de marché ZINDO » activé globalement depuis /admin/fonctionnalites.
  */
 const MARKETPLACE_FLAG = "marche_zindo";
@@ -28,6 +28,11 @@ type StoreRow = {
   locationId: string | null;
   businessId: string;
   showOutOfStock: boolean;
+  deliveryEnabled: boolean;
+  deliveryFee: number;
+  freeDeliveryAbove: number | null;
+  pickupEnabled: boolean;
+  minOrderAmount: number | null;
   business: { currency: string };
 };
 
@@ -67,7 +72,8 @@ export default async function MarketplacePage({
   const { data: storesData } = await supabase
     .from("online_stores")
     .select(
-      "slug, storeName:store_name, city, locationId:location_id, businessId:business_id, showOutOfStock:show_out_of_stock, business:businesses(currency)"
+      "slug, storeName:store_name, city, locationId:location_id, businessId:business_id, showOutOfStock:show_out_of_stock, " +
+        "deliveryEnabled:delivery_enabled, deliveryFee:delivery_fee, freeDeliveryAbove:free_delivery_above, pickupEnabled:pickup_enabled, minOrderAmount:min_order_amount, business:businesses(currency)"
     )
     .eq("published", true)
     .not("location_id", "is", null);
@@ -161,40 +167,27 @@ export default async function MarketplacePage({
           <p className="py-16 text-center text-zinc-500">Aucun produit ne correspond à votre recherche.</p>
         ) : (
           <>
-            <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-              {shown.map((o) => (
-                <li key={`${o.store.slug}-${o.product.id}`}>
-                  <Link
-                    href={`/boutique/${o.store.slug}`}
-                    className="flex h-full flex-col overflow-hidden rounded-2xl border border-zinc-200 bg-white transition hover:-translate-y-0.5 hover:shadow-md"
-                  >
-                    <div className="flex aspect-square items-center justify-center bg-zinc-100">
-                      {o.product.photoUrl ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img src={o.product.photoUrl} alt={o.product.name} loading="lazy" className="h-full w-full object-cover" />
-                      ) : (
-                        <Store className="h-10 w-10 text-zinc-300" />
-                      )}
-                    </div>
-                    <div className="flex flex-1 flex-col p-3">
-                      <p className="line-clamp-2 text-sm font-semibold text-zindo-ink-900">{o.product.name}</p>
-                      <p className="mt-1 text-base font-extrabold text-zindo-green-600">
-                        {formatMoney(o.product.salePrice, o.store.business.currency)}
-                      </p>
-                      <p className="mt-auto pt-2 text-xs text-zinc-500">
-                        {o.store.storeName}
-                        {o.store.city && (
-                          <span className="ml-1 inline-flex items-center gap-0.5">
-                            · <MapPin className="h-3 w-3" /> {o.store.city}
-                          </span>
-                        )}
-                      </p>
-                      {o.quantity <= 0 && <p className="mt-1 text-xs font-semibold text-red-600">Rupture de stock</p>}
-                    </div>
-                  </Link>
-                </li>
-              ))}
-            </ul>
+            <MarketplaceShop
+              offers={shown.map((o) => ({
+                productId: o.product.id,
+                name: o.product.name,
+                salePrice: o.product.salePrice,
+                photoUrl: o.product.photoUrl,
+                available: o.quantity,
+                storeSlug: o.store.slug,
+              }))}
+              stores={stores.map((st) => ({
+                slug: st.slug,
+                storeName: st.storeName,
+                city: st.city,
+                currency: st.business.currency,
+                deliveryEnabled: st.deliveryEnabled,
+                deliveryFee: st.deliveryFee,
+                freeDeliveryAbove: st.freeDeliveryAbove,
+                pickupEnabled: st.pickupEnabled,
+                minOrderAmount: st.minOrderAmount ?? 0,
+              }))}
+            />
             {results.length > shown.length && (
               <p className="mt-6 text-center text-sm text-zinc-500">
                 {results.length - shown.length} autres produits : affinez votre recherche.
