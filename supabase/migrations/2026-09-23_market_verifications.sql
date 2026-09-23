@@ -11,8 +11,8 @@
 -- Additif et idempotent. À exécuter dans l'éditeur SQL de Supabase.
 
 create table if not exists market_verifications (
-  id uuid primary key default gen_random_uuid(),
-  business_id uuid not null unique references businesses(id) on delete cascade,
+  id text primary key default gen_random_uuid()::text,
+  business_id text not null unique references businesses(id) on delete cascade,
   status text not null default 'EN_ATTENTE' check (status in ('EN_ATTENTE', 'VALIDEE', 'REFUSEE')),
   id_front_path text not null,
   id_back_path text not null,
