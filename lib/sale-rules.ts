@@ -1,6 +1,7 @@
 import { isFeatureEnabled, registerFeatureFlag } from "@/lib/feature-flags";
 import { formatMoney } from "@/lib/format";
 import { supabase } from "@/lib/supabase";
+import { sendPushToBusiness } from "@/lib/push";
 import type { Role } from "@/lib/db-types";
 import { CANCEL_REASON_REQUIRED } from "@/lib/sale-rules-constants";
 
@@ -131,4 +132,27 @@ export async function checkCreditLimit(
     return `Plafond de crédit dépassé : ce client doit déjà ${formatMoney(debt)} (maximum ${formatMoney(CREDIT_LIMIT)}). Demandez à un administrateur.`;
   }
   return null;
+}
+
+/**
+ * Règle « alerte écart de caisse » : désactivée par défaut. Quand elle est
+ * active, une notification est envoyée au commerce si l'écart constaté à la
+ * clôture dépasse CASH_VARIANCE_ALERT (en plus ou en moins).
+ */
+const CASH_VARIANCE_FLAG = "cash_variance_alert";
+const CASH_VARIANCE_ALERT = 5000;
+
+export async function alertCashVariance(businessId: string, sessionId: string, variance: number, cashierName: string) {
+  if (Math.abs(variance) < CASH_VARIANCE_ALERT) return;
+  await registerFeatureFlag(
+    CASH_VARIANCE_FLAG,
+    `Alerte écart de caisse ≥ ${formatMoney(CASH_VARIANCE_ALERT)}`,
+    `Envoie une notification quand l'écart constaté à la fermeture de caisse dépasse ${formatMoney(CASH_VARIANCE_ALERT)}.`
+  );
+  if (!(await isFeatureEnabled(CASH_VARIANCE_FLAG, businessId))) return;
+  await sendPushToBusiness(businessId, {
+    title: "⚠️ Écart de caisse",
+    body: `${cashierName} a fermé la caisse avec un écart de ${variance > 0 ? "+" : ""}${formatMoney(variance)}`,
+    link: `/ventes/session/${sessionId}`,
+  });
 }

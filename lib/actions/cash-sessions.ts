@@ -9,6 +9,7 @@ import { getCurrentLocation } from "@/lib/location";
 import { generateSessionNumber } from "@/lib/reference";
 import { computeSessionStats } from "@/lib/cash-sessions";
 import { logAction } from "@/lib/audit";
+import { alertCashVariance } from "@/lib/sale-rules";
 
 export type ActionState = { error?: string; success?: string } | undefined;
 
@@ -135,6 +136,8 @@ export async function closeSessionAction(input: CloseSessionInput): Promise<Clos
     entityId: session.id as string,
     details: `Compté ${input.countedCash}, écart ${variance}`,
   });
+
+  await alertCashVariance(user.businessId, session.id as string, variance, `${user.firstName} ${user.lastName}`);
 
   revalidatePath("/ventes");
   revalidatePath(`/ventes/session/${session.id}`);
