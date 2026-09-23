@@ -18,6 +18,31 @@ export type MerchantCredentialResult =
   | { ok: true; userId: string; businessId: string; role: string; totpEnabled: boolean }
   | { ok: false };
 
+/**
+ * Formes possibles d'un même numéro : le téléphone est enregistré tel qu'il a
+ * été tapé à l'inscription (« 70 12 34 56 », « 70123456 », « +226 70… »), et
+ * la connexion comparait jusqu'ici la saisie à l'identique. On essaie donc
+ * les variantes courantes (sans espaces, avec/sans indicatif, par paires).
+ */
+function phoneVariants(identifier: string): string[] {
+  const digits = identifier.replace(/\D/g, "");
+  if (digits.length < 8) return [];
+  const local = digits.length > 8 ? digits.slice(-8) : digits;
+  const pairs = local.replace(/(\d{2})(?=\d)/g, "$1 ");
+  const prefix = digits.length > 8 ? digits.slice(0, digits.length - 8) : "226";
+  return [
+    ...new Set([
+      local,
+      pairs,
+      `+${prefix}${local}`,
+      `${prefix}${local}`,
+      `00${prefix}${local}`,
+      `+${prefix} ${pairs}`,
+      `+${prefix} ${local}`,
+    ]),
+  ].filter((v) => v !== identifier);
+}
+
 export async function verifyMerchantCredentials(
   identifier: string,
   password: string
@@ -50,6 +75,22 @@ export async function verifyMerchantCredentials(
 
   if (error) {
     console.error("[verifyMerchantCredentials] Échec de la requête Supabase :", error.message);
+  }
+
+  // Pas trouvé tel quel : on tente les autres écritures du même numéro. Utilisé
+  // seulement s'il n'y a qu'UN compte correspondant, pour ne jamais confondre deux comptes.
+  if (!user && !identifier.includes("@")) {
+    const variants = phoneVariants(identifier);
+    if (variants.length > 0) {
+      const { data: matches } = await supabase
+        .from("users")
+        .select(
+          "id, businessId:business_id, role, active, passwordHash:password_hash, totpEnabled:totp_enabled, failedLoginAttempts:failed_login_attempts"
+        )
+        .in("phone", variants)
+        .limit(2);
+      if (matches && matches.length === 1) user = matches[0];
+    }
   }
 
   if (!user || !user.active) return { ok: false };
