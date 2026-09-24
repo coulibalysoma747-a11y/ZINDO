@@ -18,6 +18,7 @@ const PUBLIC_PATHS = [
   "/cgu",
   "/confidentialite",
   "/tarifs",
+  "/fonctionnalites",
   // Version anglaise (voir app/en/) : "/en" couvre aussi tous ses
   // sous-chemins (/en/login, /en/inscription, /en/cgu, /en/confidentialite)
   // grâce au startsWith(`${p}/`) ci-dessous — pas besoin de les lister un par un.
@@ -35,6 +36,7 @@ const PUBLIC_PATHS_ALLOWED_WHEN_LOGGED_IN = [
   "/marche",
   "/cgu",
   "/confidentialite",
+  "/fonctionnalites",
   "/en/cgu",
   "/en/confidentialite",
 ];

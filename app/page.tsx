@@ -108,7 +108,17 @@ const FAQS = [
   {
     question: "Qu'est-ce que ZINDO ?",
     answer:
-      "ZINDO est une application de gestion de stock, de caisse et de ventes conçue pour les commerces d'Afrique de l'Ouest (Burkina Faso, Côte d'Ivoire, Mali, Niger, Sénégal...) : boutiques, quincailleries, magasins de pièces détachées, boutiques de motos, alimentations et grossistes. Elle remplace les cahiers et les fichiers Excel.",
+      "ZINDO est un logiciel de gestion de stock, de caisse et de facturation conçu au Burkina Faso, pour les boutiques comme pour les PME : quincailleries, magasins de pièces détachées, boutiques de motos, alimentations, grossistes et dépôts. Il remplace les cahiers et les fichiers Excel, et s'utilise aussi dans le reste de l'Afrique de l'Ouest (Côte d'Ivoire, Mali, Niger, Sénégal...).",
+  },
+  {
+    question: "ZINDO est-il adapté aux PME ?",
+    answer:
+      "Oui. En plus de la caisse et du stock, ZINDO gère plusieurs employés avec des permissions par module, plusieurs boutiques et dépôts, les achats fournisseurs, les crédits clients, les devis, les factures avec IFU et RCCM, les dépenses et les rapports de bénéfices.",
+  },
+  {
+    question: "ZINDO fonctionne-t-il sur ordinateur ?",
+    answer:
+      "Oui. ZINDO fonctionne sur ordinateur Windows (application de bureau ou navigateur), sur téléphone et tablette Android et iOS, avec les mêmes données sur tous les appareils.",
   },
   {
     question: "ZINDO est-elle adaptée au FCFA et aux commerces d'Afrique de l'Ouest ?",
@@ -174,7 +184,7 @@ const STRUCTURED_DATA = [
     applicationCategory: "BusinessApplication",
     operatingSystem: "Web, Android, iOS, Windows",
     description:
-      "Application de gestion de stock, de caisse et de ventes pour les commerces d'Afrique de l'Ouest (boutiques, quincailleries, pièces détachées, motos, alimentation).",
+      "Logiciel de gestion de stock, de caisse et de facturation conçu au Burkina Faso pour les boutiques et les PME : multi-utilisateurs, multi-dépôts, crédits clients, devis et factures, caisse hors ligne. Sur PC Windows, Android et iOS.",
     url: "https://www.zindo.site",
     offers: {
       "@type": "Offer",
@@ -341,6 +351,14 @@ export default async function RootPage() {
               );
             })}
           </div>
+          <div className="mt-8 text-center">
+            <Link
+              href="/fonctionnalites"
+              className="inline-flex items-center gap-1.5 text-sm font-bold text-zindo-green-700 hover:text-zindo-green-600"
+            >
+              Voir toutes les fonctionnalités <ArrowRight className="h-4 w-4" />
+            </Link>
+          </div>
         </section>
 
         {/* Pourquoi travailler avec ZINDO */}
@@ -499,7 +517,18 @@ export default async function RootPage() {
       </main>
 
       <footer className="relative z-10 border-t border-zinc-200 py-8 text-center text-xs text-zinc-400">
-        <p>ZINDO — Gestion de stock et de ventes pour commerces d&apos;Afrique de l&apos;Ouest.</p>
+        <p>ZINDO — Logiciel de gestion de stock, de caisse et de facturation conçu au Burkina Faso.</p>
+        <p className="mt-1">
+          <Link href="/fonctionnalites" className="hover:text-zindo-green-600">Fonctionnalités</Link>
+          {" · "}
+          <Link href="/fonctionnalites/logiciel-gestion-pme" className="hover:text-zindo-green-600">Pour les PME</Link>
+          {" · "}
+          <Link href="/fonctionnalites/credits-clients" className="hover:text-zindo-green-600">Crédits clients</Link>
+          {" · "}
+          <Link href="/fonctionnalites/facturation" className="hover:text-zindo-green-600">Factures et devis</Link>
+          {" · "}
+          <Link href="/tarifs" className="hover:text-zindo-green-600">Tarifs</Link>
+        </p>
         <p className="mt-1">
           Support WhatsApp :{" "}
           <a
