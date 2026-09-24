@@ -29,11 +29,18 @@ export async function createSubscriptionInvoiceAction(billingCycle: "MONTHLY" | 
 
   const { data: existingPending } = await supabase
     .from("subscription_invoices")
-    .select("id")
+    .select("id, planKey:plan_key, paymentReference:payment_reference")
     .eq("business_id", user.businessId)
     .eq("status", "EN_ATTENTE")
     .maybeSingle();
-  if (existingPending) return { success: true, invoiceId: existingPending.id as string };
+  if (existingPending) {
+    // Une ancienne facture (palier retiré, ancien prix) sans paiement déclaré est
+    // annulée et remplacée par une facture Pro ; si un paiement a déjà été
+    // déclaré, on la garde pour que l'admin puisse la confirmer.
+    const isLegacy = existingPending.planKey !== plan.key;
+    if (!isLegacy || existingPending.paymentReference) return { success: true, invoiceId: existingPending.id as string };
+    await supabase.from("subscription_invoices").update({ status: "ANNULEE" }).eq("id", existingPending.id).eq("status", "EN_ATTENTE");
+  }
 
   const amount = (parsed.data.billingCycle === "ANNUAL" ? plan.annualPrice : plan.monthlyPrice) as number;
   const number = await generateSubscriptionInvoiceNumber(user.businessId);

@@ -17,6 +17,9 @@ type InvoiceRow = {
   paymentReference: string | null;
   createdAt: string;
   paidAt: string | null;
+  payerLastName: string | null;
+  payerFirstName: string | null;
+  payerPhone: string | null;
 };
 
 export default async function SubscriptionInvoicePage({ params }: { params: Promise<{ id: string }> }) {
@@ -26,7 +29,7 @@ export default async function SubscriptionInvoicePage({ params }: { params: Prom
   const { data } = await supabase
     .from("subscription_invoices")
     .select(
-      "id, number, planLabel:plan_label, billingCycle:billing_cycle, amount, status, paymentMethod:payment_method, paymentReference:payment_reference, createdAt:created_at, paidAt:paid_at"
+      "id, number, planLabel:plan_label, billingCycle:billing_cycle, amount, status, paymentMethod:payment_method, paymentReference:payment_reference, createdAt:created_at, paidAt:paid_at, payerLastName:payer_last_name, payerFirstName:payer_first_name, payerPhone:payer_phone"
     )
     .eq("id", id)
     .eq("business_id", user.businessId)
@@ -39,7 +42,7 @@ export default async function SubscriptionInvoicePage({ params }: { params: Prom
   return (
     <FactureInvoiceView
       invoice={invoice}
-      businessName={user.business.name}
+      business={{ name: user.business.name, phone: user.business.phone, address: user.business.address, city: user.business.city, country: user.business.country }}
       cycleLabel={CYCLE_LABELS[invoice.billingCycle]}
       statusLabel={STATUS_LABELS[invoice.status]}
       currency={currency}

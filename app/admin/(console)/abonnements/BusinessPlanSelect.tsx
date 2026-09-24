@@ -39,6 +39,11 @@ export function BusinessPlanSelect({
           Aucun palier (illimité) — choisir...
         </option>
       )}
+      {value && !plans.some((p) => p.key === planKey) && (
+        <option value={value} disabled>
+          Ancien palier — passer au Pro...
+        </option>
+      )}
       {plans.map((p) => (
         <optgroup key={p.key} label={p.label}>
           <option value={`${p.key}:MONTHLY`}>{p.label} — Mensuel</option>

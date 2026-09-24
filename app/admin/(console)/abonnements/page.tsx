@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Wallet, TrendingUp, Users, Receipt, Settings2, Clock, ShieldAlert } from "lucide-react";
 import { requireSuperAdmin } from "@/lib/superadmin-auth";
 import { supabase } from "@/lib/supabase";
+import { ACTIVE_PLAN_KEY } from "@/lib/subscription";
 import { formatMoney, formatDateTime } from "@/lib/format";
 import { Card, CardBody, CardHeader } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
@@ -58,7 +59,8 @@ export default async function AdminSubscriptionsPage() {
     { count: totalBusinesses },
     { count: subscribedBusinesses },
   ] = await Promise.all([
-    supabase.from("subscription_plans").select("id, key, label, monthlyPrice:monthly_price, annualPrice:annual_price").order("order", { ascending: true }),
+    // Seul le palier vendu (Pro) est proposé : les anciens paliers restent en base pour l'historique.
+    supabase.from("subscription_plans").select("id, key, label, monthlyPrice:monthly_price, annualPrice:annual_price").eq("key", ACTIVE_PLAN_KEY),
     supabase
       .from("business_subscriptions")
       .select(

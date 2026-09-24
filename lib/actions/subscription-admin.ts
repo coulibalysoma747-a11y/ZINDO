@@ -10,10 +10,27 @@ import { FEATURE_CATALOG } from "@/lib/subscription";
 
 export type ActionState = { error?: string; success?: string } | undefined;
 
-export async function confirmInvoicePaymentAction(invoiceId: string) {
+const payerSchema = z.object({
+  lastName: z.string().trim().min(1, "Nom du payeur requis").max(80),
+  firstName: z.string().trim().min(1, "Prénom du payeur requis").max(80),
+  phone: z.string().trim().min(8, "Numéro du payeur requis").max(20),
+});
+
+export async function confirmInvoicePaymentAction(
+  invoiceId: string,
+  payer: { lastName: string; firstName: string; phone: string }
+) {
   const admin = await requireSuperAdmin();
+  const parsed = payerSchema.safeParse(payer);
+  if (!parsed.success) return { error: parsed.error.issues[0].message };
+
   const result = await activateInvoicePayment({ invoiceId, method: "MANUEL" });
   if ("error" in result) return { error: result.error };
+
+  await supabase
+    .from("subscription_invoices")
+    .update({ payer_last_name: parsed.data.lastName, payer_first_name: parsed.data.firstName, payer_phone: parsed.data.phone })
+    .eq("id", invoiceId);
 
   await logAdminAction({
     superAdminId: admin.id,

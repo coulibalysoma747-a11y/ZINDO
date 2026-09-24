@@ -1619,6 +1619,9 @@ create table subscription_invoices (
   payment_method invoice_payment_method,
   payment_reference text,
   proof_note text,
+  payer_last_name text,
+  payer_first_name text,
+  payer_phone text,
   paid_at timestamptz,
   created_at timestamptz not null default now(),
   unique (business_id, number)
