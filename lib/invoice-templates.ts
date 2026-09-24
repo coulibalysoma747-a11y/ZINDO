@@ -18,7 +18,12 @@ export type InvoiceTemplateId =
   | "moto"
   | "restaurant"
   | "epicerie"
-  | "cabinet";
+  | "cabinet"
+  | "prestige"
+  | "royal"
+  | "ivoire"
+  | "emeraude"
+  | "bordeaux";
 
 export type InvoiceTemplateMeta = {
   id: InvoiceTemplateId;
@@ -88,6 +93,36 @@ export const INVOICE_TEMPLATES: InvoiceTemplateMeta[] = [
     label: "Cabinet",
     description: "Blanc/indigo formel, encadré sobre façon document de consultation.",
     suggestedFor: ["Cabinet médical / Clinique"],
+  },
+  {
+    id: "prestige",
+    label: "Prestige",
+    description: "Élégant noir & or, bandeau plein et filets dorés — pour une image haut de gamme.",
+    suggestedFor: ["Vêtements & Chaussures", "Cosmétique & Beauté", "Électronique & Téléphonie"],
+  },
+  {
+    id: "royal",
+    label: "Royal",
+    description: "Élégant bleu nuit & or, bandeau plein — sérieux et raffiné, pour les entreprises.",
+    suggestedFor: ["Services", "Grossiste / Demi-grossiste"],
+  },
+  {
+    id: "ivoire",
+    label: "Ivoire",
+    description: "Élégant fond crème, en-tête centré et ornement doré — l'allure d'un papier à lettres de luxe.",
+    suggestedFor: ["Cosmétique & Beauté", "Atelier (couture, menuiserie...)"],
+  },
+  {
+    id: "emeraude",
+    label: "Émeraude",
+    description: "Élégant vert profond & or, bandeau plein — distingué et rassurant.",
+    suggestedFor: ["Pharmacie", "Supermarché / Alimentation"],
+  },
+  {
+    id: "bordeaux",
+    label: "Bordeaux",
+    description: "Élégant bordeaux & champagne, en-tête centré — chaleureux et raffiné.",
+    suggestedFor: ["Restaurant / Maquis", "Vêtements & Chaussures"],
   },
 ];
 

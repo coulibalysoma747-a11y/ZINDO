@@ -28,7 +28,9 @@ export type InvoicePreviewBusiness = Pick<
   | "currency"
 >;
 
-function buildPreviewData(business: InvoicePreviewBusiness, templateId: InvoiceTemplateId): FactureData {
+type DocumentKind = "facture" | "devis";
+
+function buildPreviewData(business: InvoicePreviewBusiness, templateId: InvoiceTemplateId, kind: DocumentKind): FactureData {
   const items = [
     { reference: "ZND-000001", name: "Article exemple A", unit: "pièce", quantity: 2, unitPrice: 5000, total: 10000 },
     { reference: "ZND-000002", name: "Article exemple B", unit: "pièce", quantity: 1, unitPrice: 3500, total: 3500 },
@@ -37,6 +39,22 @@ function buildPreviewData(business: InvoicePreviewBusiness, templateId: InvoiceT
   const subtotal = items.reduce((s, i) => s + i.total, 0);
   const discount = 500;
   const total = subtotal - discount;
+  if (kind === "devis") {
+    return {
+      ...business,
+      invoiceNumber: "D-000045",
+      date: new Date(),
+      documentTitle: "Devis",
+      validUntil: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+      customerName: "Client exemple",
+      customerPhone: "70 00 00 00",
+      items,
+      subtotal,
+      discount,
+      total,
+      templateId,
+    };
+  }
   return {
     ...business,
     invoiceNumber: "V-000123",
@@ -65,7 +83,9 @@ export function InvoiceTemplatePanel({
   business: InvoicePreviewBusiness;
 }) {
   const [selected, setSelected] = useState(settings.invoiceTemplate as InvoiceTemplateId);
+  const [quoteSelected, setQuoteSelected] = useState(settings.quoteTemplate as InvoiceTemplateId | null);
   const [previewId, setPreviewId] = useState<InvoiceTemplateId | null>(null);
+  const [previewKind, setPreviewKind] = useState<DocumentKind>("facture");
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
 
@@ -76,6 +96,20 @@ export function InvoiceTemplatePanel({
       const result = await updateBusinessSettingsAction({ invoiceTemplate: id });
       if (result.error) setError(result.error);
     });
+  }
+
+  function chooseQuote(id: InvoiceTemplateId | null) {
+    setQuoteSelected(id);
+    setError(null);
+    startTransition(async () => {
+      const result = await updateBusinessSettingsAction({ quoteTemplate: id });
+      if (result.error) setError(result.error);
+    });
+  }
+
+  function openPreview(id: InvoiceTemplateId, kind: DocumentKind) {
+    setPreviewKind(kind);
+    setPreviewId(id);
   }
 
   return (
@@ -122,7 +156,7 @@ export function InvoiceTemplatePanel({
               </button>
               <button
                 type="button"
-                onClick={() => setPreviewId(tpl.id)}
+                onClick={() => openPreview(tpl.id, "facture")}
                 className="inline-flex items-center gap-1.5 self-end rounded-lg border border-zinc-200 bg-white px-2.5 py-1.5 text-xs font-medium text-zinc-600 hover:bg-zinc-50"
               >
                 <Eye className="h-3.5 w-3.5" /> Aperçu
@@ -132,17 +166,49 @@ export function InvoiceTemplatePanel({
         })}
       </div>
 
+      {/* Modèle des devis — indépendant de celui des factures */}
+      <div className="mt-4 rounded-lg border border-zinc-200 p-3">
+        <p className="text-sm font-semibold text-zinc-900">Modèle des devis</p>
+        <p className="mt-0.5 text-xs text-zinc-500">
+          Vos devis peuvent avoir un style différent de vos factures.
+        </p>
+        <div className="mt-2 flex flex-col gap-2 sm:flex-row sm:items-center">
+          <select
+            value={quoteSelected ?? ""}
+            disabled={pending}
+            onChange={(e) => chooseQuote((e.target.value || null) as InvoiceTemplateId | null)}
+            className="min-w-0 flex-1 rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-900"
+          >
+            <option value="">Identique aux factures</option>
+            {INVOICE_TEMPLATES.map((tpl) => (
+              <option key={tpl.id} value={tpl.id}>
+                {tpl.label}
+              </option>
+            ))}
+          </select>
+          <button
+            type="button"
+            onClick={() => openPreview(quoteSelected ?? selected, "devis")}
+            className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-3 py-2 text-xs font-medium text-zinc-600 hover:bg-zinc-50"
+          >
+            <Eye className="h-3.5 w-3.5" /> Aperçu du devis
+          </button>
+        </div>
+      </div>
+
       {error && <p className="mt-2 text-sm text-red-600">{error}</p>}
 
       {previewId && (
         <InvoicePreviewDialog
           business={business}
           templateId={previewId}
-          isSelected={selected === previewId}
+          kind={previewKind}
+          isSelected={previewKind === "devis" ? quoteSelected === previewId : selected === previewId}
           pending={pending}
           onNavigate={setPreviewId}
           onChoose={() => {
-            choose(previewId);
+            if (previewKind === "devis") chooseQuote(previewId);
+            else choose(previewId);
             setPreviewId(null);
           }}
           onClose={() => setPreviewId(null)}
@@ -155,6 +221,7 @@ export function InvoiceTemplatePanel({
 function InvoicePreviewDialog({
   business,
   templateId,
+  kind,
   isSelected,
   pending,
   onNavigate,
@@ -163,6 +230,7 @@ function InvoicePreviewDialog({
 }: {
   business: InvoicePreviewBusiness;
   templateId: InvoiceTemplateId;
+  kind: DocumentKind;
   isSelected: boolean;
   pending: boolean;
   onNavigate: (id: InvoiceTemplateId) => void;
@@ -199,7 +267,7 @@ function InvoicePreviewDialog({
           </button>
           <div className="min-w-0 flex-1 text-center">
             <p className="font-semibold text-zinc-900">
-              Aperçu : {tpl.label} <span className="text-xs font-normal text-zinc-400">({index + 1}/{INVOICE_TEMPLATES.length})</span>
+              Aperçu {kind === "devis" ? "du devis" : "de la facture"} : {tpl.label}<span className="text-xs font-normal text-zinc-400">({index + 1}/{INVOICE_TEMPLATES.length})</span>
             </p>
             <p className="truncate text-xs text-zinc-500">Articles et client fictifs — vos informations réelles du commerce.</p>
           </div>
@@ -217,7 +285,7 @@ function InvoicePreviewDialog({
         </div>
 
         <div className="flex-1 overflow-auto bg-zinc-100 p-2 sm:p-4">
-          <InvoiceDocument data={buildPreviewData(business, templateId)} />
+          <InvoiceDocument data={buildPreviewData(business, templateId, kind)} />
         </div>
 
         <div className="flex items-center justify-end gap-2 border-t border-zinc-100 px-4 py-3">
@@ -234,7 +302,7 @@ function InvoicePreviewDialog({
             onClick={onChoose}
             className="inline-flex items-center gap-1.5 rounded-lg bg-zindo-green-600 px-3 py-2 text-sm font-semibold text-white hover:bg-zindo-green-700 disabled:opacity-60"
           >
-            <Check className="h-4 w-4" /> {isSelected ? "Modèle actuel" : "Choisir ce modèle"}
+            <Check className="h-4 w-4" /> {isSelected ? "Modèle actuel" : kind === "devis" ? "Choisir pour les devis" : "Choisir ce modèle"}
           </button>
         </div>
       </div>

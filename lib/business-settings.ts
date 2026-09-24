@@ -51,6 +51,8 @@ export type BusinessSettings = {
   };
   /** Modèle visuel de la Facture A4 (voir lib/invoice-templates.ts) — derrière le flag "facture_multi_templates", voir components/sales/InvoiceTemplatePanel.tsx. */
   invoiceTemplate: string;
+  /** Modèle visuel des devis — null = même modèle que les factures (comportement historique). */
+  quoteTemplate: string | null;
 };
 
 // Comportement par défaut si la colonne n'est pas encore migrée ou vide :
@@ -86,6 +88,7 @@ const DEFAULTS: BusinessSettings = {
     cashierQueue: false,
   },
   invoiceTemplate: "classique",
+  quoteTemplate: null,
 };
 
 export type BusinessSettingsPatch = Partial<Omit<BusinessSettings, "modulesEnabled">> & {

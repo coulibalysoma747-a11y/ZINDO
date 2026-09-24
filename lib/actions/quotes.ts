@@ -215,7 +215,9 @@ export async function getQuoteDocumentAction(quoteId: string): Promise<QuoteDocu
     isInvoiceTemplatesModuleEnabled(user.businessId),
     getBusinessSettings(user.businessId),
   ]);
-  const templateId = invoiceTemplatesEnabled ? businessSettings.invoiceTemplate : "classique";
+  const templateId = invoiceTemplatesEnabled
+    ? (businessSettings.quoteTemplate ?? businessSettings.invoiceTemplate)
+    : "classique";
 
   const factureData: FactureData = {
     businessName: business.name,
