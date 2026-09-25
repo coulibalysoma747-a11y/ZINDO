@@ -250,16 +250,29 @@ export function POS({
   const [pending, startTransition] = useTransition();
   const [receiptDoc, setReceiptDoc] = useState<Extract<SaleDocument, { success: true }> | null>(null);
 
-  const filteredProducts = useMemo(() => {
-    const q = search.trim().toLowerCase();
+  const localMatches = useMemo(() => {
+    const q = normalizeSearchText(search);
     if (!q) return products;
-    return products.filter(
-      (p) =>
-        p.name.toLowerCase().includes(q) ||
-        p.reference.toLowerCase().includes(q) ||
-        (p.barcode ?? "").toLowerCase().includes(q)
-    );
+    return products.filter((p) => matchesSearch(q, [p.name, p.reference, p.barcode]));
   }, [products, search]);
+
+  // Rien trouvé localement : on demande au serveur, qui connaît aussi les
+  // "autres noms" d'un produit (ex. "Omo" pour "savon en poudre"). Seuls les
+  // produits réellement en stock dans cette boutique sont proposés.
+  const [serverMatches, setServerMatches] = useState<{ query: string; products: PosProduct[] } | null>(null);
+  useEffect(() => {
+    const q = search.trim();
+    if (localMatches.length > 0 || q.length < 2 || !isOnline) return;
+    const timer = setTimeout(() => {
+      searchProductsAction(q, locationId)
+        .then((found) => setServerMatches({ query: q, products: found.filter((p) => p.quantity > 0) }))
+        .catch(() => {});
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [search, localMatches.length, locationId, isOnline]);
+
+  const filteredProducts =
+    localMatches.length === 0 && serverMatches?.query === search.trim() ? serverMatches.products : localMatches;
 
   // "Caisse à deux" : sur le module Vente, on ne finalise plus jamais le
   // paiement directement — on envoie à la caisse (module Caisse dédié).
