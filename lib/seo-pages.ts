@@ -85,7 +85,7 @@ export const SEO_PAGES: SeoPage[] = [
   {
     slug: "credits-clients",
     label: "Crédits clients",
-    metaTitle: "Gestion des crédits clients et des dettes — ZINDO",
+    metaTitle: "Gestion des crédits clients et des dettes",
     metaDescription:
       "Vendez à crédit sans carnet : ZINDO enregistre qui vous doit de l'argent, combien et depuis quand, suit les remboursements et relance vos clients par WhatsApp.",
     h1: "Suivez les crédits de vos clients, sans carnet",
@@ -126,7 +126,7 @@ export const SEO_PAGES: SeoPage[] = [
   {
     slug: "facturation",
     label: "Factures et devis",
-    metaTitle: "Logiciel de facturation et de devis avec IFU et RCCM — ZINDO",
+    metaTitle: "Logiciel de facturation et de devis avec IFU et RCCM",
     metaDescription:
       "Créez devis, factures A4 et tickets de caisse professionnels avec votre logo, IFU, RCCM et un QR code de vérification. Impression thermique 58/80 mm ou A4, partage PDF.",
     h1: "Des factures et des devis professionnels, en quelques secondes",
@@ -167,7 +167,7 @@ export const SEO_PAGES: SeoPage[] = [
   {
     slug: "caisse-hors-ligne",
     label: "Caisse hors ligne",
-    metaTitle: "Logiciel de caisse qui fonctionne sans Internet — ZINDO",
+    metaTitle: "Logiciel de caisse qui fonctionne sans Internet",
     metaDescription:
       "Une coupure d'Internet ne bloque plus vos ventes : la caisse ZINDO continue d'encaisser hors ligne et synchronise tout dès que la connexion revient.",
     h1: "Continuez à vendre, même sans connexion",
@@ -198,7 +198,7 @@ export const SEO_PAGES: SeoPage[] = [
   {
     slug: "gestion-de-stock",
     label: "Stock et inventaire",
-    metaTitle: "Gestion de stock et inventaire pour boutiques et dépôts — ZINDO",
+    metaTitle: "Gestion de stock et inventaire pour boutiques et dépôts",
     metaDescription:
       "Stock en temps réel, alertes de rupture, entrées et sorties tracées, inventaire avec calcul des écarts et transferts entre dépôts. Remplacez vos cahiers par ZINDO.",
     h1: "Un stock juste, en temps réel",

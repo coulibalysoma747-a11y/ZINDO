@@ -108,7 +108,7 @@ const FAQS = [
   {
     question: "Qu'est-ce que ZINDO ?",
     answer:
-      "ZINDO est un logiciel de gestion de stock, de caisse et de facturation conçu au Burkina Faso, pour les boutiques comme pour les PME : quincailleries, magasins de pièces détachées, boutiques de motos, alimentations, grossistes et dépôts. Il remplace les cahiers et les fichiers Excel, et s'utilise aussi dans le reste de l'Afrique de l'Ouest (Côte d'Ivoire, Mali, Niger, Sénégal...).",
+      "ZINDO est un logiciel de gestion de stock, de caisse et de facturation conçu au Burkina Faso, pour les boutiques comme pour les PME : quincailleries, magasins de pièces détachées, boutiques de motos, alimentations, grossistes et dépôts. Il remplace les cahiers et les fichiers Excel.",
   },
   {
     question: "ZINDO est-il adapté aux PME ?",
@@ -121,7 +121,7 @@ const FAQS = [
       "Oui. ZINDO fonctionne sur ordinateur Windows (application de bureau ou navigateur), sur téléphone et tablette Android et iOS, avec les mêmes données sur tous les appareils.",
   },
   {
-    question: "ZINDO est-elle adaptée au FCFA et aux commerces d'Afrique de l'Ouest ?",
+    question: "ZINDO est-elle adaptée au FCFA et aux commerces du Burkina Faso ?",
     answer:
       "Oui. ZINDO fonctionne nativement en FCFA et s'adapte au pays et à l'activité choisis à l'inscription (boutique générale, quincaillerie, pièces détachées, boutique de motos, alimentation...) pour proposer les bons champs et les bons modules.",
   },
@@ -284,7 +284,7 @@ export default async function RootPage() {
           </h1>
           <p className="mx-auto mt-4 max-w-xl text-base text-zinc-200 sm:text-lg">
             Suivez votre stock en temps réel, encaissez vos ventes et connaissez enfin vos bénéfices —
-            depuis une seule application pensée pour les commerces d&apos;Afrique de l&apos;Ouest.
+            depuis une seule application conçue au Burkina Faso, pour les boutiques comme pour les PME.
           </p>
           <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
             <Link

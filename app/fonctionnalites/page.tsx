@@ -5,7 +5,7 @@ import { SEO_PAGES } from "@/lib/seo-pages";
 import { PublicPageShell } from "@/components/landing/PublicPageShell";
 
 export const metadata: Metadata = {
-  title: "Fonctionnalités — logiciel de gestion de stock, caisse et facturation | ZINDO",
+  title: "Fonctionnalités — logiciel de gestion de stock, caisse et facturation",
   description:
     "Toutes les fonctionnalités de ZINDO : gestion de stock et inventaire, caisse hors ligne, factures et devis avec IFU, crédits clients, employés et permissions. Pour boutiques et PME au Burkina Faso.",
   alternates: { canonical: "https://www.zindo.site/fonctionnalites" },

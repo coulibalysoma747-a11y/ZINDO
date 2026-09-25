@@ -14,9 +14,9 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-const TITLE = "ZINDO — Application de gestion de stock et de caisse en Afrique de l'Ouest";
+const TITLE = "ZINDO — Logiciel de gestion de stock et de caisse pour boutiques et PME au Burkina Faso";
 const DESCRIPTION =
-  "ZINDO est l'application de gestion de stock, de caisse et de ventes pensée pour les commerces d'Afrique de l'Ouest (Burkina Faso, Côte d'Ivoire, Mali, Niger, Sénégal...) : boutiques, quincailleries, pièces détachées, motos, alimentation. Suivez votre stock en temps réel, encaissez et connaissez vos bénéfices, en FCFA.";
+  "ZINDO, logiciel de gestion de stock, de caisse et de facturation conçu au Burkina Faso pour les boutiques et les PME : plusieurs employés et dépôts, crédits clients, devis et factures, caisse hors ligne. Sur PC, Android et iOS, en FCFA.";
 
 export const metadata: Metadata = {
   // Requis par Next.js pour résoudre les URLs d'images relatives (openGraph,
@@ -36,11 +36,10 @@ export const metadata: Metadata = {
     "gestion de boutique Burkina Faso",
     "application de facturation FCFA",
     "logiciel pièces détachées moto",
-    "gestion de stock Côte d'Ivoire",
-    "gestion de stock Mali",
-    "gestion de stock Sénégal",
-    "gestion de stock Niger",
-    "logiciel de caisse Afrique de l'Ouest",
+    "logiciel de gestion PME Burkina Faso",
+    "logiciel de facturation Burkina Faso",
+    "gestion des crédits clients",
+    "logiciel de caisse hors ligne",
   ],
   alternates: { canonical: "/" },
   manifest: "/manifest.json",
