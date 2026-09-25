@@ -14,6 +14,7 @@ import { createSaleAction } from "@/lib/actions/sales";
 import { getSaleDocumentAction, type SaleDocument } from "@/lib/actions/receipt";
 import { getPosProductsAction, findProductByExactCodeAction, searchProductsAction } from "@/lib/actions/product-search";
 import { searchItems } from "@/lib/search-text";
+import { generateQrDataUrlInBrowser } from "@/lib/qrcode-client";
 import { sendCartToQueueAction } from "@/lib/actions/cashier-queue";
 import { ClientFormModal } from "@/app/(app)/clients/ClientFormModal";
 import { Modal } from "@/components/ui/Modal";
@@ -654,6 +655,22 @@ export function POS({
       setAmountPaidInput(""); setCashPortionInput(""); setMobilePortionInput("");
       setFinalizingRef(sendToServer ? clientRef : null);
       setReceiptDoc(doc);
+
+      // QR de vérification fabriqué ici même (quelques millisecondes), avec
+      // la clientRef — app/verifier/[id] la reconnaît une fois la vente
+      // enregistrée côté serveur. Remplacé ensuite par le QR du ticket
+      // définitif, équivalent.
+      if (businessInfo.verificationBaseUrl && doc.documentType === "TICKET") {
+        generateQrDataUrlInBrowser(businessInfo.verificationBaseUrl + clientRef)
+          .then((qr) =>
+            setReceiptDoc((cur) =>
+              cur && cur.saleId === clientRef && cur.documentType === "TICKET" && !cur.data.qrCodeDataUrl
+                ? { ...cur, data: { ...cur.data, qrCodeDataUrl: qr } }
+                : cur
+            )
+          )
+          .catch(() => {});
+      }
 
       void (async () => {
         // D'abord sur l'appareil : si la page se ferme ou si Internet coupe

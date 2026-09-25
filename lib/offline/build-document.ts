@@ -98,6 +98,7 @@ export function buildOfflineDocument(params: {
     footerMessage: params.business.footerMessage,
     currency: params.business.currency,
     qrCodeDataUrl: null,
+    qrCodeSize: params.business.qrCodeSize,
   };
   return { success: true, saleId: params.clientRef, documentType: "TICKET", data, defaultWidth: params.defaultWidth, isCancelled: false, canEdit: false };
 }

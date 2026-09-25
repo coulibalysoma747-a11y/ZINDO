@@ -32,6 +32,9 @@ export type CachedBusinessInfo = {
   locationAddress: string | null;
   currency: string;
   footerMessage: string | null;
+  /** Préfixe des liens de vérification (voir lib/verification.ts::getVerificationBaseUrl) — absent d'un ancien cache. */
+  verificationBaseUrl?: string;
+  qrCodeSize?: number;
 };
 
 export type PendingWriteKind =

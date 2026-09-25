@@ -31,13 +31,13 @@ export default async function VerifyTicketPage({
 }) {
   const { id } = await params;
 
-  const { data } = await supabase
-    .from("sales")
-    .select(
-      "id, number, createdAt:created_at, status, total, amountPaid:amount_paid, paymentMethod:payment_method, business:businesses(name, currency), location:locations(name), items:sale_items(id)"
-    )
-    .eq("id", id)
-    .maybeSingle();
+  const select =
+    "id, number, createdAt:created_at, status, total, amountPaid:amount_paid, paymentMethod:payment_method, business:businesses(name, currency), location:locations(name), items:sale_items(id)";
+  const { data: byId } = await supabase.from("sales").select(select).eq("id", id).maybeSingle();
+  // Ticket imprimé à la validation instantanée ou hors ligne : son QR porte la
+  // clientRef de la vente (connue avant l'enregistrement serveur), pas son id.
+  const data =
+    byId ?? (await supabase.from("sales").select(select).eq("client_ref", id).limit(1).maybeSingle()).data;
   const sale = data as unknown as SaleRow | null;
 
   return (
@@ -56,7 +56,8 @@ export default async function VerifyTicketPage({
             <p className="mt-3 font-bold text-zindo-ink-900">Ticket introuvable</p>
             <p className="mt-1.5 text-sm text-zinc-500">
               Ce code ne correspond à aucun ticket enregistré dans ZINDO. Il peut être invalide ou
-              falsifié.
+              falsifié — ou, s&apos;il vient d&apos;être émis sans connexion, pas encore synchronisé :
+              réessayez un peu plus tard.
             </p>
           </div>
         ) : (

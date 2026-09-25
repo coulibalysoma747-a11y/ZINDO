@@ -8,6 +8,7 @@ import { EmptyState } from "@/components/ui/Empty";
 import { ButtonLink } from "@/components/ui/Button";
 import { OpenSessionForm } from "./OpenSessionForm";
 import { POS } from "./POS";
+import { getVerificationBaseUrl } from "@/lib/verification";
 
 /**
  * Chargement de données partagé entre les deux modules de vente — "Vente /
@@ -91,6 +92,8 @@ export async function POSPageContent({ mode }: { mode: "pos" | "facture" }) {
         locationAddress: currentLocation.address,
         currency: user.business.currency,
         footerMessage: user.business.ticketFooter,
+        verificationBaseUrl: await getVerificationBaseUrl(),
+        qrCodeSize: user.business.qrCodeSize,
       }}
     />
   );

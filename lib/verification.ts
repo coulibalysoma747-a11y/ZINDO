@@ -26,6 +26,16 @@ async function getPublicVerificationHost() {
   return { host, protocol };
 }
 
+/**
+ * Préfixe des liens de vérification ("https://…/verifier/"), transmis à la
+ * caisse pour qu'elle fabrique elle-même le QR d'un ticket instantané ou hors
+ * ligne, avec la clientRef de la vente — app/verifier/[id] accepte les deux.
+ */
+export async function getVerificationBaseUrl() {
+  const { host, protocol } = await getPublicVerificationHost();
+  return `${protocol}://${host}/verifier/`;
+}
+
 /** URL absolue de vérification publique d'un ticket, à partir de l'hôte de la requête en cours. */
 export async function getVerificationUrl(saleId: string) {
   const { host, protocol } = await getPublicVerificationHost();
