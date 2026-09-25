@@ -87,7 +87,9 @@ export function ProductGrid({
             <ProductCardMenu productId={product.id} canEdit={canEditProducts} />
           </div>
           <div className="pointer-events-none flex flex-1 flex-col gap-0.5 p-2.5">
-            <p className="line-clamp-2 text-sm font-medium text-zinc-900">{product.name}</p>
+            <p className="break-words text-sm font-medium leading-snug text-zinc-900" title={product.name}>
+              {product.name}
+            </p>
             <p className="truncate text-[11px] text-zinc-400">{product.reference}</p>
             <p className="mt-auto pt-1 text-sm font-bold text-emerald-600">
               {formatMoney(product.salePrice, currency)}
