@@ -829,11 +829,18 @@ export function POS({
     });
   }
 
-  // Sur téléphone, le clavier qui s'ouvre recouvre le champ touché (P.U.,
-  // remise, quantité) : on le recentre une fois le clavier affiché.
+  // Le champ touché (P.U., remise, quantité) doit rester visible. Sur écran
+  // tactile, le clavier qui s'ouvre le recouvre : on le recentre donc une fois
+  // le clavier affiché. Sur ordinateur, on ne fait défiler la page que si le
+  // champ est hors de vue (long panier dans la colonne de droite), pour éviter
+  // que la page ne saute.
   function revealAboveKeyboard(e: FocusEvent<HTMLInputElement>) {
     const el = e.currentTarget;
-    setTimeout(() => el.scrollIntoView({ block: "center", behavior: "smooth" }), 300);
+    const touch = window.matchMedia("(pointer: coarse)").matches;
+    setTimeout(
+      () => el.scrollIntoView({ block: touch ? "center" : "nearest", behavior: "smooth" }),
+      touch ? 300 : 0
+    );
   }
 
   // Panier : sous les produits sur téléphone/tablette ; dans la colonne de
@@ -915,6 +922,7 @@ export function POS({
                                     Math.min(lineMaxQty(line), Math.max(1, Number(e.target.value) || 1))
                                   )
                                 }
+                                onFocus={revealAboveKeyboard}
                                 className="h-8 w-14 rounded-lg border border-zinc-200 text-center text-sm tabular-nums focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zindo-green-500/40 dark:border-slate-700 dark:bg-slate-900"
                               />
                             )}
@@ -939,6 +947,7 @@ export function POS({
                           min={0}
                           value={line.unitPrice}
                           onChange={(e) => updateLine(lineKey(line), { unitPrice: Number(e.target.value) || 0 })}
+                          onFocus={revealAboveKeyboard}
                           className="h-8 w-24 rounded-lg border border-zinc-200 text-right text-sm tabular-nums focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zindo-green-500/40 dark:border-slate-700 dark:bg-slate-900"
                         />
                       </TableCell>
@@ -948,6 +957,7 @@ export function POS({
                           min={0}
                           value={line.discount}
                           onChange={(e) => updateLine(lineKey(line), { discount: Number(e.target.value) || 0 })}
+                          onFocus={revealAboveKeyboard}
                           className="h-8 w-20 rounded-lg border border-zinc-200 text-right text-sm tabular-nums focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zindo-green-500/40 dark:border-slate-700 dark:bg-slate-900"
                         />
                       </TableCell>
