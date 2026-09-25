@@ -361,7 +361,11 @@ export function Receipt({
   style?: ReceiptStyle;
 }) {
   const currency = data.currency ?? "XOF";
-  const money = (v: number) => formatMoney(v, currency);
+  // Ticket de caisse : montants sans la mention "FCFA" (demande commerçants —
+  // plus lisible sur 58/80 mm). Une autre devise garde son code, pour éviter
+  // toute ambiguïté.
+  const money = (v: number) =>
+    currency === "XOF" ? new Intl.NumberFormat("fr-FR").format(Math.round(v)) : formatMoney(v, currency);
   const containerWidthClass =
     width === "58mm" ? "max-w-[58mm]" : width === "80mm" ? "max-w-[80mm]" : "max-w-[190mm]";
   const qrSize = data.qrCodeSize && data.qrCodeSize > 0 ? data.qrCodeSize : DEFAULT_QR_SIZE[width];
