@@ -15,6 +15,7 @@ import { getSaleDocumentAction, type SaleDocument } from "@/lib/actions/receipt"
 import { getPosProductsAction, findProductByExactCodeAction, searchProductsAction } from "@/lib/actions/product-search";
 import { searchItems } from "@/lib/search-text";
 import { generateQrDataUrlInBrowser } from "@/lib/qrcode-client";
+import { cleanManualSaleNumber, nextManualSaleNumber } from "@/lib/sale-number";
 import { sendCartToQueueAction } from "@/lib/actions/cashier-queue";
 import { ClientFormModal } from "@/app/(app)/clients/ClientFormModal";
 import { Modal } from "@/components/ui/Modal";
@@ -129,6 +130,8 @@ export function POS({
   allowMixedPayment = false,
   aiCartEnabled = false,
   cashierQueueEnabled = false,
+  manualSaleNumberEnabled = false,
+  suggestedManualNumber = null,
 }: {
   mode?: "pos" | "facture";
   customers: { id: string; name: string; phone: string | null }[];
@@ -149,6 +152,9 @@ export function POS({
   allowMixedPayment?: boolean;
   aiCartEnabled?: boolean;
   cashierQueueEnabled?: boolean;
+  /** Champ facultatif "N° de ticket" (continuité d'un ancien logiciel) — voir lib/manual-sale-number.ts. */
+  manualSaleNumberEnabled?: boolean;
+  suggestedManualNumber?: string | null;
 }) {
   const isFacture = mode === "facture";
   const [cart, setCart] = useState<CartLine[]>([]);
@@ -245,6 +251,8 @@ export function POS({
     mobileMoneyOperators[0] ?? ""
   );
   const [cashPortionInput, setCashPortionInput] = useState<string>("");
+  const [manualNumberInput, setManualNumberInput] = useState("");
+  const [nextManualNumber, setNextManualNumber] = useState<string | null>(suggestedManualNumber);
   const [mobilePortionInput, setMobilePortionInput] = useState<string>("");
   const [newClientOpen, setNewClientOpen] = useState(false);
   const [aiCartOpen, setAiCartOpen] = useState(false);
@@ -601,7 +609,16 @@ export function POS({
     // Restent sur l'ancien chemin (attente du serveur) : la facture A4 en
     // ligne (numéro définitif sur le document) et les ventes d'engin ou par
     // conditionnement, que le mode hors ligne ne sait pas construire.
-    const instant = !cart.some((l) => l.vehicleUnitId || l.packagingUnitId) && (!isFacture || !isOnline);
+    const manualNumber = manualSaleNumberEnabled ? cleanManualSaleNumber(manualNumberInput) : undefined;
+    // Numéro saisi et connexion disponible : on attend le serveur, pour
+    // signaler tout de suite un numéro déjà utilisé (panier conservé).
+    const instant =
+      !cart.some((l) => l.vehicleUnitId || l.packagingUnitId) && (!isFacture || !isOnline) && !(manualNumber && isOnline);
+    const rememberManualNumber = () => {
+      if (!manualNumber) return;
+      setManualNumberInput("");
+      setNextManualNumber(nextManualSaleNumber(manualNumber));
+    };
     if (instant) {
       const clientRef = crypto.randomUUID();
       const selectedCustomer = customers.find((c) => c.id === customerId) ?? null;
@@ -617,6 +634,7 @@ export function POS({
         mobileMoneyOperator: paymentMethod === "MOBILE_MONEY" ? mobileMoneyOperator || undefined : undefined,
         cashPortion: isMixed ? cashPortion : undefined,
         mobilePortion: isMixed ? mobilePortion : undefined,
+        manualNumber,
       };
       const sendToServer = navigator.onLine;
       const localNumber = `HL-${clientRef.slice(0, 8).toUpperCase()}`;
@@ -639,7 +657,9 @@ export function POS({
         discount,
         amountPaid,
         defaultWidth: (printerTicketWidth as ReceiptWidth) || "80mm",
+        number: manualNumber,
       });
+      rememberManualNumber();
 
       // Écran mis à jour tout de suite, sans rien attendre : stock affiché
       // (pour ne pas survendre), panier vidé, ticket provisoire affiché.
@@ -736,11 +756,13 @@ export function POS({
         mobileMoneyOperator: paymentMethod === "MOBILE_MONEY" ? mobileMoneyOperator || undefined : undefined,
         cashPortion: isMixed ? cashPortion : undefined,
         mobilePortion: isMixed ? mobilePortion : undefined,
+        manualNumber,
       });
       if (!result.success) {
         setError(result.error);
         return;
       }
+      rememberManualNumber();
 
       // On ne quitte jamais la page Vente après un encaissement : la caissière
       // doit pouvoir enchaîner immédiatement sur le client suivant. Le
@@ -1210,6 +1232,26 @@ export function POS({
             <h2 className="font-semibold tracking-tight text-zinc-900">{queueOnlyMode ? "Panier" : "Paiement"}</h2>
           </CardHeader>
           <CardBody className="space-y-3">
+            {manualSaleNumberEnabled && !queueOnlyMode && (
+              <Field label="N° de ticket (facultatif)" htmlFor="manualNumber" hint="Vide : numéro ZINDO automatique">
+                <div className="flex gap-2">
+                  <Input
+                    id="manualNumber"
+                    value={manualNumberInput}
+                    onChange={(e) => setManualNumberInput(e.target.value)}
+                    placeholder={nextManualNumber ?? "ex. S-1251"}
+                    maxLength={40}
+                    className="flex-1"
+                  />
+                  {nextManualNumber && manualNumberInput.trim() !== nextManualNumber && (
+                    <Button type="button" variant="outline" onClick={() => setManualNumberInput(nextManualNumber)}>
+                      {nextManualNumber}
+                    </Button>
+                  )}
+                </div>
+              </Field>
+            )}
+
             <Field label="Remise globale" htmlFor="discount">
               <Input
                 id="discount"

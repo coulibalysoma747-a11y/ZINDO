@@ -6,6 +6,8 @@ import { requirePermission, requireUser } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
 import { logAction } from "@/lib/audit";
 import { generateSaleNumber } from "@/lib/reference";
+import { isManualSaleNumberEnabled } from "@/lib/manual-sale-number";
+import { cleanManualSaleNumber } from "@/lib/sale-number";
 import { adjustStock } from "@/lib/stock";
 import { rethrowIfNavigationSignal } from "@/lib/action-errors";
 import { getBusinessSettings } from "@/lib/business-settings";
@@ -56,6 +58,12 @@ export type CreateSaleInput = {
   /** Répartition espèces/mobile money quand paymentMethod = MIXTE — doit sommer à amountPaid. */
   cashPortion?: number;
   mobilePortion?: number;
+  /**
+   * N° de ticket saisi à la caisse (continuité d'un ancien logiciel — voir
+   * lib/manual-sale-number.ts, derrière un feature flag). Vide : numérotation
+   * ZINDO automatique.
+   */
+  manualNumber?: string;
 };
 
 export type CreateSaleResult = { success: true; saleId: string } | { success: false; error: string };
@@ -293,7 +301,30 @@ async function createSaleImpl(input: CreateSaleInput): Promise<CreateSaleResult>
   }
 
   const status = amountPaid >= total ? "PAYEE" : amountPaid > 0 ? "PARTIELLE" : "CREDIT";
-  const number = await generateSaleNumber(user.businessId);
+  let number: string | undefined;
+  let numberNote: string | null = null;
+  const manualNumber = cleanManualSaleNumber(input.manualNumber);
+  if (manualNumber && (await isManualSaleNumberEnabled(user.businessId))) {
+    const { data: taken } = await supabase
+      .from("sales")
+      .select("id")
+      .eq("business_id", user.businessId)
+      .eq("number", manualNumber)
+      .maybeSingle();
+    if (!taken) {
+      number = manualNumber;
+    } else if (!input.clientRef) {
+      // Vente en ligne : la caisse attend la réponse, on peut refuser et
+      // laisser corriger le numéro, panier conservé.
+      return { success: false, error: `Le N° de ticket ${manualNumber} est déjà utilisé. Changez-le ou laissez le champ vide.` };
+    } else {
+      // Vente déjà remise au client (validation instantanée / hors ligne) :
+      // la refuser la bloquerait pour toujours dans la file de l'appareil.
+      // On l'enregistre avec un numéro automatique, en le signalant.
+      numberNote = `N° de ticket saisi « ${manualNumber} » déjà utilisé — numéro automatique attribué.`;
+    }
+  }
+  number ??= await generateSaleNumber(user.businessId);
 
   const { data: sale, error: saleError } = await supabase
     .from("sales")
@@ -310,7 +341,7 @@ async function createSaleImpl(input: CreateSaleInput): Promise<CreateSaleResult>
       payment_method: input.paymentMethod,
       status,
       document_type: input.documentType ?? "TICKET",
-      note: input.note ?? null,
+      note: [input.note, numberNote].filter(Boolean).join("\n") || null,
       client_ref: input.clientRef ?? null,
       mobile_money_operator: input.paymentMethod === "MOBILE_MONEY" ? input.mobileMoneyOperator ?? null : null,
       cash_portion: input.paymentMethod === "MIXTE" ? input.cashPortion ?? null : null,

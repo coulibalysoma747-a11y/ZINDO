@@ -31,13 +31,15 @@ export function buildOfflineDocument(params: {
   discount: number;
   amountPaid: number;
   defaultWidth: ReceiptWidth;
+  /** N° de ticket saisi à la caisse (voir lib/manual-sale-number.ts) — sinon numéro provisoire "HL-…". */
+  number?: string;
 }): Extract<SaleDocument, { success: true }> {
   const subtotal = params.items.reduce((sum, i) => sum + i.unitPrice * i.quantity - i.discount, 0);
   const total = Math.max(0, subtotal - params.discount);
   const change = Math.max(0, params.amountPaid - total);
   const remaining = Math.max(0, total - params.amountPaid);
   const paymentMethodLabel = PAYMENT_LABELS[params.paymentMethod] ?? params.paymentMethod;
-  const offlineNumber = `HL-${params.clientRef.slice(0, 8).toUpperCase()}`;
+  const offlineNumber = params.number ?? `HL-${params.clientRef.slice(0, 8).toUpperCase()}`;
 
   if (params.documentType === "FACTURE") {
     const data: FactureData = {
