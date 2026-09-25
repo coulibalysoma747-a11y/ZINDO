@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState, useTransition } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
 import Link from "next/link";
 import { Trash2, Plus, Minus, UserPlus, Search, Loader2, Wallet, Lock, WifiOff, RefreshCw, Sparkles } from "lucide-react";
 import { ProductGrid, type PosProduct, type PackagingUnitOption } from "@/components/products/ProductGrid";
@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/Button";
 import { Field, Input, Select } from "@/components/ui/Input";
 import { Table, TableHead, TableBody, TableRow, TableHeaderCell, TableCell } from "@/components/ui/Table";
 import { formatMoney, formatDateTime } from "@/lib/format";
-import { createSaleAction } from "@/lib/actions/sales";
+import { createSaleAction, reserveSaleNumberAction } from "@/lib/actions/sales";
 import { getSaleDocumentAction, type SaleDocument } from "@/lib/actions/receipt";
 import { getPosProductsAction, findProductByExactCodeAction, searchProductsAction } from "@/lib/actions/product-search";
 import { searchItems } from "@/lib/search-text";
@@ -262,6 +262,43 @@ export function POS({
   const [receiptDoc, setReceiptDoc] = useState<Extract<SaleDocument, { success: true }> | null>(null);
   /** clientRef de la vente dont le ticket définitif est attendu du serveur (voir handleSubmit). */
   const [finalizingRef, setFinalizingRef] = useState<string | null>(null);
+
+  // Numéro de la prochaine vente, réservé d'avance auprès du serveur : le
+  // ticket imprimé à la validation instantanée porte ainsi tout de suite son
+  // vrai numéro (voir lib/sale-number-reservation.ts). Une réservation non
+  // utilisée (page fermée) laisse simplement un numéro sauté.
+  const reservedNumberRef = useRef<{ number: string; token: string } | null>(null);
+  const reservingRef = useRef(false);
+  const refillReservedNumber = useCallback(() => {
+    if (reservedNumberRef.current || reservingRef.current || !navigator.onLine) return;
+    reservingRef.current = true;
+    reserveSaleNumberAction()
+      .then((r) => {
+        reservedNumberRef.current = r;
+      })
+      .catch(() => {})
+      .finally(() => {
+        reservingRef.current = false;
+      });
+  }, []);
+  useEffect(() => {
+    if (!loadingProducts) refillReservedNumber();
+  }, [loadingProducts, refillReservedNumber]);
+
+  // Le catalogue n'est plus rechargé après chaque vente (des milliers de
+  // produits, et les actions serveur passent une par une : la vente
+  // suivante attendait ce rechargement). Le stock affiché est décrémenté
+  // localement ; les changements faits ailleurs (autre caisse, achats)
+  // arrivent par ce rafraîchissement périodique.
+  useEffect(() => {
+    const timer = setInterval(() => {
+      if (!navigator.onLine) return;
+      getPosProductsAction(locationId)
+        .then(setProducts)
+        .catch(() => {});
+    }, 10 * 60 * 1000);
+    return () => clearInterval(timer);
+  }, [locationId]);
 
   const localMatches = useMemo(
     () => searchItems(products, search, (p) => [p.name, p.reference, p.barcode]),
@@ -635,9 +672,15 @@ export function POS({
         cashPortion: isMixed ? cashPortion : undefined,
         mobilePortion: isMixed ? mobilePortion : undefined,
         manualNumber,
+        reservedNumber: undefined as { number: string; token: string } | undefined,
       };
       const sendToServer = navigator.onLine;
-      const localNumber = `HL-${clientRef.slice(0, 8).toUpperCase()}`;
+      // Numéro saisi à la main en priorité (hors ligne) ; sinon le numéro réservé d'avance, consommé ici.
+      const reserved = manualNumber ? null : reservedNumberRef.current;
+      if (reserved) reservedNumberRef.current = null;
+      saleInput.reservedNumber = reserved ?? undefined;
+      const finalNumber = manualNumber ?? reserved?.number;
+      const localNumber = finalNumber ?? `HL-${clientRef.slice(0, 8).toUpperCase()}`;
 
       const doc = buildOfflineDocument({
         documentType,
@@ -657,7 +700,7 @@ export function POS({
         discount,
         amountPaid,
         defaultWidth: (printerTicketWidth as ReceiptWidth) || "80mm",
-        number: manualNumber,
+        number: finalNumber,
       });
       rememberManualNumber();
 
@@ -674,22 +717,17 @@ export function POS({
       setDiscount(0);
       setAmountPaidInput(""); setCashPortionInput(""); setMobilePortionInput("");
       setFinalizingRef(sendToServer ? clientRef : null);
-      setReceiptDoc(doc);
 
-      // QR de vérification fabriqué ici même (quelques millisecondes), avec
-      // la clientRef — app/verifier/[id] la reconnaît une fois la vente
-      // enregistrée côté serveur. Remplacé ensuite par le QR du ticket
-      // définitif, équivalent.
+      // Ticket affiché (et imprimé, si l'impression auto est activée) avec
+      // son QR de vérification, fabriqué ici même en quelques millisecondes
+      // avec la clientRef — app/verifier/[id] la reconnaît une fois la vente
+      // enregistrée côté serveur.
       if (businessInfo.verificationBaseUrl && doc.documentType === "TICKET") {
         generateQrDataUrlInBrowser(businessInfo.verificationBaseUrl + clientRef)
-          .then((qr) =>
-            setReceiptDoc((cur) =>
-              cur && cur.saleId === clientRef && cur.documentType === "TICKET" && !cur.data.qrCodeDataUrl
-                ? { ...cur, data: { ...cur.data, qrCodeDataUrl: qr } }
-                : cur
-            )
-          )
-          .catch(() => {});
+          .then((qr) => setReceiptDoc({ ...doc, data: { ...doc.data, qrCodeDataUrl: qr } }))
+          .catch(() => setReceiptDoc(doc));
+      } else {
+        setReceiptDoc(doc);
       }
 
       void (async () => {
@@ -721,10 +759,12 @@ export function POS({
           const result = await createSaleAction(saleInput);
           if (result.success) {
             await removePendingWrite(clientRef).catch(() => {});
-            // Ticket définitif (vrai numéro + QR de vérification) à la place du provisoire, s'il est encore affiché.
-            const serverDoc = await getSaleDocumentAction(result.saleId);
-            if (serverDoc.success) setReceiptDoc((cur) => (cur && cur.saleId === clientRef ? serverDoc : cur));
-            getPosProductsAction(locationId).then(setProducts).catch(() => {});
+            // Ticket provisoire "HL-…" (aucun numéro réservé disponible) :
+            // remplacé par le définitif, s'il est encore affiché.
+            if (!finalNumber) {
+              const serverDoc = await getSaleDocumentAction(result.saleId);
+              if (serverDoc.success) setReceiptDoc((cur) => (cur && cur.saleId === clientRef ? serverDoc : cur));
+            }
           } else {
             await markPendingWriteError(clientRef, result.error).catch(() => {});
             setError(
@@ -739,6 +779,7 @@ export function POS({
         } finally {
           setFinalizingRef((cur) => (cur === clientRef ? null : cur));
           refreshPendingSales();
+          refillReservedNumber();
         }
       })();
       return;
@@ -763,6 +804,15 @@ export function POS({
         return;
       }
       rememberManualNumber();
+      const soldLines = cart;
+      setProducts((prev) =>
+        prev.map((p) => {
+          const sold = soldLines
+            .filter((l) => l.product.id === p.id)
+            .reduce((sum, l) => sum + l.quantity * (l.multiplier ?? 1), 0);
+          return sold > 0 ? { ...p, quantity: Math.max(0, p.quantity - sold) } : p;
+        })
+      );
 
       // On ne quitte jamais la page Vente après un encaissement : la caissière
       // doit pouvoir enchaîner immédiatement sur le client suivant. Le
@@ -776,8 +826,6 @@ export function POS({
       const doc = await getSaleDocumentAction(result.saleId);
       if (doc.success) setReceiptDoc(doc);
       else setError("Vente enregistrée, mais impossible de charger le ticket pour l'impression.");
-
-      getPosProductsAction(locationId).then(setProducts);
     });
   }
 

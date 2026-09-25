@@ -42,23 +42,19 @@ export function ReceiptPrintPanel({
   const [width, setWidth] = useState<ReceiptWidth>(doc.documentType === "TICKET" ? doc.defaultWidth : "A4");
   const [style, setStyle] = useState<ReceiptStyle>("classique");
 
-  // Impression rapide : déclenchée automatiquement si le commerce a activé
-  // l'impression auto, sans attendre un clic — une seule fois. Si le ticket
-  // définitif est en route, on l'attend au plus 3 s pour imprimer le vrai
-  // numéro ; au-delà (connexion lente), on imprime le provisoire.
+  // Impression rapide : déclenchée automatiquement dès l'ouverture si le
+  // commerce a activé l'impression auto, sans attendre un clic ni le serveur
+  // — le ticket porte déjà son numéro réservé et son QR (voir POS.tsx).
   const printedRef = useRef(false);
   useEffect(() => {
     if (!autoPrint || printedRef.current) return;
-    const timeout = setTimeout(
-      () => {
-        printedRef.current = true;
-        printDocument(width);
-      },
-      finalizing ? 3000 : 250
-    );
+    const timeout = setTimeout(() => {
+      printedRef.current = true;
+      printDocument(width);
+    }, 150);
     return () => clearTimeout(timeout);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [finalizing]);
+  }, []);
 
   // À l'impression, tout ce qui n'est pas le ticket/la facture lui-même doit
   // disparaître avec `display: none` (print:hidden), pas juste devenir

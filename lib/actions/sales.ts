@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { after } from "next/server";
 import { supabase } from "@/lib/supabase";
 import { requirePermission, requireUser } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
@@ -8,6 +9,7 @@ import { logAction } from "@/lib/audit";
 import { generateSaleNumber } from "@/lib/reference";
 import { isManualSaleNumberEnabled } from "@/lib/manual-sale-number";
 import { cleanManualSaleNumber } from "@/lib/sale-number";
+import { isValidReservedSaleNumber, signReservedSaleNumber } from "@/lib/sale-number-reservation";
 import { adjustStock } from "@/lib/stock";
 import { rethrowIfNavigationSignal } from "@/lib/action-errors";
 import { getBusinessSettings } from "@/lib/business-settings";
@@ -64,6 +66,8 @@ export type CreateSaleInput = {
    * ZINDO automatique.
    */
   manualNumber?: string;
+  /** Numéro réservé d'avance par la caisse (voir reserveSaleNumberAction), déjà imprimé sur le ticket. */
+  reservedNumber?: { number: string; token: string };
 };
 
 export type CreateSaleResult = { success: true; saleId: string } | { success: false; error: string };
@@ -151,6 +155,22 @@ async function recordOneStockMovement(
     note: params.note,
   });
   if (error) console.error("[sales] Échec de l'écriture du mouvement de stock :", error.message);
+}
+
+/**
+ * Réserve d'avance le numéro de la prochaine vente de cette caisse (voir
+ * lib/sale-number-reservation.ts) — `null` en cas d'échec : la vente
+ * recevra alors simplement un numéro au moment de son enregistrement.
+ */
+export async function reserveSaleNumberAction(): Promise<{ number: string; token: string } | null> {
+  try {
+    const user = await requirePermission(PERMISSIONS.SALES_CREATE);
+    const number = await generateSaleNumber(user.businessId);
+    return { number, token: signReservedSaleNumber(user.businessId, number) };
+  } catch (e) {
+    rethrowIfNavigationSignal(e);
+    return null;
+  }
 }
 
 /**
@@ -324,6 +344,18 @@ async function createSaleImpl(input: CreateSaleInput): Promise<CreateSaleResult>
       numberNote = `N° de ticket saisi « ${manualNumber} » déjà utilisé — numéro automatique attribué.`;
     }
   }
+  if (!number && !numberNote && input.reservedNumber) {
+    const { number: reserved, token } = input.reservedNumber;
+    if (isValidReservedSaleNumber(user.businessId, reserved, token)) {
+      const { data: taken } = await supabase
+        .from("sales")
+        .select("id")
+        .eq("business_id", user.businessId)
+        .eq("number", reserved)
+        .maybeSingle();
+      if (!taken) number = reserved;
+    }
+  }
   number ??= await generateSaleNumber(user.businessId);
 
   const { data: sale, error: saleError } = await supabase
@@ -402,33 +434,39 @@ async function createSaleImpl(input: CreateSaleInput): Promise<CreateSaleResult>
   // Best-effort : décrémente le lot qui expire le plus tôt (FEFO) pour les
   // commerces avec le module Péremption actif (pharmacie/supermarché) — voir
   // lib/actions/expiry.ts. Ne bloque et ne fait jamais échouer la vente.
-  await consumeExpiryBatchesFefo(
-    input.items.map((i) => ({ productId: i.productId, quantity: i.quantity * (i.multiplier ?? 1) })),
-    { businessId: user.businessId, locationId: input.locationId, activityKey: user.business.activityKey }
-  );
-
-  await logAction({
-    businessId: user.businessId,
-    userId: user.id,
-    action: "CREATE",
-    entity: "Sale",
-    entityId: sale.id as string,
-    details: `Total ${total}`,
+  // Lots de péremption, journal et notification push : après la réponse
+  // (after), pour que la caisse n'attende pas ces écritures secondaires.
+  const saleId = sale.id as string;
+  after(async () => {
+    await consumeExpiryBatchesFefo(
+      input.items.map((i) => ({ productId: i.productId, quantity: i.quantity * (i.multiplier ?? 1) })),
+      { businessId: user.businessId, locationId: input.locationId, activityKey: user.business.activityKey }
+    );
+    await logAction({
+      businessId: user.businessId,
+      userId: user.id,
+      action: "CREATE",
+      entity: "Sale",
+      entityId: saleId,
+      details: `Total ${total}`,
+    });
+    await sendPushToBusiness(user.businessId, {
+      title: "Nouvelle vente",
+      body: `Vente ${number} — ${formatMoney(total, user.business.currency)}`,
+      link: `/ventes/${saleId}`,
+    });
   });
 
-  revalidatePath("/ventes");
+  // Pas de revalidatePath("/ventes") : depuis une action serveur, il fait
+  // recalculer toute la page caisse affichée avant de répondre — plusieurs
+  // secondes de plus par vente, pour rien (la caisse met déjà son écran à
+  // jour elle-même).
   revalidatePath("/ventes/historique");
   revalidatePath("/produits");
   revalidatePath("/dashboard");
   if (input.customerId) revalidatePath(`/clients/${input.customerId}`);
 
-  await sendPushToBusiness(user.businessId, {
-    title: "Nouvelle vente",
-    body: `Vente ${number} — ${formatMoney(total, user.business.currency)}`,
-    link: `/ventes/${sale.id}`,
-  });
-
-  return { success: true, saleId: sale.id as string };
+  return { success: true, saleId };
 }
 
 export type UpdateSaleInput = {
