@@ -945,7 +945,7 @@ export function POS({
                         <input
                           type="number"
                           min={0}
-                          value={line.unitPrice}
+                          value={line.unitPrice || ""}
                           onChange={(e) => updateLine(lineKey(line), { unitPrice: Number(e.target.value) || 0 })}
                           onFocus={revealAboveKeyboard}
                           className="h-8 w-24 rounded-lg border border-zinc-200 text-right text-sm tabular-nums focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zindo-green-500/40 dark:border-slate-700 dark:bg-slate-900"
@@ -955,7 +955,7 @@ export function POS({
                         <input
                           type="number"
                           min={0}
-                          value={line.discount}
+                          value={line.discount || ""}
                           onChange={(e) => updateLine(lineKey(line), { discount: Number(e.target.value) || 0 })}
                           onFocus={revealAboveKeyboard}
                           className="h-8 w-20 rounded-lg border border-zinc-200 text-right text-sm tabular-nums focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zindo-green-500/40 dark:border-slate-700 dark:bg-slate-900"
@@ -1074,7 +1074,7 @@ export function POS({
                         type="number"
                         min={0}
                         inputMode="decimal"
-                        value={line.unitPrice}
+                        value={line.unitPrice || ""}
                         onChange={(e) => updateLine(lineKey(line), { unitPrice: Number(e.target.value) || 0 })}
                         onFocus={revealAboveKeyboard}
                         className="h-10 w-full rounded-lg border border-zinc-200 px-2 text-right text-sm tabular-nums dark:border-slate-700 dark:bg-slate-900"
@@ -1086,7 +1086,7 @@ export function POS({
                         type="number"
                         min={0}
                         inputMode="decimal"
-                        value={line.discount}
+                        value={line.discount || ""}
                         onChange={(e) => updateLine(lineKey(line), { discount: Number(e.target.value) || 0 })}
                         onFocus={revealAboveKeyboard}
                         className="h-10 w-full rounded-lg border border-zinc-200 px-2 text-right text-sm tabular-nums dark:border-slate-700 dark:bg-slate-900"
@@ -1149,7 +1149,7 @@ export function POS({
             </div>
             <Link
               href={`/ventes/session/${session.id}/fermer`}
-              className="ml-2 inline-flex items-center gap-1 rounded-lg bg-emerald-600 px-2.5 py-1.5 font-medium text-white transition-colors hover:bg-emerald-700"
+              className="ml-2 inline-flex items-center gap-1 rounded-lg bg-emerald-600 px-2.5 py-1.5 font-semibold text-white shadow-sm transition-colors hover:bg-emerald-700"
             >
               <Lock className="h-3.5 w-3.5" /> Fermer la caisse
             </Link>
@@ -1403,14 +1403,16 @@ export function POS({
               </>
             )}
 
-            <div className="space-y-1.5 border-t border-zinc-100 pt-3 text-sm dark:border-slate-800">
+            <div className="space-y-1.5 rounded-2xl border border-zindo-green-100 bg-zindo-green-50/60 p-3.5 text-sm dark:border-zindo-green-500/20 dark:bg-zindo-green-500/5">
               <div className="flex justify-between text-zinc-600">
                 <span>Sous-total</span>
                 <span className="tabular-nums">{formatMoney(subtotal, currency)}</span>
               </div>
-              <div className="flex items-baseline justify-between border-t border-dashed border-zinc-200 pt-2 dark:border-slate-700">
+              <div className="flex items-baseline justify-between border-t border-dashed border-zindo-green-200 pt-2 dark:border-zindo-green-500/20">
                 <span className="font-semibold text-zinc-900">Total</span>
-                <span className="text-xl font-bold tabular-nums text-zinc-900">{formatMoney(total, currency)}</span>
+                <span className="text-2xl font-extrabold tracking-tight tabular-nums text-zindo-green-800 dark:text-zindo-green-300">
+                  {formatMoney(total, currency)}
+                </span>
               </div>
               {canSeeMargin && cart.length > 0 && (
                 <div className={`flex justify-between text-xs font-medium ${cartMargin < 0 ? "text-red-600" : "text-emerald-700"}`}>
@@ -1439,11 +1441,11 @@ export function POS({
             )}
 
             {queueOnlyMode ? (
-              <Button className="w-full" size="lg" disabled={sendingToQueue} onClick={handleSendToQueue}>
+              <Button className="h-14 w-full text-base" size="lg" disabled={sendingToQueue} onClick={handleSendToQueue}>
                 {sendingToQueue ? "Envoi..." : "Envoyer à la caisse"}
               </Button>
             ) : (
-              <Button className="w-full" size="lg" disabled={pending} onClick={handleSubmit}>
+              <Button className="h-14 w-full text-base" size="lg" disabled={pending} onClick={handleSubmit}>
                 {pending ? "Enregistrement..." : isFacture ? "Générer la facture" : "Valider la vente"}
               </Button>
             )}

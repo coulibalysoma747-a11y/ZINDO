@@ -15,6 +15,9 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
+  /* Fond de l'espace commerçant : gris très légèrement teinté de vert, pour
+     que les cartes blanches ressortent nettement. */
+  --app-canvas: #f3f5f3;
 }
 
 @theme inline {
@@ -46,6 +49,30 @@
   --color-zindo-green-600: #0c6e3d;
   --color-zindo-green-700: #095830;
   --color-zindo-green-800: #064124;
+  --color-zindo-green-900: #053a20;
+  --color-zindo-green-950: #022414;
+
+  /* Échelle "emerald" de Tailwind alignée sur le vert ZINDO : plus de 250
+     classes emerald-* dispersées dans l'application affichaient un vert
+     menthe différent de celui du logo. Elles prennent désormais toutes la
+     teinte de marque, sans toucher chaque page une par une. */
+  --color-emerald-50: #ebf9f2;
+  --color-emerald-100: #d8f4e6;
+  --color-emerald-200: #a8e6c7;
+  --color-emerald-300: #64d89e;
+  --color-emerald-400: #22c373;
+  --color-emerald-500: #10844a;
+  --color-emerald-600: #0c6e3d;
+  --color-emerald-700: #095830;
+  --color-emerald-800: #064124;
+  --color-emerald-900: #053a20;
+  --color-emerald-950: #022414;
+
+  /* Ombres douces à plusieurs couches (cartes, menus, fenêtres) : plus
+     naturelles qu'une seule ombre grise. */
+  --shadow-zindo-card: 0 1px 2px rgb(16 24 20 / 0.04), 0 1px 3px rgb(16 24 20 / 0.03);
+  --shadow-zindo-raised: 0 2px 4px rgb(16 24 20 / 0.04), 0 8px 20px -6px rgb(16 24 20 / 0.10);
+  --shadow-zindo-float: 0 4px 8px rgb(16 24 20 / 0.05), 0 20px 40px -12px rgb(16 24 20 / 0.22);
   --color-zindo-red-50: #fdecec;
   --color-zindo-red-100: #fbd0d0;
   --color-zindo-red-200: #f6a0a0;
@@ -123,6 +150,7 @@
 :root.dark {
   --background: #101013;
   --foreground: #f2f2f4;
+  --app-canvas: #0b0d10;
   --color-zinc-50: #1c1c1f;
   --color-zinc-100: #26262a;
   --color-zinc-200: #323236;
@@ -154,10 +182,41 @@
   --color-zinc-950: #09090b;
 }
 
+/* La police Geist était chargée (app/layout.tsx) mais jamais appliquée :
+   Arial la remplaçait sur toute l'application. */
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-geist-sans), ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  font-feature-settings: "cv11", "ss01";
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+/* Titres plus serrés et chiffres alignés (montants FCFA dans les tableaux,
+   cartes et tickets) sans devoir ajouter tabular-nums partout. */
+h1,
+h2,
+h3 {
+  letter-spacing: -0.015em;
+}
+table,
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Barre de défilement fine et discrète (menu latéral, listes, panier). */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-zinc-300) transparent;
+}
+
+/* Anneau de focus clavier cohérent partout, y compris sur les liens. */
+a:focus-visible {
+  outline: 2px solid var(--color-zindo-green-500);
+  outline-offset: 2px;
+  border-radius: 6px;
 }
 
 /* Petite touche de finition "pro" appliquée globalement : sélection de texte

@@ -76,7 +76,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     <div
       id="zindo-app-shell"
       data-sidebar={sidebarClosed ? "closed" : "open"}
-      className="group/app flex min-h-screen bg-zinc-50 print:block print:min-h-0 print:bg-white"
+      className="group/app flex min-h-screen bg-(--app-canvas) print:block print:min-h-0 print:bg-white"
     >
       <div className="print:hidden group-data-[sidebar=closed]/app:hidden">
         <Sidebar
@@ -103,7 +103,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
             currentLocationId={currentLocation?.id ?? ""}
           />
         </div>
-        <main className="flex-1 overflow-y-auto p-4 pb-24 sm:pb-4 md:p-6 print:overflow-visible print:p-0">{children}</main>
+        <main className="flex-1 overflow-y-auto p-4 pb-28 sm:pb-6 md:p-6 lg:p-8 print:overflow-visible print:p-0">{children}</main>
         <div className="print:hidden">
           <AppFooter />
         </div>

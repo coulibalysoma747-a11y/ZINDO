@@ -126,7 +126,10 @@ export default async function DashboardPage({
     <div className="hidden space-y-6 sm:block">
       {(canSell || canViewStock) && (
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <h2 className="text-sm font-semibold text-zinc-500">Aperçu — {currentLocation.name}</h2>
+          <div>
+            <h2 className="text-lg font-bold text-zinc-900">Vue d&apos;ensemble</h2>
+            <p className="text-sm text-zinc-500">Chiffres de {currentLocation.name}</p>
+          </div>
           <HistoryFilters paramName="periode" periods={DASHBOARD_PERIODS} defaultValue="aujourdhui" />
         </div>
       )}
@@ -329,7 +332,7 @@ export default async function DashboardPage({
         <Card>
           <CardHeader>
             <h2 className="font-semibold text-zinc-900">Stock par boutique</h2>
-            <Link href="/boutiques" className="text-sm text-emerald-600 hover:underline">
+            <Link href="/boutiques" className="text-sm font-medium text-zindo-green-600 hover:text-zindo-green-700 hover:underline">
               Gérer les boutiques
             </Link>
           </CardHeader>
@@ -338,7 +341,7 @@ export default async function DashboardPage({
               {locationsOverview.map((l) => (
                 <div
                   key={l.id}
-                  className={`rounded-lg border px-4 py-3 ${
+                  className={`rounded-xl border px-4 py-3 ${
                     l.id === currentLocation.id
                       ? "border-emerald-300 bg-emerald-50 dark:border-emerald-700 dark:bg-emerald-500/10"
                       : "border-zinc-200"
@@ -366,7 +369,7 @@ export default async function DashboardPage({
             <Card>
               <CardHeader>
                 <h2 className="font-semibold text-zinc-900">Top produits</h2>
-                <Link href="/rapports" className="text-sm text-emerald-600 hover:underline">
+                <Link href="/rapports" className="text-sm font-medium text-zindo-green-600 hover:text-zindo-green-700 hover:underline">
                   Voir les rapports
                 </Link>
               </CardHeader>
@@ -377,11 +380,18 @@ export default async function DashboardPage({
                     description="Les produits les plus vendus apparaîtront ici dès votre première vente."
                   />
                 ) : (
-                  <ol className="space-y-2">
+                  <ol className="space-y-2.5">
                     {overview.topByRevenue.map((p, i) => (
-                      <li key={p.productId} className="flex items-center justify-between gap-2 text-sm">
-                        <span className="min-w-0 truncate text-zinc-700">
-                          <span className="mr-1.5 text-zinc-400">{i + 1}.</span> {p.name}
+                      <li key={p.productId} className="flex items-center justify-between gap-3 text-sm">
+                        <span className="flex min-w-0 items-center gap-2.5 text-zinc-700">
+                          <span
+                            className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-lg text-[11px] font-bold tabular-nums ${
+                              i === 0 ? "bg-zindo-gold-100 text-zindo-gold-700" : "bg-zinc-100 text-zinc-500"
+                            }`}
+                          >
+                            {i + 1}
+                          </span>
+                          <span className="truncate">{p.name}</span>
                         </span>
                         <span className="shrink-0 font-medium text-zinc-900">{formatMoney(p.total, currency)}</span>
                       </li>
@@ -404,11 +414,18 @@ export default async function DashboardPage({
                     description="Le classement par marge apparaîtra ici dès votre première vente."
                   />
                 ) : (
-                  <ol className="space-y-2">
+                  <ol className="space-y-2.5">
                     {overview.topByMargin.map((p, i) => (
-                      <li key={p.productId} className="flex items-center justify-between gap-2 text-sm">
-                        <span className="min-w-0 truncate text-zinc-700">
-                          <span className="mr-1.5 text-zinc-400">{i + 1}.</span> {p.name}
+                      <li key={p.productId} className="flex items-center justify-between gap-3 text-sm">
+                        <span className="flex min-w-0 items-center gap-2.5 text-zinc-700">
+                          <span
+                            className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-lg text-[11px] font-bold tabular-nums ${
+                              i === 0 ? "bg-zindo-gold-100 text-zindo-gold-700" : "bg-zinc-100 text-zinc-500"
+                            }`}
+                          >
+                            {i + 1}
+                          </span>
+                          <span className="truncate">{p.name}</span>
                         </span>
                         <span className="shrink-0 font-medium text-zindo-green-600">{formatMoney(p.margin, currency)}</span>
                       </li>
@@ -428,13 +445,13 @@ export default async function DashboardPage({
               </CardHeader>
               <CardBody className="space-y-3">
                 {data.outOfStockCount > 0 && (
-                  <div className="flex items-center justify-between rounded-lg bg-red-50 px-3 py-2">
+                  <div className="flex items-center justify-between rounded-xl bg-red-50 px-3 py-2.5 dark:bg-red-500/10">
                     <span className="text-sm text-red-700">Produits en rupture</span>
                     <Badge tone="red">{data.outOfStockCount}</Badge>
                   </div>
                 )}
                 {data.lowStockCount > 0 && (
-                  <div className="flex items-center justify-between rounded-lg bg-amber-50 px-3 py-2">
+                  <div className="flex items-center justify-between rounded-xl bg-amber-50 px-3 py-2.5 dark:bg-amber-500/10">
                     <span className="text-sm text-amber-700">Produits en stock faible</span>
                     <Badge tone="amber">{data.lowStockCount}</Badge>
                   </div>

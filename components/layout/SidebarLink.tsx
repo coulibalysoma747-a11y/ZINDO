@@ -21,31 +21,31 @@ export function SidebarLink({ item }: { item: NavItem }) {
   return (
     <Link
       href={href}
+      aria-current={active ? "page" : undefined}
       className={cn(
-        "group flex items-center justify-between rounded-xl px-3.5 py-2.5 text-sm font-medium transition-all duration-200",
+        "group relative flex items-center justify-between rounded-xl px-2.5 py-2 text-sm transition-colors duration-150",
         active
-          ? "bg-gradient-to-r from-zindo-green-600 to-zindo-green-500 text-white shadow-md shadow-zindo-green-800/25"
-          : "text-zindo-ink-500 hover:bg-zindo-ink-50 hover:text-zindo-ink-900"
+          ? "bg-zindo-green-50 font-semibold text-zindo-green-800 dark:bg-zindo-green-500/10 dark:text-zindo-green-300"
+          : "font-medium text-zindo-ink-500 hover:bg-zinc-100/80 hover:text-zindo-ink-900 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-white"
       )}
     >
-      <div className="flex items-center gap-3">
+      {active && <span className="absolute -left-3 top-1/2 h-5 w-1 -translate-y-1/2 rounded-r-full bg-zindo-green-500" />}
+      <div className="flex min-w-0 items-center gap-3">
         <span
           className={cn(
-            "flex h-8 w-8 shrink-0 items-center justify-center rounded-lg transition-transform duration-200 group-hover:scale-110",
+            "flex h-7 w-7 shrink-0 items-center justify-center rounded-lg shadow-sm transition-transform duration-200 group-hover:scale-105",
             ICON_BADGE_COLORS[item.icon]
           )}
         >
-          <Icon className="h-4.5 w-4.5 text-white" />
+          <Icon className="h-4 w-4 text-white" />
         </span>
-        <span>{item.label}</span>
+        <span className="truncate">{item.label}</span>
       </div>
       {item.badge && (
         <span
           className={cn(
-            "rounded-md px-1.5 py-0.5 text-[10px] font-bold transition-colors",
-            active
-              ? "bg-white/20 text-white"
-              : "bg-zindo-gold-500/20 text-zindo-gold-400 group-hover:bg-zindo-gold-500 group-hover:text-white"
+            "ml-2 shrink-0 rounded-md px-1.5 py-0.5 text-[10px] font-bold",
+            active ? "bg-zindo-green-500 text-white" : "bg-zindo-gold-100 text-zindo-gold-700 dark:bg-zindo-gold-500/15 dark:text-zindo-gold-300"
           )}
         >
           {item.badge}

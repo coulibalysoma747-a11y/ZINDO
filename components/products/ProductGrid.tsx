@@ -1,6 +1,6 @@
 "use client";
 
-import { Package } from "lucide-react";
+import { Package, Plus } from "lucide-react";
 import { formatMoney } from "@/lib/format";
 import { EmptyState } from "@/components/ui/Empty";
 import { ProductCardMenu } from "@/components/products/ProductCardMenu";
@@ -62,15 +62,15 @@ export function ProductGrid({
       {products.map((product) => (
         <div
           key={product.id}
-          className="group relative flex flex-col rounded-2xl border border-zinc-200/80 bg-white text-left shadow-sm shadow-zinc-900/[0.02] transition-all hover:-translate-y-0.5 hover:border-zindo-green-300 hover:shadow-md dark:border-slate-800 dark:bg-slate-900"
+          className="group relative flex flex-col rounded-2xl border border-zinc-200/70 bg-white text-left shadow-zindo-card transition-all duration-150 hover:-translate-y-0.5 hover:border-zindo-green-300 hover:shadow-zindo-raised dark:border-slate-800 dark:bg-slate-900"
         >
           <button
             type="button"
             onClick={() => onSelect(product)}
             aria-label={`Ajouter ${product.name} au panier`}
-            className="absolute inset-0 z-0 rounded-2xl active:scale-[0.98]"
+            className="absolute inset-0 z-0 rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zindo-green-500 active:scale-[0.98]"
           />
-          <div className="pointer-events-none relative aspect-[4/3] w-full overflow-hidden rounded-t-2xl bg-zinc-50 dark:bg-slate-800">
+          <div className="pointer-events-none relative aspect-[4/3] w-full overflow-hidden rounded-t-2xl bg-gradient-to-br from-zinc-50 to-zinc-100 dark:from-slate-800 dark:to-slate-800">
             {product.photoUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
@@ -80,22 +80,32 @@ export function ProductGrid({
               />
             ) : (
               <div className="flex h-full w-full items-center justify-center">
-                <Package className="h-8 w-8 text-zinc-300" />
+                <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white/80 text-zinc-300 shadow-zindo-card dark:bg-slate-700/60">
+                  <Package className="h-6 w-6" />
+                </span>
               </div>
             )}
-            <span className="absolute right-1.5 top-1.5 rounded-full bg-white/90 px-1.5 py-0.5 text-[10px] font-medium text-zinc-600 shadow-sm">
+            <span
+              className={`absolute right-1.5 top-1.5 rounded-full px-2 py-0.5 text-[10px] font-semibold tabular-nums shadow-sm backdrop-blur-sm ${
+                product.quantity <= 0 ? "bg-red-600/90 text-white" : "bg-white/90 text-zinc-700"
+              }`}
+            >
               {product.quantity} {product.unit}
+            </span>
+            {/* Petit "+" qui apparaît au survol : rappelle qu’un clic ajoute au panier. */}
+            <span className="absolute bottom-1.5 right-1.5 flex h-7 w-7 translate-y-1 items-center justify-center rounded-full bg-zindo-green-500 text-white opacity-0 shadow-md transition-all duration-150 group-hover:translate-y-0 group-hover:opacity-100">
+              <Plus className="h-4 w-4" />
             </span>
           </div>
           <div className="absolute left-1.5 top-1.5 z-10">
             <ProductCardMenu productId={product.id} canEdit={canEditProducts} />
           </div>
           <div className="pointer-events-none flex flex-1 flex-col gap-0.5 p-2.5">
-            <p className="break-words text-sm font-medium leading-snug text-zinc-900" title={product.name}>
+            <p className="break-words text-sm font-semibold leading-snug text-zinc-900" title={product.name}>
               {product.name}
             </p>
             <p className="truncate text-[11px] text-zinc-400">{product.reference}</p>
-            <p className="mt-auto pt-1 text-sm font-bold text-emerald-600">
+            <p className="mt-auto pt-1.5 text-[15px] font-bold tabular-nums text-zindo-green-600 dark:text-zindo-green-400">
               {formatMoney(product.salePrice, currency)}
             </p>
             {product.priceTiers && product.priceTiers.length > 0 && (

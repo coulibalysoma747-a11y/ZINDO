@@ -8,7 +8,7 @@ export function TableHead({ className, ...props }: React.HTMLAttributes<HTMLTabl
   return (
     <thead
       className={cn(
-        "border-b border-zinc-100 bg-zinc-50/60 text-left text-zinc-500 dark:border-slate-800 dark:bg-slate-800/40",
+        "border-b border-zinc-200/70 bg-zinc-50/80 text-left text-zinc-500 dark:border-slate-800 dark:bg-slate-800/40",
         className
       )}
       {...props}
@@ -33,7 +33,7 @@ export function TableRow({
   return (
     <tr
       className={cn(
-        interactive && "transition-colors hover:bg-zinc-50 dark:hover:bg-slate-800/40",
+        interactive && "transition-colors hover:bg-zindo-green-50/40 dark:hover:bg-slate-800/40",
         className
       )}
       {...props}
@@ -49,7 +49,7 @@ export function TableHeaderCell({
   return (
     <th
       className={cn(
-        "px-4 py-3 text-[11px] font-semibold uppercase tracking-wide",
+        "px-4 py-2.5 text-[11px] font-semibold uppercase tracking-[0.06em]",
         align === "right" && "text-right",
         align === "center" && "text-center",
         className
