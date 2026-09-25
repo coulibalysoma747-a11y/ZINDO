@@ -54,7 +54,17 @@ const TEXT = {
   },
 } as const;
 
-export function RegisterForm({ locale = "fr" }: { locale?: "fr" | "en" }) {
+export function RegisterForm({
+  locale = "fr",
+  referralCode = null,
+  showReferralField = false,
+}: {
+  locale?: "fr" | "en";
+  /** Code reçu via un lien de parrainage (zindo.site/r/CODE) — voir lib/referral.ts. */
+  referralCode?: string | null;
+  /** Champ visible (module parrainage activé globalement, ou arrivée par un lien). */
+  showReferralField?: boolean;
+}) {
   const [state, action, pending] = useActionState(registerAction, undefined);
   const [countryCode, setCountryCode] = useState<CountryCode | "">("");
   const t = TEXT[locale];
@@ -106,6 +116,17 @@ export function RegisterForm({ locale = "fr" }: { locale?: "fr" | "en" }) {
       <Field label={t.city} htmlFor="city">
         <Input id="city" name="city" placeholder={country?.capital ?? t.cityPlaceholder} />
       </Field>
+      {showReferralField && (
+        <Field label={locale === "en" ? "Referral code (optional)" : "Code de parrainage (facultatif)"} htmlFor="referralCode">
+          <Input
+            id="referralCode"
+            name="referralCode"
+            defaultValue={referralCode ?? ""}
+            placeholder="Ex. SOMA7K"
+            autoCapitalize="characters"
+          />
+        </Field>
+      )}
       <label className="flex items-start gap-2.5 text-sm text-zinc-600">
         <input
           type="checkbox"

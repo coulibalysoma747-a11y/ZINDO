@@ -104,6 +104,20 @@ function parseCustomFields(formData: FormData, defs: { key: string }[]): string 
   return Object.keys(values).length > 0 ? JSON.stringify(values) : null;
 }
 
+/**
+ * Nombre d'unités par carton (réassort intelligent, module "bons-de-commande") :
+ * écrit à part, et seulement quand le champ est présent dans le formulaire
+ * (donc module activé), pour ne jamais faire échouer l'enregistrement d'un
+ * produit si la colonne n'existe pas encore.
+ */
+async function saveUnitsPerCarton(productId: string, formData: FormData) {
+  if (!formData.has("unitsPerCarton")) return;
+  const raw = Number(formData.get("unitsPerCarton"));
+  const value = Number.isInteger(raw) && raw > 1 ? raw : null;
+  const { error } = await supabase.from("products").update({ units_per_carton: value }).eq("id", productId);
+  if (error) console.error("[saveUnitsPerCarton] Échec de l'enregistrement :", error.message);
+}
+
 function parseProductForm(formData: FormData) {
   return productSchema.safeParse({
     name: formData.get("name"),
@@ -174,6 +188,7 @@ export async function createProductAction(
   });
   if (!result.success) return { error: result.error };
   const product = { id: result.productId };
+  await saveUnitsPerCarton(product.id, formData);
 
   if (packagingRows.rows.length > 0 && (await isPackagingUnitsModuleEnabled(user.businessId))) {
     const { error: packagingError } = await supabase.from("product_packaging_units").insert(
@@ -446,6 +461,7 @@ export async function updateProductAction(
     console.error("[updateProductAction] Échec de la mise à jour :", updateError.message);
     return { error: "Impossible de mettre à jour le produit" };
   }
+  await saveUnitsPerCarton(id, formData);
 
   await replaceProductAliases(id, parseAliases(formData, data.name));
 

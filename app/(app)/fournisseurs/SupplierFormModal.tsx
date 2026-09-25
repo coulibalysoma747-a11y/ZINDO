@@ -16,6 +16,8 @@ type Supplier = {
   email: string | null;
   address: string | null;
   notes: string | null;
+  /** Présent seulement quand le réassort intelligent est activé (voir [id]/page.tsx). */
+  leadTimeDays?: number | null;
 } | null;
 
 /**
@@ -27,10 +29,12 @@ export function SupplierFormModal({
   open,
   onClose,
   supplier,
+  showLeadTime = false,
 }: {
   open: boolean;
   onClose: () => void;
   supplier?: Supplier;
+  showLeadTime?: boolean;
 }) {
   const router = useRouter();
   const [updateState, updateFormAction, updatePending] = useActionState<ActionState, FormData>(
@@ -128,6 +132,11 @@ export function SupplierFormModal({
         <Field label="Adresse" htmlFor="address">
           <Input id="address" name="address" value={address} onChange={(e) => setAddress(e.target.value)} />
         </Field>
+        {supplier && showLeadTime && (
+          <Field label="Délai de livraison habituel (jours)" htmlFor="leadTimeDays" hint="Utilisé par le réassort pour éviter les ruptures avant la livraison. Vide = 7 jours.">
+            <Input id="leadTimeDays" name="leadTimeDays" type="number" min={0} defaultValue={supplier.leadTimeDays ?? ""} />
+          </Field>
+        )}
         <Field label="Notes" htmlFor="notes">
           <Textarea id="notes" name="notes" rows={2} value={notes} onChange={(e) => setNotes(e.target.value)} />
         </Field>

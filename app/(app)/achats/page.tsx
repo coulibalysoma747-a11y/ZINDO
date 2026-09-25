@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { Plus } from "lucide-react";
+import { Plus, FileText } from "lucide-react";
+import { isPurchaseOrdersModuleEnabled } from "@/lib/actions/purchase-orders";
 import { requirePermission } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
 import { supabase } from "@/lib/supabase";
@@ -35,6 +36,7 @@ export default async function PurchasesPage() {
   const purchases = (data ?? []) as unknown as PurchaseRow[];
 
   const currency = user.business.currency;
+  const ordersEnabled = await isPurchaseOrdersModuleEnabled(user.businessId);
 
   return (
     <div className="space-y-6">
@@ -43,9 +45,16 @@ export default async function PurchasesPage() {
           <h1 className="text-xl font-bold text-zinc-900">Achats</h1>
           <p className="text-sm text-zinc-500">{purchases.length} achat(s)</p>
         </div>
-        <ButtonLink href="/achats/nouveau">
-          <Plus className="h-4 w-4" /> Nouvel achat
-        </ButtonLink>
+        <div className="flex flex-wrap gap-2">
+          {ordersEnabled && (
+            <ButtonLink href="/achats/commandes" variant="outline">
+              <FileText className="h-4 w-4" /> Demandes et bons de commande
+            </ButtonLink>
+          )}
+          <ButtonLink href="/achats/nouveau">
+            <Plus className="h-4 w-4" /> Nouvel achat
+          </ButtonLink>
+        </div>
       </div>
 
       {purchases.length === 0 ? (

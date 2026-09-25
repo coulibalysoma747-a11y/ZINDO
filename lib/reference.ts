@@ -22,6 +22,7 @@ async function nextSeq(
     | "next_repair_seq"
     | "next_table_order_seq"
     | "next_custom_order_seq"
+    | "next_purchase_order_seq"
 ) {
   const { data, error } = await supabase.rpc("increment_business_seq", {
     p_business_id: businessId,
@@ -137,4 +138,10 @@ export function generateInventoryReference() {
     d.getMinutes()
   ).padStart(2, "0")}${String(d.getSeconds()).padStart(2, "0")}`;
   return `INV-${stamp}`;
+}
+
+/** Numéro d'une demande de prix / bon de commande fournisseur, sans préfixe (DP-/BC- ajouté à l'affichage selon le statut). */
+export async function generatePurchaseOrderNumber(businessId: string) {
+  const seq = await nextSeq(businessId, "next_purchase_order_seq");
+  return `${new Date().getFullYear()}-${pad(seq)}`;
 }

@@ -1,11 +1,50 @@
 import { PackagePlus } from "lucide-react";
-import { getRestockSuggestionsAction } from "@/lib/actions/restock";
+import { getRestockSuggestionsAction, getSmartRestockAction } from "@/lib/actions/restock";
+import { isPurchaseOrdersModuleEnabled } from "@/lib/actions/purchase-orders";
+import { requirePermission } from "@/lib/auth";
+import { PERMISSIONS } from "@/lib/permissions";
+import { supabase } from "@/lib/supabase";
 import { Card, CardBody } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { ButtonLink } from "@/components/ui/Button";
 import { EmptyState } from "@/components/ui/Empty";
+import { SmartRestockPlanner } from "./SmartRestockPlanner";
 
-export default async function RestockPage() {
+// Lecture de 90 jours de mouvements de stock, page par page.
+export const maxDuration = 30;
+
+const COVERAGE_CHOICES = [15, 30, 60];
+
+export default async function RestockPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ couverture?: string; budget?: string }>;
+}) {
+  const user = await requirePermission(PERMISSIONS.STOCK_VIEW);
+
+  if (await isPurchaseOrdersModuleEnabled(user.businessId)) {
+    const params = await searchParams;
+    const coverage = COVERAGE_CHOICES.includes(Number(params.couverture)) ? Number(params.couverture) : 30;
+    const budgetValue = Number(params.budget);
+    const budget = Number.isFinite(budgetValue) && budgetValue > 0 ? budgetValue : null;
+    const [result, { data: suppliers }] = await Promise.all([
+      getSmartRestockAction({ coverageDays: coverage, budget }),
+      supabase.from("suppliers").select("id, name").eq("business_id", user.businessId).order("name"),
+    ]);
+    return (
+      <SmartRestockPlanner
+        result={result}
+        suppliers={(suppliers ?? []) as { id: string; name: string }[]}
+        coverageChoices={COVERAGE_CHOICES}
+        currency={user.business.currency}
+      />
+    );
+  }
+
+  return <LegacyRestock />;
+}
+
+async function LegacyRestock() {
   const rows = await getRestockSuggestionsAction();
 
   return (

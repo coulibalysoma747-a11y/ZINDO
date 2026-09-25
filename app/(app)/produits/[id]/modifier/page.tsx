@@ -7,6 +7,7 @@ import { getActivityConfig } from "@/lib/activity-config";
 import { MOTO_ACTIVITY_KEY } from "@/lib/activities";
 import { ProductForm } from "@/components/products/ProductForm";
 import { updateProductAction } from "@/lib/actions/products";
+import { isPurchaseOrdersModuleEnabled } from "@/lib/actions/purchase-orders";
 
 export default async function EditProductPage({
   params,
@@ -36,6 +37,13 @@ export default async function EditProductPage({
 
   if (!product) notFound();
 
+  // Colonne lue à part : la page ne doit pas casser si la migration du
+  // réassort intelligent n'est pas encore appliquée.
+  const unitsPerCartonEnabled = await isPurchaseOrdersModuleEnabled(user.businessId);
+  const { data: cartonRow } = unitsPerCartonEnabled
+    ? await supabase.from("products").select("unitsPerCarton:units_per_carton").eq("id", id).maybeSingle()
+    : { data: null };
+
   let parsedCustomFields: Record<string, string> = {};
   if (product.customFields) {
     try {
@@ -59,6 +67,7 @@ export default async function EditProductPage({
         locations={locations}
         customFieldDefs={activityConfig.customFields}
         showTrackUnits={user.business.activityKey === MOTO_ACTIVITY_KEY}
+        showUnitsPerCarton={unitsPerCartonEnabled}
         initial={{
           name: product.name as string,
           reference: product.reference as string,
@@ -76,6 +85,7 @@ export default async function EditProductPage({
           customFields: parsedCustomFields,
           trackUnits: product.trackUnits as boolean,
           aliases: (aliasRows ?? []).map((r) => r.alias as string),
+          unitsPerCarton: (cartonRow?.unitsPerCarton as number | null) ?? null,
         }}
         submitLabel="Enregistrer les modifications"
       />

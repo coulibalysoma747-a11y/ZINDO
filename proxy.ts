@@ -19,6 +19,8 @@ const PUBLIC_PATHS = [
   "/confidentialite",
   "/tarifs",
   "/fonctionnalites",
+  // Lien de parrainage (app/r/[code]/route.ts), ouvert par un futur inscrit.
+  "/r",
   // Version anglaise (voir app/en/) : "/en" couvre aussi tous ses
   // sous-chemins (/en/login, /en/inscription, /en/cgu, /en/confidentialite)
   // grâce au startsWith(`${p}/`) ci-dessous — pas besoin de les lister un par un.

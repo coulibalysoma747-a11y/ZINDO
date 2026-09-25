@@ -2,6 +2,7 @@ import "server-only";
 import { supabase } from "@/lib/supabase";
 import type { InvoicePaymentMethod } from "@/lib/db-types";
 import { ACTIVE_PLAN_KEY } from "@/lib/subscription";
+import { rewardReferrerOnFirstPayment } from "@/lib/referral";
 
 function addPeriod(billingCycle: "MONTHLY" | "ANNUAL", from: Date) {
   const next = new Date(from);
@@ -35,7 +36,16 @@ export async function activateInvoicePayment(params: {
   if (!plan) return { error: "Palier introuvable" };
 
   const now = new Date();
-  const periodEnd = addPeriod(invoice.billingCycle as "MONTHLY" | "ANNUAL", now);
+  // Un renouvellement anticipé (ou un mois offert par parrainage) ne doit pas
+  // faire perdre les jours restants : la nouvelle période part de la fin de
+  // l'abonnement en cours quand celle-ci est encore dans le futur.
+  const { data: currentSub } = await supabase
+    .from("business_subscriptions")
+    .select("status, currentPeriodEnd:current_period_end")
+    .eq("business_id", invoice.businessId)
+    .maybeSingle();
+  const currentEnd = currentSub?.status === "ACTIVE" && currentSub.currentPeriodEnd ? new Date(currentSub.currentPeriodEnd as string) : null;
+  const periodEnd = addPeriod(invoice.billingCycle as "MONTHLY" | "ANNUAL", currentEnd && currentEnd > now ? currentEnd : now);
 
   const { error: invoiceError } = await supabase
     .from("subscription_invoices")
@@ -65,6 +75,10 @@ export async function activateInvoicePayment(params: {
     console.error("[activateInvoicePayment] Échec de la mise à jour de l'abonnement :", subError.message);
     return { error: "Facture confirmée mais l'abonnement n'a pas pu être mis à jour — contactez le support" };
   }
+
+  // Premier paiement d'un filleul : récompense du parrain (sans effet si le
+  // commerce n'a pas été parrainé ou si c'est déjà fait).
+  await rewardReferrerOnFirstPayment(invoice.businessId as string);
 
   return { success: true, alreadyProcessed: false };
 }

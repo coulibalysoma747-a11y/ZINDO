@@ -16,6 +16,8 @@ import { AnnouncementBanner } from "@/components/layout/AnnouncementBanner";
 import { HasPhysicalStoreBanner } from "@/components/layout/HasPhysicalStoreBanner";
 import { ROLE_LABELS, PERMISSIONS } from "@/lib/permissions";
 import { ensureDesktopOfflineFlagRegistered } from "@/lib/actions/desktop-offline";
+import { ensurePurchaseOrdersFlagRegistered } from "@/lib/actions/purchase-orders";
+import { ensureReferralFlagRegistered } from "@/lib/referral";
 import { MARKET_SELLER_HOME, isMarketSeller, isPathAllowedForMarketSeller } from "@/lib/market-seller";
 import { MarketSellerShell } from "@/components/layout/MarketSellerShell";
 
@@ -25,6 +27,9 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   // Enregistrement paresseux, sans attendre le résultat (idempotent, ne doit
   // pas ajouter de latence à chaque page) — voir lib/actions/desktop-offline.ts.
   void ensureDesktopOfflineFlagRegistered();
+  // Attendus, eux : ils conditionnent des entrées du menu, et un flag jamais
+  // enregistré serait considéré comme activé (voir lib/feature-flags.ts).
+  await Promise.all([ensurePurchaseOrdersFlagRegistered(), ensureReferralFlagRegistered()]);
 
   // Un Fondateur "en tant que" ce commerçant (voir lib/actions/impersonation.ts)
   // garde son cookie admin en plus du cookie commerçant — sa présence indique

@@ -10,6 +10,7 @@ import { EmptyState } from "@/components/ui/Empty";
 import { Badge } from "@/components/ui/Badge";
 import { Table, TableHead, TableBody, TableRow, TableHeaderCell, TableCell } from "@/components/ui/Table";
 import { SupplierEditButton } from "./SupplierEditButton";
+import { isPurchaseOrdersModuleEnabled } from "@/lib/actions/purchase-orders";
 
 type SupplierRow = {
   id: string;
@@ -38,7 +39,14 @@ export default async function SupplierDetailPage({
     .eq("business_id", user.businessId)
     .maybeSingle();
   if (!supplierRow) notFound();
-  const supplier = supplierRow as unknown as SupplierRow;
+  const supplier = supplierRow as unknown as SupplierRow & { leadTimeDays?: number | null };
+
+  // Délai de livraison lu à part (colonne du réassort intelligent, ajoutée par migration).
+  const leadTimeEnabled = await isPurchaseOrdersModuleEnabled(user.businessId);
+  if (leadTimeEnabled) {
+    const { data: leadRow } = await supabase.from("suppliers").select("leadTimeDays:lead_time_days").eq("id", id).maybeSingle();
+    supplier.leadTimeDays = (leadRow?.leadTimeDays as number | null) ?? null;
+  }
 
   const [{ data: purchasesData }, { data: paymentsData }, { data: products }] = await Promise.all([
     supabase
@@ -67,7 +75,7 @@ export default async function SupplierDetailPage({
           <h1 className="mt-1 text-xl font-bold text-zinc-900">{supplier.name}</h1>
           {supplier.company && <p className="text-sm text-zinc-500">{supplier.company}</p>}
         </div>
-        <SupplierEditButton supplier={supplier} />
+        <SupplierEditButton supplier={supplier} showLeadTime={leadTimeEnabled} />
       </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">

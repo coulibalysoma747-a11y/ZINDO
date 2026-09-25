@@ -13,16 +13,17 @@ type Supplier = {
   email: string | null;
   address: string | null;
   notes: string | null;
+  leadTimeDays?: number | null;
 };
 
-export function SupplierEditButton({ supplier }: { supplier: Supplier }) {
+export function SupplierEditButton({ supplier, showLeadTime = false }: { supplier: Supplier; showLeadTime?: boolean }) {
   const [open, setOpen] = useState(false);
   return (
     <>
       <Button variant="outline" onClick={() => setOpen(true)}>
         <Pencil className="h-4 w-4" /> Modifier
       </Button>
-      <SupplierFormModal open={open} onClose={() => setOpen(false)} supplier={supplier} />
+      <SupplierFormModal open={open} onClose={() => setOpen(false)} supplier={supplier} showLeadTime={showLeadTime} />
     </>
   );
 }

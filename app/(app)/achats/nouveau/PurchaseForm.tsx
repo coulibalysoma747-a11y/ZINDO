@@ -28,17 +28,22 @@ export function PurchaseForm({
   locations,
   defaultLocationId,
   currency,
+  showTransport = false,
 }: {
   suppliers: { id: string; name: string }[];
   locations: { id: string; name: string }[];
   defaultLocationId?: string;
   currency: string;
+  /** Réassort intelligent activé : les frais de transport alimentent le coût rendu boutique par fournisseur. */
+  showTransport?: boolean;
 }) {
   const [supplierId, setSupplierId] = useState(suppliers[0]?.id ?? "");
   const [locationId, setLocationId] = useState(defaultLocationId ?? locations[0]?.id ?? "");
   const [lines, setLines] = useState<Line[]>([]);
   const [amountPaidInput, setAmountPaidInput] = useState("");
   const [note, setNote] = useState("");
+  const [transportInput, setTransportInput] = useState("");
+  const transportCost = showTransport ? Math.max(0, Number(transportInput) || 0) : 0;
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
   const router = useRouter();
@@ -115,7 +120,7 @@ export function PurchaseForm({
           clientRef,
           kind: "purchase",
           createdAt: new Date().toISOString(),
-          input: { supplierId, locationId, items, amountPaid, note: note || undefined, clientRef },
+          input: { supplierId, locationId, items, amountPaid, transportCost, note: note || undefined, clientRef },
           label: `Achat — ${suppliers.find((s) => s.id === supplierId)?.name ?? "Fournisseur"} (${formatMoney(total, currency)})`,
         });
         refreshPendingCount();
@@ -125,7 +130,7 @@ export function PurchaseForm({
     }
 
     startTransition(async () => {
-      const result = await createPurchaseAction({ supplierId, locationId, items, amountPaid, note: note || undefined });
+      const result = await createPurchaseAction({ supplierId, locationId, items, amountPaid, transportCost, note: note || undefined });
       if (!result.success) return setError(result.error);
       router.push(`/achats/${result.purchaseId}`);
     });
@@ -249,6 +254,18 @@ export function PurchaseForm({
               <p className="text-sm text-amber-600">
                 Dette fournisseur : {formatMoney(total - amountPaid, currency)}
               </p>
+            )}
+            {showTransport && (
+              <Field label="Frais de transport (facultatif)" htmlFor="transportCost" hint="Sert à comparer le vrai coût de chaque fournisseur.">
+                <Input
+                  id="transportCost"
+                  type="number"
+                  min={0}
+                  value={transportInput}
+                  onChange={(e) => setTransportInput(e.target.value)}
+                  placeholder="0"
+                />
+              </Field>
             )}
             <Field label="Note (facultatif)" htmlFor="note">
               <Input id="note" value={note} onChange={(e) => setNote(e.target.value)} />

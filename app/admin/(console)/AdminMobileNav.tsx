@@ -17,6 +17,7 @@ const NAV_ITEMS = [
   { label: "Support", href: "/admin/support", founderOnly: false },
   { label: "Fonctionnalités", href: "/admin/fonctionnalites", founderOnly: false },
   { label: "Vérifications", href: "/admin/verifications", founderOnly: false },
+  { label: "Parrainages", href: "/admin/parrainages", founderOnly: false },
   { label: "Plateforme", href: "/admin/plateforme", founderOnly: true },
   { label: "Profil", href: "/admin/profil", founderOnly: false },
 ];

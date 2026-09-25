@@ -1,6 +1,7 @@
 import type { NavItem } from "@/lib/nav";
 import {
   LayoutDashboard,
+  Gift,
   Bot,
   ShoppingCart,
   History,
@@ -167,6 +168,8 @@ export const NAV_ICONS: Record<NavItem["icon"], React.ComponentType<{ className?
   notifications: Bell,
   "credit-reminders": BellRing,
   restock: PackagePlus,
+  "purchase-orders": ClipboardList,
+  referral: Gift,
   "cost-price": Calculator,
   "product-photos": Images,
   rentals: CalendarClock,

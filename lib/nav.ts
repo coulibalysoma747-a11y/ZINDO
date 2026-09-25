@@ -53,6 +53,8 @@ export type NavItem = {
   href: string;
   icon:
     | "dashboard"
+    | "purchase-orders"
+    | "referral"
     | "sales"
     | "products"
     | "categories"
@@ -261,6 +263,7 @@ export const NAV_ITEMS: NavItem[] = [
   { label: "Enlèvements partenaires", href: "/enlevements", icon: "pickups", permission: PERMISSIONS.STOCK_MANAGE, moduleToggle: "pickups" },
   { label: "Expéditions", href: "/expeditions", icon: "shipments", permission: PERMISSIONS.SALES_VIEW, moduleToggle: "shipments" },
   { label: "Achats", href: "/achats", icon: "purchases", permission: PERMISSIONS.PURCHASES_MANAGE },
+  { label: "Bons de commande", href: "/achats/commandes", icon: "purchase-orders", permission: PERMISSIONS.PURCHASES_MANAGE, featureFlag: "bons-de-commande" },
   { label: "Dépenses", href: "/depenses", icon: "expenses", permission: PERMISSIONS.EXPENSES_MANAGE, planFeature: "expenses" },
   { label: "Clients", href: "/clients", icon: "customers", permission: PERMISSIONS.CUSTOMERS_VIEW },
   { label: "Crédits", href: "/credits", icon: "credits", permission: PERMISSIONS.CUSTOMERS_VIEW, planFeature: "credits" },
@@ -279,6 +282,7 @@ export const NAV_ITEMS: NavItem[] = [
     planFeature: "boutique_en_ligne",
   },
   { label: "Utilisateurs", href: "/utilisateurs", icon: "users", permission: PERMISSIONS.USERS_MANAGE },
+  { label: "Parrainage", href: "/parrainage", icon: "referral", permission: PERMISSIONS.SETTINGS_MANAGE, featureFlag: "parrainage" },
   { label: "Aide & support", href: "/support", icon: "support" },
   { label: "Paramètres", href: "/parametres", icon: "settings", permission: PERMISSIONS.SETTINGS_MANAGE },
   // Pas de `permission` : accessible à tous les rôles, y compris pendant un

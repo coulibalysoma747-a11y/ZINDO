@@ -143,6 +143,15 @@ export async function updateSupplierAction(
     return { error: "Impossible de mettre à jour le fournisseur" };
   }
 
+  // Délai de livraison (réassort intelligent) : champ affiché seulement quand
+  // le module est activé, écrit à part pour ne jamais bloquer la mise à jour.
+  if (formData.has("leadTimeDays")) {
+    const raw = Number(formData.get("leadTimeDays"));
+    const leadTime = formData.get("leadTimeDays") !== "" && Number.isInteger(raw) && raw >= 0 && raw <= 365 ? raw : null;
+    const { error: leadError } = await supabase.from("suppliers").update({ lead_time_days: leadTime }).eq("id", id);
+    if (leadError) console.error("[updateSupplierAction] Échec du délai de livraison :", leadError.message);
+  }
+
   await logAction({
     businessId: user.businessId,
     userId: user.id,

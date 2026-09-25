@@ -26,6 +26,7 @@ export function ProductForm({
   customFieldDefs,
   showTrackUnits = false,
   packagingEnabled = false,
+  showUnitsPerCarton = false,
   initial,
   submitLabel,
 }: {
@@ -40,6 +41,8 @@ export function ProductForm({
   showTrackUnits?: boolean;
   /** Fonctionnalité "Conditionnements" activée pour ce commerce (voir lib/actions/packaging-units.ts). */
   packagingEnabled?: boolean;
+  /** Réassort intelligent activé (module "bons-de-commande") : affiche le champ "Nombre par carton". */
+  showUnitsPerCarton?: boolean;
   initial?: {
     name: string;
     reference: string;
@@ -57,6 +60,7 @@ export function ProductForm({
     customFields?: Record<string, string>;
     trackUnits?: boolean;
     aliases?: string[];
+    unitsPerCarton?: number | null;
   };
   submitLabel: string;
 }) {
@@ -189,6 +193,22 @@ export function ProductForm({
             defaultValue={initial?.minStock ?? 5}
           />
         </Field>
+        {showUnitsPerCarton && (
+          <Field
+            label="Nombre par carton (facultatif)"
+            htmlFor="unitsPerCarton"
+            hint="Ex. 12 : le réassort proposera toujours des cartons complets."
+          >
+            <Input
+              id="unitsPerCarton"
+              name="unitsPerCarton"
+              type="number"
+              min={0}
+              defaultValue={initial?.unitsPerCarton ?? ""}
+              placeholder="Laisser vide si pas de carton"
+            />
+          </Field>
+        )}
         <Field label="Unité" htmlFor="unit">
           <Input id="unit" name="unit" defaultValue={initial?.unit ?? "unité"} />
         </Field>

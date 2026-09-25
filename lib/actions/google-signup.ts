@@ -9,6 +9,7 @@ import { createSession, getPendingGoogleSignupSession, createPendingGoogleSignup
 import { isEmailConfigured, sendVerificationCodeEmail } from "@/lib/email";
 import { registerFeatureFlag, isFeatureEnabledGlobally } from "@/lib/feature-flags";
 import type { Role } from "@/lib/db-types";
+import { attachReferralFromSignup } from "@/lib/referral-signup";
 import { isCountryCode, countryNameFr, DEFAULT_COUNTRY_CODE } from "@/lib/countries";
 
 export type ActionState = { error?: string } | undefined;
@@ -142,6 +143,7 @@ export async function confirmGoogleSignupCodeAction(
   }
 
   const row = data[0] as { user_id: string; business_id: string; role: string };
+  await attachReferralFromSignup({ businessId: row.business_id, phone: pending.phone ?? "" });
   await destroyPendingGoogleSignupSession();
   await createSession({ userId: row.user_id, businessId: row.business_id, role: row.role as Role });
   redirect("/dashboard");

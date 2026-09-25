@@ -20,6 +20,8 @@ export type CreatePurchaseInput = {
   locationId: string;
   items: PurchaseItemInput[];
   amountPaid: number;
+  /** Frais de transport payés pour cet achat (coût rendu boutique, voir lib/restock-engine.ts). */
+  transportCost?: number;
   note?: string;
   /** Clé d'idempotence pour un achat enregistré hors ligne (voir lib/offline/) — absente pour un achat créé normalement en ligne. */
   clientRef?: string;
@@ -90,6 +92,10 @@ async function createPurchaseImpl(input: CreatePurchaseInput): Promise<CreatePur
       total,
       amount_paid: amountPaid,
       status,
+      // Colonne ajoutée par 2026-09-25_bons_de_commande_parrainage.sql : envoyée
+      // seulement quand elle est renseignée, pour ne pas casser l'enregistrement
+      // d'un achat classique tant que la migration n'est pas appliquée.
+      ...(input.transportCost && input.transportCost > 0 ? { transport_cost: input.transportCost } : {}),
       note: input.note ?? null,
       client_ref: input.clientRef ?? null,
     })

@@ -7,11 +7,12 @@ import { MOTO_ACTIVITY_KEY } from "@/lib/activities";
 import { ProductForm } from "@/components/products/ProductForm";
 import { createProductAction } from "@/lib/actions/products";
 import { isPackagingUnitsModuleEnabled } from "@/lib/actions/packaging-units";
+import { isPurchaseOrdersModuleEnabled } from "@/lib/actions/purchase-orders";
 
 export default async function NewProductPage() {
   const user = await requirePermission(PERMISSIONS.PRODUCTS_MANAGE);
 
-  const [{ data: categories }, { data: brands }, { data: suppliers }, locations, currentLocation, activityConfig, packagingEnabled] = await Promise.all([
+  const [{ data: categories }, { data: brands }, { data: suppliers }, locations, currentLocation, activityConfig, packagingEnabled, unitsPerCartonEnabled] = await Promise.all([
     supabase.from("categories").select("id, name").eq("business_id", user.businessId).order("name", { ascending: true }),
     supabase.from("brands").select("id, name").eq("business_id", user.businessId).order("name", { ascending: true }),
     supabase.from("suppliers").select("id, name").eq("business_id", user.businessId).order("name", { ascending: true }),
@@ -19,6 +20,7 @@ export default async function NewProductPage() {
     getCurrentLocation(user.businessId),
     getActivityConfig(user.business.activityKey),
     isPackagingUnitsModuleEnabled(user.businessId),
+    isPurchaseOrdersModuleEnabled(user.businessId),
   ]);
 
   return (
@@ -37,6 +39,7 @@ export default async function NewProductPage() {
         customFieldDefs={activityConfig.customFields}
         showTrackUnits={user.business.activityKey === MOTO_ACTIVITY_KEY}
         packagingEnabled={packagingEnabled}
+        showUnitsPerCarton={unitsPerCartonEnabled}
         submitLabel="Créer le produit"
       />
     </div>
