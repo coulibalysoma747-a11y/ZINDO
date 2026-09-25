@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { NavItem } from "@/lib/nav";
 import { SidebarLink } from "./SidebarLink";
+import { SidebarCloseButton } from "./SidebarToggle";
 import { ZindoLogo } from "@/components/auth/ZindoLogo";
 
 export function Sidebar({
@@ -24,12 +25,13 @@ export function Sidebar({
       <div className="min-h-0 flex-1 overflow-y-auto">
         <div className="flex items-center gap-3 border-b-2 border-dashed border-zindo-green-200 p-5">
           <ZindoLogo size={40} />
-          <div className="min-w-0">
+          <div className="min-w-0 flex-1">
             <h1 className="truncate text-lg font-extrabold tracking-wide text-zindo-ink-900">ZINDO</h1>
             <span className="inline-block max-w-full truncate rounded-full bg-zindo-green-500/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-zindo-green-400">
               {businessName}
             </span>
           </div>
+          <SidebarCloseButton className="-mr-2 shrink-0" />
         </div>
 
         <nav className="space-y-1 p-3">

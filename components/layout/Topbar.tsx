@@ -5,6 +5,7 @@ import Link from "next/link";
 import { LogOut, Menu, User as UserIcon } from "lucide-react";
 import { logoutAction } from "@/lib/actions/auth";
 import { MobileNav } from "./MobileNav";
+import { SidebarOpenButton } from "./SidebarToggle";
 import { LocationSwitcher } from "./LocationSwitcher";
 import { InstallAppButton } from "@/components/InstallAppButton";
 import type { NavItem } from "@/lib/nav";
@@ -41,7 +42,9 @@ export function Topbar({
         >
           <Menu className="h-5 w-5" />
         </button>
-        <div className="hidden md:block">
+        <div className="hidden items-center gap-2 md:flex">
+          {/* Visible seulement quand le menu latéral a été fermé (voir SidebarToggle). */}
+          <SidebarOpenButton className="hidden group-data-[sidebar=closed]/app:inline-flex" />
           <LocationSwitcher locations={locations} currentLocationId={currentLocationId} />
         </div>
         <div className="flex items-center gap-2">

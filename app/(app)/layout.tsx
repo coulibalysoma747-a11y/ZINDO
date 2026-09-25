@@ -1,4 +1,4 @@
-import { headers } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { requireUserForBilling, hasPermission } from "@/lib/auth";
 import { getVisibleNavItems } from "@/lib/nav-server";
@@ -69,9 +69,16 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     hasPermission(user.businessId, user.role, PERMISSIONS.PURCHASES_MANAGE, user.id),
   ]);
 
+  // Menu latéral fermé par l'utilisateur (voir components/layout/SidebarToggle.tsx).
+  const sidebarClosed = (await cookies()).get("zindo_sidebar")?.value === "closed";
+
   return (
-    <div className="flex min-h-screen bg-zinc-50 print:block print:min-h-0 print:bg-white">
-      <div className="print:hidden">
+    <div
+      id="zindo-app-shell"
+      data-sidebar={sidebarClosed ? "closed" : "open"}
+      className="group/app flex min-h-screen bg-zinc-50 print:block print:min-h-0 print:bg-white"
+    >
+      <div className="print:hidden group-data-[sidebar=closed]/app:hidden">
         <Sidebar
           businessName={user.business.name}
           items={navItems}
