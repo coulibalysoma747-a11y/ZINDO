@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, useTransition, type FocusEvent } from "react";
 import Link from "next/link";
 import { Trash2, Plus, Minus, UserPlus, Search, Loader2, Wallet, Lock, WifiOff, RefreshCw, Sparkles } from "lucide-react";
 import { ProductGrid, type PosProduct, type PackagingUnitOption } from "@/components/products/ProductGrid";
@@ -829,6 +829,13 @@ export function POS({
     });
   }
 
+  // Sur téléphone, le clavier qui s'ouvre recouvre le champ touché (P.U.,
+  // remise, quantité) : on le recentre une fois le clavier affiché.
+  function revealAboveKeyboard(e: FocusEvent<HTMLInputElement>) {
+    const el = e.currentTarget;
+    setTimeout(() => el.scrollIntoView({ block: "center", behavior: "smooth" }), 300);
+  }
+
   // Panier : sous les produits sur téléphone/tablette ; dans la colonne de
   // droite (toujours visible, à côté du bouton Valider) sur ordinateur.
   const renderCart = (compact: boolean) => (
@@ -1027,6 +1034,7 @@ export function POS({
                                 Math.min(lineMaxQty(line), Math.max(1, Number(e.target.value) || 1))
                               )
                             }
+                            onFocus={revealAboveKeyboard}
                             className="h-10 w-16 rounded-lg border border-zinc-200 text-center text-sm tabular-nums dark:border-slate-700 dark:bg-slate-900"
                           />
                         )}
@@ -1058,6 +1066,7 @@ export function POS({
                         inputMode="decimal"
                         value={line.unitPrice}
                         onChange={(e) => updateLine(lineKey(line), { unitPrice: Number(e.target.value) || 0 })}
+                        onFocus={revealAboveKeyboard}
                         className="h-10 w-full rounded-lg border border-zinc-200 px-2 text-right text-sm tabular-nums dark:border-slate-700 dark:bg-slate-900"
                       />
                     </label>
@@ -1069,6 +1078,7 @@ export function POS({
                         inputMode="decimal"
                         value={line.discount}
                         onChange={(e) => updateLine(lineKey(line), { discount: Number(e.target.value) || 0 })}
+                        onFocus={revealAboveKeyboard}
                         className="h-10 w-full rounded-lg border border-zinc-200 px-2 text-right text-sm tabular-nums dark:border-slate-700 dark:bg-slate-900"
                       />
                     </label>
