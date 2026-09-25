@@ -16,6 +16,8 @@ import { AnnouncementBanner } from "@/components/layout/AnnouncementBanner";
 import { HasPhysicalStoreBanner } from "@/components/layout/HasPhysicalStoreBanner";
 import { ROLE_LABELS, PERMISSIONS } from "@/lib/permissions";
 import { ensureDesktopOfflineFlagRegistered } from "@/lib/actions/desktop-offline";
+import { isBrowserOfflineEnabled } from "@/lib/actions/browser-offline";
+import { OfflineShell } from "@/components/layout/OfflineShell";
 import { ensurePurchaseOrdersFlagRegistered } from "@/lib/actions/purchase-orders";
 import { ensureReferralFlagRegistered } from "@/lib/referral";
 import { MARKET_SELLER_HOME, isMarketSeller, isPathAllowedForMarketSeller } from "@/lib/market-seller";
@@ -61,12 +63,13 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
   const [locations, currentLocation] = await Promise.all([getLocations(user.businessId), getCurrentLocation(user.businessId)]);
 
-  const [navItems, canSell, canManageProducts, canManageStock, canManagePurchases] = await Promise.all([
+  const [navItems, canSell, canManageProducts, canManageStock, canManagePurchases, offlineEnabled] = await Promise.all([
     getVisibleNavItems(user.businessId, user.role, user.id, user.business.activityKey, currentLocation?.id),
     hasPermission(user.businessId, user.role, PERMISSIONS.SALES_CREATE, user.id),
     hasPermission(user.businessId, user.role, PERMISSIONS.PRODUCTS_MANAGE, user.id),
     hasPermission(user.businessId, user.role, PERMISSIONS.STOCK_MANAGE, user.id),
     hasPermission(user.businessId, user.role, PERMISSIONS.PURCHASES_MANAGE, user.id),
+    isBrowserOfflineEnabled(user.businessId),
   ]);
 
   // Menu latéral fermé par l'utilisateur (voir components/layout/SidebarToggle.tsx).
@@ -108,6 +111,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           <AppFooter />
         </div>
       </div>
+      <OfflineShell enabled={offlineEnabled} userId={user.id} />
       <div className="print:hidden">
         <MobileTabBar
           navItems={navItems}

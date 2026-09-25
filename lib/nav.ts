@@ -11,6 +11,8 @@ export const EXPIRY_ACTIVITIES = [SUPERMARKET_ACTIVITY_KEY, PHARMACY_ACTIVITY_KE
 
 /** Application Windows (Electron) avec mode hors ligne — voir lib/offline/. Pas lié à une activité précise. */
 export const DESKTOP_OFFLINE_FLAG = "desktop_offline_mode";
+/** Ouverture de ZINDO sans Internet dans le navigateur et sur téléphone (service worker public/sw.js) — voir components/layout/OfflineShell.tsx. */
+export const BROWSER_OFFLINE_FLAG = "hors_ligne_navigateur";
 
 export const REPAIR_ACTIVITY_KEY = "atelier_reparation";
 export const SPARE_PARTS_ACTIVITY_KEY = "pieces_detachees";

@@ -22,7 +22,21 @@ export type SyncOutcome = { synced: number; failed: number; blocked: number; fai
  * lib/offline/actions-registry.ts dédoublonnent dessus, donc rejouer une
  * synchronisation interrompue ne duplique jamais une écriture déjà passée.
  */
-export async function syncPendingWrites(): Promise<SyncOutcome> {
+let runningSync: Promise<SyncOutcome> | null = null;
+
+export function syncPendingWrites(): Promise<SyncOutcome> {
+  // Plusieurs appelants peuvent déclencher la synchro au même retour de
+  // connexion (la page ouverte et components/layout/OfflineShell.tsx) : ils
+  // partagent le même passage au lieu de rejouer la file deux fois.
+  if (!runningSync) {
+    runningSync = runSync().finally(() => {
+      runningSync = null;
+    });
+  }
+  return runningSync;
+}
+
+async function runSync(): Promise<SyncOutcome> {
   const pending = await getPendingWrites();
   let synced = 0;
   let blocked = 0;

@@ -8,6 +8,7 @@ import { MobileNav } from "./MobileNav";
 import { SidebarOpenButton } from "./SidebarToggle";
 import { LocationSwitcher } from "./LocationSwitcher";
 import { InstallAppButton } from "@/components/InstallAppButton";
+import { clearOfflineCopies } from "./OfflineShell";
 import { ZindoLogo } from "@/components/auth/ZindoLogo";
 import type { NavItem } from "@/lib/nav";
 
@@ -90,7 +91,12 @@ export function Topbar({
                 </Link>
                 <button
                   disabled={pending}
-                  onClick={() => startTransition(() => logoutAction())}
+                  onClick={() =>
+                    startTransition(async () => {
+                      await clearOfflineCopies();
+                      await logoutAction();
+                    })
+                  }
                   className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-left text-sm font-medium text-red-600 hover:bg-red-50 dark:hover:bg-red-950/40"
                 >
                   <LogOut className="h-4 w-4" /> Déconnexion
