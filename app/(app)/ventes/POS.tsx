@@ -29,6 +29,8 @@ import {
   decrementCachedStock,
   queueOfflineSale,
   getPendingSales,
+  removePendingWrite,
+  markPendingWriteError,
   type CachedBusinessInfo,
   type PendingSale,
 } from "@/lib/offline/db";
@@ -249,6 +251,8 @@ export function POS({
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
   const [receiptDoc, setReceiptDoc] = useState<Extract<SaleDocument, { success: true }> | null>(null);
+  /** clientRef de la vente dont le ticket définitif est attendu du serveur (voir handleSubmit). */
+  const [finalizingRef, setFinalizingRef] = useState<string | null>(null);
 
   const localMatches = useMemo(
     () => searchItems(products, search, (p) => [p.name, p.reference, p.barcode]),
@@ -588,67 +592,118 @@ export function POS({
       return;
     }
 
-    if (!isOnline) {
-      startTransition(async () => {
-        const clientRef = crypto.randomUUID();
-        const selectedCustomer = customers.find((c) => c.id === customerId) ?? null;
+    // Validation instantanée (ticket, ou toute vente hors ligne) : la vente est
+    // d'abord enregistrée sur cet appareil et le ticket s'affiche aussitôt ;
+    // l'envoi au serveur se fait ensuite en arrière-plan, avec la même
+    // clientRef que la file hors ligne — le serveur dédoublonne dessus
+    // (lib/actions/sales.ts), donc une vente ne peut jamais compter deux fois.
+    // Restent sur l'ancien chemin (attente du serveur) : la facture A4 en
+    // ligne (numéro définitif sur le document) et les ventes d'engin ou par
+    // conditionnement, que le mode hors ligne ne sait pas construire.
+    const instant = !cart.some((l) => l.vehicleUnitId || l.packagingUnitId) && (!isFacture || !isOnline);
+    if (instant) {
+      const clientRef = crypto.randomUUID();
+      const selectedCustomer = customers.find((c) => c.id === customerId) ?? null;
+      const saleInput = {
+        locationId,
+        items,
+        customerId: customerId || undefined,
+        discount,
+        paymentMethod,
+        amountPaid,
+        documentType,
+        clientRef,
+        mobileMoneyOperator: paymentMethod === "MOBILE_MONEY" ? mobileMoneyOperator || undefined : undefined,
+        cashPortion: isMixed ? cashPortion : undefined,
+        mobilePortion: isMixed ? mobilePortion : undefined,
+      };
+      const sendToServer = navigator.onLine;
+      const localNumber = `HL-${clientRef.slice(0, 8).toUpperCase()}`;
 
-        await queueOfflineSale({
-          clientRef,
-          createdAt: new Date().toISOString(),
-          input: {
-            locationId,
-            items,
-            customerId: customerId || undefined,
-            discount,
-            paymentMethod,
-            amountPaid,
-            documentType,
-            clientRef,
-            mobileMoneyOperator: paymentMethod === "MOBILE_MONEY" ? mobileMoneyOperator || undefined : undefined,
-            cashPortion: isMixed ? cashPortion : undefined,
-            mobilePortion: isMixed ? mobilePortion : undefined,
-          },
-          cashierName: session.cashierName,
-          customerName: selectedCustomer?.name ?? null,
-        });
-        await decrementCachedStock(items);
-
-        const doc = buildOfflineDocument({
-          documentType,
-          clientRef,
-          items: cart.map((l) => ({
-            productId: l.product.id,
-            quantity: l.quantity,
-            unitPrice: l.unitPrice,
-            discount: l.discount,
-            name: l.product.name,
-            unit: l.product.unit,
-          })),
-          cashierName: session.cashierName,
-          customer: selectedCustomer,
-          business: businessInfo,
-          paymentMethod,
-          discount,
-          amountPaid,
-          defaultWidth: (printerTicketWidth as ReceiptWidth) || "80mm",
-        });
-
-        // Répercute la vente hors ligne sur le stock affiché localement, pour
-        // ne pas proposer de survendre avant la prochaine synchronisation.
-        setProducts((prev) =>
-          prev.map((p) => {
-            const line = cart.find((l) => l.product.id === p.id);
-            return line ? { ...p, quantity: Math.max(0, p.quantity - line.quantity) } : p;
-          })
-        );
-        setCart([]);
-        setCustomerId("");
-        setDiscount(0);
-        setAmountPaidInput(""); setCashPortionInput(""); setMobilePortionInput("");
-        setReceiptDoc(doc);
-        refreshPendingSales();
+      const doc = buildOfflineDocument({
+        documentType,
+        clientRef,
+        items: cart.map((l) => ({
+          productId: l.product.id,
+          quantity: l.quantity,
+          unitPrice: l.unitPrice,
+          discount: l.discount,
+          name: l.product.name,
+          unit: l.product.unit,
+        })),
+        cashierName: session.cashierName,
+        customer: selectedCustomer,
+        business: businessInfo,
+        paymentMethod,
+        discount,
+        amountPaid,
+        defaultWidth: (printerTicketWidth as ReceiptWidth) || "80mm",
       });
+
+      // Écran mis à jour tout de suite, sans rien attendre : stock affiché
+      // (pour ne pas survendre), panier vidé, ticket provisoire affiché.
+      setProducts((prev) =>
+        prev.map((p) => {
+          const line = cart.find((l) => l.product.id === p.id);
+          return line ? { ...p, quantity: Math.max(0, p.quantity - line.quantity) } : p;
+        })
+      );
+      setCart([]);
+      setCustomerId("");
+      setDiscount(0);
+      setAmountPaidInput(""); setCashPortionInput(""); setMobilePortionInput("");
+      setFinalizingRef(sendToServer ? clientRef : null);
+      setReceiptDoc(doc);
+
+      void (async () => {
+        // D'abord sur l'appareil : si la page se ferme ou si Internet coupe
+        // pendant l'envoi, la vente n'est pas perdue et partira à la
+        // prochaine synchronisation.
+        let queued = false;
+        try {
+          await queueOfflineSale({
+            clientRef,
+            createdAt: new Date().toISOString(),
+            input: saleInput,
+            cashierName: session.cashierName,
+            customerName: selectedCustomer?.name ?? null,
+          });
+          queued = true;
+        } catch {
+          // Stockage local indisponible (navigation privée...) : on tente quand même le serveur.
+        }
+        void decrementCachedStock(items);
+
+        if (!sendToServer) {
+          if (!queued) setError(`Vente ${localNumber} non enregistrée : stockage de l'appareil indisponible et pas de connexion.`);
+          refreshPendingSales();
+          return;
+        }
+
+        try {
+          const result = await createSaleAction(saleInput);
+          if (result.success) {
+            await removePendingWrite(clientRef).catch(() => {});
+            // Ticket définitif (vrai numéro + QR de vérification) à la place du provisoire, s'il est encore affiché.
+            const serverDoc = await getSaleDocumentAction(result.saleId);
+            if (serverDoc.success) setReceiptDoc((cur) => (cur && cur.saleId === clientRef ? serverDoc : cur));
+            getPosProductsAction(locationId).then(setProducts).catch(() => {});
+          } else {
+            await markPendingWriteError(clientRef, result.error).catch(() => {});
+            setError(
+              `Vente ${localNumber} refusée par le serveur : ${result.error}` +
+                (queued ? " Elle reste en attente sur cet appareil." : "")
+            );
+          }
+        } catch {
+          // Réseau coupé pendant l'envoi : la vente reste en file et partira
+          // à la prochaine synchronisation.
+          if (!queued) setError(`Vente ${localNumber} non enregistrée : connexion perdue. Recommencez la vente.`);
+        } finally {
+          setFinalizingRef((cur) => (cur === clientRef ? null : cur));
+          refreshPendingSales();
+        }
+      })();
       return;
     }
 
@@ -687,6 +742,259 @@ export function POS({
     });
   }
 
+  // Panier : sous les produits sur téléphone/tablette ; dans la colonne de
+  // droite (toujours visible, à côté du bouton Valider) sur ordinateur.
+  const renderCart = (compact: boolean) => (
+    <Card>
+      <CardHeader>
+        <h2 className="font-semibold tracking-tight text-zinc-900">Panier</h2>
+        {cart.length > 0 && (
+          <span className="rounded-full bg-zindo-green-50 px-2.5 py-0.5 text-xs font-semibold text-zindo-green-700 dark:bg-emerald-500/10 dark:text-emerald-400">
+            {cart.length} article{cart.length > 1 ? "s" : ""}
+          </span>
+        )}
+      </CardHeader>
+      <CardBody className="p-0">
+        {cart.length === 0 ? (
+          <p className="p-8 text-center text-sm text-zinc-500">Le panier est vide.</p>
+        ) : (
+          <>
+            {/* Version tableau : confortable à partir de sm (tablette/bureau). En
+                dessous, une table à 6 colonnes avec des champs numériques serait
+                illisible et impossible à remplir sur téléphone — voir la version
+                carte juste en dessous, réservée à sm:hidden. */}
+            <div className={compact ? "hidden" : "hidden overflow-x-auto sm:block"}>
+              <Table>
+                <TableHead>
+                  <TableRow interactive={false}>
+                    <TableHeaderCell>Produit</TableHeaderCell>
+                    <TableHeaderCell>Qté</TableHeaderCell>
+                    <TableHeaderCell align="right">P.U.</TableHeaderCell>
+                    <TableHeaderCell align="right">Remise</TableHeaderCell>
+                    <TableHeaderCell align="right">Total</TableHeaderCell>
+                    <TableHeaderCell />
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {cart.map((line) => (
+                    <TableRow key={lineKey(line)} interactive={false}>
+                      <TableCell>
+                        <p className="font-medium text-zinc-900">
+                          {line.product.name}
+                          {line.packagingLabel && (
+                            <span className="ml-1.5 rounded-md bg-zindo-green-50 px-1.5 py-0.5 text-[10px] font-semibold text-zindo-green-700 dark:bg-emerald-500/10 dark:text-emerald-400">
+                              {line.packagingLabel}
+                            </span>
+                          )}
+                        </p>
+                        <p className="text-xs text-zinc-400">
+                          {line.chassisNumber ? (
+                            <span className="font-mono font-semibold text-zinc-600">{line.chassisNumber}</span>
+                          ) : (
+                            line.product.reference
+                          )}
+                        </p>
+                      </TableCell>
+                      <TableCell>
+                        {line.vehicleUnitId ? (
+                          <span className="text-zinc-500">1 {line.product.unit}</span>
+                        ) : (
+                          <div className="flex items-center gap-1.5">
+                            {quantityInputMode !== "input" && (
+                              <button
+                                type="button"
+                                onClick={() => setLineQuantity(lineKey(line), Math.max(1, line.quantity - 1))}
+                                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-zinc-200 text-zinc-600 transition-colors hover:border-zinc-300 hover:bg-zinc-100 active:scale-95 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+                              >
+                                <Minus className="h-3.5 w-3.5" />
+                              </button>
+                            )}
+                            {quantityInputMode !== "buttons" && (
+                              <input
+                                type="number"
+                                min={1}
+                                max={lineMaxQty(line)}
+                                value={line.quantity}
+                                onChange={(e) =>
+                                  setLineQuantity(
+                                    lineKey(line),
+                                    Math.min(lineMaxQty(line), Math.max(1, Number(e.target.value) || 1))
+                                  )
+                                }
+                                className="h-8 w-14 rounded-lg border border-zinc-200 text-center text-sm tabular-nums focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zindo-green-500/40 dark:border-slate-700 dark:bg-slate-900"
+                              />
+                            )}
+                            {quantityInputMode === "buttons" && (
+                              <span className="w-6 text-center text-sm tabular-nums text-zinc-700">{line.quantity}</span>
+                            )}
+                            {quantityInputMode !== "input" && (
+                              <button
+                                type="button"
+                                onClick={() => setLineQuantity(lineKey(line), Math.min(lineMaxQty(line), line.quantity + 1))}
+                                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-zinc-200 text-zinc-600 transition-colors hover:border-zinc-300 hover:bg-zinc-100 active:scale-95 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+                              >
+                                <Plus className="h-3.5 w-3.5" />
+                              </button>
+                            )}
+                          </div>
+                        )}
+                      </TableCell>
+                      <TableCell align="right">
+                        <input
+                          type="number"
+                          min={0}
+                          value={line.unitPrice}
+                          onChange={(e) => updateLine(lineKey(line), { unitPrice: Number(e.target.value) || 0 })}
+                          className="h-8 w-24 rounded-lg border border-zinc-200 text-right text-sm tabular-nums focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zindo-green-500/40 dark:border-slate-700 dark:bg-slate-900"
+                        />
+                      </TableCell>
+                      <TableCell align="right">
+                        <input
+                          type="number"
+                          min={0}
+                          value={line.discount}
+                          onChange={(e) => updateLine(lineKey(line), { discount: Number(e.target.value) || 0 })}
+                          className="h-8 w-20 rounded-lg border border-zinc-200 text-right text-sm tabular-nums focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zindo-green-500/40 dark:border-slate-700 dark:bg-slate-900"
+                        />
+                      </TableCell>
+                      <TableCell align="right" className="font-semibold text-zinc-900 tabular-nums">
+                        {formatMoney(line.unitPrice * line.quantity - line.discount, currency)}
+                      </TableCell>
+                      <TableCell>
+                        <button
+                          type="button"
+                          onClick={() => removeLine(lineKey(line))}
+                          aria-label={`Retirer ${line.product.name} du panier`}
+                          className="flex h-8 w-8 items-center justify-center rounded-lg text-red-500 transition-colors hover:bg-red-50 dark:hover:bg-red-500/10"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+
+            {/* Version carte : téléphone, et colonne de droite sur ordinateur (compact). */}
+            <ul
+              className={
+                compact
+                  ? "max-h-[40vh] divide-y divide-zinc-100 overflow-y-auto dark:divide-slate-800"
+                  : "divide-y divide-zinc-100 sm:hidden dark:divide-slate-800"
+              }
+            >
+              {cart.map((line) => (
+                <li key={lineKey(line)} className="space-y-3 p-3">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0">
+                      <p className="break-words font-medium text-zinc-900">
+                        {line.product.name}
+                        {line.packagingLabel && (
+                          <span className="ml-1.5 rounded-md bg-zindo-green-50 px-1.5 py-0.5 text-[10px] font-semibold text-zindo-green-700 dark:bg-emerald-500/10 dark:text-emerald-400">
+                            {line.packagingLabel}
+                          </span>
+                        )}
+                      </p>
+                      <p className="text-xs text-zinc-400">
+                        {line.chassisNumber ? (
+                          <span className="font-mono font-semibold text-zinc-600">{line.chassisNumber}</span>
+                        ) : (
+                          line.product.reference
+                        )}
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => removeLine(lineKey(line))}
+                      aria-label={`Retirer ${line.product.name} du panier`}
+                      className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-red-500 transition-colors hover:bg-red-50 dark:hover:bg-red-500/10"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  </div>
+
+                  <div className="flex items-center gap-1.5">
+                    {line.vehicleUnitId ? (
+                      <span className="text-sm text-zinc-500">1 {line.product.unit}</span>
+                    ) : (
+                      <>
+                        {quantityInputMode !== "input" && (
+                          <button
+                            type="button"
+                            onClick={() => setLineQuantity(lineKey(line), Math.max(1, line.quantity - 1))}
+                            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-zinc-200 text-zinc-600 transition-colors hover:border-zinc-300 hover:bg-zinc-100 active:scale-95 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+                          >
+                            <Minus className="h-4 w-4" />
+                          </button>
+                        )}
+                        {quantityInputMode !== "buttons" && (
+                          <input
+                            type="number"
+                            min={1}
+                            max={lineMaxQty(line)}
+                            value={line.quantity}
+                            onChange={(e) =>
+                              setLineQuantity(
+                                lineKey(line),
+                                Math.min(lineMaxQty(line), Math.max(1, Number(e.target.value) || 1))
+                              )
+                            }
+                            className="h-10 w-16 rounded-lg border border-zinc-200 text-center text-sm tabular-nums dark:border-slate-700 dark:bg-slate-900"
+                          />
+                        )}
+                        {quantityInputMode === "buttons" && (
+                          <span className="w-8 text-center text-sm tabular-nums text-zinc-700">{line.quantity}</span>
+                        )}
+                        {quantityInputMode !== "input" && (
+                          <button
+                            type="button"
+                            onClick={() => setLineQuantity(lineKey(line), Math.min(lineMaxQty(line), line.quantity + 1))}
+                            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-zinc-200 text-zinc-600 transition-colors hover:border-zinc-300 hover:bg-zinc-100 active:scale-95 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+                          >
+                            <Plus className="h-4 w-4" />
+                          </button>
+                        )}
+                      </>
+                    )}
+                    <span className="ml-auto text-right font-semibold tabular-nums text-zinc-900">
+                      {formatMoney(line.unitPrice * line.quantity - line.discount, currency)}
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2">
+                    <label className="block">
+                      <span className="mb-1 block text-xs text-zinc-500">P.U.</span>
+                      <input
+                        type="number"
+                        min={0}
+                        inputMode="decimal"
+                        value={line.unitPrice}
+                        onChange={(e) => updateLine(lineKey(line), { unitPrice: Number(e.target.value) || 0 })}
+                        className="h-10 w-full rounded-lg border border-zinc-200 px-2 text-right text-sm tabular-nums dark:border-slate-700 dark:bg-slate-900"
+                      />
+                    </label>
+                    <label className="block">
+                      <span className="mb-1 block text-xs text-zinc-500">Remise</span>
+                      <input
+                        type="number"
+                        min={0}
+                        inputMode="decimal"
+                        value={line.discount}
+                        onChange={(e) => updateLine(lineKey(line), { discount: Number(e.target.value) || 0 })}
+                        className="h-10 w-full rounded-lg border border-zinc-200 px-2 text-right text-sm tabular-nums dark:border-slate-700 dark:bg-slate-900"
+                      />
+                    </label>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </>
+        )}
+      </CardBody>
+    </Card>
+  );
+
   return (
     // print:hidden est essentiel, pas juste cosmétique : sans lui, toute cette
     // grille de produits/panier/formulaires reste invisible mais garde sa
@@ -698,8 +1006,8 @@ export function POS({
     // héritait de display:none à l'impression et ne sortait donc jamais
     // (page blanche).
     <>
-    <div className="grid grid-cols-1 gap-6 lg:grid-cols-3 print:hidden">
-      <div className="space-y-4 lg:col-span-2">
+    <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_380px] xl:grid-cols-[minmax(0,1fr)_420px] print:hidden">
+      <div className="min-w-0 space-y-4">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="flex items-start gap-2">
             <div>
@@ -839,7 +1147,7 @@ export function POS({
           />
         )}
 
-        <div className="max-h-[420px] overflow-y-auto rounded-2xl">
+        <div className="max-h-[420px] overflow-y-auto rounded-2xl lg:max-h-[calc(100vh-15rem)]">
           {loadingProducts ? (
             <div className="flex items-center justify-center gap-2 py-16 text-sm text-zinc-400">
               <Loader2 className="h-4 w-4 animate-spin" /> Chargement des produits...
@@ -854,251 +1162,11 @@ export function POS({
           )}
         </div>
 
-        <Card>
-          <CardHeader>
-            <h2 className="font-semibold tracking-tight text-zinc-900">Panier</h2>
-            {cart.length > 0 && (
-              <span className="rounded-full bg-zindo-green-50 px-2.5 py-0.5 text-xs font-semibold text-zindo-green-700 dark:bg-emerald-500/10 dark:text-emerald-400">
-                {cart.length} article{cart.length > 1 ? "s" : ""}
-              </span>
-            )}
-          </CardHeader>
-          <CardBody className="p-0">
-            {cart.length === 0 ? (
-              <p className="p-8 text-center text-sm text-zinc-500">Le panier est vide.</p>
-            ) : (
-              <>
-                {/* Version tableau : confortable à partir de sm (tablette/bureau). En
-                    dessous, une table à 6 colonnes avec des champs numériques serait
-                    illisible et impossible à remplir sur téléphone — voir la version
-                    carte juste en dessous, réservée à sm:hidden. */}
-                <div className="hidden overflow-x-auto sm:block">
-                  <Table>
-                    <TableHead>
-                      <TableRow interactive={false}>
-                        <TableHeaderCell>Produit</TableHeaderCell>
-                        <TableHeaderCell>Qté</TableHeaderCell>
-                        <TableHeaderCell align="right">P.U.</TableHeaderCell>
-                        <TableHeaderCell align="right">Remise</TableHeaderCell>
-                        <TableHeaderCell align="right">Total</TableHeaderCell>
-                        <TableHeaderCell />
-                      </TableRow>
-                    </TableHead>
-                    <TableBody>
-                      {cart.map((line) => (
-                        <TableRow key={lineKey(line)} interactive={false}>
-                          <TableCell>
-                            <p className="font-medium text-zinc-900">
-                              {line.product.name}
-                              {line.packagingLabel && (
-                                <span className="ml-1.5 rounded-md bg-zindo-green-50 px-1.5 py-0.5 text-[10px] font-semibold text-zindo-green-700 dark:bg-emerald-500/10 dark:text-emerald-400">
-                                  {line.packagingLabel}
-                                </span>
-                              )}
-                            </p>
-                            <p className="text-xs text-zinc-400">
-                              {line.chassisNumber ? (
-                                <span className="font-mono font-semibold text-zinc-600">{line.chassisNumber}</span>
-                              ) : (
-                                line.product.reference
-                              )}
-                            </p>
-                          </TableCell>
-                          <TableCell>
-                            {line.vehicleUnitId ? (
-                              <span className="text-zinc-500">1 {line.product.unit}</span>
-                            ) : (
-                              <div className="flex items-center gap-1.5">
-                                {quantityInputMode !== "input" && (
-                                  <button
-                                    type="button"
-                                    onClick={() => setLineQuantity(lineKey(line), Math.max(1, line.quantity - 1))}
-                                    className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-zinc-200 text-zinc-600 transition-colors hover:border-zinc-300 hover:bg-zinc-100 active:scale-95 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
-                                  >
-                                    <Minus className="h-3.5 w-3.5" />
-                                  </button>
-                                )}
-                                {quantityInputMode !== "buttons" && (
-                                  <input
-                                    type="number"
-                                    min={1}
-                                    max={lineMaxQty(line)}
-                                    value={line.quantity}
-                                    onChange={(e) =>
-                                      setLineQuantity(
-                                        lineKey(line),
-                                        Math.min(lineMaxQty(line), Math.max(1, Number(e.target.value) || 1))
-                                      )
-                                    }
-                                    className="h-8 w-14 rounded-lg border border-zinc-200 text-center text-sm tabular-nums focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zindo-green-500/40 dark:border-slate-700 dark:bg-slate-900"
-                                  />
-                                )}
-                                {quantityInputMode === "buttons" && (
-                                  <span className="w-6 text-center text-sm tabular-nums text-zinc-700">{line.quantity}</span>
-                                )}
-                                {quantityInputMode !== "input" && (
-                                  <button
-                                    type="button"
-                                    onClick={() => setLineQuantity(lineKey(line), Math.min(lineMaxQty(line), line.quantity + 1))}
-                                    className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-zinc-200 text-zinc-600 transition-colors hover:border-zinc-300 hover:bg-zinc-100 active:scale-95 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
-                                  >
-                                    <Plus className="h-3.5 w-3.5" />
-                                  </button>
-                                )}
-                              </div>
-                            )}
-                          </TableCell>
-                          <TableCell align="right">
-                            <input
-                              type="number"
-                              min={0}
-                              value={line.unitPrice}
-                              onChange={(e) => updateLine(lineKey(line), { unitPrice: Number(e.target.value) || 0 })}
-                              className="h-8 w-24 rounded-lg border border-zinc-200 text-right text-sm tabular-nums focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zindo-green-500/40 dark:border-slate-700 dark:bg-slate-900"
-                            />
-                          </TableCell>
-                          <TableCell align="right">
-                            <input
-                              type="number"
-                              min={0}
-                              value={line.discount}
-                              onChange={(e) => updateLine(lineKey(line), { discount: Number(e.target.value) || 0 })}
-                              className="h-8 w-20 rounded-lg border border-zinc-200 text-right text-sm tabular-nums focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zindo-green-500/40 dark:border-slate-700 dark:bg-slate-900"
-                            />
-                          </TableCell>
-                          <TableCell align="right" className="font-semibold text-zinc-900 tabular-nums">
-                            {formatMoney(line.unitPrice * line.quantity - line.discount, currency)}
-                          </TableCell>
-                          <TableCell>
-                            <button
-                              type="button"
-                              onClick={() => removeLine(lineKey(line))}
-                              aria-label={`Retirer ${line.product.name} du panier`}
-                              className="flex h-8 w-8 items-center justify-center rounded-lg text-red-500 transition-colors hover:bg-red-50 dark:hover:bg-red-500/10"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </button>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
-
-                {/* Version carte : téléphone. */}
-                <ul className="divide-y divide-zinc-100 sm:hidden dark:divide-slate-800">
-                  {cart.map((line) => (
-                    <li key={lineKey(line)} className="space-y-3 p-3">
-                      <div className="flex items-start justify-between gap-2">
-                        <div className="min-w-0">
-                          <p className="break-words font-medium text-zinc-900">
-                            {line.product.name}
-                            {line.packagingLabel && (
-                              <span className="ml-1.5 rounded-md bg-zindo-green-50 px-1.5 py-0.5 text-[10px] font-semibold text-zindo-green-700 dark:bg-emerald-500/10 dark:text-emerald-400">
-                                {line.packagingLabel}
-                              </span>
-                            )}
-                          </p>
-                          <p className="text-xs text-zinc-400">
-                            {line.chassisNumber ? (
-                              <span className="font-mono font-semibold text-zinc-600">{line.chassisNumber}</span>
-                            ) : (
-                              line.product.reference
-                            )}
-                          </p>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => removeLine(lineKey(line))}
-                          aria-label={`Retirer ${line.product.name} du panier`}
-                          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-red-500 transition-colors hover:bg-red-50 dark:hover:bg-red-500/10"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </button>
-                      </div>
-
-                      <div className="flex items-center gap-1.5">
-                        {line.vehicleUnitId ? (
-                          <span className="text-sm text-zinc-500">1 {line.product.unit}</span>
-                        ) : (
-                          <>
-                            {quantityInputMode !== "input" && (
-                              <button
-                                type="button"
-                                onClick={() => setLineQuantity(lineKey(line), Math.max(1, line.quantity - 1))}
-                                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-zinc-200 text-zinc-600 transition-colors hover:border-zinc-300 hover:bg-zinc-100 active:scale-95 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
-                              >
-                                <Minus className="h-4 w-4" />
-                              </button>
-                            )}
-                            {quantityInputMode !== "buttons" && (
-                              <input
-                                type="number"
-                                min={1}
-                                max={lineMaxQty(line)}
-                                value={line.quantity}
-                                onChange={(e) =>
-                                  setLineQuantity(
-                                    lineKey(line),
-                                    Math.min(lineMaxQty(line), Math.max(1, Number(e.target.value) || 1))
-                                  )
-                                }
-                                className="h-10 w-16 rounded-lg border border-zinc-200 text-center text-sm tabular-nums dark:border-slate-700 dark:bg-slate-900"
-                              />
-                            )}
-                            {quantityInputMode === "buttons" && (
-                              <span className="w-8 text-center text-sm tabular-nums text-zinc-700">{line.quantity}</span>
-                            )}
-                            {quantityInputMode !== "input" && (
-                              <button
-                                type="button"
-                                onClick={() => setLineQuantity(lineKey(line), Math.min(lineMaxQty(line), line.quantity + 1))}
-                                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-zinc-200 text-zinc-600 transition-colors hover:border-zinc-300 hover:bg-zinc-100 active:scale-95 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
-                              >
-                                <Plus className="h-4 w-4" />
-                              </button>
-                            )}
-                          </>
-                        )}
-                        <span className="ml-auto text-right font-semibold tabular-nums text-zinc-900">
-                          {formatMoney(line.unitPrice * line.quantity - line.discount, currency)}
-                        </span>
-                      </div>
-
-                      <div className="grid grid-cols-2 gap-2">
-                        <label className="block">
-                          <span className="mb-1 block text-xs text-zinc-500">P.U.</span>
-                          <input
-                            type="number"
-                            min={0}
-                            inputMode="decimal"
-                            value={line.unitPrice}
-                            onChange={(e) => updateLine(lineKey(line), { unitPrice: Number(e.target.value) || 0 })}
-                            className="h-10 w-full rounded-lg border border-zinc-200 px-2 text-right text-sm tabular-nums dark:border-slate-700 dark:bg-slate-900"
-                          />
-                        </label>
-                        <label className="block">
-                          <span className="mb-1 block text-xs text-zinc-500">Remise</span>
-                          <input
-                            type="number"
-                            min={0}
-                            inputMode="decimal"
-                            value={line.discount}
-                            onChange={(e) => updateLine(lineKey(line), { discount: Number(e.target.value) || 0 })}
-                            className="h-10 w-full rounded-lg border border-zinc-200 px-2 text-right text-sm tabular-nums dark:border-slate-700 dark:bg-slate-900"
-                          />
-                        </label>
-                      </div>
-                    </li>
-                  ))}
-                </ul>
-              </>
-            )}
-          </CardBody>
-        </Card>
+        <div className="lg:hidden">{renderCart(false)}</div>
       </div>
 
-      <div className="space-y-4 lg:sticky lg:top-4 lg:self-start">
+      <div className="space-y-4 lg:sticky lg:top-4 lg:self-start lg:max-h-[calc(100vh-2rem)] lg:overflow-y-auto">
+        <div className="hidden lg:block">{renderCart(true)}</div>
         {(!hideCustomerInPos || isCreditOnly) && (
           <Card>
             <CardHeader>
@@ -1291,7 +1359,12 @@ export function POS({
     </div>
 
       {receiptDoc && (
-        <ReceiptPrintPanel doc={receiptDoc} autoPrint={autoPrintReceipt} onClose={() => setReceiptDoc(null)} />
+        <ReceiptPrintPanel
+          doc={receiptDoc}
+          autoPrint={autoPrintReceipt}
+          finalizing={finalizingRef !== null && receiptDoc.saleId === finalizingRef}
+          onClose={() => setReceiptDoc(null)}
+        />
       )}
     </>
   );

@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { X, Printer } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { X, Printer, Loader2 } from "lucide-react";
 import { Receipt, type ReceiptStyle, type ReceiptWidth } from "@/components/sales/Receipt";
 import { InvoiceDocument } from "@/components/sales/InvoiceDocument";
 import { FactureEngin } from "@/components/sales/FactureEngin";
@@ -30,23 +30,35 @@ const STYLE_OPTIONS: { value: ReceiptStyle; label: string }[] = [
 export function ReceiptPrintPanel({
   doc,
   autoPrint,
+  finalizing = false,
   onClose,
 }: {
   doc: Extract<SaleDocument, { success: true }>;
   autoPrint: boolean;
+  /** Ticket provisoire affiché pendant que le serveur enregistre la vente — le définitif (vrai numéro, QR) le remplacera. */
+  finalizing?: boolean;
   onClose: () => void;
 }) {
   const [width, setWidth] = useState<ReceiptWidth>(doc.documentType === "TICKET" ? doc.defaultWidth : "A4");
   const [style, setStyle] = useState<ReceiptStyle>("classique");
 
-  // Impression rapide : déclenchée automatiquement dès que le panneau est
-  // monté si le commerce a activé l'impression auto, sans attendre un clic.
+  // Impression rapide : déclenchée automatiquement si le commerce a activé
+  // l'impression auto, sans attendre un clic — une seule fois. Si le ticket
+  // définitif est en route, on l'attend au plus 3 s pour imprimer le vrai
+  // numéro ; au-delà (connexion lente), on imprime le provisoire.
+  const printedRef = useRef(false);
   useEffect(() => {
-    if (!autoPrint) return;
-    const timeout = setTimeout(() => printDocument(width), 250);
+    if (!autoPrint || printedRef.current) return;
+    const timeout = setTimeout(
+      () => {
+        printedRef.current = true;
+        printDocument(width);
+      },
+      finalizing ? 3000 : 250
+    );
     return () => clearTimeout(timeout);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [finalizing]);
 
   // À l'impression, tout ce qui n'est pas le ticket/la facture lui-même doit
   // disparaître avec `display: none` (print:hidden), pas juste devenir
@@ -73,8 +85,13 @@ export function ReceiptPrintPanel({
             <p className="text-sm font-semibold text-zindo-ink-900">
               {doc.documentType === "TICKET" ? "Ticket" : "Facture"} enregistré{doc.documentType === "TICKET" ? "" : "e"}
             </p>
-            <p className="text-xs text-zinc-500">
+            <p className="flex items-center gap-1 text-xs text-zinc-500">
               N° {doc.documentType === "TICKET" ? doc.data.ticketNumber : doc.data.invoiceNumber}
+              {finalizing && (
+                <>
+                  <Loader2 className="h-3 w-3 animate-spin" /> envoi au serveur...
+                </>
+              )}
             </p>
           </div>
           <button
