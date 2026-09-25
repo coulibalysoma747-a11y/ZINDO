@@ -10,7 +10,8 @@ import { PackagingTypePicker } from "@/components/products/PackagingTypePicker";
 import { EntityQuickSelect } from "@/components/products/EntityQuickSelect";
 import { getOrCreateCategoryByNameAction } from "@/lib/actions/categories";
 import { getOrCreateBrandByNameAction } from "@/lib/actions/brands";
-import type { ActionState } from "@/lib/actions/products";
+import type { ActionState, CreateProductInput } from "@/lib/actions/products";
+import { queueOfflineWrite } from "@/lib/offline/db";
 import type { CustomFieldDef } from "@/lib/activity-config";
 import { formatMoney } from "@/lib/format";
 
@@ -29,6 +30,7 @@ export function ProductForm({
   showUnitsPerCarton = false,
   initial,
   submitLabel,
+  allowOffline = false,
 }: {
   action: (state: ActionState, formData: FormData) => Promise<ActionState>;
   categories: Option[];
@@ -63,8 +65,13 @@ export function ProductForm({
     unitsPerCarton?: number | null;
   };
   submitLabel: string;
+  /** Création uniquement : sans Internet, le produit est mis en file et créé à la synchronisation (voir lib/offline/). */
+  allowOffline?: boolean;
 }) {
-  const [state, formAction, pending] = useActionState(action, undefined);
+  const [state, formAction, pending] = useActionState(async (prev: ActionState, formData: FormData): Promise<ActionState> => {
+    if (allowOffline && !navigator.onLine) return queueOfflineProduct(formData);
+    return action(prev, formData);
+  }, undefined);
   const [barcode, setBarcode] = useState(initial?.barcode ?? "");
   const [trackUnits, setTrackUnits] = useState(initial?.trackUnits ?? false);
   const [purchasePrice, setPurchasePrice] = useState(String(initial?.purchasePrice ?? ""));
@@ -359,6 +366,9 @@ export function ProductForm({
         </div>
       )}
 
+      {state?.success && (
+        <p className="rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-800">{state.success}</p>
+      )}
       {state?.error && (
         <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{state.error}</p>
       )}
@@ -373,6 +383,58 @@ export function ProductForm({
       </div>
     </form>
   );
+}
+
+/**
+ * Hors ligne, seuls les champs essentiels sont gardés (voir
+ * createProductJsonAction) : photo, conditionnements, alias et champs
+ * personnalisés seront à compléter en ligne. Une catégorie tout juste créée
+ * (pas encore d'id serveur) est ignorée.
+ */
+async function queueOfflineProduct(formData: FormData): Promise<ActionState> {
+  const text = (key: string) => {
+    const v = formData.get(key);
+    return typeof v === "string" && v.trim() !== "" ? v.trim() : undefined;
+  };
+  const num = (key: string) => {
+    const v = text(key);
+    return v === undefined ? undefined : Number(v);
+  };
+  const name = text("name");
+  const purchasePrice = num("purchasePrice") ?? 0;
+  const salePrice = num("salePrice") ?? 0;
+  if (!name) return { error: "Le nom est requis" };
+  if (!Number.isFinite(purchasePrice) || !Number.isFinite(salePrice) || purchasePrice < 0 || salePrice < 0) {
+    return { error: "Prix invalides" };
+  }
+  if (purchasePrice > salePrice) return { error: "Le prix d'achat ne peut pas dépasser le prix de vente" };
+
+  const clientRef = crypto.randomUUID();
+  const input: CreateProductInput = {
+    name,
+    categoryId: text("categoryId"),
+    brand: text("brand"),
+    description: text("description"),
+    unit: text("unit") ?? "unité",
+    purchasePrice,
+    salePrice,
+    quantity: num("quantity"),
+    locationId: text("locationId"),
+    minStock: num("minStock"),
+    shelfLocation: text("shelfLocation"),
+    supplierId: text("supplierId"),
+    barcode: text("barcode"),
+    reference: text("reference"),
+    clientRef,
+  };
+  try {
+    await queueOfflineWrite({ clientRef, kind: "product", createdAt: new Date().toISOString(), input, label: name });
+  } catch {
+    return { error: "Impossible d'enregistrer le produit sur cet appareil." };
+  }
+  return {
+    success: `« ${name} » est enregistré hors ligne : il sera créé dès le retour d'Internet (photo et options avancées à compléter ensuite).`,
+  };
 }
 
 /** Marge par unité, recalculée à chaque frappe dans les champs de prix. */

@@ -17,6 +17,26 @@ const STATIC_CACHE = "zindo-static";
 const META_URL = "/__zindo_offline_meta";
 // Au plus une remise à jour complète des copies toutes les 6 heures.
 const REFRESH_INTERVAL_MS = 6 * 60 * 60 * 1000;
+// En plus des pages essentielles, chaque page visitée en ligne est gardée
+// (fiche produit, rapports, dépenses…), dans la limite de ce nombre : les
+// plus anciennes sont retirées en premier.
+const MAX_VISITED_PAGES = 150;
+// Jamais gardées : console d'administration, connexion, inscription…
+const NEVER_CACHED = ["/admin", "/login", "/inscription", "/mot-de-passe-oublie", "/reinitialiser-mot-de-passe", "/verifier-2fa", "/compte-suspendu", "/maintenance", "/api"];
+
+function isNeverCached(pathname) {
+  return NEVER_CACHED.some((p) => pathname === p || pathname.startsWith(p + "/"));
+}
+
+async function rememberVisitedPage(cache, pathname, res, meta) {
+  await cache.delete(pathname, { ignoreVary: true });
+  await cache.put(pathname, res);
+  const keys = (await cache.keys()).filter((r) => {
+    const path = new URL(r.url).pathname;
+    return path !== META_URL && !meta.pages.includes(path);
+  });
+  for (let i = 0; i < keys.length - MAX_VISITED_PAGES; i++) await cache.delete(keys[i]);
+}
 
 self.addEventListener("install", () => {
   self.skipWaiting();
@@ -62,8 +82,9 @@ function staticUrlsIn(html) {
 
 /**
  * Télécharge toutes les pages essentielles et les fichiers qu'elles
- * utilisent, puis remplace les anciennes copies d'un seul coup (une coupure
- * au milieu ne doit pas laisser un mélange de deux versions).
+ * utilisent, puis remplace leurs anciennes copies d'un seul coup (une coupure
+ * au milieu ne doit pas laisser un mélange de deux versions). Les pages
+ * visitées et leurs fichiers sont conservés.
  */
 async function refreshOfflineCopies(userId, pages) {
   const fetchedPages = [];
@@ -92,12 +113,21 @@ async function refreshOfflineCopies(userId, pages) {
     }
   }
 
-  await purgeOfflineCaches();
   const pagesCache = await caches.open(PAGES_CACHE);
   const staticCache = await caches.open(STATIC_CACHE);
   await Promise.all(fetchedPages.map(([path, res]) => pagesCache.put(path, res)));
   await Promise.all(fetchedStatic.map(([url, res]) => staticCache.put(url, res)));
   await writeMeta({ userId, pages, refreshedAt: Date.now() });
+  await trimStaticCache(staticCache);
+}
+
+// Les fichiers des anciennes versions de l'application s'accumulent à chaque
+// mise à jour de ZINDO : au-delà de ce nombre, les plus anciens sont retirés.
+const MAX_STATIC_FILES = 800;
+
+async function trimStaticCache(cache) {
+  const keys = await cache.keys();
+  for (let i = 0; i < keys.length - MAX_STATIC_FILES; i++) await cache.delete(keys[i]);
 }
 
 let refreshing = null;
@@ -156,11 +186,11 @@ async function handleNavigation(request) {
   const url = new URL(request.url);
   try {
     const res = await fetch(request);
-    // Garde la copie de la page à jour à chaque visite en ligne.
+    // Garde (ou met à jour) la copie de chaque page visitée en ligne.
     const meta = await readMeta();
-    if (meta && meta.pages.includes(url.pathname) && isCacheablePage(res)) {
+    if (meta && !isNeverCached(url.pathname) && isCacheablePage(res)) {
       const cache = await caches.open(PAGES_CACHE);
-      await cache.put(url.pathname, res.clone());
+      await rememberVisitedPage(cache, url.pathname, res.clone(), meta);
     }
     return res;
   } catch (err) {

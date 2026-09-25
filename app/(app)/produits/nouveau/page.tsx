@@ -41,6 +41,7 @@ export default async function NewProductPage() {
         packagingEnabled={packagingEnabled}
         showUnitsPerCarton={unitsPerCartonEnabled}
         submitLabel="Créer le produit"
+        allowOffline
       />
     </div>
   );
