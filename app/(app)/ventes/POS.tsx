@@ -13,7 +13,7 @@ import { formatMoney, formatDateTime } from "@/lib/format";
 import { createSaleAction } from "@/lib/actions/sales";
 import { getSaleDocumentAction, type SaleDocument } from "@/lib/actions/receipt";
 import { getPosProductsAction, findProductByExactCodeAction, searchProductsAction } from "@/lib/actions/product-search";
-import { matchesSearch, normalizeSearchText } from "@/lib/search-text";
+import { searchItems } from "@/lib/search-text";
 import { sendCartToQueueAction } from "@/lib/actions/cashier-queue";
 import { ClientFormModal } from "@/app/(app)/clients/ClientFormModal";
 import { Modal } from "@/components/ui/Modal";
@@ -250,11 +250,10 @@ export function POS({
   const [pending, startTransition] = useTransition();
   const [receiptDoc, setReceiptDoc] = useState<Extract<SaleDocument, { success: true }> | null>(null);
 
-  const localMatches = useMemo(() => {
-    const q = normalizeSearchText(search);
-    if (!q) return products;
-    return products.filter((p) => matchesSearch(q, [p.name, p.reference, p.barcode]));
-  }, [products, search]);
+  const localMatches = useMemo(
+    () => searchItems(products, search, (p) => [p.name, p.reference, p.barcode]),
+    [products, search]
+  );
 
   // Rien trouvé localement : on demande au serveur, qui connaît aussi les
   // "autres noms" d'un produit (ex. "Omo" pour "savon en poudre"). Seuls les
