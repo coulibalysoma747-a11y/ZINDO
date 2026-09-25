@@ -69,11 +69,14 @@ export function OrderWorkflow({
   group,
   suppliers,
   currency,
+  shareUrl,
 }: {
   order: OrderDetail;
   group: GroupOffer[];
   suppliers: { id: string; name: string }[];
   currency: string;
+  /** Lien public signé vers le document (voir lib/purchase-order-document.ts). */
+  shareUrl: string;
 }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
@@ -99,8 +102,12 @@ export function OrderWorkflow({
   }
 
   const shareText = isRequest
-    ? `Bonjour ${order.supplier.name}, voici notre demande de prix ${displayNumber}. Merci de nous communiquer vos prix unitaires, les frais de transport et la disponibilité. Le document PDF suit.`
-    : `Bonjour ${order.supplier.name}, voici notre bon de commande ${displayNumber}. Merci de confirmer la livraison. Le document PDF suit.`;
+    ? `Bonjour ${order.supplier.name}, voici notre demande de prix ${displayNumber}. Merci de nous communiquer vos prix unitaires, les frais de transport et la disponibilité.
+
+Voir et télécharger la demande (PDF) : ${shareUrl}`
+    : `Bonjour ${order.supplier.name}, voici notre bon de commande ${displayNumber}. Merci de confirmer la livraison.
+
+Voir et télécharger le bon de commande (PDF) : ${shareUrl}`;
 
   return (
     <div className="space-y-6">

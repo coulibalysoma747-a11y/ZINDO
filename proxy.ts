@@ -21,6 +21,8 @@ const PUBLIC_PATHS = [
   "/fonctionnalites",
   // Lien de parrainage (app/r/[code]/route.ts), ouvert par un futur inscrit.
   "/r",
+  // Demande de prix / bon de commande ouvert par le fournisseur (app/d/[token]).
+  "/d",
   // Version anglaise (voir app/en/) : "/en" couvre aussi tous ses
   // sous-chemins (/en/login, /en/inscription, /en/cgu, /en/confidentialite)
   // grâce au startsWith(`${p}/`) ci-dessous — pas besoin de les lister un par un.
@@ -29,6 +31,7 @@ const PUBLIC_PATHS = [
 // Chemins publics qui restent accessibles même à un utilisateur déjà connecté
 // (au lieu d'être redirigés vers /dashboard).
 const PUBLIC_PATHS_ALLOWED_WHEN_LOGGED_IN = [
+  "/d",
   "/mot-de-passe-oublie",
   "/verifier",
   "/verifier-ordonnance",

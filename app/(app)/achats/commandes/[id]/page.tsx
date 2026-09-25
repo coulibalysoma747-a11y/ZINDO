@@ -12,6 +12,7 @@ import {
   type PurchaseOrderStatus,
 } from "@/lib/purchase-orders";
 import { Badge } from "@/components/ui/Badge";
+import { purchaseOrderShareUrl } from "@/lib/purchase-order-document";
 import { OrderWorkflow, type OrderDetail, type GroupOffer } from "./OrderWorkflow";
 
 type ItemRow = {
@@ -74,6 +75,7 @@ export default async function PurchaseOrderPage({ params }: { params: Promise<{ 
         group={group}
         suppliers={(suppliers ?? []) as { id: string; name: string }[]}
         currency={user.business.currency}
+        shareUrl={purchaseOrderShareUrl(order.id)}
       />
     </div>
   );
