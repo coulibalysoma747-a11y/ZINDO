@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { FileDown, ImageIcon, MessageCircle, Send, Users, CheckCircle2, PackageCheck, XCircle } from "lucide-react";
@@ -101,43 +101,67 @@ export function OrderWorkflow({
     });
   }
 
-  const [imagePending, setImagePending] = useState(false);
+  // Image préparée dès l'ouverture : le partage natif du téléphone
+  // (navigator.share) n'est autorisé que juste après l'appui sur le bouton —
+  // attendre ~4 s la génération de l'image au moment du clic le faisait
+  // refuser par le navigateur.
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imageFailed, setImageFailed] = useState(false);
+  const imageKey = `${status}|${order.items.map((i) => `${i.quantity}:${i.unitPrice ?? ""}`).join(",")}|${order.transportCost ?? ""}`;
+
+  useEffect(() => {
+    if (status === "ANNULEE" || status === "RECUE") return;
+    let cancelled = false;
+    // Chemin relatif : même serveur (web ou application Windows) que la page.
+    fetch(`${new URL(shareUrl).pathname}/image`)
+      .then((res) => (res.ok ? res.blob() : Promise.reject(new Error(String(res.status)))))
+      .then((blob) => {
+        if (cancelled) return;
+        setImageFile(new File([blob], `${displayNumber}.png`, { type: "image/png" }));
+        setImageFailed(false);
+      })
+      .catch(() => {
+        if (!cancelled) setImageFailed(true);
+      });
+    return () => {
+      cancelled = true;
+    };
+    // imageKey résume tout ce qui change l'image (statut, quantités, prix).
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [imageKey, shareUrl]);
+
+  function downloadImage(file: File) {
+    const url = URL.createObjectURL(file);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = file.name;
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
 
   /**
-   * Envoi du document en image : sur téléphone, partage natif (WhatsApp,
-   * etc.) avec le fichier PNG joint ; sinon (ordinateur), téléchargement de
-   * l'image à joindre soi-même.
+   * Envoi du document en image : sur téléphone, partage natif (WhatsApp...)
+   * avec le PNG joint ; sinon (ordinateur, ou partage refusé), téléchargement
+   * de l'image à joindre soi-même. Aucun await avant navigator.share.
    */
-  async function sendAsImage() {
+  function sendAsImage() {
+    if (!imageFile) return;
     setError(null);
-    setImagePending(true);
-    try {
-      // Chemin relatif : même serveur (web ou application Windows) que la page.
-      const res = await fetch(`${new URL(shareUrl).pathname}/image`);
-      if (!res.ok) throw new Error();
-      const blob = await res.blob();
-      const fileName = `${displayNumber}.png`;
-      const file = new File([blob], fileName, { type: "image/png" });
-      if (navigator.canShare?.({ files: [file] })) {
-        try {
-          await navigator.share({ files: [file], title: displayNumber });
-        } catch (e) {
-          if (e instanceof DOMException && e.name === "AbortError") return;
-          throw e;
-        }
-      } else {
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = fileName;
-        a.click();
-        URL.revokeObjectURL(url);
-      }
+    const markSent = () => {
       if (status === "BROUILLON") run(() => markOrderSentAction(order.id));
-    } catch {
-      setError("Impossible de préparer l'image. Réessayez, ou envoyez le lien WhatsApp.");
-    } finally {
-      setImagePending(false);
+    };
+    if (navigator.canShare?.({ files: [imageFile] })) {
+      navigator
+        .share({ files: [imageFile], title: displayNumber })
+        .then(markSent)
+        .catch((e) => {
+          if (e instanceof DOMException && e.name === "AbortError") return;
+          downloadImage(imageFile);
+          markSent();
+        });
+    } else {
+      downloadImage(imageFile);
+      markSent();
     }
   }
 
@@ -173,8 +197,8 @@ Voir et télécharger le bon de commande (PDF) : ${shareUrl}`;
             </a>
           )}
           {status !== "ANNULEE" && status !== "RECUE" && (
-            <Button variant="outline" disabled={imagePending} onClick={sendAsImage}>
-              <ImageIcon className="h-4 w-4 text-emerald-600" /> {imagePending ? "Préparation..." : "Envoyer en image"}
+            <Button variant="outline" disabled={!imageFile} onClick={sendAsImage}>
+              <ImageIcon className="h-4 w-4 text-emerald-600" /> {imageFile ? "Envoyer en image" : imageFailed ? "Image indisponible" : "Préparation de l’image..."}
             </Button>
           )}
           {status === "BROUILLON" && (
