@@ -3,7 +3,7 @@
 import { useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { FileDown, MessageCircle, Send, Users, CheckCircle2, PackageCheck, XCircle } from "lucide-react";
+import { FileDown, ImageIcon, MessageCircle, Send, Users, CheckCircle2, PackageCheck, XCircle } from "lucide-react";
 import {
   addCompetitorsAction,
   cancelOrderAction,
@@ -101,6 +101,46 @@ export function OrderWorkflow({
     });
   }
 
+  const [imagePending, setImagePending] = useState(false);
+
+  /**
+   * Envoi du document en image : sur téléphone, partage natif (WhatsApp,
+   * etc.) avec le fichier PNG joint ; sinon (ordinateur), téléchargement de
+   * l'image à joindre soi-même.
+   */
+  async function sendAsImage() {
+    setError(null);
+    setImagePending(true);
+    try {
+      // Chemin relatif : même serveur (web ou application Windows) que la page.
+      const res = await fetch(`${new URL(shareUrl).pathname}/image`);
+      if (!res.ok) throw new Error();
+      const blob = await res.blob();
+      const fileName = `${displayNumber}.png`;
+      const file = new File([blob], fileName, { type: "image/png" });
+      if (navigator.canShare?.({ files: [file] })) {
+        try {
+          await navigator.share({ files: [file], title: displayNumber });
+        } catch (e) {
+          if (e instanceof DOMException && e.name === "AbortError") return;
+          throw e;
+        }
+      } else {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = fileName;
+        a.click();
+        URL.revokeObjectURL(url);
+      }
+      if (status === "BROUILLON") run(() => markOrderSentAction(order.id));
+    } catch {
+      setError("Impossible de préparer l'image. Réessayez, ou envoyez le lien WhatsApp.");
+    } finally {
+      setImagePending(false);
+    }
+  }
+
   const shareText = isRequest
     ? `Bonjour ${order.supplier.name}, voici notre demande de prix ${displayNumber}. Merci de nous communiquer vos prix unitaires, les frais de transport et la disponibilité.
 
@@ -129,8 +169,13 @@ Voir et télécharger le bon de commande (PDF) : ${shareUrl}`;
               onClick={() => status === "BROUILLON" && run(() => markOrderSentAction(order.id))}
               className="inline-flex h-10 items-center gap-2 rounded-lg border border-zinc-200 bg-white px-4 text-sm font-semibold text-zinc-700 hover:bg-zinc-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
             >
-              <MessageCircle className="h-4 w-4 text-emerald-600" /> WhatsApp
+              <MessageCircle className="h-4 w-4 text-emerald-600" /> WhatsApp (lien)
             </a>
+          )}
+          {status !== "ANNULEE" && status !== "RECUE" && (
+            <Button variant="outline" disabled={imagePending} onClick={sendAsImage}>
+              <ImageIcon className="h-4 w-4 text-emerald-600" /> {imagePending ? "Préparation..." : "Envoyer en image"}
+            </Button>
           )}
           {status === "BROUILLON" && (
             <Button variant="secondary" disabled={pending} onClick={() => run(() => markOrderSentAction(order.id))}>
