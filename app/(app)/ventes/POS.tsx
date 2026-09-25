@@ -12,7 +12,8 @@ import { Table, TableHead, TableBody, TableRow, TableHeaderCell, TableCell } fro
 import { formatMoney, formatDateTime } from "@/lib/format";
 import { createSaleAction } from "@/lib/actions/sales";
 import { getSaleDocumentAction, type SaleDocument } from "@/lib/actions/receipt";
-import { getPosProductsAction, findProductByExactCodeAction } from "@/lib/actions/product-search";
+import { getPosProductsAction, findProductByExactCodeAction, searchProductsAction } from "@/lib/actions/product-search";
+import { matchesSearch, normalizeSearchText } from "@/lib/search-text";
 import { sendCartToQueueAction } from "@/lib/actions/cashier-queue";
 import { ClientFormModal } from "@/app/(app)/clients/ClientFormModal";
 import { Modal } from "@/components/ui/Modal";

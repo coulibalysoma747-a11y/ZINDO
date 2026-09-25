@@ -6,6 +6,7 @@ import { isPackagingUnitsModuleEnabled } from "@/lib/actions/packaging-units";
 import { isPriceTiersModuleEnabled } from "@/lib/actions/price-tiers";
 import { getNearestExpiryByProduct } from "@/lib/actions/expiry";
 import type { PriceTierOption } from "@/lib/pricing";
+import { fetchAllPages } from "@/lib/supabase-paging";
 
 const PRODUCT_FIELDS =
   "id, businessId:business_id, reference, name, categoryId:category_id, brand, description, unit, purchasePrice:purchase_price, salePrice:sale_price, minStock:min_stock, shelfLocation:shelf_location, supplierId:supplier_id, photoUrl:photo_url, barcode, customFields:custom_fields, active, createdAt:created_at, updatedAt:updated_at, trackUnits:track_units";
@@ -71,6 +72,18 @@ async function fetchPriceTiersByProduct(businessId: string, productIds: string[]
   return map;
 }
 
+/**
+ * Un filtre `.in(...)` avec des milliers d'identifiants dépasse la longueur
+ * d'URL acceptée par PostgREST : on interroge par lots puis on fusionne.
+ */
+async function mergeChunks<V>(ids: string[], fetchChunk: (ids: string[]) => Promise<Map<string, V>>, size = 150) {
+  const merged = new Map<string, V>();
+  for (let i = 0; i < ids.length; i += size) {
+    for (const [k, v] of await fetchChunk(ids.slice(i, i + size))) merged.set(k, v);
+  }
+  return merged;
+}
+
 export async function searchProductsAction(query: string, locationId: string) {
   const user = await requireUser();
 
@@ -130,21 +143,29 @@ export async function searchProductsAction(query: string, locationId: string) {
 export async function getPosProductsAction(locationId: string) {
   const user = await requireUser();
 
-  const { data: stocks } = await supabase
-    .from("product_stocks")
-    .select(`quantity, product:products!inner(${PRODUCT_FIELDS})`)
-    .eq("location_id", locationId)
-    .gt("quantity", 0)
-    .eq("products.business_id", user.businessId)
-    .eq("products.active", true)
-    .limit(300);
+  // Tout le stock de la boutique, page par page : un plafond fixe (anciennement
+  // 300 lignes, sans ordre) rendait des produits pourtant en stock introuvables
+  // à la caisse, puisque la recherche filtre cette liste côté navigateur.
+  type StockRow = { quantity: number; product: ProductRow };
+  const rows = await fetchAllPages<StockRow>(
+    (from, to) =>
+      supabase
+        .from("product_stocks")
+        .select(`quantity, product:products!inner(${PRODUCT_FIELDS})`)
+        .eq("location_id", locationId)
+        .gt("quantity", 0)
+        .eq("products.business_id", user.businessId)
+        .eq("products.active", true)
+        .order("product_id", { ascending: true })
+        .range(from, to) as unknown as PromiseLike<{ data: StockRow[] | null; error: { message: string } | null }>,
+    { maxRows: 10000 }
+  );
 
-  const rows = (stocks ?? []) as unknown as Array<{ quantity: number; product: ProductRow }>;
   const productIds = rows.map((r) => r.product.id);
   const [packagingByProduct, priceTiersByProduct, nearestExpiryByProduct] = await Promise.all([
-    fetchPackagingUnitsByProduct(user.businessId, productIds),
-    fetchPriceTiersByProduct(user.businessId, productIds),
-    getNearestExpiryByProduct(user.businessId, locationId, productIds, user.business.activityKey),
+    mergeChunks(productIds, (ids) => fetchPackagingUnitsByProduct(user.businessId, ids)),
+    mergeChunks(productIds, (ids) => fetchPriceTiersByProduct(user.businessId, ids)),
+    mergeChunks(productIds, (ids) => getNearestExpiryByProduct(user.businessId, locationId, ids, user.business.activityKey)),
   ]);
   return rows
     .map((s) => ({
