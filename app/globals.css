@@ -182,3 +182,17 @@ body {
 
 /* Le ticket de caisse (components/sales/Receipt.tsx) embarque son propre CSS
    d'impression (taille de page, marges, masquage du reste de l'écran). */
+
+/* Petites flèches (haut/bas) que le navigateur ajoute d'office dans les
+   champs numériques (prix, remise, quantité…) : retirées partout. Un clic
+   par mégarde modifiait le prix sans que le vendeur s'en aperçoive. Le
+   chiffre se tape toujours au clavier. */
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type="number"] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
