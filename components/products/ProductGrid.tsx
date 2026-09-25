@@ -54,7 +54,11 @@ export function ProductGrid({
   }
 
   return (
-    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5">
+    // Colonnes selon la place réellement disponible (requêtes de conteneur),
+    // pas selon la largeur de l'écran : à la caisse sur ordinateur, la grille
+    // partage l'écran avec la colonne panier/paiement.
+    <div className="@container">
+    <div className="grid grid-cols-2 gap-3 @md:grid-cols-3 @2xl:grid-cols-4 @4xl:grid-cols-5 @6xl:grid-cols-6">
       {products.map((product) => (
         <div
           key={product.id}
@@ -66,7 +70,7 @@ export function ProductGrid({
             aria-label={`Ajouter ${product.name} au panier`}
             className="absolute inset-0 z-0 rounded-2xl active:scale-[0.98]"
           />
-          <div className="pointer-events-none relative aspect-square w-full overflow-hidden rounded-t-2xl bg-zinc-50 dark:bg-slate-800">
+          <div className="pointer-events-none relative aspect-[4/3] w-full overflow-hidden rounded-t-2xl bg-zinc-50 dark:bg-slate-800">
             {product.photoUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
@@ -126,6 +130,7 @@ export function ProductGrid({
           </div>
         </div>
       ))}
+    </div>
     </div>
   );
 }

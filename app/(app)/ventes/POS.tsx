@@ -1006,7 +1006,7 @@ export function POS({
     // héritait de display:none à l'impression et ne sortait donc jamais
     // (page blanche).
     <>
-    <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_380px] xl:grid-cols-[minmax(0,1fr)_420px] print:hidden">
+    <div className="grid grid-cols-1 gap-6 md:grid-cols-[minmax(0,1fr)_320px] lg:grid-cols-[minmax(0,1fr)_380px] xl:grid-cols-[minmax(0,1fr)_420px] print:hidden">
       <div className="min-w-0 space-y-4">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="flex items-start gap-2">
@@ -1147,7 +1147,7 @@ export function POS({
           />
         )}
 
-        <div className="max-h-[420px] overflow-y-auto rounded-2xl lg:max-h-[calc(100vh-15rem)]">
+        <div className="max-h-[420px] overflow-y-auto rounded-2xl md:max-h-[calc(100vh-15rem)]">
           {loadingProducts ? (
             <div className="flex items-center justify-center gap-2 py-16 text-sm text-zinc-400">
               <Loader2 className="h-4 w-4 animate-spin" /> Chargement des produits...
@@ -1162,11 +1162,11 @@ export function POS({
           )}
         </div>
 
-        <div className="lg:hidden">{renderCart(false)}</div>
+        <div className="md:hidden">{renderCart(false)}</div>
       </div>
 
-      <div className="space-y-4 lg:sticky lg:top-4 lg:self-start lg:max-h-[calc(100vh-2rem)] lg:overflow-y-auto">
-        <div className="hidden lg:block">{renderCart(true)}</div>
+      <div className="space-y-4 md:sticky md:top-4 md:self-start md:max-h-[calc(100vh-2rem)] md:overflow-y-auto">
+        <div className="hidden md:block">{renderCart(true)}</div>
         {(!hideCustomerInPos || isCreditOnly) && (
           <Card>
             <CardHeader>
