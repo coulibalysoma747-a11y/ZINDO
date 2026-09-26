@@ -14,6 +14,8 @@ import { HistoryFilters } from "@/components/history/HistoryFilters";
 import { Table, TableHead, TableBody, TableRow, TableHeaderCell, TableCell } from "@/components/ui/Table";
 import { ExpenseManager } from "./ExpenseManager";
 import { DeleteExpenseButton } from "./DeleteExpenseButton";
+import { EditExpenseButton } from "./EditExpenseButton";
+import { isExtendedEditEnabled } from "@/lib/extended-edit";
 
 const PAYMENT_LABELS: Record<string, string> = { ESPECES: "Espèces", MOBILE_MONEY: "Mobile Money" };
 
@@ -36,9 +38,10 @@ export default async function ExpensesPage({
   const user = await requirePermission(PERMISSIONS.EXPENSES_MANAGE);
   const { periode } = await searchParams;
   const expensesPdf = await isDocumentEnabled("pdf_depenses", user.businessId);
-  const [currentLocation, businessSettings] = await Promise.all([
+  const [currentLocation, businessSettings, extendedEdit] = await Promise.all([
     getCurrentLocation(user.businessId),
     getBusinessSettings(user.businessId),
+    isExtendedEditEnabled(user.businessId),
   ]);
 
   if (!currentLocation) {
@@ -130,7 +133,10 @@ export default async function ExpensesPage({
                   </TableCell>
                   <TableCell align="right" className="font-medium text-red-600 tabular-nums">{formatMoney(e.amount, currency)}</TableCell>
                   <TableCell align="right">
-                    <DeleteExpenseButton id={e.id} label={e.label} />
+                    <div className="flex justify-end gap-1">
+                      {extendedEdit && <EditExpenseButton expense={e} categories={businessSettings.expenseCategories} />}
+                      <DeleteExpenseButton id={e.id} label={e.label} />
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}

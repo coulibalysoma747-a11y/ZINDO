@@ -112,6 +112,33 @@ export async function createTableAction(_prevState: ActionState, formData: FormD
   return { success: "Table ajoutée" };
 }
 
+/** Renommer une table (flag modifier_supprimer_partout). */
+export async function renameTableAction(tableId: string, name: string): Promise<ActionState> {
+  const user = await requirePermission(PERMISSIONS.TABLES_MANAGE);
+  const newName = name.trim();
+  if (!newName) return { error: "Le nom de la table est requis" };
+  const { data: table } = await supabase.from("restaurant_tables").select("id, locationId:location_id").eq("id", tableId).eq("business_id", user.businessId).maybeSingle();
+  if (!table) return { error: "Table introuvable" };
+
+  const { data: existing } = await supabase
+    .from("restaurant_tables")
+    .select("id")
+    .eq("location_id", table.locationId as string)
+    .eq("name", newName)
+    .neq("id", tableId)
+    .maybeSingle();
+  if (existing) return { error: "Une table porte déjà ce nom dans cette boutique" };
+
+  const { error } = await supabase.from("restaurant_tables").update({ name: newName }).eq("id", tableId);
+  if (error) {
+    console.error("[renameTableAction] Échec du renommage :", error.message);
+    return { error: "Impossible de renommer la table" };
+  }
+
+  revalidatePath("/tables");
+  return { success: "Table renommée" };
+}
+
 export async function deleteTableAction(tableId: string): Promise<ActionState> {
   const user = await requirePermission(PERMISSIONS.TABLES_MANAGE);
   const { data: table } = await supabase.from("restaurant_tables").select("id, status").eq("id", tableId).eq("business_id", user.businessId).maybeSingle();

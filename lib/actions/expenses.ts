@@ -110,3 +110,66 @@ export async function deleteExpenseAction(id: string) {
   revalidatePath("/dashboard");
   return { success: "Dépense supprimée" };
 }
+
+/** Correction d'une dépense (flag modifier_supprimer_partout). */
+export async function updateExpenseAction(
+  _prevState: ActionState,
+  formData: FormData
+): Promise<ActionState> {
+  const user = await requirePermission(PERMISSIONS.EXPENSES_MANAGE);
+  const id = String(formData.get("id") ?? "");
+  const parsed = expenseSchema.safeParse({
+    label: formData.get("label"),
+    amount: formData.get("amount"),
+    category: formData.get("category") || undefined,
+    paymentMethod: formData.get("paymentMethod") || undefined,
+    date: formData.get("date") || undefined,
+    note: formData.get("note") || undefined,
+  });
+  if (!parsed.success) return { error: parsed.error.issues[0]?.message };
+
+  const { data: expense } = await supabase
+    .from("expenses")
+    .select("id, date")
+    .eq("id", id)
+    .eq("business_id", user.businessId)
+    .maybeSingle();
+  if (!expense) return { error: "Dépense introuvable" };
+
+  // On garde l'heure d'origine si la date (jour) n'a pas changé.
+  const oldDate = new Date(expense.date as string);
+  const newDate =
+    parsed.data.date && parsed.data.date !== oldDate.toISOString().slice(0, 10)
+      ? new Date(parsed.data.date).toISOString()
+      : oldDate.toISOString();
+
+  const { error } = await supabase
+    .from("expenses")
+    .update({
+      label: parsed.data.label,
+      amount: parsed.data.amount,
+      category: parsed.data.category ?? null,
+      payment_method: (parsed.data.paymentMethod ?? "ESPECES") as PaymentMethod,
+      date: newDate,
+      note: parsed.data.note ?? null,
+    })
+    .eq("id", id)
+    .eq("business_id", user.businessId);
+  if (error) {
+    console.error("[updateExpenseAction] Échec de la modification :", error.message);
+    return { error: "Impossible de modifier la dépense" };
+  }
+
+  await logAction({
+    businessId: user.businessId,
+    userId: user.id,
+    action: "UPDATE",
+    entity: "Expense",
+    entityId: id,
+    details: `${parsed.data.label} — ${parsed.data.amount}`,
+  });
+
+  revalidatePath("/depenses");
+  revalidatePath("/dashboard");
+  return { success: "Dépense modifiée" };
+}

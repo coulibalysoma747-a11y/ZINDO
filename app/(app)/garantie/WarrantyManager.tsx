@@ -1,13 +1,13 @@
 "use client";
 
 import { useActionState, useEffect, useState, useTransition } from "react";
-import { Search, Trash2, ShieldCheck, ShieldX } from "lucide-react";
+import { Search, Trash2, ShieldCheck, ShieldX, Pencil } from "lucide-react";
 import { Card, CardBody } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Field, Input, Select, Textarea } from "@/components/ui/Input";
 import { Badge } from "@/components/ui/Badge";
 import { formatDate } from "@/lib/format";
-import { registerWarrantyAction, searchWarrantyAction, deleteWarrantyAction, type ActionState, type WarrantyRecord } from "@/lib/actions/warranty";
+import { registerWarrantyAction, updateWarrantyAction, searchWarrantyAction, deleteWarrantyAction, type ActionState, type WarrantyRecord } from "@/lib/actions/warranty";
 
 const DURATION_OPTIONS = [3, 6, 12, 18, 24, 36];
 
@@ -15,12 +15,73 @@ function todayIso() {
   return new Date().toISOString().slice(0, 10);
 }
 
+function WarrantyEditForm({
+  record,
+  customers,
+  onDone,
+}: {
+  record: WarrantyRecord;
+  customers: { id: string; name: string }[];
+  onDone: (saved: boolean) => void;
+}) {
+  const [state, formAction, pending] = useActionState<ActionState, FormData>(async (prev, fd) => {
+    const res = await updateWarrantyAction(prev, fd);
+    if (res?.success) onDone(true);
+    return res;
+  }, undefined);
+  return (
+    <form action={formAction} className="grid w-full grid-cols-1 gap-3 sm:grid-cols-2">
+      <input type="hidden" name="id" value={record.id} />
+      <Field label="Numéro de série / IMEI" htmlFor={`sn-${record.id}`}>
+        <Input id={`sn-${record.id}`} name="serialNumber" defaultValue={record.serialNumber} required autoFocus />
+      </Field>
+      <Field label="Client" htmlFor={`cu-${record.id}`}>
+        <Select id={`cu-${record.id}`} name="customerId" defaultValue={record.customer?.id ?? ""}>
+          <option value="">Sans client</option>
+          {customers.map((c) => (
+            <option key={c.id} value={c.id}>
+              {c.name}
+            </option>
+          ))}
+        </Select>
+      </Field>
+      <Field label="Date de vente" htmlFor={`sa-${record.id}`}>
+        <Input id={`sa-${record.id}`} name="soldAt" type="date" defaultValue={record.soldAt.slice(0, 10)} required />
+      </Field>
+      <Field label="Durée de garantie (mois)" htmlFor={`wm-${record.id}`}>
+        <Input id={`wm-${record.id}`} name="warrantyMonths" type="number" min={1} defaultValue={record.warrantyMonths} required />
+      </Field>
+      <Field label="Note (facultatif)" htmlFor={`no-${record.id}`}>
+        <Textarea id={`no-${record.id}`} name="note" rows={2} defaultValue={record.note ?? ""} />
+      </Field>
+      {state?.error && <p className="text-sm text-red-600 sm:col-span-2">{state.error}</p>}
+      <div className="flex gap-2 sm:col-span-2">
+        <Button type="submit" size="sm" disabled={pending}>
+          {pending ? "Enregistrement..." : "Enregistrer"}
+        </Button>
+        <Button type="button" size="sm" variant="outline" onClick={() => onDone(false)}>
+          Annuler
+        </Button>
+      </div>
+    </form>
+  );
+}
+
 function warrantyState(expiresAt: string): { active: boolean; daysLeft: number } {
   const days = Math.ceil((new Date(expiresAt).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
   return { active: days >= 0, daysLeft: days };
 }
 
-export function WarrantyManager({ products, customers }: { products: { id: string; name: string }[]; customers: { id: string; name: string }[] }) {
+export function WarrantyManager({
+  products,
+  customers,
+  canEdit = false,
+}: {
+  products: { id: string; name: string }[];
+  customers: { id: string; name: string }[];
+  canEdit?: boolean;
+}) {
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [tab, setTab] = useState<"register" | "search">("register");
   const [state, formAction, pending] = useActionState<ActionState, FormData>(registerWarrantyAction, undefined);
   const [query, setQuery] = useState("");
@@ -139,6 +200,17 @@ export function WarrantyManager({ products, customers }: { products: { id: strin
                 const { active, daysLeft } = warrantyState(r.warrantyExpiresAt);
                 return (
                   <li key={r.id} className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-zinc-200 bg-white p-3">
+                    {editingId === r.id ? (
+                      <WarrantyEditForm
+                        record={r}
+                        customers={customers}
+                        onDone={(saved) => {
+                          setEditingId(null);
+                          if (saved) searchWarrantyAction(query).then((res) => setResults(res));
+                        }}
+                      />
+                    ) : (
+                    <>
                     <div>
                       <p className="font-mono text-sm font-semibold text-zinc-900">{r.serialNumber}</p>
                       <p className="text-xs text-zinc-500">
@@ -153,10 +225,17 @@ export function WarrantyManager({ products, customers }: { products: { id: strin
                         {active ? <ShieldCheck className="h-3 w-3" /> : <ShieldX className="h-3 w-3" />}
                         {active ? `Sous garantie (${daysLeft} j.)` : "Garantie expirée"}
                       </Badge>
+                      {canEdit && (
+                        <button type="button" onClick={() => setEditingId(r.id)} className="rounded-lg p-1.5 text-zinc-500 hover:bg-zinc-100" aria-label="Modifier">
+                          <Pencil className="h-4 w-4" />
+                        </button>
+                      )}
                       <button type="button" onClick={() => handleDelete(r.id)} className="rounded-lg p-1.5 text-red-400 hover:bg-red-50" aria-label="Supprimer">
                         <Trash2 className="h-4 w-4" />
                       </button>
                     </div>
+                    </>
+                    )}
                   </li>
                 );
               })}

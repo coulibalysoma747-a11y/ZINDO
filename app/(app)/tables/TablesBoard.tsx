@@ -3,24 +3,26 @@
 import { useActionState, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Plus, Trash2, X } from "lucide-react";
+import { Plus, Trash2, X, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Field, Input, Select } from "@/components/ui/Input";
 import { Modal } from "@/components/ui/Modal";
 import { Badge } from "@/components/ui/Badge";
 import { formatMoney, formatTime } from "@/lib/format";
-import { createTableAction, deleteTableAction, openTableOrderAction, type TableRow, type ActionState } from "@/lib/actions/tables";
+import { createTableAction, renameTableAction, deleteTableAction, openTableOrderAction, type TableRow, type ActionState } from "@/lib/actions/tables";
 
 export function TablesBoard({
   locationId,
   tables,
   customers,
   currency,
+  canRename = false,
 }: {
   locationId: string;
   tables: TableRow[];
   customers: { id: string; name: string }[];
   currency: string;
+  canRename?: boolean;
 }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
@@ -40,6 +42,16 @@ export function TablesBoard({
         return;
       }
       router.push(`/tables/${openingTable.id}`);
+    });
+  }
+
+  function handleRename(table: TableRow) {
+    const name = prompt("Nouveau nom de la table :", table.name);
+    if (name === null || name.trim() === "" || name.trim() === table.name) return;
+    startTransition(async () => {
+      const result = await renameTableAction(table.id, name);
+      if (result?.error) alert(result.error);
+      else router.refresh();
     });
   }
 
@@ -94,7 +106,20 @@ export function TablesBoard({
               }`}
             >
               <div className="flex items-center justify-between">
-                <p className="font-semibold text-zinc-900">{t.name}</p>
+                <p className="flex min-w-0 items-center gap-1 font-semibold text-zinc-900">
+                  <span className="truncate">{t.name}</span>
+                  {canRename && (
+                    <button
+                      type="button"
+                      onClick={() => handleRename(t)}
+                      disabled={pending}
+                      className="shrink-0 rounded p-0.5 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700"
+                      aria-label="Renommer la table"
+                    >
+                      <Pencil className="h-3.5 w-3.5" />
+                    </button>
+                  )}
+                </p>
                 <Badge tone={t.openOrder ? "amber" : "emerald"}>{t.openOrder ? "Occupée" : "Libre"}</Badge>
               </div>
 

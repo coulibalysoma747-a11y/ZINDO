@@ -6,6 +6,7 @@ import { EmptyState } from "@/components/ui/Empty";
 import { OnlineStoreTabs } from "../OnlineStoreTabs";
 import { listPromoCodesAction } from "@/lib/actions/promo-codes";
 import { PromoCodesList } from "./PromoCodesList";
+import { isExtendedEditEnabled } from "@/lib/extended-edit";
 
 export default async function PromoCodesPage() {
   const user = await requirePermission(PERMISSIONS.SETTINGS_MANAGE);
@@ -50,7 +51,7 @@ export default async function PromoCodesPage() {
           description="L'onglet « Ma vitrine » vous permet de créer votre boutique. Vous pourrez ensuite y ajouter des codes promo."
         />
       ) : (
-        <PromoCodesList promoCodes={promoCodes} />
+        <PromoCodesList promoCodes={promoCodes} canEdit={await isExtendedEditEnabled(user.businessId)} />
       )}
     </div>
   );

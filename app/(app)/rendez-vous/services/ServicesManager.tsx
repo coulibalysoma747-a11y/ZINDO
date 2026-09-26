@@ -1,16 +1,42 @@
 "use client";
 
 import { useActionState, useState, useTransition } from "react";
-import { Plus, Trash2, X } from "lucide-react";
+import { Plus, Trash2, X, Pencil } from "lucide-react";
 import { Card, CardBody } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Field, Input } from "@/components/ui/Input";
 import { Badge } from "@/components/ui/Badge";
 import { formatMoney } from "@/lib/format";
-import { createServiceAction, toggleServiceActiveAction, deleteServiceAction, type ActionState, type ServiceRow } from "@/lib/actions/appointments";
+import { createServiceAction, updateServiceAction, toggleServiceActiveAction, deleteServiceAction, type ActionState, type ServiceRow } from "@/lib/actions/appointments";
 
-export function ServicesManager({ services, currency }: { services: ServiceRow[]; currency: string }) {
+function ServiceEditForm({ service, onDone }: { service: ServiceRow; onDone: () => void }) {
+  const [state, formAction, pending] = useActionState<ActionState, FormData>(async (prev, fd) => {
+    const res = await updateServiceAction(prev, fd);
+    if (res?.success) onDone();
+    return res;
+  }, undefined);
+  return (
+    <form action={formAction} className="grid w-full grid-cols-1 gap-2 sm:grid-cols-4">
+      <input type="hidden" name="id" value={service.id} />
+      <Input name="name" defaultValue={service.name} required autoFocus aria-label="Nom de la prestation" />
+      <Input name="durationMinutes" type="number" min={5} step={5} defaultValue={service.durationMinutes} required aria-label="Durée (minutes)" />
+      <Input name="price" type="number" min={0} defaultValue={service.price} required aria-label="Prix" />
+      <div className="flex gap-2">
+        <Button type="submit" size="sm" disabled={pending}>
+          {pending ? "..." : "Enregistrer"}
+        </Button>
+        <Button type="button" size="sm" variant="outline" onClick={onDone}>
+          Annuler
+        </Button>
+      </div>
+      {state?.error && <p className="text-sm text-red-600 sm:col-span-4">{state.error}</p>}
+    </form>
+  );
+}
+
+export function ServicesManager({ services, currency, canEdit = false }: { services: ServiceRow[]; currency: string; canEdit?: boolean }) {
   const [formOpen, setFormOpen] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [state, formAction, pending] = useActionState<ActionState, FormData>(createServiceAction, undefined);
   const [, startTransition] = useTransition();
 
@@ -70,6 +96,10 @@ export function ServicesManager({ services, currency }: { services: ServiceRow[]
         <ul className="space-y-2">
           {services.map((s) => (
             <li key={s.id} className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-zinc-200 bg-white p-3">
+              {editingId === s.id ? (
+                <ServiceEditForm service={s} onDone={() => setEditingId(null)} />
+              ) : (
+              <>
               <div>
                 <p className="font-medium text-zinc-900">{s.name}</p>
                 <p className="text-xs text-zinc-500">
@@ -84,10 +114,17 @@ export function ServicesManager({ services, currency }: { services: ServiceRow[]
                 >
                   <Badge tone={s.active ? "emerald" : "zinc"}>{s.active ? "Active" : "Désactivée"}</Badge>
                 </button>
+                {canEdit && (
+                  <button type="button" onClick={() => setEditingId(s.id)} className="rounded-lg p-1.5 text-zinc-500 hover:bg-zinc-100" aria-label="Modifier">
+                    <Pencil className="h-4 w-4" />
+                  </button>
+                )}
                 <button type="button" onClick={() => handleDelete(s.id)} className="rounded-lg p-1.5 text-red-400 hover:bg-red-50" aria-label="Supprimer">
                   <Trash2 className="h-4 w-4" />
                 </button>
               </div>
+              </>
+              )}
             </li>
           ))}
         </ul>

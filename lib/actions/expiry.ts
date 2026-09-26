@@ -83,6 +83,38 @@ const batchSchema = z.object({
   note: z.string().optional(),
 });
 
+const batchUpdateSchema = z.object({
+  quantity: z.coerce.number().int().positive("Quantité invalide"),
+  expiryDate: z.string().min(1, "Date de péremption requise"),
+  note: z.string().optional(),
+});
+
+/** Corriger la quantité, la date ou la note d'un lot suivi (flag modifier_supprimer_partout). */
+export async function updateExpiryBatchAction(batchId: string, formData: FormData): Promise<ActionState> {
+  const user = await requirePermission(PERMISSIONS.EXPIRY_MANAGE);
+  const parsed = batchUpdateSchema.safeParse({
+    quantity: formData.get("quantity"),
+    expiryDate: formData.get("expiryDate"),
+    note: formData.get("note") || undefined,
+  });
+  if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Champs invalides" };
+
+  const { data: updated, error } = await supabase
+    .from("product_expiry_batches")
+    .update({ quantity: parsed.data.quantity, expiry_date: parsed.data.expiryDate, note: parsed.data.note || null })
+    .eq("id", batchId)
+    .eq("business_id", user.businessId)
+    .select("id")
+    .maybeSingle();
+  if (error || !updated) {
+    console.error("[updateExpiryBatchAction] Échec de la modification :", error?.message);
+    return { error: "Impossible de modifier le lot" };
+  }
+
+  revalidatePath("/peremption");
+  return { success: "Lot modifié" };
+}
+
 export async function addExpiryBatchAction(formData: FormData): Promise<ActionState> {
   const user = await requirePermission(PERMISSIONS.EXPIRY_MANAGE);
   if (!(await isExpiryModuleEnabled(user.businessId))) return { error: "Fonctionnalité non disponible pour le moment" };

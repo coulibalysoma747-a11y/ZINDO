@@ -8,6 +8,7 @@ import { getCurrentLocation } from "@/lib/location";
 import { EmptyState } from "@/components/ui/Empty";
 import { ButtonLink } from "@/components/ui/Button";
 import { TablesBoard } from "./TablesBoard";
+import { isExtendedEditEnabled } from "@/lib/extended-edit";
 
 export default async function TablesPage() {
   const user = await requirePermission(PERMISSIONS.TABLES_MANAGE);
@@ -46,6 +47,7 @@ export default async function TablesPage() {
         tables={tables}
         customers={customers ?? []}
         currency={user.business.currency}
+        canRename={await isExtendedEditEnabled(user.businessId)}
       />
     </div>
   );

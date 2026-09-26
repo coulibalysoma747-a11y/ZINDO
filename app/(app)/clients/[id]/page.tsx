@@ -11,11 +11,15 @@ import { EmptyState } from "@/components/ui/Empty";
 import { Table, TableHead, TableBody, TableRow, TableHeaderCell, TableCell } from "@/components/ui/Table";
 import { ClientEditButton } from "./ClientEditButton";
 import { RecordPaymentButton } from "./RecordPaymentButton";
+import { DeletePaymentButton } from "./DeletePaymentButton";
 import { DebtExemptionToggle } from "./DebtExemptionToggle";
 import { isDebtExemptionEnabled } from "@/lib/debt-exemption";
 import { getBusinessSettings } from "@/lib/business-settings";
 import { groupPayments, isClientDocumentsEnabled } from "@/lib/client-documents";
 import { ButtonLink } from "@/components/ui/Button";
+import { DeleteRedirectButton } from "@/components/ui/DeleteRedirectButton";
+import { isExtendedEditEnabled } from "@/lib/extended-edit";
+import { deleteCustomerAction } from "@/lib/actions/customers";
 
 type CustomerRow = {
   id: string;
@@ -45,13 +49,14 @@ export default async function CustomerDetailPage({
   // Le module "Ventes" est piloté par SALES_CREATE (même droit que le lien
   // "Vente / Caisse" du menu) : si un compte n'y a plus accès, aucune trace du
   // module ne doit apparaître ailleurs dans l'application, y compris ici.
-  const [canManage, canSeeSales, canManageSettings, debtExemptionEnabled, businessSettings, clientDocuments] = await Promise.all([
+  const [canManage, canSeeSales, canManageSettings, debtExemptionEnabled, businessSettings, clientDocuments, extendedEdit] = await Promise.all([
     hasPermission(user.businessId, user.role, PERMISSIONS.CUSTOMERS_MANAGE, user.id),
     hasPermission(user.businessId, user.role, PERMISSIONS.SALES_CREATE, user.id),
     hasPermission(user.businessId, user.role, PERMISSIONS.SETTINGS_MANAGE, user.id),
     isDebtExemptionEnabled(user.businessId),
     getBusinessSettings(user.businessId),
     isClientDocumentsEnabled(user.businessId),
+    isExtendedEditEnabled(user.businessId),
   ]);
   const { id } = await params;
 
@@ -110,6 +115,14 @@ export default async function CustomerDetailPage({
               <RecordPaymentButton customerId={customer.id} maxAmount={creditBalance} receiptEnabled={clientDocuments} />
             )}
             {canManage && <ClientEditButton customer={customer} />}
+            {canManage && extendedEdit && (
+              <DeleteRedirectButton
+                action={deleteCustomerAction.bind(null, customer.id)}
+                redirectTo="/clients"
+                confirmTitle="Supprimer le client"
+                confirmMessage={`Supprimer définitivement « ${customer.name} » ? Un client qui a déjà des ventes ne peut pas être supprimé.`}
+              />
+            )}
           </div>
         )}
       </div>
@@ -224,6 +237,9 @@ export default async function CustomerDetailPage({
                 </span>
                 <span className="flex items-center gap-1">
                   <span className="font-medium text-emerald-600">{formatMoney(p.amount, currency)}</span>
+                  {canManage && extendedEdit && p.note !== "Paiement d'échéance" && (
+                    <DeletePaymentButton customerId={customer.id} paymentId={p.id} amountLabel={formatMoney(p.amount, currency)} />
+                  )}
                   {clientDocuments && (
                     <Link
                       href={`/clients/${customer.id}/recu/${p.id}`}

@@ -10,6 +10,9 @@ import { Badge } from "@/components/ui/Badge";
 import { isDocumentEnabled } from "@/lib/documents";
 import { ButtonLink } from "@/components/ui/Button";
 import { Table, TableHead, TableBody, TableRow, TableHeaderCell, TableCell } from "@/components/ui/Table";
+import { DeleteRedirectButton } from "@/components/ui/DeleteRedirectButton";
+import { isExtendedEditEnabled } from "@/lib/extended-edit";
+import { deletePurchaseAction } from "@/lib/actions/purchases";
 
 type PurchaseRow = {
   id: string;
@@ -45,6 +48,7 @@ export default async function PurchaseDetailPage({
   const purchase = data as unknown as PurchaseRow;
 
   const currency = user.business.currency;
+  const extendedEdit = await isExtendedEditEnabled(user.businessId);
 
   return (
     <div className="space-y-6">
@@ -64,6 +68,17 @@ export default async function PurchaseDetailPage({
             {purchase.supplier.name}
           </Link>
         </p>
+        {extendedEdit && (
+          <div className="mt-3">
+            <DeleteRedirectButton
+              action={deletePurchaseAction.bind(null, purchase.id)}
+              redirectTo="/achats"
+              label="Supprimer l'achat"
+              confirmTitle="Supprimer l'achat"
+              confirmMessage={`Supprimer l'achat ${purchase.number} ? Les quantités reçues seront retirées du stock et le paiement au fournisseur effacé. Le prix d'achat des produits n'est pas remis à l'ancien.`}
+            />
+          </div>
+        )}
       </div>
 
       <Card>

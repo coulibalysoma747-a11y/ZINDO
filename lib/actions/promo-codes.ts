@@ -242,3 +242,71 @@ export async function validatePromoCode(
     label: discountType === "PERCENTAGE" ? `-${discountValue}%` : `-${discountValue}`,
   };
 }
+
+/** Modifier un code promo existant (flag modifier_supprimer_partout). */
+export async function updatePromoCodeAction(
+  _prevState: ActionState,
+  formData: FormData
+): Promise<ActionState> {
+  const user = await requirePermission(PERMISSIONS.SETTINGS_MANAGE);
+  const storeId = await requireStoreId(user.businessId);
+  if (!storeId) return { error: "Boutique en ligne introuvable" };
+  const id = String(formData.get("id") ?? "");
+
+  const parsed = createSchema.safeParse({
+    code: formData.get("code"),
+    discountType: formData.get("discountType"),
+    discountValue: formData.get("discountValue"),
+    startsAt: formData.get("startsAt") || undefined,
+    endsAt: formData.get("endsAt") || undefined,
+    minOrderAmount: formData.get("minOrderAmount") || 0,
+    usageLimit: formData.get("usageLimit") || undefined,
+  });
+  if (!parsed.success) return { error: parsed.error.issues[0]?.message };
+  const data = parsed.data;
+
+  if (data.startsAt && data.endsAt && new Date(data.endsAt) < new Date(data.startsAt)) {
+    return { error: "La date de fin doit être après la date de début" };
+  }
+
+  const { data: existing } = await supabase
+    .from("promo_codes")
+    .select("id")
+    .eq("store_id", storeId)
+    .eq("code", data.code)
+    .neq("id", id)
+    .maybeSingle();
+  if (existing) return { error: "Ce code existe déjà" };
+
+  const { data: updated, error } = await supabase
+    .from("promo_codes")
+    .update({
+      code: data.code,
+      discount_type: data.discountType,
+      discount_value: data.discountValue,
+      starts_at: data.startsAt ? new Date(data.startsAt).toISOString() : null,
+      ends_at: data.endsAt ? new Date(data.endsAt).toISOString() : null,
+      min_order_amount: data.minOrderAmount,
+      usage_limit: data.usageLimit ?? null,
+    })
+    .eq("id", id)
+    .eq("store_id", storeId)
+    .select("id")
+    .maybeSingle();
+  if (error || !updated) {
+    console.error("[updatePromoCodeAction] Échec de la modification :", error?.message);
+    return { error: "Impossible de modifier ce code promo" };
+  }
+
+  await logAction({
+    businessId: user.businessId,
+    userId: user.id,
+    action: "UPDATE",
+    entity: "PromoCode",
+    entityId: id,
+    details: data.code,
+  });
+
+  revalidatePath("/boutique-en-ligne/codes-promo");
+  return { success: "Code promo modifié" };
+}

@@ -6,6 +6,7 @@ import { EXPIRY_ACTIVITIES } from "@/lib/nav";
 import { getLocations, getCurrentLocation } from "@/lib/location";
 import { ensureExpiryFlagRegistered, isExpiryModuleEnabled, getExpiryBatchesAction } from "@/lib/actions/expiry";
 import { ExpiryTracker } from "./ExpiryTracker";
+import { isExtendedEditEnabled } from "@/lib/extended-edit";
 
 export default async function ExpiryPage() {
   const user = await requirePermission(PERMISSIONS.EXPIRY_MANAGE);
@@ -38,6 +39,7 @@ export default async function ExpiryPage() {
         locations={locations.map((l) => ({ id: l.id as string, name: l.name as string }))}
         defaultLocationId={currentLocation?.id as string | undefined}
         batches={batches}
+        canEdit={await isExtendedEditEnabled(user.businessId)}
       />
     </div>
   );

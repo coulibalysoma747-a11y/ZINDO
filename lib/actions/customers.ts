@@ -269,3 +269,83 @@ export async function recordCustomerPaymentAction(
   revalidatePath("/ventes/historique");
   return { success: "Paiement enregistré", receiptId: (inserted?.[0]?.id as string | undefined) ?? undefined };
 }
+
+/**
+ * Supprimer un remboursement saisi par erreur (flag modifier_supprimer_partout).
+ * Toutes les lignes du même remboursement (même instant, même moyen) sont
+ * retirées, et la dette revient sur chaque vente qu'il avait soldée.
+ * Les paiements d'échéance restent liés à leur échéancier : refusés ici.
+ */
+export async function deleteCustomerPaymentAction(customerId: string, paymentId: string) {
+  const user = await requirePermission(PERMISSIONS.CUSTOMERS_MANAGE);
+  const { data: customer } = await supabase
+    .from("customers")
+    .select("id")
+    .eq("id", customerId)
+    .eq("business_id", user.businessId)
+    .maybeSingle();
+  if (!customer) return { error: "Client introuvable" };
+
+  const { data: payment } = await supabase
+    .from("customer_payments")
+    .select("id, createdAt:created_at, method, note")
+    .eq("id", paymentId)
+    .eq("customer_id", customerId)
+    .maybeSingle();
+  if (!payment) return { error: "Remboursement introuvable" };
+  if (payment.note === "Paiement d'échéance") {
+    return { error: "Ce paiement appartient à un échéancier : il ne peut pas être supprimé ici" };
+  }
+
+  const { data: rows } = await supabase
+    .from("customer_payments")
+    .select("id, amount, saleId:sale_id")
+    .eq("customer_id", customerId)
+    .eq("created_at", payment.createdAt as string)
+    .eq("method", payment.method as string);
+  const group = (rows ?? []) as Array<{ id: string; amount: number; saleId: string | null }>;
+  if (group.length === 0) return { error: "Remboursement introuvable" };
+
+  const { error } = await supabase
+    .from("customer_payments")
+    .delete()
+    .in("id", group.map((r) => r.id));
+  if (error) {
+    console.error("[deleteCustomerPaymentAction] Échec de la suppression :", error.message);
+    return { error: "Impossible de supprimer le remboursement" };
+  }
+
+  for (const r of group) {
+    if (!r.saleId) continue;
+    const { data: sale } = await supabase
+      .from("sales")
+      .select("id, total, amountPaid:amount_paid, status")
+      .eq("id", r.saleId)
+      .eq("business_id", user.businessId)
+      .maybeSingle();
+    if (!sale || sale.status === "ANNULEE") continue;
+    const newAmountPaid = Math.max(0, Math.round(((sale.amountPaid as number) - r.amount) * 100) / 100);
+    const status = newAmountPaid >= (sale.total as number) ? "PAYEE" : newAmountPaid > 0 ? "PARTIELLE" : "CREDIT";
+    const { error: saleError } = await supabase
+      .from("sales")
+      .update({ amount_paid: newAmountPaid, status })
+      .eq("id", r.saleId);
+    if (saleError) console.error("[deleteCustomerPaymentAction] Échec de la remise en dette :", saleError.message);
+  }
+
+  const total = Math.round(group.reduce((s, r) => s + r.amount, 0) * 100) / 100;
+  await logAction({
+    businessId: user.businessId,
+    userId: user.id,
+    action: "DELETE",
+    entity: "CustomerPayment",
+    entityId: customerId,
+    details: `Remboursement de ${total} supprimé`,
+  });
+
+  revalidatePath(`/clients/${customerId}`);
+  revalidatePath("/credits");
+  revalidatePath("/ventes/historique");
+  revalidatePath("/dashboard");
+  return { success: "Remboursement supprimé" };
+}

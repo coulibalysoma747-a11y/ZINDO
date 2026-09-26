@@ -81,6 +81,61 @@ export async function createUserAction(
   return { success: "Utilisateur créé" };
 }
 
+const userInfoSchema = z.object({
+  firstName: z.string().trim().min(1, "Prénom requis"),
+  lastName: z.string().trim().min(1, "Nom requis"),
+  phone: z.string().trim().min(6, "Téléphone invalide"),
+});
+
+/** Corriger le nom ou le téléphone d'un employé (flag modifier_supprimer_partout). */
+export async function updateUserInfoAction(_prevState: ActionState, formData: FormData): Promise<ActionState> {
+  const admin = await requirePermission(PERMISSIONS.USERS_MANAGE);
+  const id = String(formData.get("id") ?? "");
+  const parsed = userInfoSchema.safeParse({
+    firstName: formData.get("firstName"),
+    lastName: formData.get("lastName"),
+    phone: formData.get("phone"),
+  });
+  if (!parsed.success) return { error: parsed.error.issues[0]?.message };
+
+  const { data: user } = await supabase
+    .from("users")
+    .select("id")
+    .eq("id", id)
+    .eq("business_id", admin.businessId)
+    .maybeSingle();
+  if (!user) return { error: "Utilisateur introuvable" };
+
+  const { data: existing } = await supabase
+    .from("users")
+    .select("id")
+    .eq("business_id", admin.businessId)
+    .eq("phone", parsed.data.phone)
+    .neq("id", id)
+    .maybeSingle();
+  if (existing) return { error: "Ce numéro de téléphone est déjà utilisé" };
+
+  const { error } = await supabase
+    .from("users")
+    .update({ first_name: parsed.data.firstName, last_name: parsed.data.lastName, phone: parsed.data.phone })
+    .eq("id", id);
+  if (error) {
+    console.error("[updateUserInfoAction] Échec de la mise à jour :", error.message);
+    return { error: "Impossible de modifier l'utilisateur" };
+  }
+
+  await logAction({
+    businessId: admin.businessId,
+    userId: admin.id,
+    action: "UPDATE",
+    entity: "User",
+    entityId: id,
+  });
+
+  revalidatePath("/utilisateurs");
+  return { success: "Utilisateur modifié" };
+}
+
 export async function toggleUserActiveAction(id: string, active: boolean) {
   const admin = await requirePermission(PERMISSIONS.USERS_MANAGE);
   if (id === admin.id) return { error: "Vous ne pouvez pas désactiver votre propre compte" };

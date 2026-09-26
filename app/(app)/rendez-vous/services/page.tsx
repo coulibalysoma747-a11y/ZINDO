@@ -6,6 +6,7 @@ import { PERMISSIONS } from "@/lib/permissions";
 import { BEAUTY_ACTIVITY_KEY } from "@/lib/nav";
 import { ensureAppointmentsFlagRegistered, isAppointmentsModuleEnabled, getServicesAction } from "@/lib/actions/appointments";
 import { ServicesManager } from "./ServicesManager";
+import { isExtendedEditEnabled } from "@/lib/extended-edit";
 
 export default async function ServicesPage() {
   const user = await requirePermission(PERMISSIONS.APPOINTMENTS_MANAGE);
@@ -14,7 +15,7 @@ export default async function ServicesPage() {
   await ensureAppointmentsFlagRegistered();
   if (!(await isAppointmentsModuleEnabled(user.businessId))) redirect("/dashboard");
 
-  const services = await getServicesAction();
+  const [services, extendedEdit] = await Promise.all([getServicesAction(), isExtendedEditEnabled(user.businessId)]);
 
   return (
     <div className="max-w-2xl space-y-6">
@@ -29,7 +30,7 @@ export default async function ServicesPage() {
         <p className="text-sm text-zinc-500">Le catalogue de prestations proposées, avec leur durée et leur prix par défaut.</p>
       </div>
 
-      <ServicesManager services={services} currency={user.business.currency} />
+      <ServicesManager services={services} currency={user.business.currency} canEdit={extendedEdit} />
     </div>
   );
 }

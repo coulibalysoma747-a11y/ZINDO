@@ -181,3 +181,97 @@ async function createPurchaseImpl(input: CreatePurchaseInput): Promise<CreatePur
 
   return { success: true, purchaseId: purchase.id as string };
 }
+
+/**
+ * Supprimer un achat saisi par erreur (flag modifier_supprimer_partout).
+ * Le stock ajouté est retiré (mouvement « CORRECTION » tracé dans
+ * l'historique), le paiement au fournisseur lié est effacé. Refusé si une
+ * partie de la marchandise est déjà sortie du stock, ou si l'achat provient
+ * de la réception d'un bon de commande.
+ */
+export async function deletePurchaseAction(purchaseId: string) {
+  const user = await requirePermission(PERMISSIONS.PURCHASES_MANAGE);
+  const { data: purchase } = await supabase
+    .from("purchases")
+    .select("id, number, supplierId:supplier_id, locationId:location_id, items:purchase_items(productId:product_id, quantity)")
+    .eq("id", purchaseId)
+    .eq("business_id", user.businessId)
+    .maybeSingle();
+  if (!purchase) return { error: "Achat introuvable" };
+  const number = purchase.number as string;
+  const locationId = purchase.locationId as string;
+  const items = (purchase.items ?? []) as unknown as Array<{ productId: string; quantity: number }>;
+
+  const { data: linkedOrder, error: orderError } = await supabase
+    .from("purchase_orders")
+    .select("id")
+    .eq("purchase_id", purchaseId)
+    .limit(1)
+    .maybeSingle();
+  if (!orderError && linkedOrder) {
+    return { error: "Cet achat vient de la réception d'un bon de commande : il ne peut pas être supprimé" };
+  }
+
+  // Quantité à retirer par produit (un produit peut figurer sur plusieurs lignes).
+  const toRemove = new Map<string, number>();
+  for (const i of items) toRemove.set(i.productId, (toRemove.get(i.productId) ?? 0) + i.quantity);
+  const productIds = [...toRemove.keys()];
+
+  if (productIds.length > 0) {
+    const [{ data: stocks }, { data: products }] = await Promise.all([
+      supabase.from("product_stocks").select("productId:product_id, quantity").eq("location_id", locationId).in("product_id", productIds),
+      supabase.from("products").select("id, name").in("id", productIds),
+    ]);
+    const stockOf = new Map(((stocks ?? []) as Array<{ productId: string; quantity: number }>).map((s) => [s.productId, s.quantity]));
+    const nameOf = new Map(((products ?? []) as Array<{ id: string; name: string }>).map((p) => [p.id, p.name]));
+    const short = productIds.filter((id) => (stockOf.get(id) ?? 0) < (toRemove.get(id) ?? 0));
+    if (short.length > 0) {
+      return {
+        error: `Impossible : une partie de la marchandise est déjà sortie du stock (${short
+          .map((id) => nameOf.get(id) ?? "produit")
+          .join(", ")}). Faites plutôt une sortie de stock « Retour fournisseur ».`,
+      };
+    }
+  }
+
+  for (const [productId, quantity] of toRemove) {
+    const { oldStock, newStock } = await adjustStock({ productId, locationId, delta: -quantity });
+    const { error: movementError } = await supabase.from("stock_movements").insert({
+      business_id: user.businessId,
+      location_id: locationId,
+      product_id: productId,
+      direction: "OUT",
+      reason: "CORRECTION",
+      quantity,
+      old_stock: oldStock,
+      new_stock: newStock,
+      user_id: user.id,
+      note: `Suppression de l'achat ${number}`,
+    });
+    if (movementError) console.error("[deletePurchaseAction] Échec de l'écriture du mouvement de stock :", movementError.message);
+  }
+
+  await supabase.from("supplier_payments").delete().eq("purchase_id", purchaseId);
+  await supabase.from("purchase_items").delete().eq("purchase_id", purchaseId);
+  const { error } = await supabase.from("purchases").delete().eq("id", purchaseId);
+  if (error) {
+    console.error("[deletePurchaseAction] Échec de la suppression :", error.message);
+    return { error: "Le stock a été corrigé, mais l'achat n'a pas pu être supprimé" };
+  }
+
+  await logAction({
+    businessId: user.businessId,
+    userId: user.id,
+    action: "DELETE",
+    entity: "Purchase",
+    entityId: purchaseId,
+    details: `Achat ${number} supprimé, stock retiré`,
+  });
+
+  revalidatePath("/achats");
+  revalidatePath("/produits");
+  revalidatePath("/stock");
+  revalidatePath(`/fournisseurs/${purchase.supplierId as string}`);
+  revalidatePath("/dashboard");
+  return { success: "Achat supprimé" };
+}

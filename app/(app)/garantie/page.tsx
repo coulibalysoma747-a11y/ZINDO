@@ -6,6 +6,7 @@ import { ELECTRONICS_ACTIVITY_KEY } from "@/lib/nav";
 import { ensureWarrantyFlagRegistered, isWarrantyModuleEnabled } from "@/lib/actions/warranty";
 import { supabase } from "@/lib/supabase";
 import { WarrantyManager } from "./WarrantyManager";
+import { isExtendedEditEnabled } from "@/lib/extended-edit";
 
 export default async function WarrantyPage() {
   const user = await requirePermission(PERMISSIONS.WARRANTY_MANAGE);
@@ -29,7 +30,7 @@ export default async function WarrantyPage() {
         </div>
       </div>
 
-      <WarrantyManager products={products ?? []} customers={customers ?? []} />
+      <WarrantyManager products={products ?? []} customers={customers ?? []} canEdit={await isExtendedEditEnabled(user.businessId)} />
     </div>
   );
 }

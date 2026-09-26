@@ -1,8 +1,8 @@
 "use client";
 
-import { useActionState, useTransition } from "react";
+import { useActionState, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Tag, Trash2 } from "lucide-react";
+import { Tag, Trash2, Pencil } from "lucide-react";
 import { Card, CardBody, CardHeader } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
@@ -10,14 +10,21 @@ import { Field, Input, Select } from "@/components/ui/Input";
 import { formatMoney, formatDateTime } from "@/lib/format";
 import {
   createPromoCodeAction,
+  updatePromoCodeAction,
   togglePromoCodeAction,
   deletePromoCodeAction,
   type PromoCodeSummary,
   type ActionState,
 } from "@/lib/actions/promo-codes";
 
-export function PromoCodesList({ promoCodes }: { promoCodes: PromoCodeSummary[] }) {
-  const [state, formAction, pending] = useActionState<ActionState, FormData>(createPromoCodeAction, undefined);
+export function PromoCodesList({ promoCodes, canEdit = false }: { promoCodes: PromoCodeSummary[]; canEdit?: boolean }) {
+  const [editing, setEditing] = useState<PromoCodeSummary | null>(null);
+  const [state, formAction, pending] = useActionState<ActionState, FormData>(async (prev, fd) => {
+    if (!fd.get("id")) return createPromoCodeAction(prev, fd);
+    const res = await updatePromoCodeAction(prev, fd);
+    if (res?.success) setEditing(null);
+    return res;
+  }, undefined);
   const router = useRouter();
   const [transitionPending, startTransition] = useTransition();
 
@@ -40,34 +47,35 @@ export function PromoCodesList({ promoCodes }: { promoCodes: PromoCodeSummary[] 
     <div className="space-y-6">
       <Card>
         <CardHeader>
-          <h2 className="font-semibold text-zinc-900">Nouveau code promo</h2>
+          <h2 className="font-semibold text-zinc-900">{editing ? `Modifier le code ${editing.code}` : "Nouveau code promo"}</h2>
         </CardHeader>
         <CardBody>
-          <form action={formAction} className="space-y-4">
+          <form key={editing?.id ?? "nouveau"} action={formAction} className="space-y-4">
+            {editing && <input type="hidden" name="id" value={editing.id} />}
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <Field label="Code" htmlFor="code" hint="Le client le saisit tel quel (ex. BIENVENUE10)">
-                <Input id="code" name="code" placeholder="BIENVENUE10" required maxLength={30} />
+                <Input id="code" name="code" placeholder="BIENVENUE10" defaultValue={editing?.code} required maxLength={30} />
               </Field>
               <Field label="Type de remise" htmlFor="discountType">
-                <Select id="discountType" name="discountType" defaultValue="PERCENTAGE">
+                <Select id="discountType" name="discountType" defaultValue={editing?.discountType ?? "PERCENTAGE"}>
                   <option value="PERCENTAGE">Pourcentage (%)</option>
                   <option value="FIXED">Montant fixe</option>
                 </Select>
               </Field>
               <Field label="Valeur" htmlFor="discountValue">
-                <Input id="discountValue" name="discountValue" type="number" min={1} step="any" required />
+                <Input id="discountValue" name="discountValue" type="number" min={1} step="any" defaultValue={editing?.discountValue} required />
               </Field>
               <Field label="Montant minimum de commande (facultatif)" htmlFor="minOrderAmount">
-                <Input id="minOrderAmount" name="minOrderAmount" type="number" min={0} defaultValue={0} />
+                <Input id="minOrderAmount" name="minOrderAmount" type="number" min={0} defaultValue={editing?.minOrderAmount ?? 0} />
               </Field>
               <Field label="Limite d'utilisation (facultatif)" htmlFor="usageLimit" hint="Nombre de commandes max">
-                <Input id="usageLimit" name="usageLimit" type="number" min={1} />
+                <Input id="usageLimit" name="usageLimit" type="number" min={1} defaultValue={editing?.usageLimit ?? undefined} />
               </Field>
               <Field label="Actif à partir du (facultatif)" htmlFor="startsAt">
-                <Input id="startsAt" name="startsAt" type="date" />
+                <Input id="startsAt" name="startsAt" type="date" defaultValue={editing?.startsAt?.slice(0, 10)} />
               </Field>
               <Field label="Actif jusqu'au (facultatif)" htmlFor="endsAt">
-                <Input id="endsAt" name="endsAt" type="date" />
+                <Input id="endsAt" name="endsAt" type="date" defaultValue={editing?.endsAt?.slice(0, 10)} />
               </Field>
             </div>
 
@@ -76,9 +84,16 @@ export function PromoCodesList({ promoCodes }: { promoCodes: PromoCodeSummary[] 
               <p className="rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-700">{state.success}</p>
             )}
 
-            <Button type="submit" disabled={pending} className="w-full sm:w-auto">
-              {pending ? "Création..." : "Créer le code"}
-            </Button>
+            <div className="flex flex-wrap gap-2">
+              <Button type="submit" disabled={pending} className="w-full sm:w-auto">
+                {pending ? "Enregistrement..." : editing ? "Enregistrer les modifications" : "Créer le code"}
+              </Button>
+              {editing && (
+                <Button type="button" variant="outline" onClick={() => setEditing(null)} className="w-full sm:w-auto">
+                  Annuler
+                </Button>
+              )}
+            </div>
           </form>
         </CardBody>
       </Card>
@@ -121,6 +136,20 @@ export function PromoCodesList({ promoCodes }: { promoCodes: PromoCodeSummary[] 
                   >
                     {promo.active ? "Désactiver" : "Activer"}
                   </Button>
+                  {canEdit && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        setEditing(promo);
+                        window.scrollTo({ top: 0, behavior: "smooth" });
+                      }}
+                      aria-label="Modifier"
+                    >
+                      <Pencil className="h-4 w-4 text-zinc-500" />
+                    </Button>
+                  )}
                   <Button
                     type="button"
                     variant="ghost"

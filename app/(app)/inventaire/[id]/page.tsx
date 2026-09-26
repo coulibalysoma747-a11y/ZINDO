@@ -11,6 +11,9 @@ import { isDocumentEnabled } from "@/lib/documents";
 import { ButtonLink } from "@/components/ui/Button";
 import { Table, TableHead, TableBody, TableRow, TableHeaderCell, TableCell } from "@/components/ui/Table";
 import { ValidateInventoryButton } from "./ValidateInventoryButton";
+import { DeleteRedirectButton } from "@/components/ui/DeleteRedirectButton";
+import { isExtendedEditEnabled } from "@/lib/extended-edit";
+import { deleteInventoryAction } from "@/lib/actions/inventory";
 
 // La validation d'un inventaire peut porter sur des dizaines/centaines de
 // produits (voir validateInventoryAction) — marge de sécurité.
@@ -66,7 +69,17 @@ export default async function InventoryDetailPage({
           </p>
         </div>
         {inventory.status === "EN_COURS" && (
-          <ValidateInventoryButton inventoryId={inventory.id} discrepancyCount={discrepancies.length} />
+          <div className="flex flex-wrap gap-2">
+            {(await isExtendedEditEnabled(user.businessId)) && (
+              <DeleteRedirectButton
+                action={deleteInventoryAction.bind(null, inventory.id)}
+                redirectTo="/inventaire"
+                confirmTitle="Supprimer l'inventaire"
+                confirmMessage={`Supprimer l'inventaire ${inventory.reference} ? Le stock n'est pas modifié, car cet inventaire n'a pas été validé.`}
+              />
+            )}
+            <ValidateInventoryButton inventoryId={inventory.id} discrepancyCount={discrepancies.length} />
+          </div>
         )}
       </div>
 

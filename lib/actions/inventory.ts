@@ -181,3 +181,38 @@ async function validateInventoryImpl(inventoryId: string) {
   revalidatePath("/produits");
   return { success: "Inventaire validé, le stock a été mis à jour" };
 }
+
+/**
+ * Supprimer un inventaire encore « EN_COURS » (flag modifier_supprimer_partout).
+ * Un inventaire non validé n'a jamais touché au stock : rien à annuler.
+ */
+export async function deleteInventoryAction(inventoryId: string) {
+  const user = await requirePermission(PERMISSIONS.INVENTORY_MANAGE);
+  const { data: inventory } = await supabase
+    .from("inventories")
+    .select("id, reference, status")
+    .eq("id", inventoryId)
+    .eq("business_id", user.businessId)
+    .maybeSingle();
+  if (!inventory) return { error: "Inventaire introuvable" };
+  if (inventory.status !== "EN_COURS") return { error: "Un inventaire validé ne peut pas être supprimé" };
+
+  await supabase.from("inventory_items").delete().eq("inventory_id", inventoryId);
+  const { error } = await supabase.from("inventories").delete().eq("id", inventoryId).eq("status", "EN_COURS");
+  if (error) {
+    console.error("[deleteInventoryAction] Échec de la suppression :", error.message);
+    return { error: "Impossible de supprimer l'inventaire" };
+  }
+
+  await logAction({
+    businessId: user.businessId,
+    userId: user.id,
+    action: "DELETE",
+    entity: "Inventory",
+    entityId: inventoryId,
+    details: inventory.reference as string,
+  });
+
+  revalidatePath("/inventaire");
+  return { success: "Inventaire supprimé" };
+}

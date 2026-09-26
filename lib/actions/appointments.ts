@@ -73,6 +73,38 @@ export async function createServiceAction(_prevState: ActionState, formData: For
   return { success: "Prestation ajoutée" };
 }
 
+/** Modifier le nom, la durée ou le prix d'une prestation (flag modifier_supprimer_partout). */
+export async function updateServiceAction(_prevState: ActionState, formData: FormData): Promise<ActionState> {
+  const user = await requirePermission(PERMISSIONS.APPOINTMENTS_MANAGE);
+  const id = String(formData.get("id") ?? "");
+  const parsed = serviceSchema.safeParse({ name: formData.get("name"), durationMinutes: formData.get("durationMinutes"), price: formData.get("price") });
+  if (!parsed.success) return { error: parsed.error.issues[0]?.message };
+
+  const { data: existing } = await supabase
+    .from("services")
+    .select("id")
+    .eq("business_id", user.businessId)
+    .eq("name", parsed.data.name)
+    .neq("id", id)
+    .maybeSingle();
+  if (existing) return { error: "Une prestation porte déjà ce nom" };
+
+  const { data: updated, error } = await supabase
+    .from("services")
+    .update({ name: parsed.data.name, duration_minutes: parsed.data.durationMinutes, price: parsed.data.price })
+    .eq("id", id)
+    .eq("business_id", user.businessId)
+    .select("id")
+    .maybeSingle();
+  if (error || !updated) {
+    console.error("[updateServiceAction] Échec de la modification :", error?.message);
+    return { error: "Impossible de modifier la prestation" };
+  }
+
+  revalidatePath("/rendez-vous/services");
+  return { success: "Prestation modifiée" };
+}
+
 export async function toggleServiceActiveAction(id: string, active: boolean): Promise<ActionState> {
   const user = await requirePermission(PERMISSIONS.APPOINTMENTS_MANAGE);
   const { data: service } = await supabase.from("services").select("id").eq("id", id).eq("business_id", user.businessId).maybeSingle();

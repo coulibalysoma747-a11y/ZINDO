@@ -114,6 +114,60 @@ export async function searchWarrantyAction(query: string): Promise<WarrantyRecor
   return (data ?? []) as unknown as WarrantyRecord[];
 }
 
+const updateSchema = z.object({
+  customerId: z.string().optional(),
+  serialNumber: z.string().trim().min(1, "Le numéro de série est requis"),
+  soldAt: z.string().min(1, "La date de vente est requise"),
+  warrantyMonths: z.coerce.number().int().positive("Durée invalide"),
+  note: z.string().optional(),
+});
+
+/** Corriger une garantie enregistrée (flag modifier_supprimer_partout). */
+export async function updateWarrantyAction(_prevState: ActionState, formData: FormData): Promise<ActionState> {
+  const user = await requirePermission(PERMISSIONS.WARRANTY_MANAGE);
+  const id = String(formData.get("id") ?? "");
+  const parsed = updateSchema.safeParse({
+    customerId: formData.get("customerId") || undefined,
+    serialNumber: formData.get("serialNumber"),
+    soldAt: formData.get("soldAt"),
+    warrantyMonths: formData.get("warrantyMonths"),
+    note: formData.get("note") || undefined,
+  });
+  if (!parsed.success) return { error: parsed.error.issues[0]?.message };
+  const data = parsed.data;
+
+  const { data: existing } = await supabase
+    .from("warranty_records")
+    .select("id")
+    .eq("business_id", user.businessId)
+    .eq("serial_number", data.serialNumber)
+    .neq("id", id)
+    .maybeSingle();
+  if (existing) return { error: "Ce numéro de série est déjà enregistré" };
+
+  const { data: updated, error } = await supabase
+    .from("warranty_records")
+    .update({
+      customer_id: data.customerId || null,
+      serial_number: data.serialNumber,
+      sold_at: data.soldAt,
+      warranty_months: data.warrantyMonths,
+      warranty_expires_at: addMonths(data.soldAt, data.warrantyMonths),
+      note: data.note ?? null,
+    })
+    .eq("id", id)
+    .eq("business_id", user.businessId)
+    .select("id")
+    .maybeSingle();
+  if (error || !updated) {
+    console.error("[updateWarrantyAction] Échec de la modification :", error?.message);
+    return { error: "Impossible de modifier la garantie" };
+  }
+
+  revalidatePath("/garantie");
+  return { success: "Garantie modifiée" };
+}
+
 export async function deleteWarrantyAction(id: string): Promise<ActionState> {
   const user = await requirePermission(PERMISSIONS.WARRANTY_MANAGE);
   const { data: record } = await supabase.from("warranty_records").select("id").eq("id", id).eq("business_id", user.businessId).maybeSingle();

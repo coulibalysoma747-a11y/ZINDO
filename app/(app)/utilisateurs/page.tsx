@@ -6,6 +6,8 @@ import { Badge } from "@/components/ui/Badge";
 import { Table, TableHead, TableBody, TableRow, TableHeaderCell, TableCell } from "@/components/ui/Table";
 import { UserManager } from "./UserManager";
 import { UserRowActions } from "./UserRowActions";
+import { EditUserButton } from "./EditUserButton";
+import { isExtendedEditEnabled } from "@/lib/extended-edit";
 
 export default async function UsersPage() {
   const admin = await requirePermission(PERMISSIONS.USERS_MANAGE);
@@ -15,6 +17,7 @@ export default async function UsersPage() {
     .select("id, firstName:first_name, lastName:last_name, phone, role, active")
     .eq("business_id", admin.businessId)
     .order("created_at", { ascending: true });
+  const extendedEdit = await isExtendedEditEnabled(admin.businessId);
   const users = (data ?? []) as unknown as Array<{
     id: string;
     firstName: string;
@@ -49,7 +52,7 @@ export default async function UsersPage() {
           </TableHead>
           <TableBody>
             {users.map((u) => (
-              <UserRow key={u.id} user={u} isSelf={u.id === admin.id} />
+              <UserRow key={u.id} user={u} isSelf={u.id === admin.id} canEdit={extendedEdit} />
             ))}
           </TableBody>
         </Table>
@@ -61,9 +64,11 @@ export default async function UsersPage() {
 function UserRow({
   user,
   isSelf,
+  canEdit,
 }: {
   user: { id: string; firstName: string; lastName: string; phone: string; role: keyof typeof ROLE_LABELS; active: boolean };
   isSelf: boolean;
+  canEdit: boolean;
 }) {
   return (
     <TableRow>
@@ -78,7 +83,10 @@ function UserRow({
         <Badge tone={user.active ? "emerald" : "zinc"}>{user.active ? "Actif" : "Désactivé"}</Badge>
       </TableCell>
       <TableCell align="right">
-        {!isSelf && <UserRowActions userId={user.id} userName={`${user.firstName} ${user.lastName}`} active={user.active} />}
+        <div className="flex items-center justify-end gap-2">
+          {canEdit && <EditUserButton user={user} />}
+          {!isSelf && <UserRowActions userId={user.id} userName={`${user.firstName} ${user.lastName}`} active={user.active} />}
+        </div>
       </TableCell>
     </TableRow>
   );

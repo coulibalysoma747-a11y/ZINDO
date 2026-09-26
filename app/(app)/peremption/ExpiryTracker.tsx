@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Plus, Trash2, X } from "lucide-react";
+import { Plus, Trash2, X, Pencil } from "lucide-react";
 import { Field, Input, Select } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { Card, CardBody } from "@/components/ui/Card";
@@ -11,7 +11,7 @@ import { EmptyState } from "@/components/ui/Empty";
 import { ProductPicker } from "@/components/products/ProductPicker";
 import { ProductThumbnail } from "@/components/products/ProductThumbnail";
 import { formatDate } from "@/lib/format";
-import { addExpiryBatchAction, deleteExpiryBatchAction, type ExpiryBatchRow } from "@/lib/actions/expiry";
+import { addExpiryBatchAction, updateExpiryBatchAction, deleteExpiryBatchAction, type ExpiryBatchRow } from "@/lib/actions/expiry";
 
 type SelectedProduct = { id: string; name: string; photoUrl?: string | null };
 
@@ -31,11 +31,15 @@ export function ExpiryTracker({
   locations,
   defaultLocationId,
   batches,
+  canEdit = false,
 }: {
   locations: { id: string; name: string }[];
   defaultLocationId?: string;
   batches: ExpiryBatchRow[];
+  canEdit?: boolean;
 }) {
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editError, setEditError] = useState<string | null>(null);
   const router = useRouter();
   const [formOpen, setFormOpen] = useState(false);
   const [locationId, setLocationId] = useState(defaultLocationId ?? locations[0]?.id ?? "");
@@ -69,6 +73,19 @@ export function ExpiryTracker({
       setExpiryDate("");
       setNote("");
       setFormOpen(false);
+      router.refresh();
+    });
+  }
+
+  function handleUpdate(batchId: string, formData: FormData) {
+    setEditError(null);
+    startTransition(async () => {
+      const result = await updateExpiryBatchAction(batchId, formData);
+      if (result?.error) {
+        setEditError(result.error);
+        return;
+      }
+      setEditingId(null);
       router.refresh();
     });
   }
@@ -162,11 +179,44 @@ export function ExpiryTracker({
                     {b.note && ` · ${b.note}`}
                   </p>
                 </div>
+                {editingId === b.id ? (
+                  <form action={(fd) => handleUpdate(b.id, fd)} className="flex w-full flex-wrap items-end gap-2">
+                    <Field label="Quantité" htmlFor={`q-${b.id}`}>
+                      <Input id={`q-${b.id}`} name="quantity" type="number" min={1} defaultValue={b.quantity} required className="w-24" />
+                    </Field>
+                    <Field label="Date de péremption" htmlFor={`d-${b.id}`}>
+                      <Input id={`d-${b.id}`} name="expiryDate" type="date" defaultValue={b.expiryDate.slice(0, 10)} required />
+                    </Field>
+                    <Field label="Note" htmlFor={`n-${b.id}`}>
+                      <Input id={`n-${b.id}`} name="note" defaultValue={b.note ?? ""} />
+                    </Field>
+                    <Button type="submit" size="sm" disabled={pending}>
+                      Enregistrer
+                    </Button>
+                    <Button type="button" size="sm" variant="outline" onClick={() => setEditingId(null)}>
+                      Annuler
+                    </Button>
+                    {editError && <p className="w-full text-sm text-red-600">{editError}</p>}
+                  </form>
+                ) : (
                 <div className="flex items-center gap-3">
                   <div className="text-right">
                     <p className="text-xs text-zinc-400">{formatDate(b.expiryDate)}</p>
                     <Badge tone={u.tone}>{u.label}</Badge>
                   </div>
+                  {canEdit && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setEditError(null);
+                        setEditingId(b.id);
+                      }}
+                      className="rounded-lg p-1.5 text-zinc-500 hover:bg-zinc-100"
+                      aria-label="Modifier le lot"
+                    >
+                      <Pencil className="h-4 w-4" />
+                    </button>
+                  )}
                   <button
                     type="button"
                     onClick={() => handleDelete(b.id)}
@@ -177,6 +227,7 @@ export function ExpiryTracker({
                     <Trash2 className="h-4 w-4" />
                   </button>
                 </div>
+                )}
               </CardBody>
             );
           })}

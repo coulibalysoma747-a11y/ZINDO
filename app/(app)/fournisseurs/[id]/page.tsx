@@ -12,6 +12,9 @@ import { EmptyState } from "@/components/ui/Empty";
 import { Badge } from "@/components/ui/Badge";
 import { Table, TableHead, TableBody, TableRow, TableHeaderCell, TableCell } from "@/components/ui/Table";
 import { SupplierEditButton } from "./SupplierEditButton";
+import { DeleteRedirectButton } from "@/components/ui/DeleteRedirectButton";
+import { isExtendedEditEnabled } from "@/lib/extended-edit";
+import { deleteSupplierAction } from "@/lib/actions/suppliers";
 import { isPurchaseOrdersModuleEnabled } from "@/lib/actions/purchase-orders";
 
 type SupplierRow = {
@@ -45,7 +48,10 @@ export default async function SupplierDetailPage({
   const supplier = supplierRow as unknown as SupplierRow & { leadTimeDays?: number | null };
 
   // Délai de livraison lu à part (colonne du réassort intelligent, ajoutée par migration).
-  const leadTimeEnabled = await isPurchaseOrdersModuleEnabled(user.businessId);
+  const [leadTimeEnabled, extendedEdit] = await Promise.all([
+    isPurchaseOrdersModuleEnabled(user.businessId),
+    isExtendedEditEnabled(user.businessId),
+  ]);
   if (leadTimeEnabled) {
     const { data: leadRow } = await supabase.from("suppliers").select("leadTimeDays:lead_time_days").eq("id", id).maybeSingle();
     supplier.leadTimeDays = (leadRow?.leadTimeDays as number | null) ?? null;
@@ -78,7 +84,17 @@ export default async function SupplierDetailPage({
           <h1 className="mt-1 text-xl font-bold text-zinc-900">{supplier.name}</h1>
           {supplier.company && <p className="text-sm text-zinc-500">{supplier.company}</p>}
         </div>
-        <SupplierEditButton supplier={supplier} showLeadTime={leadTimeEnabled} />
+        <div className="flex flex-wrap gap-2">
+          <SupplierEditButton supplier={supplier} showLeadTime={leadTimeEnabled} />
+          {extendedEdit && (
+            <DeleteRedirectButton
+              action={deleteSupplierAction.bind(null, supplier.id)}
+              redirectTo="/fournisseurs"
+              confirmTitle="Supprimer le fournisseur"
+              confirmMessage={`Supprimer définitivement « ${supplier.name} » ? Un fournisseur lié à des produits ou à des achats ne peut pas être supprimé.`}
+            />
+          )}
+        </div>
       </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
