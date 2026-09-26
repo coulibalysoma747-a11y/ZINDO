@@ -8,7 +8,16 @@ import { headers } from "next/headers";
 import { supabase } from "@/lib/supabase";
 import { isEmailConfigured, sendPasswordResetEmail } from "@/lib/email";
 
-export type ActionState = { error?: string; success?: boolean } | undefined;
+export type ActionState = { error?: string; success?: boolean; sentTo?: string } | undefined;
+
+const SUPPORT_HINT = "Contactez le support ZINDO sur WhatsApp au +226 04 05 99 29.";
+
+/** « mo****@gmail.com » : confirme l'adresse sans l'afficher en entier. */
+function maskEmail(email: string) {
+  const [local, domain] = email.split("@");
+  if (!domain) return email;
+  return `${local.slice(0, 2)}${"*".repeat(Math.max(2, local.length - 2))}@${domain}`;
+}
 
 const RESET_TOKEN_TTL_MINUTES = 30;
 
@@ -28,9 +37,10 @@ const requestSchema = z.object({
 });
 
 /**
- * Toujours répondre par le même message de succès générique, que le compte
- * existe ou non et que l'e-mail parte réellement ou non — évite qu'un
- * attaquant puisse déduire quels e-mails sont enregistrés dans ZINDO.
+ * Répond la vérité : « e-mail envoyé » seulement si l'envoi a réellement
+ * réussi. L'ancienne réponse générique (identique que le compte existe ou
+ * non, que l'e-mail parte ou non) laissait les commerçants attendre un
+ * e-mail qui n'arrivait jamais — choix du propriétaire le 2026-09-26.
  */
 export async function requestPasswordResetAction(
   _prevState: ActionState,
@@ -45,7 +55,7 @@ export async function requestPasswordResetAction(
     // Configuration serveur manquante : contrairement à "compte introuvable"
     // (qu'on masque volontairement), c'est un vrai problème à signaler.
     console.error("[requestPasswordResetAction] RESEND_API_KEY manquant");
-    return { error: "L'envoi d'e-mails n'est pas configuré pour le moment. Réessayez plus tard." };
+    return { error: `L'envoi d'e-mails n'est pas configuré pour le moment. ${SUPPORT_HINT}` };
   }
 
   const email = parsed.data.email.trim();
@@ -55,31 +65,42 @@ export async function requestPasswordResetAction(
     .from("users")
     .select("id, email, active")
     .ilike("email", emailPattern)
+    .order("active", { ascending: false })
+    .limit(1)
     .maybeSingle();
 
-  if (user && user.active) {
-    const token = randomBytes(32).toString("hex");
-    const tokenHash = hashToken(token);
-    const expiresAt = new Date(Date.now() + RESET_TOKEN_TTL_MINUTES * 60_000).toISOString();
-
-    const { error: insertError } = await supabase
-      .from("password_reset_tokens")
-      .insert({ user_id: user.id, token_hash: tokenHash, expires_at: expiresAt });
-
-    if (insertError) {
-      console.error("[requestPasswordResetAction] Échec création token :", insertError.message);
-    } else {
-      try {
-        const origin = await getOrigin();
-        const resetUrl = `${origin}/reinitialiser-mot-de-passe?token=${token}`;
-        await sendPasswordResetEmail(user.email as string, resetUrl);
-      } catch (e) {
-        console.error("[requestPasswordResetAction] Échec envoi e-mail :", e);
-      }
-    }
+  if (!user) {
+    return {
+      error:
+        "Aucun compte ZINDO n'utilise cette adresse e-mail. Vérifiez l'orthographe, ou demandez à l'administrateur de votre commerce de vous créer un nouveau mot de passe.",
+    };
+  }
+  if (!user.active) {
+    return { error: "Ce compte est désactivé. Contactez l'administrateur de votre commerce." };
   }
 
-  return { success: true };
+  const token = randomBytes(32).toString("hex");
+  const tokenHash = hashToken(token);
+  const expiresAt = new Date(Date.now() + RESET_TOKEN_TTL_MINUTES * 60_000).toISOString();
+
+  const { error: insertError } = await supabase
+    .from("password_reset_tokens")
+    .insert({ user_id: user.id, token_hash: tokenHash, expires_at: expiresAt });
+  if (insertError) {
+    console.error("[requestPasswordResetAction] Échec création token :", insertError.message);
+    return { error: `Impossible de préparer la réinitialisation pour le moment. ${SUPPORT_HINT}` };
+  }
+
+  try {
+    const origin = await getOrigin();
+    const resetUrl = `${origin}/reinitialiser-mot-de-passe?token=${token}`;
+    await sendPasswordResetEmail(user.email as string, resetUrl);
+  } catch (e) {
+    console.error("[requestPasswordResetAction] Échec envoi e-mail :", e);
+    return { error: `L'e-mail n'a pas pu être envoyé. ${SUPPORT_HINT}` };
+  }
+
+  return { success: true, sentTo: maskEmail(user.email as string) };
 }
 
 const resetSchema = z

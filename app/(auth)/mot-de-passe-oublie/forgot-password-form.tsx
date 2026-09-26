@@ -14,8 +14,8 @@ export function ForgotPasswordForm() {
           <CheckCircle2 className="h-6 w-6" />
         </div>
         <p className="text-sm text-zinc-600">
-          Si un compte ZINDO est associé à cette adresse, un e-mail avec un lien de réinitialisation vient
-          d&apos;être envoyé. Pensez à vérifier vos spams.
+          E-mail envoyé à <span className="font-semibold text-zindo-ink-900">{state.sentTo}</span> avec un lien pour
+          choisir un nouveau mot de passe (valable 30 minutes). Pensez à regarder dans les spams.
         </p>
       </div>
     );

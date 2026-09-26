@@ -10,7 +10,8 @@ const GOOGLE_ERROR_MESSAGES: Record<string, string> = {
   "google-non-configure": "La connexion avec Google n'est pas encore configurée pour ZINDO.",
   "google-echec": "La connexion avec Google a échoué. Réessayez.",
   "google-email-non-verifie": "Votre adresse e-mail Google n'est pas vérifiée.",
-  "google-aucun-compte": "Aucun compte ZINDO n'est associé à cette adresse Google. Créez d'abord un compte.",
+  "google-aucun-compte":
+    "Aucun compte ZINDO n'utilise cette adresse Google. Connectez-vous avec votre téléphone et votre mot de passe, ajoutez cette adresse e-mail dans Mon profil, puis Google fonctionnera.",
   "google-compte-desactive": "Ce compte a été désactivé. Contactez votre administrateur.",
 };
 

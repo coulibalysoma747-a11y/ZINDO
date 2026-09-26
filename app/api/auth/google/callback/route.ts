@@ -33,7 +33,11 @@ export async function GET(request: NextRequest) {
       .select(
         "id, businessId:business_id, role, active, business:businesses(suspended)"
       )
-      .eq("email", profile.email)
+      // Sans tenir compte des majuscules (« Moussa@… » saisi au téléphone) ;
+      // `%`/`_` échappés pour ne pas servir de jokers ILIKE.
+      .ilike("email", profile.email.replace(/[%_\\]/g, (m) => `\\${m}`))
+      .order("active", { ascending: false })
+      .limit(1)
       .maybeSingle();
 
     if (error) {
@@ -67,7 +71,8 @@ export async function GET(request: NextRequest) {
       role: user.role as string,
     });
     return redirectWithClearedState(request, "/dashboard");
-  } catch {
+  } catch (e) {
+    console.error("[googleCallback] Échec de la connexion Google :", e);
     return redirectWithClearedState(request, "/login?error=google-echec");
   }
 }
