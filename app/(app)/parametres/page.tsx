@@ -8,6 +8,7 @@ import { MEDICAL_ACTIVITY_KEY } from "@/lib/nav";
 import { getLocations } from "@/lib/location";
 import { getInvoiceCustomization } from "@/lib/invoice-customization";
 import { getBusinessSettings } from "@/lib/business-settings";
+import { isTicketPreviewEnabled } from "@/lib/ticket-preview";
 import { ensureInvoiceTemplatesFlagRegistered, isInvoiceTemplatesModuleEnabled } from "@/lib/actions/invoice-templates";
 import { listFasoStockStores, type FasoStockStore } from "@/lib/integrations/faso-stock";
 import { Card, CardBody, CardHeader } from "@/components/ui/Card";
@@ -58,6 +59,7 @@ export default async function SettingsPage() {
     invoiceCustomization,
     businessSettings,
     invoiceTemplatesEnabled,
+    ticketPreviewEnabled,
   ] = await Promise.all([
       supabase.from("payment_method_configs").select("method, label, enabled").eq("business_id", user.businessId),
       supabase.from("role_permissions").select("role, permission, allowed").eq("business_id", user.businessId),
@@ -72,6 +74,7 @@ export default async function SettingsPage() {
       getInvoiceCustomization(user.businessId),
       getBusinessSettings(user.businessId),
       isInvoiceTemplatesModuleEnabled(user.businessId),
+      isTicketPreviewEnabled(user.businessId),
     ]);
 
   const configMap = new Map((configs ?? []).map((c) => [c.method as string, c]));
@@ -143,7 +146,12 @@ export default async function SettingsPage() {
           <h2 className="font-semibold text-zinc-900">Commerce</h2>
         </CardHeader>
         <CardBody>
-          <BusinessSettingsForm business={{ ...user.business, ...invoiceCustomization }} />
+          <BusinessSettingsForm
+            business={{ ...user.business, ...invoiceCustomization }}
+            ticketPreview={
+              ticketPreviewEnabled ? { cashierName: `${user.firstName} ${user.lastName}`.trim() } : null
+            }
+          />
         </CardBody>
       </Card>
 

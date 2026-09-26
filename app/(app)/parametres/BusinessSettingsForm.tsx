@@ -5,6 +5,7 @@ import { Field, Input, Select, Textarea } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { ImageUploadField } from "@/components/ui/ImageUploadField";
 import { updateBusinessSettingsAction, type ActionState } from "@/lib/actions/settings";
+import { TicketPreviewButton } from "./TicketPreviewButton";
 
 type Business = {
   name: string;
@@ -33,14 +34,21 @@ const QR_SIZE_OPTIONS = [
   { value: 180, label: "Grand" },
 ];
 
-export function BusinessSettingsForm({ business }: { business: Business }) {
+export function BusinessSettingsForm({
+  business,
+  ticketPreview,
+}: {
+  business: Business;
+  /** Présent seulement si le flag « apercu_ticket_parametres » est actif pour ce commerce. */
+  ticketPreview?: { cashierName: string } | null;
+}) {
   const [state, formAction, pending] = useActionState<ActionState, FormData>(
     updateBusinessSettingsAction,
     undefined
   );
 
   return (
-    <form action={formAction} className="space-y-4">
+    <form id="business-settings-form" action={formAction} className="space-y-4">
       <ImageUploadField
         name="logo"
         removeFieldName="removeLogo"
@@ -141,9 +149,18 @@ export function BusinessSettingsForm({ business }: { business: Business }) {
 
       {state?.error && <p className="text-sm text-red-600">{state.error}</p>}
       {state?.success && <p className="text-sm text-emerald-600">{state.success}</p>}
-      <Button type="submit" disabled={pending}>
-        {pending ? "Enregistrement..." : "Enregistrer"}
-      </Button>
+      <div className="flex flex-wrap gap-2">
+        <Button type="submit" disabled={pending}>
+          {pending ? "Enregistrement..." : "Enregistrer"}
+        </Button>
+        {ticketPreview && (
+          <TicketPreviewButton
+            formId="business-settings-form"
+            cashierName={ticketPreview.cashierName}
+            savedLogoUrl={business.logoUrl}
+          />
+        )}
+      </div>
     </form>
   );
 }
