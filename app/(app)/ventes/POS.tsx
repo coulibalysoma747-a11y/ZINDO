@@ -914,7 +914,7 @@ export function POS({
   // droite (toujours visible, à côté du bouton Valider) sur ordinateur.
   const renderCart = (compact: boolean) => (
     <Card>
-      <CardHeader>
+      <CardHeader className="px-4 py-2.5 sm:px-4">
         <h2 className="font-semibold tracking-tight text-zinc-900">Panier</h2>
         {cart.length > 0 && (
           <span className="rounded-full bg-zindo-green-50 px-2.5 py-0.5 text-xs font-semibold text-zindo-green-700 dark:bg-emerald-500/10 dark:text-emerald-400">
@@ -924,7 +924,7 @@ export function POS({
       </CardHeader>
       <CardBody className="p-0">
         {cart.length === 0 ? (
-          <p className="p-8 text-center text-sm text-zinc-500">Le panier est vide.</p>
+          <p className="p-4 text-center text-sm text-zinc-500">Le panier est vide.</p>
         ) : (
           <>
             {/* Version tableau : confortable à partir de sm (tablette/bureau). En
@@ -1343,15 +1343,17 @@ export function POS({
         <div className="md:hidden">{renderCart(false)}</div>
       </div>
 
-      <div className="space-y-4 md:sticky md:top-4 md:self-start md:max-h-[calc(100vh-2rem)] md:overflow-y-auto">
+      <div className="space-y-3 md:sticky md:top-4 md:self-start md:max-h-[calc(100vh-2rem)] md:overflow-y-auto">
         <div className="hidden md:block">{renderCart(true)}</div>
         {(!hideCustomerInPos || isCreditOnly) && (
           <Card>
-            <CardHeader>
-              <h2 className="font-semibold tracking-tight text-zinc-900">Client</h2>
-            </CardHeader>
-            <CardBody className="flex gap-2">
-              <Select value={customerId} onChange={(e) => setCustomerId(e.target.value)} className="flex-1">
+            <CardBody className="flex gap-2 p-3 sm:p-3">
+              <Select
+                value={customerId}
+                onChange={(e) => setCustomerId(e.target.value)}
+                className="flex-1"
+                aria-label="Client"
+              >
                 <option value="">Client de passage</option>
                 {customers.map((c) => (
                   <option key={c.id} value={c.id}>
@@ -1367,18 +1369,18 @@ export function POS({
         )}
 
         <Card>
-          <CardHeader>
+          <CardHeader className="px-4 py-2.5 sm:px-4">
             <h2 className="font-semibold tracking-tight text-zinc-900">{queueOnlyMode ? "Panier" : "Paiement"}</h2>
           </CardHeader>
-          <CardBody className="space-y-3">
+          <CardBody className="space-y-2.5 p-4 sm:p-4">
             {manualSaleNumberEnabled && !queueOnlyMode && (
-              <Field label="N° de ticket (facultatif)" htmlFor="manualNumber" hint="Vide : numéro ZINDO automatique">
+              <Field label="N° de ticket (facultatif)" htmlFor="manualNumber">
                 <div className="flex gap-2">
                   <Input
                     id="manualNumber"
                     value={manualNumberInput}
                     onChange={(e) => setManualNumberInput(e.target.value)}
-                    placeholder={nextManualNumber ?? "ex. S-1251"}
+                    placeholder="Vide : automatique"
                     maxLength={40}
                     className="flex-1"
                   />
@@ -1391,15 +1393,17 @@ export function POS({
               </Field>
             )}
 
-            <Field label="Remise globale" htmlFor="discount">
-              <Input
-                id="discount"
-                type="number"
-                min={0}
-                value={discount}
-                onChange={(e) => setDiscount(Number(e.target.value) || 0)}
-              />
-            </Field>
+            {queueOnlyMode && (
+              <Field label="Remise globale" htmlFor="discount">
+                <Input
+                  id="discount"
+                  type="number"
+                  min={0}
+                  value={discount}
+                  onChange={(e) => setDiscount(Number(e.target.value) || 0)}
+                />
+              </Field>
+            )}
 
             {!queueOnlyMode && (
               <>
@@ -1434,6 +1438,18 @@ export function POS({
                   </Field>
                 )}
 
+                {isMixed && (
+                  <Field label="Remise globale" htmlFor="discount">
+                    <Input
+                      id="discount"
+                      type="number"
+                      min={0}
+                      value={discount}
+                      onChange={(e) => setDiscount(Number(e.target.value) || 0)}
+                    />
+                  </Field>
+                )}
+
                 {isMixed ? (
                   <div className="grid grid-cols-2 gap-3">
                     <Field label="Part espèces" htmlFor="cashPortion">
@@ -1456,30 +1472,43 @@ export function POS({
                     </Field>
                   </div>
                 ) : (
-                  <Field
-                    label="Montant reçu"
-                    htmlFor="amountPaid"
-                    hint={isCreditOnly ? "Laissez à 0 pour un crédit total" : "Laissez vide pour un paiement exact"}
-                  >
-                    <Input
-                      id="amountPaid"
-                      type="number"
-                      min={0}
-                      value={amountPaidInput}
-                      onChange={(e) => setAmountPaidInput(e.target.value)}
-                      placeholder={String(total)}
-                    />
-                  </Field>
+                  <div className="grid grid-cols-2 gap-3">
+                    <Field label="Remise globale" htmlFor="discount">
+                      <Input
+                        id="discount"
+                        type="number"
+                        min={0}
+                        value={discount}
+                        onChange={(e) => setDiscount(Number(e.target.value) || 0)}
+                      />
+                    </Field>
+                    <Field
+                      label="Montant reçu"
+                      htmlFor="amountPaid"
+                      hint={isCreditOnly ? "0 = crédit total" : undefined}
+                    >
+                      <Input
+                        id="amountPaid"
+                        type="number"
+                        min={0}
+                        value={amountPaidInput}
+                        onChange={(e) => setAmountPaidInput(e.target.value)}
+                        placeholder={`${total} (exact)`}
+                      />
+                    </Field>
+                  </div>
                 )}
               </>
             )}
 
-            <div className="space-y-1.5 rounded-lg border border-zinc-200 bg-zinc-50 p-3.5 text-sm dark:border-zindo-green-500/20 dark:bg-zindo-green-500/5">
-              <div className="flex justify-between text-zinc-600">
-                <span>Sous-total</span>
-                <span className="tabular-nums">{formatMoney(subtotal, currency)}</span>
-              </div>
-              <div className="flex items-baseline justify-between border-t border-zinc-200 pt-2 dark:border-slate-700">
+            <div className="space-y-1 rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2 text-sm dark:border-zindo-green-500/20 dark:bg-zindo-green-500/5">
+              {subtotal !== total && (
+                <div className="flex justify-between border-b border-zinc-200 pb-1.5 text-zinc-600 dark:border-slate-700">
+                  <span>Sous-total</span>
+                  <span className="tabular-nums">{formatMoney(subtotal, currency)}</span>
+                </div>
+              )}
+              <div className="flex items-baseline justify-between">
                 <span className="font-semibold text-zinc-900">Total</span>
                 <span className="text-2xl font-semibold tracking-tight tabular-nums text-zinc-900">
                   {formatMoney(total, currency)}
