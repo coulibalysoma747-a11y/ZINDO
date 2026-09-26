@@ -312,6 +312,14 @@ export async function getSaleDocumentAction(saleId: string, formatOverride?: "TI
     currency: business.currency,
     qrCodeDataUrl,
     qrCodeSize: business.qrCodeSize,
+    // Bon de retour (lib/actions/sale-returns.ts) : total et payé négatifs ;
+    // payé - total = part déduite de la dette plutôt que rendue en argent.
+    ...(sale.documentType === "RETOUR" && {
+      isReturn: true,
+      returnDebtReduced: Math.max(0, sale.amountPaid - sale.total),
+      change: 0,
+      remaining: 0,
+    }),
   };
 
   return {

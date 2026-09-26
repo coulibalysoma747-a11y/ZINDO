@@ -32,6 +32,10 @@ export type ReceiptData = {
   qrCodeDataUrl?: string | null;
   /** Taille d'affichage choisie par le commerce, en pixels. 0 (ou absent) = taille automatique selon le format. */
   qrCodeSize?: number;
+  /** Bon de retour (lib/actions/sale-returns.ts) : montants négatifs, argent rendu au client. */
+  isReturn?: boolean;
+  /** Part du retour déduite de la dette du client (plutôt que rendue). */
+  returnDebtReduced?: number;
 };
 
 export type ReceiptWidth = "58mm" | "80mm" | "A4";
@@ -116,7 +120,7 @@ function ClassiqueBody({ data, width, money, qrSize }: BodyProps) {
       <DashLine width={width} />
 
       <div className="flex justify-between">
-        <span>Reçu N°</span>
+        <span>{data.isReturn ? "Bon de retour N°" : "Reçu N°"}</span>
         <span className="font-semibold">{data.ticketNumber}</span>
       </div>
       <div className="flex justify-between">
@@ -176,10 +180,16 @@ function ClassiqueBody({ data, width, money, qrSize }: BodyProps) {
           <span>TOTAL</span>
           <span>{money(data.total)}</span>
         </div>
-        <div className="flex justify-between">
-          <span>Payé ({data.paymentMethodLabel})</span>
-          <span>{money(data.amountPaid)}</span>
+        <div className={data.isReturn && !data.amountPaid ? "hidden" : "flex justify-between"}>
+          <span>{data.isReturn ? "Rendu au client" : "Payé"} ({data.paymentMethodLabel})</span>
+          <span>{money(data.isReturn ? Math.abs(data.amountPaid) : data.amountPaid)}</span>
         </div>
+        {data.isReturn && !!data.returnDebtReduced && (
+          <div className="flex justify-between">
+            <span>Déduit de la dette</span>
+            <span>{money(data.returnDebtReduced)}</span>
+          </div>
+        )}
         {!!data.change && data.change > 0 && (
           <div className="flex justify-between font-medium">
             <span>Monnaie rendue</span>
@@ -221,7 +231,7 @@ function ModerneBody({ data, money, qrSize }: BodyProps) {
       <div className="my-3 h-px bg-zinc-100" />
 
       <div className="flex justify-between text-zinc-500">
-        <span>Reçu N° {data.ticketNumber}</span>
+        <span>{data.isReturn ? "Bon de retour N°" : "Reçu N°"} {data.ticketNumber}</span>
         <span>{formatDateTime(data.date)}</span>
       </div>
       {(data.cashierName || data.customerName) && (
@@ -260,10 +270,16 @@ function ModerneBody({ data, money, qrSize }: BodyProps) {
         <span className="text-[15px] font-bold text-emerald-900">{money(data.total)}</span>
       </div>
 
-      <div className="flex justify-between text-zinc-500">
-        <span>Payé · {data.paymentMethodLabel}</span>
-        <span>{money(data.amountPaid)}</span>
+      <div className={data.isReturn && !data.amountPaid ? "hidden" : "flex justify-between text-zinc-500"}>
+        <span>{data.isReturn ? "Rendu au client" : "Payé"} · {data.paymentMethodLabel}</span>
+        <span>{money(data.isReturn ? Math.abs(data.amountPaid) : data.amountPaid)}</span>
       </div>
+      {data.isReturn && !!data.returnDebtReduced && (
+        <div className="flex justify-between">
+          <span>Déduit de la dette</span>
+          <span>{money(data.returnDebtReduced)}</span>
+        </div>
+      )}
       {!!data.change && data.change > 0 && (
         <div className="flex justify-between font-medium">
           <span>Monnaie rendue</span>
@@ -321,10 +337,16 @@ function CompactBody({ data, money, qrSize }: BodyProps) {
         <span>TOTAL</span>
         <span>{money(data.total)}</span>
       </div>
-      <div className="flex justify-between">
-        <span>{data.paymentMethodLabel}</span>
-        <span>{money(data.amountPaid)}</span>
+      <div className={data.isReturn && !data.amountPaid ? "hidden" : "flex justify-between"}>
+        <span>{data.isReturn ? `Rendu au client · ${data.paymentMethodLabel}` : data.paymentMethodLabel}</span>
+        <span>{money(data.isReturn ? Math.abs(data.amountPaid) : data.amountPaid)}</span>
       </div>
+      {data.isReturn && !!data.returnDebtReduced && (
+        <div className="flex justify-between">
+          <span>Déduit de la dette</span>
+          <span>{money(data.returnDebtReduced)}</span>
+        </div>
+      )}
       {!!data.change && data.change > 0 && (
         <div className="flex justify-between">
           <span>Rendu</span>

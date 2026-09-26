@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { loadSaleItemsInBaseUnits } from "@/lib/sale-items";
+import { getReturnLinks } from "@/lib/sale-returns";
 import { after } from "next/server";
 import { supabase } from "@/lib/supabase";
 import { requirePermission, requireUser } from "@/lib/auth";
@@ -503,6 +504,11 @@ async function updateSaleImpl(input: UpdateSaleInput): Promise<CreateSaleResult>
   if (sale.status === "ANNULEE") {
     return { success: false, error: "Impossible de modifier une vente annulée" };
   }
+  const links = await getReturnLinks(sale.id as string);
+  if (links.returnOfSaleId) return { success: false, error: "Un bon de retour ne se modifie pas : annulez-le puis refaites-le." };
+  if (links.activeReturns > 0) {
+    return { success: false, error: "Cette vente a des retours d'articles : elle ne peut plus être modifiée." };
+  }
   if (!input.items || input.items.length === 0) {
     return { success: false, error: "Le panier est vide" };
   }
@@ -664,23 +670,62 @@ async function cancelSaleImpl(saleId: string, reason?: string) {
 
   const { data: sale } = await supabase
     .from("sales")
-    .select("id, number, locationId:location_id, status")
+    .select("id, number, locationId:location_id, status, total, amountPaid:amount_paid")
     .eq("id", saleId)
     .eq("business_id", user.businessId)
     .maybeSingle();
   if (!sale) return { error: "Vente introuvable" };
   if (sale.status === "ANNULEE") return { error: "Cette vente est déjà annulée" };
 
+  // Retours d'articles (lib/actions/sale-returns.ts) : annuler la vente
+  // d'origine remettrait en stock des articles déjà rendus.
+  const links = await getReturnLinks(sale.id as string);
+  if (links.activeReturns > 0) {
+    return { error: "Cette vente a des retours d'articles : annulez d'abord les bons de retour." };
+  }
+
   const items = await loadSaleItemsInBaseUnits(sale.id as string);
 
-  await recordStockMovements(items, {
-    businessId: user.businessId,
-    locationId: sale.locationId as string,
-    userId: user.id,
-    direction: "IN",
-    reason: "RETOUR_CLIENT",
-    note: `Annulation vente ${sale.number}${motif}`,
-  });
+  if (links.returnOfSaleId) {
+    // Annuler un bon de retour : les articles ressortent du stock, et la
+    // dette qu'il avait réduite est rétablie sur la vente d'origine.
+    await recordStockMovements(
+      items.map((i) => ({ productId: i.productId, quantity: Math.abs(i.quantity) })),
+      {
+        businessId: user.businessId,
+        locationId: sale.locationId as string,
+        userId: user.id,
+        direction: "OUT",
+        reason: "CORRECTION",
+        note: `Annulation du retour ${sale.number}${motif}`,
+      }
+    );
+    const debtReduced = Number(sale.amountPaid) - Number(sale.total);
+    if (debtReduced > 0) {
+      const { data: original } = await supabase
+        .from("sales")
+        .select("id, total, amountPaid:amount_paid")
+        .eq("id", links.returnOfSaleId)
+        .eq("business_id", user.businessId)
+        .maybeSingle();
+      if (original) {
+        const newPaid = Math.max(0, Number(original.amountPaid) - debtReduced);
+        const status = newPaid >= Number(original.total) ? "PAYEE" : newPaid > 0 ? "PARTIELLE" : "CREDIT";
+        await supabase.from("sales").update({ amount_paid: newPaid, status }).eq("id", original.id);
+      }
+    }
+    revalidatePath(`/ventes/${links.returnOfSaleId}`);
+    revalidatePath("/credits");
+  } else {
+    await recordStockMovements(items, {
+      businessId: user.businessId,
+      locationId: sale.locationId as string,
+      userId: user.id,
+      direction: "IN",
+      reason: "RETOUR_CLIENT",
+      note: `Annulation vente ${sale.number}${motif}`,
+    });
+  }
 
   const { error } = await supabase.from("sales").update({ status: "ANNULEE" }).eq("id", sale.id);
   if (error) {

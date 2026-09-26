@@ -8,6 +8,7 @@ import { logAction } from "@/lib/audit";
 import { adjustStock } from "@/lib/stock";
 import { recordStockMovements, insertSaleItems, type SaleItemRow } from "@/lib/actions/sales";
 import { loadSaleItemsInBaseUnits } from "@/lib/sale-items";
+import { getReturnLinks } from "@/lib/sale-returns";
 import type { PaymentMethod } from "@/lib/db-types";
 
 /**
@@ -67,6 +68,10 @@ export async function adminUpdateSaleAction(
   if (!sale) return { error: "Vente introuvable" };
   if (sale.status === "ANNULEE") return { error: "Impossible de modifier une vente annulée — annulez-en une nouvelle si besoin" };
   if (!input.items || input.items.length === 0) return { error: "Le panier ne peut pas être vide (annulez la vente à la place)" };
+  const links = await getReturnLinks(sale.id);
+  if (links.returnOfSaleId || links.activeReturns > 0) {
+    return { error: "Vente liée à un retour d'articles : elle ne peut plus être modifiée." };
+  }
 
   const { data: existingItems } = await supabase
     .from("sale_items")
@@ -205,6 +210,12 @@ export async function adminCancelSaleAction(businessId: string, saleId: string):
   const sale = await loadSaleForAdmin(businessId, saleId);
   if (!sale) return { error: "Vente introuvable" };
   if (sale.status === "ANNULEE") return { error: "Cette vente est déjà annulée" };
+  // Retours d'articles : voir cancelSaleImpl (lib/actions/sales.ts), qui
+  // sait annuler un bon de retour proprement — à faire depuis le commerce.
+  const links = await getReturnLinks(sale.id);
+  if (links.returnOfSaleId || links.activeReturns > 0) {
+    return { error: "Vente liée à un retour d'articles : annulation à faire depuis le compte du commerçant." };
+  }
 
   const items = await loadSaleItemsInBaseUnits(sale.id);
 
