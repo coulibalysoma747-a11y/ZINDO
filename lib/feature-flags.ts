@@ -135,7 +135,7 @@ export async function isFeatureEnabledGlobally(key: string): Promise<boolean> {
  * chose que l'administrateur a délibérément laissé désactivé).
  */
 export async function registerFeatureFlag(key: string, label: string, description?: string) {
-  // Appelé notamment depuis /login (ensureGoogleSignupFlagRegistered), donc
+  // Appelé notamment au retour de connexion Google (ensureGoogleSignupFlagRegistered), donc
   // potentiellement avant toute connexion sur l'app Windows, où aucun accès
   // Supabase n'est encore possible (voir lib/supabase.ts resolveClient) —
   // ce bootstrap best-effort ne doit jamais faire planter une page publique ;

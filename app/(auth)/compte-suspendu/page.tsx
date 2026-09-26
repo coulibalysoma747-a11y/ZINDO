@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/Button";
 
 export default async function AccountSuspendedPage() {
   const user = await getCurrentUser();
-  if (!user) redirect("/login");
+  if (!user) redirect("/api/auth/fin-session");
   if (!user.business.suspended) redirect("/dashboard");
 
   return (

@@ -119,7 +119,9 @@ export type CurrentUser = NonNullable<Awaited<ReturnType<typeof getCurrentUser>>
  */
 export async function requireUserAllowingActivitySetup() {
   const user = await getCurrentUser();
-  if (!user) redirect("/login");
+  // Passe par /api/auth/fin-session pour effacer le cookie : une redirection
+  // directe vers /login bouclait (voir cette route).
+  if (!user) redirect("/api/auth/fin-session");
   if (user.business.suspended) redirect("/compte-suspendu");
   return user;
 }
