@@ -11,6 +11,7 @@ import { POS } from "./POS";
 import { getPosProductsAction } from "@/lib/actions/product-search";
 import { getVerificationBaseUrl } from "@/lib/verification";
 import { getSuggestedManualSaleNumber, isManualSaleNumberEnabled } from "@/lib/manual-sale-number";
+import { isQuickCashNotesEnabled } from "@/lib/quick-cash-notes";
 
 /**
  * Chargement de données partagé entre les deux modules de vente — "Vente /
@@ -58,12 +59,13 @@ export async function POSPageContent({ mode }: { mode: "pos" | "facture" }) {
     user: { firstName: string; lastName: string };
   };
 
-  const [{ data: customers }, paymentMethods, canEditProducts, canSeeMargin, manualSaleNumberEnabled] = await Promise.all([
+  const [{ data: customers }, paymentMethods, canEditProducts, canSeeMargin, manualSaleNumberEnabled, quickCashNotes] = await Promise.all([
     supabase.from("customers").select("id, name, phone").eq("business_id", user.businessId).order("name", { ascending: true }),
     getEnabledPaymentMethods(),
     hasPermission(user.businessId, user.role, PERMISSIONS.PRODUCTS_MANAGE, user.id),
     hasPermission(user.businessId, user.role, PERMISSIONS.REPORTS_VIEW, user.id),
     isManualSaleNumberEnabled(user.businessId),
+    isQuickCashNotesEnabled(user.businessId),
   ]);
   const suggestedManualNumber = manualSaleNumberEnabled ? await getSuggestedManualSaleNumber(user.businessId) : null;
 
@@ -85,6 +87,7 @@ export async function POSPageContent({ mode }: { mode: "pos" | "facture" }) {
       cashierQueueEnabled={businessSettings.modulesEnabled.cashierQueue}
       manualSaleNumberEnabled={manualSaleNumberEnabled}
       suggestedManualNumber={suggestedManualNumber}
+      quickCashNotes={quickCashNotes}
       initialProducts={initialProducts}
       autoPrintReceipt={user.autoPrintReceipt}
       printerTicketWidth={user.printerTicketWidth}

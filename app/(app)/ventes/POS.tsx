@@ -42,6 +42,7 @@ import { buildOfflineDocument } from "@/lib/offline/build-document";
 import { getAvailableVehicleUnitsAction } from "@/lib/actions/vehicle-units";
 import { playAddToCartSound } from "@/lib/sound";
 import { resolveTieredPrice } from "@/lib/pricing";
+import { QuickCashNotes } from "./QuickCashNotes";
 
 type CartLine = {
   product: PosProduct;
@@ -133,6 +134,7 @@ export function POS({
   cashierQueueEnabled = false,
   manualSaleNumberEnabled = false,
   suggestedManualNumber = null,
+  quickCashNotes = false,
   initialProducts,
 }: {
   mode?: "pos" | "facture";
@@ -157,6 +159,8 @@ export function POS({
   /** Champ facultatif "N° de ticket" (continuité d'un ancien logiciel) — voir lib/manual-sale-number.ts. */
   manualSaleNumberEnabled?: boolean;
   suggestedManualNumber?: string | null;
+  /** Boutons de billets sous le montant reçu (flag billets_rapides) — voir QuickCashNotes. */
+  quickCashNotes?: boolean;
   /** Produits dont la lecture a démarré côté serveur, dès le rendu de la page (voir POSPageContent). */
   initialProducts?: Promise<PosProduct[]>;
 }) {
@@ -441,6 +445,7 @@ export function POS({
         ? total
         : Number(amountPaidInput);
   const change = Math.max(0, amountPaid - total);
+  const showQuickCashNotes = quickCashNotes && !queueOnlyMode && paymentMethod === "ESPECES";
   const remaining = Math.max(0, total - amountPaid);
 
   // Un produit "normal" n'a qu'une ligne de panier (identifiée par son id) ;
@@ -1497,6 +1502,15 @@ export function POS({
                       />
                     </Field>
                   </div>
+                )}
+
+                {showQuickCashNotes && (
+                  <QuickCashNotes
+                    total={total}
+                    currency={currency}
+                    amountPaidInput={amountPaidInput}
+                    onAmountPaidChange={setAmountPaidInput}
+                  />
                 )}
               </>
             )}
