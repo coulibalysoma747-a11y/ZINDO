@@ -44,6 +44,7 @@ import { playAddToCartSound, playErrorSound } from "@/lib/sound";
 import { resolveTieredPrice } from "@/lib/pricing";
 import { QuickCashNotes } from "./QuickCashNotes";
 import { PosCalculator } from "./PosCalculator";
+import { getMiscItemProductAction } from "@/lib/actions/misc-item";
 import type { PosExtras } from "@/lib/pos-extras";
 
 type CartLine = {
@@ -54,6 +55,8 @@ type CartLine = {
   /** Exemplaire précis (moto/engin à suivi unitaire) — jamais fusionné avec une autre ligne. */
   vehicleUnitId?: string;
   chassisNumber?: string;
+  /** Ligne « Article divers » (flag article_divers) : jamais fusionnée, identifiée par cette clé. */
+  miscKey?: string;
   /** Vente par conditionnement (ex. "Carton de 12") plutôt qu'à l'unité — quantity compte alors des colis, pas des unités de base. */
   packagingUnitId?: string;
   packagingLabel?: string;
@@ -74,6 +77,7 @@ type HeldSale = {
     discount: number;
     vehicleUnitId?: string;
     chassisNumber?: string;
+    miscKey?: string;
     packagingUnitId?: string;
     packagingLabel?: string;
     multiplier?: number;
@@ -331,6 +335,58 @@ export function POS({
   const lastReceiptKey = `zindo_last_receipt_${locationId}`;
   const [lastReceipt, setLastReceipt] = useState<Extract<SaleDocument, { success: true }> | null>(null);
   const [reprintOpen, setReprintOpen] = useState(false);
+
+  // « Article divers » (flag article_divers) : un montant tapé part au panier
+  // sans fiche produit. La fiche cachée du commerce est demandée une fois.
+  const [miscOpen, setMiscOpen] = useState(false);
+  const [miscAmount, setMiscAmount] = useState("");
+  const [miscLabel, setMiscLabel] = useState("");
+  const [miscError, setMiscError] = useState<string | null>(null);
+  const [miscLoading, setMiscLoading] = useState(false);
+  const miscProductRef = useRef<PosProduct | null>(null);
+
+  async function addMiscItem() {
+    const price = Math.round(Number(miscAmount));
+    if (!Number.isFinite(price) || price <= 0) {
+      setMiscError("Tapez le montant de l'article.");
+      return;
+    }
+    setMiscError(null);
+    if (!miscProductRef.current) {
+      setMiscLoading(true);
+      try {
+        const result = await getMiscItemProductAction();
+        if ("error" in result) {
+          setMiscError(result.error);
+          return;
+        }
+        miscProductRef.current = result;
+      } catch {
+        setMiscError("Connexion nécessaire pour le premier article divers. Réessayez une fois en ligne.");
+        return;
+      } finally {
+        setMiscLoading(false);
+      }
+    }
+    const product = miscProductRef.current;
+    const label = miscLabel.trim().slice(0, 60);
+    playAddToCartSound();
+    setCart((prev) => [
+      ...prev,
+      {
+        product,
+        quantity: 1,
+        unitPrice: price,
+        discount: 0,
+        miscKey: `divers-${crypto.randomUUID()}`,
+        packagingLabel: label || undefined,
+        multiplier: 1,
+      },
+    ]);
+    setMiscAmount("");
+    setMiscLabel("");
+    setMiscOpen(false);
+  }
   useEffect(() => {
     if (!extras.reprintLast) return;
     try {
@@ -454,6 +510,7 @@ export function POS({
         discount: l.discount,
         vehicleUnitId: l.vehicleUnitId,
         chassisNumber: l.chassisNumber,
+        miscKey: l.miscKey,
         packagingUnitId: l.packagingUnitId,
         packagingLabel: l.packagingLabel,
         multiplier: l.multiplier,
@@ -475,7 +532,7 @@ export function POS({
     }
     const lines: CartLine[] = [];
     for (const l of entry.lines) {
-      const product = products.find((p) => p.id === l.productId);
+      const product = l.miscKey ? miscProductRef.current : products.find((p) => p.id === l.productId);
       if (!product) continue;
       lines.push({
         product,
@@ -484,6 +541,7 @@ export function POS({
         discount: l.discount,
         vehicleUnitId: l.vehicleUnitId,
         chassisNumber: l.chassisNumber,
+        miscKey: l.miscKey,
         packagingUnitId: l.packagingUnitId,
         packagingLabel: l.packagingLabel,
         multiplier: l.multiplier,
@@ -526,11 +584,12 @@ export function POS({
   // simultanées — une par exemplaire choisi — jamais fusionnées entre elles,
   // donc identifiées par l'exemplaire précis plutôt que par le produit.
   function lineKey(line: CartLine) {
-    return line.vehicleUnitId ?? (line.packagingUnitId ? `${line.product.id}:${line.packagingUnitId}` : line.product.id);
+    return line.miscKey ?? line.vehicleUnitId ?? (line.packagingUnitId ? `${line.product.id}:${line.packagingUnitId}` : line.product.id);
   }
 
   /** Quantité maximale vendable pour cette ligne — en colis si conditionnement, sinon en unités de base. */
   function lineMaxQty(line: CartLine) {
+    if (line.miscKey) return 9999;
     return Math.max(1, Math.floor(line.product.quantity / (line.multiplier ?? 1)));
   }
 
@@ -609,7 +668,7 @@ export function POS({
               ...l,
               quantity,
               unitPrice:
-                l.packagingUnitId || l.vehicleUnitId ? l.unitPrice : resolveTieredPrice(l.product.salePrice, quantity, l.product.priceTiers),
+                l.packagingUnitId || l.vehicleUnitId || l.miscKey ? l.unitPrice : resolveTieredPrice(l.product.salePrice, quantity, l.product.priceTiers),
             }
           : l
       )
@@ -866,7 +925,7 @@ export function POS({
           quantity: l.quantity,
           unitPrice: l.unitPrice,
           discount: l.discount,
-          name: l.product.name,
+          name: l.miscKey && l.packagingLabel ? `${l.product.name} (${l.packagingLabel})` : l.product.name,
           unit: l.product.unit,
         })),
         cashierName: session.cashierName,
@@ -1759,6 +1818,11 @@ export function POS({
               En attente ({heldSales.length})
             </Button>
           )}
+          {extras.miscItem && (
+            <Button type="button" variant="outline" onClick={() => setMiscOpen(true)}>
+              <Plus className="h-4 w-4" /> Article divers
+            </Button>
+          )}
           {extras.reprintLast && lastReceipt && (
             <Button
               type="button"
@@ -2078,6 +2142,45 @@ export function POS({
             queueOnlyMode || isMixed ? undefined : (value) => setAmountPaidInput(String(value))
           }
         />
+      )}
+
+      {extras.miscItem && (
+        <Modal open={miscOpen} onClose={() => setMiscOpen(false)} title="Article divers">
+          <form
+            className="space-y-3"
+            onSubmit={(e) => {
+              e.preventDefault();
+              void addMiscItem();
+            }}
+          >
+            <Field label={`Montant (${currency})`} htmlFor="miscAmount">
+              <Input
+                id="miscAmount"
+                type="number"
+                min={1}
+                inputMode="numeric"
+                value={miscAmount}
+                onChange={(e) => setMiscAmount(e.target.value)}
+                placeholder="Ex. 500"
+                autoFocus
+                className="h-12 text-lg font-semibold"
+              />
+            </Field>
+            <Field label="Libellé (facultatif)" htmlFor="miscLabel" hint="Imprimé sur le ticket : « Article divers (Sachet de glace) ».">
+              <Input
+                id="miscLabel"
+                value={miscLabel}
+                onChange={(e) => setMiscLabel(e.target.value)}
+                placeholder="Ex. Sachet de glace"
+                maxLength={60}
+              />
+            </Field>
+            {miscError && <p className="text-sm text-red-600">{miscError}</p>}
+            <Button type="submit" className="h-12 w-full text-base" disabled={miscLoading}>
+              {miscLoading ? "Préparation..." : "Ajouter au panier"}
+            </Button>
+          </form>
+        </Modal>
       )}
 
       {/* Choix du conditionnement au clic (flag choix_conditionnement). */}

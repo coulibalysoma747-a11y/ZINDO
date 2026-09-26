@@ -16,6 +16,7 @@ import { adjustStock } from "@/lib/stock";
 import { rethrowIfNavigationSignal } from "@/lib/action-errors";
 import { getBusinessSettings } from "@/lib/business-settings";
 import { isDebtExemptionEnabled } from "@/lib/debt-exemption";
+import { findMiscItemProductIds, MISC_ITEM_REFERENCE } from "@/lib/misc-item";
 import { sendPushToBusiness } from "@/lib/push";
 import { formatMoney } from "@/lib/format";
 import { consumeExpiryBatchesFefo } from "@/lib/actions/expiry";
@@ -122,8 +123,13 @@ export async function insertSaleItems(rows: SaleItemRow[]) {
  */
 export async function recordStockMovements(
   items: { productId: string; quantity: number }[],
-  params: { businessId: string; locationId: string; userId: string; direction: "IN" | "OUT"; reason: string; note: string }
+  params: { businessId: string; locationId: string; userId: string; direction: "IN" | "OUT"; reason: string; note: string },
+  /** Lignes « Article divers » (sans stock) déjà connues de l'appelant ; sinon recherchées ici. */
+  miscProductIds?: Set<string>
 ) {
+  // « Article divers » (lib/misc-item.ts) : ni sortie ni retour de stock.
+  const skip = miscProductIds ?? (await findMiscItemProductIds(params.businessId, items.map((i) => i.productId)));
+  items = items.filter((item) => !skip.has(item.productId));
   // En parallèle plutôt qu'un for-loop séquentiel : chaque article touche une
   // ligne product_stocks différente (adjustStock est atomique par ligne côté
   // base), donc rien n'empêche de lancer les appels en même temps. Pour un
@@ -236,18 +242,20 @@ async function createSaleImpl(input: CreateSaleInput): Promise<CreateSaleResult>
 
   const productIds = input.items.map((i) => i.productId);
   const [{ data: products }, { data: stocks }] = await Promise.all([
-    supabase.from("products").select("id, name, purchasePrice:purchase_price").in("id", productIds).eq("business_id", user.businessId),
+    supabase.from("products").select("id, name, reference, purchasePrice:purchase_price").in("id", productIds).eq("business_id", user.businessId),
     supabase.from("product_stocks").select("productId:product_id, quantity").in("product_id", productIds).eq("location_id", input.locationId),
   ]);
   const productMap = new Map(
-    ((products ?? []) as unknown as Array<{ id: string; name: string; purchasePrice: number }>).map((p) => [p.id, p])
+    ((products ?? []) as unknown as Array<{ id: string; name: string; reference: string; purchasePrice: number }>).map((p) => [p.id, p])
   );
   const stockMap = new Map(((stocks ?? []) as Array<{ productId: string; quantity: number }>).map((s) => [s.productId, s.quantity]));
+  const miscProductIds = new Set([...productMap.values()].filter((p) => p.reference === MISC_ITEM_REFERENCE).map((p) => p.id));
 
   for (const item of input.items) {
     const product = productMap.get(item.productId);
     if (!product) return { success: false, error: "Un produit du panier est introuvable" };
     if (item.quantity <= 0) return { success: false, error: "Quantité invalide" };
+    if (miscProductIds.has(item.productId)) continue; // Article divers : pas de stock.
     const baseUnitsNeeded = item.quantity * (item.multiplier ?? 1);
     const available = stockMap.get(item.productId) ?? 0;
     if (available < baseUnitsNeeded) {
@@ -435,7 +443,8 @@ async function createSaleImpl(input: CreateSaleInput): Promise<CreateSaleResult>
       direction: "OUT",
       reason: "VENTE",
       note: `Vente ${number}`,
-    }
+    },
+    miscProductIds
   );
 
   // Best-effort : décrémente le lot qui expire le plus tôt (FEFO) pour les
@@ -538,18 +547,20 @@ async function updateSaleImpl(input: UpdateSaleInput): Promise<CreateSaleResult>
   const productIds = Array.from(new Set([...oldQtyMap.keys(), ...input.items.map((i) => i.productId)]));
 
   const [{ data: products }, { data: stocks }] = await Promise.all([
-    supabase.from("products").select("id, name, purchasePrice:purchase_price").in("id", productIds).eq("business_id", user.businessId),
+    supabase.from("products").select("id, name, reference, purchasePrice:purchase_price").in("id", productIds).eq("business_id", user.businessId),
     supabase.from("product_stocks").select("productId:product_id, quantity").in("product_id", productIds).eq("location_id", sale.locationId as string),
   ]);
   const productMap = new Map(
-    ((products ?? []) as unknown as Array<{ id: string; name: string; purchasePrice: number }>).map((p) => [p.id, p])
+    ((products ?? []) as unknown as Array<{ id: string; name: string; reference: string; purchasePrice: number }>).map((p) => [p.id, p])
   );
   const currentStockMap = new Map(((stocks ?? []) as Array<{ productId: string; quantity: number }>).map((s) => [s.productId, s.quantity]));
+  const miscProductIds = new Set([...productMap.values()].filter((p) => p.reference === MISC_ITEM_REFERENCE).map((p) => p.id));
 
   for (const item of input.items) {
     const product = productMap.get(item.productId);
     if (!product) return { success: false, error: "Un produit du panier est introuvable" };
     if (item.quantity <= 0) return { success: false, error: "Quantité invalide" };
+    if (miscProductIds.has(item.productId)) continue; // Article divers : pas de stock.
     // Le stock déjà réservé par l'ancienne version de cette vente reste disponible pour la nouvelle.
     const available = (currentStockMap.get(item.productId) ?? 0) + (oldQtyMap.get(item.productId) ?? 0);
     const baseUnitsNeeded = item.quantity * (item.multiplier ?? 1);
@@ -577,7 +588,7 @@ async function updateSaleImpl(input: UpdateSaleInput): Promise<CreateSaleResult>
   const changedProductIds = productIds.filter((productId) => {
     const oldQty = oldQtyMap.get(productId) ?? 0;
     const newQty = newQtyMap.get(productId) ?? 0;
-    return oldQty - newQty !== 0;
+    return oldQty - newQty !== 0 && !miscProductIds.has(productId);
   });
   // En parallèle (voir recordStockMovements dans createSaleAction pour la même remarque).
   await Promise.all(

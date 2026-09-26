@@ -1,5 +1,6 @@
 import "server-only";
 import { isFeatureEnabled, registerFeatureFlag } from "@/lib/feature-flags";
+import { isMiscItemEnabled } from "@/lib/misc-item";
 
 /**
  * Petits outils de la caisse demandés le 2026-09-26, chacun derrière son
@@ -38,7 +39,8 @@ const POS_EXTRA_FLAGS = {
   },
 } as const;
 
-export type PosExtras = Record<keyof typeof POS_EXTRA_FLAGS, boolean>;
+/** miscItem : flag article_divers, déclaré dans lib/misc-item.ts (le serveur de vente s'en sert aussi). */
+export type PosExtras = Record<keyof typeof POS_EXTRA_FLAGS | "miscItem", boolean>;
 
 export async function getPosExtras(businessId: string): Promise<PosExtras> {
   const entries = await Promise.all(
@@ -47,5 +49,5 @@ export async function getPosExtras(businessId: string): Promise<PosExtras> {
       return [name, await isFeatureEnabled(flag.key, businessId)] as const;
     })
   );
-  return Object.fromEntries(entries) as PosExtras;
+  return { ...(Object.fromEntries(entries) as Omit<PosExtras, "miscItem">), miscItem: await isMiscItemEnabled(businessId) };
 }
