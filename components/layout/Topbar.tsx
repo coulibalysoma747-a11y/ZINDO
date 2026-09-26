@@ -60,7 +60,7 @@ export function Topbar({
           <LocationSwitcher locations={locations} currentLocationId={currentLocationId} />
         </div>
         <div className="flex items-center gap-2">
-          {globalSearchCurrency && <GlobalSearch currency={globalSearchCurrency} />}
+          {globalSearchCurrency && <GlobalSearch currency={globalSearchCurrency} navItems={navItems} />}
           <InstallAppButton
             iconOnly
             className="flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-2.5 py-1.5 text-xs font-medium text-zinc-600 hover:bg-zinc-50 hover:text-zinc-900 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 sm:px-3"

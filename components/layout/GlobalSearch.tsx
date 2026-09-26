@@ -2,12 +2,19 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Search, Package, Users, Truck, Receipt, Loader2, CornerDownLeft } from "lucide-react";
+import { Search, Package, Users, Truck, Receipt, Loader2, CornerDownLeft, UserCircle } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { formatMoney, formatDateTime } from "@/lib/format";
 import { globalSearchAction, type GlobalSearchResult } from "@/lib/actions/global-search";
+import type { NavItem } from "@/lib/nav";
+import { NAV_ICONS } from "./nav-icons";
 
-type Item = { key: string; href: string; title: string; subtitle: string; icon: typeof Search };
+type Item = { key: string; href: string; title: string; subtitle: string; icon: React.ComponentType<{ className?: string }> };
+
+/** Minuscules sans accents : « parametre » trouve « Paramètres ». */
+function normalize(text: string) {
+  return text.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
+}
 
 const SECTIONS: { key: keyof GlobalSearchResult; title: string }[] = [
   { key: "products", title: "Produits" },
@@ -54,7 +61,7 @@ function toItems(result: GlobalSearchResult, currency: string): Record<keyof Glo
  * produits, clients, fournisseurs et ventes au même endroit. S'ouvre au clic
  * ou avec Ctrl K (Cmd K sur Mac) ; flèches haut/bas puis Entrée pour ouvrir.
  */
-export function GlobalSearch({ currency }: { currency: string }) {
+export function GlobalSearch({ currency, navItems }: { currency: string; navItems: NavItem[] }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
@@ -101,15 +108,33 @@ export function GlobalSearch({ currency }: { currency: string }) {
   }, [query]);
 
   const grouped = useMemo(() => (result ? toItems(result, currency) : null), [result, currency]);
-  const flat = useMemo(() => (grouped ? SECTIONS.flatMap((s) => grouped[s.key]) : []), [grouped]);
   const tooShort = query.trim().length < 2;
+
+  // Pages de l'application : filtrées sur place (aucun appel au serveur),
+  // parmi les seules entrées du menu que ce rôle voit déjà.
+  const pages = useMemo<Item[]>(() => {
+    const q = normalize(query.trim());
+    if (q.length < 2) return [];
+    const all = [
+      ...navItems.map((item) => ({ label: item.label, href: item.href, icon: NAV_ICONS[item.icon] })),
+      { label: "Mon profil", href: "/profil", icon: UserCircle },
+    ];
+    return all
+      .filter((p) => normalize(p.label).includes(q))
+      .slice(0, 6)
+      .map((p) => ({ key: `page-${p.href}`, href: p.href, title: p.label, subtitle: "Page", icon: p.icon }));
+  }, [query, navItems]);
+
+  const flat = useMemo(
+    () => [...pages, ...(grouped ? SECTIONS.flatMap((s) => grouped[s.key]) : [])],
+    [pages, grouped]
+  );
 
   function close() {
     setOpen(false);
     setQuery("");
     setResult(null);
     setLoading(false);
-    requestId.current++;
   }
 
   function go(item: Item) {
@@ -197,9 +222,12 @@ export function GlobalSearch({ currency }: { currency: string }) {
                 <p className="px-3 py-8 text-center text-sm text-zinc-500">
                   Aucun résultat pour « {query.trim()} ».
                 </p>
-              ) : grouped ? (
-                SECTIONS.map((section) => {
-                  const items = grouped[section.key];
+              ) : pages.length > 0 || grouped ? (
+                [
+                  { key: "pages", title: "Pages", items: pages },
+                  ...(grouped ? SECTIONS.map((s) => ({ key: s.key, title: s.title, items: grouped[s.key] })) : []),
+                ].map((section) => {
+                  const items = section.items;
                   if (items.length === 0) return null;
                   return (
                     <div key={section.key} className="mb-1">
