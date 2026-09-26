@@ -23,6 +23,7 @@ export function Topbar({
   locations,
   currentLocationId,
   globalSearchCurrency,
+  menuSearch = false,
 }: {
   userName: string;
   role: string;
@@ -32,6 +33,8 @@ export function Topbar({
   currentLocationId: string;
   /** Devise des montants affichés dans la recherche globale ; null quand le flag « recherche_globale » est désactivé. */
   globalSearchCurrency: string | null;
+  /** Champ « Chercher un module » dans le menu mobile (flag « recherche_menu »). */
+  menuSearch?: boolean;
 }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
@@ -120,6 +123,7 @@ export function Topbar({
         items={navItems}
         businessName={businessName}
         userName={userName}
+        menuSearch={menuSearch}
       />
     </>
   );

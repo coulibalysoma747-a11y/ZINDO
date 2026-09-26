@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ChevronsUpDown } from "lucide-react";
 import type { NavItem } from "@/lib/nav";
 import { SidebarLink } from "./SidebarLink";
+import { SidebarNav } from "./SidebarNav";
 import { SidebarCloseButton } from "./SidebarToggle";
 import { groupNavItems } from "./nav-icons";
 import { ZindoLogo } from "@/components/auth/ZindoLogo";
@@ -10,10 +11,13 @@ export function Sidebar({
   businessName,
   items,
   userName,
+  menuSearch = false,
 }: {
   businessName: string;
   items: NavItem[];
   userName: string;
+  /** Champ « Chercher un module » en haut du menu (flag « recherche_menu »). */
+  menuSearch?: boolean;
 }) {
   const footerHrefs = ["/support", "/parametres"];
   const footerItems = footerHrefs
@@ -34,20 +38,7 @@ export function Sidebar({
         <SidebarCloseButton className="-mr-1.5 shrink-0 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700 dark:hover:bg-slate-800" />
       </div>
 
-      <nav className="min-h-0 flex-1 overflow-y-auto px-3 py-3">
-        {groups.map((group, i) => (
-          <div key={group.title ?? i} className={i > 0 ? "mt-5" : undefined}>
-            {group.title && (
-              <p className="mb-1 px-2.5 text-[11px] font-semibold uppercase tracking-[0.08em] text-zinc-400">{group.title}</p>
-            )}
-            <div className="space-y-px">
-              {group.items.map((item) => (
-                <SidebarLink key={item.href} item={item} />
-              ))}
-            </div>
-          </div>
-        ))}
-      </nav>
+      <SidebarNav groups={groups} footerItems={footerItems} searchable={menuSearch} />
 
       {footerItems.length > 0 && (
         <div className="shrink-0 space-y-px border-t border-zinc-200 px-3 py-2 dark:border-slate-800">

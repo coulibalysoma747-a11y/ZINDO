@@ -1,12 +1,13 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { X } from "lucide-react";
+import { Search, X } from "lucide-react";
 import { cn } from "@/lib/cn";
 import type { NavItem } from "@/lib/nav";
 import { ZindoLogo } from "@/components/auth/ZindoLogo";
-import { NAV_ICONS, groupNavItems } from "./nav-icons";
+import { NAV_ICONS, groupNavItems, filterNavGroups } from "./nav-icons";
 
 export function MobileNav({
   open,
@@ -14,27 +15,32 @@ export function MobileNav({
   items,
   businessName,
   userName,
+  menuSearch = false,
 }: {
   open: boolean;
   onClose: () => void;
   items: NavItem[];
   businessName: string;
   userName: string;
+  /** Champ « Chercher un module » en haut du menu (flag « recherche_menu »). */
+  menuSearch?: boolean;
 }) {
   const pathname = usePathname();
+  const [query, setQuery] = useState("");
   if (!open) return null;
 
   const footerHrefs = ["/support", "/parametres"];
   const footerItems = footerHrefs
     .map((href) => items.find((item) => item.href === href))
     .filter((item): item is NavItem => Boolean(item));
-  const groups = groupNavItems(items.filter((item) => !footerHrefs.includes(item.href)));
+  const allGroups = groupNavItems(items.filter((item) => !footerHrefs.includes(item.href)));
+  const groups = filterNavGroups(query.trim() ? [...allGroups, { title: "Autres", items: footerItems }] : allGroups, query);
 
   return (
     <div className="fixed inset-0 z-40 md:hidden">
       <div className="animate-zindo-fade-in absolute inset-0 bg-zindo-ink-950/50 backdrop-blur-[2px]" onClick={onClose} />
       <div className="absolute left-0 top-0 flex h-full w-[82%] max-w-80 flex-col justify-between bg-white text-zindo-ink-700 shadow-zindo-float dark:bg-slate-900 dark:text-slate-300">
-                <div className="min-h-0 flex-1 overflow-y-auto">
+        <div className="min-h-0 flex-1 overflow-y-auto">
           <div className="flex items-center justify-between gap-2 border-b border-zinc-100 p-4 dark:border-slate-800">
             <div className="flex min-w-0 items-center gap-3">
               <ZindoLogo size={32} className="!rounded-lg !shadow-none" />
@@ -47,7 +53,23 @@ export function MobileNav({
               <X className="h-5 w-5" />
             </button>
           </div>
+          {menuSearch && (
+            <div className="px-3 pt-3">
+              <div className="relative">
+                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" />
+                <input
+                  type="text"
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  placeholder="Chercher un module…"
+                  aria-label="Chercher un module dans le menu"
+                  className="h-11 w-full rounded-lg border border-zinc-300 bg-zinc-50 pl-9 pr-3 text-[15px] text-zinc-900 outline-none placeholder:text-zinc-500 focus:border-zindo-green-500 focus:bg-white dark:border-slate-700 dark:bg-slate-800/60"
+                />
+              </div>
+            </div>
+          )}
           <nav className="px-3 py-3">
+            {groups.length === 0 && <p className="px-2.5 py-4 text-sm text-zinc-500">Aucun module ne correspond.</p>}
             {groups.map((group, i) => (
               <div key={group.title ?? i} className={i > 0 ? "mt-5" : undefined}>
                 {group.title && (

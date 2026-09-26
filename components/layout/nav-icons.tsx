@@ -234,3 +234,17 @@ export function groupNavItems(items: NavItem[]): { title: string | null; items: 
   if (rest.length > 0) groups.push({ title: "Autres", items: rest });
   return groups.filter((g) => g.items.length > 0);
 }
+
+/** Minuscules sans accents : « parametre » trouve « Paramètres ». */
+export function normalizeNavText(text: string): string {
+  return text.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
+}
+
+/** Filtre les rubriques du menu sur le libellé des modules ; une rubrique vide disparaît. */
+export function filterNavGroups<G extends { items: NavItem[] }>(groups: G[], query: string): G[] {
+  const q = normalizeNavText(query.trim());
+  if (!q) return groups;
+  return groups
+    .map((g) => ({ ...g, items: g.items.filter((item) => normalizeNavText(item.label).includes(q)) }))
+    .filter((g) => g.items.length > 0);
+}

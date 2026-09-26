@@ -8,6 +8,7 @@ import { getAdminSession } from "@/lib/adminSession";
 import { getPlatformConfig } from "@/lib/platform-config";
 import { getBusinessSettings } from "@/lib/business-settings";
 import { isGlobalSearchEnabled } from "@/lib/global-search";
+import { isMenuSearchEnabled } from "@/lib/menu-search";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { Topbar } from "@/components/layout/Topbar";
 import { AppFooter } from "@/components/layout/AppFooter";
@@ -70,7 +71,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     return <MarketSellerShell sellerName={user.business.name}>{children}</MarketSellerShell>;
   }
 
-  const [navItems, canSell, canManageProducts, canManageStock, canManagePurchases, offlineEnabled, globalSearchEnabled] = await Promise.all([
+  const [navItems, canSell, canManageProducts, canManageStock, canManagePurchases, offlineEnabled, globalSearchEnabled, menuSearchEnabled] = await Promise.all([
     getVisibleNavItems(user.businessId, user.role, user.id, user.business.activityKey, currentLocation?.id),
     hasPermission(user.businessId, user.role, PERMISSIONS.SALES_CREATE, user.id),
     hasPermission(user.businessId, user.role, PERMISSIONS.PRODUCTS_MANAGE, user.id),
@@ -78,6 +79,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     hasPermission(user.businessId, user.role, PERMISSIONS.PURCHASES_MANAGE, user.id),
     isBrowserOfflineEnabled(user.businessId),
     isGlobalSearchEnabled(user.businessId),
+    isMenuSearchEnabled(user.businessId),
   ]);
 
   // Menu latéral fermé par l'utilisateur (voir components/layout/SidebarToggle.tsx).
@@ -93,6 +95,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         <Sidebar
           businessName={user.business.name}
           items={navItems}
+          menuSearch={menuSearchEnabled}
           userName={`${user.firstName} ${user.lastName}`}
         />
       </div>
@@ -113,6 +116,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
             locations={locations}
             currentLocationId={currentLocation?.id ?? ""}
             globalSearchCurrency={globalSearchEnabled ? user.business.currency : null}
+            menuSearch={menuSearchEnabled}
           />
         </div>
         <main className="flex-1 overflow-y-auto p-4 pb-28 sm:pb-6 md:p-6 lg:p-8 print:overflow-visible print:p-0">{children}</main>
