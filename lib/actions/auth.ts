@@ -4,7 +4,7 @@ import { z } from "zod";
 import bcrypt from "bcryptjs";
 import { redirect } from "next/navigation";
 import { supabase, setDesktopSupabaseClient } from "@/lib/supabase";
-import { verifyMerchantCredentials } from "@/lib/auth-credentials";
+import { verifyMerchantCredentials, phoneVariants, LOGIN_LOCK_MINUTES } from "@/lib/auth-credentials";
 import { isDesktopBuild, writeAuthCache } from "@/lib/offline/auth-cache";
 import { getCurrentUser } from "@/lib/auth";
 import {
@@ -43,6 +43,8 @@ const AUTH_MESSAGES = {
     mustAcceptTerms: "Vous devez accepter les CGU et la politique de confidentialité",
     phoneAlreadyUsed: "Ce numéro de téléphone est déjà utilisé",
     createAccountFailed: "Impossible de créer le compte. Réessayez.",
+    accountLocked: `Trop d'essais de mot de passe. Pour protéger votre compte, réessayez dans ${LOGIN_LOCK_MINUTES} minutes ou utilisez « Mot de passe oublié ».`,
+    accountDisabled: "Ce compte est désactivé. Demandez au propriétaire du commerce de le réactiver dans Utilisateurs.",
   },
   en: {
     invalidFields: "Invalid fields",
@@ -50,6 +52,8 @@ const AUTH_MESSAGES = {
     mustAcceptTerms: "You must accept the Terms of Service and Privacy Policy",
     phoneAlreadyUsed: "This phone number is already in use",
     createAccountFailed: "Could not create the account. Please try again.",
+    accountLocked: `Too many password attempts. To protect your account, try again in ${LOGIN_LOCK_MINUTES} minutes or use “Forgot your password?”.`,
+    accountDisabled: "This account is disabled. Ask the business owner to reactivate it in Users.",
   },
 } as const;
 
@@ -134,6 +138,8 @@ export async function loginAction(
     }
   }
 
+  if (merchantResult.locked) return { error: t.accountLocked };
+  if (merchantResult.disabled) return { error: t.accountDisabled };
   return { error: t.wrongCredentials };
 }
 
@@ -174,6 +180,8 @@ async function loginActionDesktop(
       error: "La double authentification (2FA) n'est pas encore prise en charge sur l'application Windows — connectez-vous depuis le site web.",
     };
   }
+  if (response.status === 429) return { error: t.accountLocked };
+  if (response.status === 423) return { error: t.accountDisabled };
   if (!response.ok) {
     return { error: t.wrongCredentials };
   }
@@ -291,7 +299,7 @@ export async function verify2FAAction(
 const registerSchema = z.object({
   firstName: z.string().min(1, "Prénom requis"),
   lastName: z.string().min(1, "Nom requis"),
-  phone: z.string().min(6, "Numéro de téléphone invalide"),
+  phone: z.string().trim().min(6, "Numéro de téléphone invalide"),
   email: z.string().email("E-mail invalide").optional().or(z.literal("")),
   password: z.string().min(6, "6 caractères minimum"),
   businessName: z.string().min(1, "Nom du commerce requis"),
@@ -329,8 +337,14 @@ export async function registerAction(
   }
   const countryCode = country;
 
-  const { data: existing } = await supabase.from("users").select("id").eq("phone", phone).maybeSingle();
-  if (existing) {
+  // Même numéro écrit autrement (« 70123456 », « 70 12 34 56 », « +226… ») :
+  // un doublon empêcherait ensuite les deux comptes de se connecter.
+  const { data: existing } = await supabase
+    .from("users")
+    .select("id")
+    .in("phone", [phone, ...phoneVariants(phone)])
+    .limit(1);
+  if (existing && existing.length > 0) {
     return { error: t.phoneAlreadyUsed };
   }
 

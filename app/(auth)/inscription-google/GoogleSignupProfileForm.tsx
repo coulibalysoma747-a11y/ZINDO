@@ -2,6 +2,7 @@
 
 import { useActionState, useState } from "react";
 import { submitGoogleSignupProfileAction } from "@/lib/actions/google-signup";
+import { keepFormValues } from "@/lib/keep-form-values";
 import { Field, Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { COUNTRIES, getCountry, type CountryCode } from "@/lib/countries";
@@ -12,7 +13,7 @@ export function GoogleSignupProfileForm() {
   const country = countryCode ? getCountry(countryCode) : null;
 
   return (
-    <form action={action} className="space-y-4">
+    <form action={action} onSubmit={keepFormValues(action)} className="space-y-4">
       <Field label="Pays" htmlFor="country">
         <select
           id="country"

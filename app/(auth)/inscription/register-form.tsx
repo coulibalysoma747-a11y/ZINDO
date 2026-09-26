@@ -3,6 +3,7 @@
 import { useActionState, useState } from "react";
 import Link from "next/link";
 import { registerAction } from "@/lib/actions/auth";
+import { keepFormValues } from "@/lib/keep-form-values";
 import { Field, Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { COUNTRIES, getCountry, type CountryCode } from "@/lib/countries";
@@ -71,7 +72,7 @@ export function RegisterForm({
   const country = countryCode ? getCountry(countryCode) : null;
 
   return (
-    <form action={action} className="space-y-4">
+    <form action={action} onSubmit={keepFormValues(action)} className="space-y-4">
       <input type="hidden" name="locale" value={locale} />
       <div className="grid grid-cols-2 gap-3">
         <Field label={t.firstName} htmlFor="firstName">

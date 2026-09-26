@@ -4,6 +4,7 @@ import { useActionState, useState } from "react";
 import Link from "next/link";
 import { Eye, EyeOff, Lock, Phone, ArrowRight, Loader2 } from "lucide-react";
 import { loginAction } from "@/lib/actions/auth";
+import { keepFormValues } from "@/lib/keep-form-values";
 import { GoogleIcon } from "@/components/icons/GoogleIcon";
 
 const TEXT = {
@@ -44,7 +45,7 @@ export function LoginForm({ googleError, locale = "fr" }: { googleError?: string
 
   return (
     <div className="space-y-5">
-      <form action={action} className="space-y-4">
+      <form action={action} onSubmit={keepFormValues(action)} className="space-y-4">
         <input type="hidden" name="locale" value={locale} />
         <div>
           <label htmlFor="identifier" className="mb-1.5 block text-sm font-medium text-zindo-ink-700">

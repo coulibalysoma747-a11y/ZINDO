@@ -154,7 +154,7 @@ export async function resetUserPasswordAction(id: string, newPassword: string) {
   if (!user) return { error: "Utilisateur introuvable" };
 
   const passwordHash = await bcrypt.hash(newPassword, 10);
-  const { error } = await supabase.from("users").update({ password_hash: passwordHash }).eq("id", id);
+  const { error } = await supabase.from("users").update({ password_hash: passwordHash, failed_login_attempts: 0 }).eq("id", id);
   if (error) {
     console.error("[resetUserPasswordAction] Échec de la réinitialisation :", error.message);
     return { error: "Impossible de réinitialiser le mot de passe" };

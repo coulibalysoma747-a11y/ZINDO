@@ -3,13 +3,14 @@
 import { useActionState, useState } from "react";
 import { Eye, EyeOff, Lock, ArrowRight, Loader2 } from "lucide-react";
 import { resetPasswordAction } from "@/lib/actions/password-reset";
+import { keepFormValues } from "@/lib/keep-form-values";
 
 export function ResetPasswordForm({ token }: { token: string }) {
   const [state, action, pending] = useActionState(resetPasswordAction, undefined);
   const [showPassword, setShowPassword] = useState(false);
 
   return (
-    <form action={action} className="space-y-4 text-left">
+    <form action={action} onSubmit={keepFormValues(action)} className="space-y-4 text-left">
       <input type="hidden" name="token" value={token} />
 
       <div>

@@ -143,7 +143,7 @@ export async function resetPasswordAction(
 
   const { error: updateError } = await supabase
     .from("users")
-    .update({ password_hash: passwordHash })
+    .update({ password_hash: passwordHash, failed_login_attempts: 0 })
     .eq("id", reset.userId);
 
   if (updateError) {

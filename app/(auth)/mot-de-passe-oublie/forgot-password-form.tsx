@@ -3,6 +3,7 @@
 import { useActionState } from "react";
 import { Mail, ArrowRight, Loader2, CheckCircle2 } from "lucide-react";
 import { requestPasswordResetAction } from "@/lib/actions/password-reset";
+import { keepFormValues } from "@/lib/keep-form-values";
 
 export function ForgotPasswordForm() {
   const [state, action, pending] = useActionState(requestPasswordResetAction, undefined);
@@ -22,7 +23,7 @@ export function ForgotPasswordForm() {
   }
 
   return (
-    <form action={action} className="space-y-4 text-left">
+    <form action={action} onSubmit={keepFormValues(action)} className="space-y-4 text-left">
       <div>
         <label htmlFor="email" className="mb-1.5 block text-sm font-medium text-zindo-ink-700">
           Adresse e-mail

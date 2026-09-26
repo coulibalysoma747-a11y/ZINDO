@@ -40,7 +40,9 @@ export async function POST(request: NextRequest) {
 
   const result = await verifyMerchantCredentials(parsed.data.identifier.trim(), parsed.data.password);
   if (!result.ok) {
-    return NextResponse.json({ error: "Identifiants incorrects" }, { status: 401 });
+    // 429 = blocage temporaire, 423 = compte désactivé (lus par loginActionDesktop).
+    const status = result.locked ? 429 : result.disabled ? 423 : 401;
+    return NextResponse.json({ error: "Identifiants incorrects" }, { status });
   }
   if (result.totpEnabled) {
     return NextResponse.json(
