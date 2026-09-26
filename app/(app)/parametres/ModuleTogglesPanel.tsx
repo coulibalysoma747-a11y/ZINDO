@@ -99,7 +99,14 @@ const MODULES: {
   },
 ];
 
-export function ModuleTogglesPanel({ settings }: { settings: BusinessSettings }) {
+export function ModuleTogglesPanel({
+  settings,
+  hiddenModules = [],
+}: {
+  settings: BusinessSettings;
+  /** Modules pas encore activés pour ce commerce (flag) : pas d'interrupteur vers une page « pas encore disponible ». */
+  hiddenModules?: ModuleKey[];
+}) {
   const [enabled, setEnabled] = useState(settings.modulesEnabled);
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
@@ -120,7 +127,7 @@ export function ModuleTogglesPanel({ settings }: { settings: BusinessSettings })
         Masquez les modules que vous n&apos;utilisez pas — ils disparaissent du menu, sans rien supprimer de vos
         données.
       </p>
-      {MODULES.map((m) => (
+      {MODULES.filter((m) => !hiddenModules.includes(m.key)).map((m) => (
         <div key={m.key} className="rounded-xl border border-zinc-200 p-4">
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-start gap-2.5">

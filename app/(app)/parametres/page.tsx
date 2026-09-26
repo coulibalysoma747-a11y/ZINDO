@@ -19,6 +19,7 @@ import { FasoStockPanel } from "./FasoStockPanel";
 import { BusinessRulesPanel } from "./BusinessRulesPanel";
 import { SalesLeaderboardPanel } from "./SalesLeaderboardPanel";
 import { ModuleTogglesPanel } from "./ModuleTogglesPanel";
+import { ensureQuoteFlagRegistered, isQuoteModuleEnabled } from "@/lib/actions/quotes";
 import { UnclaimedGoodsPanel } from "./UnclaimedGoodsPanel";
 import { PaymentBreakdownPanel } from "./PaymentBreakdownPanel";
 import { ExpenseCategoriesPanel } from "./ExpenseCategoriesPanel";
@@ -60,6 +61,7 @@ export default async function SettingsPage() {
     businessSettings,
     invoiceTemplatesEnabled,
     ticketPreviewEnabled,
+    quotesEnabled,
   ] = await Promise.all([
       supabase.from("payment_method_configs").select("method, label, enabled").eq("business_id", user.businessId),
       supabase.from("role_permissions").select("role, permission, allowed").eq("business_id", user.businessId),
@@ -75,6 +77,7 @@ export default async function SettingsPage() {
       getBusinessSettings(user.businessId),
       isInvoiceTemplatesModuleEnabled(user.businessId),
       isTicketPreviewEnabled(user.businessId),
+      ensureQuoteFlagRegistered().then(() => isQuoteModuleEnabled(user.businessId)),
     ]);
 
   const configMap = new Map((configs ?? []).map((c) => [c.method as string, c]));
@@ -265,7 +268,7 @@ export default async function SettingsPage() {
               <h2 className="font-semibold text-zinc-900">Modules</h2>
             </CardHeader>
             <CardBody>
-              <ModuleTogglesPanel settings={businessSettings} />
+              <ModuleTogglesPanel settings={businessSettings} hiddenModules={quotesEnabled ? [] : ["devis"]} />
             </CardBody>
           </Card>
         </>

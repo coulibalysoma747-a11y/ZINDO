@@ -17,6 +17,8 @@ import { ProductThumbnail } from "@/components/products/ProductThumbnail";
 import { ProductRowMenu } from "@/components/products/ProductRowMenu";
 import { QuickPackagingButton } from "@/components/products/QuickPackagingModal";
 import { isPackagingUnitsModuleEnabled } from "@/lib/actions/packaging-units";
+import { ensureCatalogImportFlagRegistered } from "@/lib/actions/catalog-import";
+import { isFeatureEnabled } from "@/lib/feature-flags";
 
 const PAGE_SIZE = 200;
 
@@ -29,10 +31,13 @@ export default async function ProductsPage({
   const { q, categorie, marque, conditionnement, filtre, page } = await searchParams;
   const currentPage = Math.max(1, parseInt(page ?? "1", 10) || 1);
   const offset = (currentPage - 1) * PAGE_SIZE;
-  const [currentLocation, activityConfig, packagingEnabled] = await Promise.all([
+  const [currentLocation, activityConfig, packagingEnabled, catalogImportEnabled] = await Promise.all([
     getCurrentLocation(user.businessId),
     getActivityConfig(user.business.activityKey),
     isPackagingUnitsModuleEnabled(user.businessId),
+    // Bouton « Importer un catalogue » montré seulement si la fonction est
+    // activée : sinon il menait à « Fonctionnalité pas encore disponible ».
+    ensureCatalogImportFlagRegistered().then(() => isFeatureEnabled("import_catalogue_pdf", user.businessId)),
   ]);
   const productsLabel = resolveTerm(activityConfig, "products");
 
@@ -180,9 +185,11 @@ export default async function ProductsPage({
           <ButtonLink href="/produits/etiquettes" variant="outline">
             <QrCode className="h-4 w-4" /> QR codes
           </ButtonLink>
-          <ButtonLink href="/produits/importer" variant="outline">
-            <FileUp className="h-4 w-4" /> Importer un catalogue
-          </ButtonLink>
+          {catalogImportEnabled && (
+            <ButtonLink href="/produits/importer" variant="outline">
+              <FileUp className="h-4 w-4" /> Importer un catalogue
+            </ButtonLink>
+          )}
           <div className="hidden sm:block">
             <ButtonLink href="/produits/nouveau">
               <Plus className="h-4 w-4" /> Nouveau produit
