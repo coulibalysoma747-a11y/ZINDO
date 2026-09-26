@@ -10,6 +10,7 @@ import { getInvoiceCustomization } from "@/lib/invoice-customization";
 import { getBusinessSettings } from "@/lib/business-settings";
 import { isTicketPreviewEnabled } from "@/lib/ticket-preview";
 import { isTicketTestEnabled } from "@/lib/ticket-test";
+import { isSettingsTabsEnabled } from "@/lib/settings-tabs";
 import { ensureInvoiceTemplatesFlagRegistered, isInvoiceTemplatesModuleEnabled } from "@/lib/actions/invoice-templates";
 import { listFasoStockStores, type FasoStockStore } from "@/lib/integrations/faso-stock";
 import { Card, CardBody, CardHeader } from "@/components/ui/Card";
@@ -36,6 +37,7 @@ import { DangerZonePanel } from "./DangerZonePanel";
 import { MobileMoneyPanel } from "./MobileMoneyPanel";
 import { AiCartPanel } from "./AiCartPanel";
 import { ApiKeysPanel } from "./ApiKeysPanel";
+import { SettingsTabs, type SettingsTab } from "./SettingsTabs";
 import type { PaymentMethod, Role } from "@/lib/db-types";
 
 // La synchronisation FasoStock déclenchée depuis cette page peut porter sur
@@ -51,7 +53,7 @@ const ALL_METHODS: { method: PaymentMethod; defaultLabel: string }[] = [
   { method: "AUTRE", defaultLabel: "Autre" },
 ];
 
-export default async function SettingsPage() {
+export default async function SettingsPage({ searchParams }: { searchParams: Promise<{ onglet?: string }> }) {
   const user = await requirePermission(PERMISSIONS.SETTINGS_MANAGE);
   await ensureInvoiceTemplatesFlagRegistered();
 
@@ -67,6 +69,8 @@ export default async function SettingsPage() {
     quotesEnabled,
     ticketTestEnabled,
     maxDiscountEnabled,
+    tabsEnabled,
+    { onglet },
   ] = await Promise.all([
       supabase.from("payment_method_configs").select("method, label, enabled").eq("business_id", user.businessId),
       supabase.from("role_permissions").select("role, permission, allowed").eq("business_id", user.businessId),
@@ -85,6 +89,8 @@ export default async function SettingsPage() {
       ensureQuoteFlagRegistered().then(() => isQuoteModuleEnabled(user.businessId)),
       isTicketTestEnabled(user.businessId),
       isMaxDiscountRuleEnabled(user.businessId),
+      isSettingsTabsEnabled(user.businessId),
+      searchParams,
     ]);
 
   const configMap = new Map((configs ?? []).map((c) => [c.method as string, c]));
@@ -103,8 +109,11 @@ export default async function SettingsPage() {
   const isMedical = user.business.activityKey === MEDICAL_ACTIVITY_KEY;
 
   const fasoStockApiKey = businessRow?.fasoStockApiKey as string | null;
+  // Les paramètres en onglets n'affichent plus FasoStock : inutile alors
+  // d'interroger son API à chaque ouverture de la page.
+  const showFasoStock = !isMedical && !tabsEnabled;
   let fasoStockStores: FasoStockStore[] = [];
-  if (fasoStockApiKey && !isMedical) {
+  if (fasoStockApiKey && showFasoStock) {
     try {
       fasoStockStores = await listFasoStockStores(fasoStockApiKey);
     } catch {
@@ -119,98 +128,264 @@ export default async function SettingsPage() {
     fasoStockMapping = {};
   }
 
+  const locationOptions = locations.map((l) => ({ id: l.id as string, name: l.name as string }));
+
+  const activityCard = (
+    <Card>
+      <CardHeader>
+        <h2 className="font-semibold text-zinc-900">Mon activité</h2>
+      </CardHeader>
+      <CardBody className="flex items-center justify-between gap-3">
+        {activity ? (
+          <div className="flex items-center gap-3">
+            <span className="text-2xl">{activity.emoji}</span>
+            <div>
+              <p className="font-medium text-zinc-900">{activity.label}</p>
+              <p className="text-xs text-zinc-500">{activity.description}</p>
+            </div>
+          </div>
+        ) : (
+          <p className="text-sm text-zinc-500">Aucune activité définie.</p>
+        )}
+        <Link
+          href="/choisir-activite?change=1"
+          className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-zinc-200 px-3 py-2 text-sm font-medium text-zinc-600 hover:bg-zinc-50"
+        >
+          <Pencil className="h-3.5 w-3.5" /> Modifier
+        </Link>
+      </CardBody>
+    </Card>
+  );
+
+  const businessCard = (
+    <Card>
+      <CardHeader>
+        <h2 className="font-semibold text-zinc-900">Commerce</h2>
+      </CardHeader>
+      <CardBody>
+        <BusinessSettingsForm
+          business={{ ...user.business, ...invoiceCustomization }}
+          ticketPreview={
+            ticketPreviewEnabled ? { cashierName: `${user.firstName} ${user.lastName}`.trim() } : null
+          }
+          ticketTestEnabled={ticketTestEnabled}
+        />
+      </CardBody>
+    </Card>
+  );
+
+  const paymentMethodsCard = (
+    <Card>
+      <CardHeader>
+        <h2 className="font-semibold text-zinc-900">Moyens de paiement</h2>
+      </CardHeader>
+      <CardBody>
+        <PaymentMethodsPanel methods={paymentMethods} />
+      </CardBody>
+    </Card>
+  );
+
+  const fasoStockCard = showFasoStock && (
+    <Card>
+      <CardHeader>
+        <h2 className="font-semibold text-zinc-900">Intégration FasoStock</h2>
+      </CardHeader>
+      <CardBody>
+        <FasoStockPanel
+          initiallyConnected={!!fasoStockApiKey}
+          initialStores={fasoStockStores}
+          locations={locationOptions}
+          initialMapping={fasoStockMapping}
+          lastSyncAt={(businessRow?.fasoStockLastSyncAt as string | null) ?? null}
+          lastSyncStatus={(businessRow?.fasoStockLastSyncStatus as string | null) ?? null}
+          lastSyncError={(businessRow?.fasoStockLastSyncError as string | null) ?? null}
+        />
+      </CardBody>
+    </Card>
+  );
+
+  const currencyCard = (
+    <Card>
+      <CardHeader>
+        <h2 className="font-semibold text-zinc-900">Devise</h2>
+      </CardHeader>
+      <CardBody>
+        <p className="text-sm text-zinc-500">
+          La monnaie utilisée dans toute l&apos;application : caisse, factures, reçus, rapports.
+        </p>
+        <p className="mt-2 text-sm font-medium text-zinc-900">
+          Devise actuelle : {user.business.currency === "XOF" ? "Franc CFA (UEMOA) (FCFA)" : user.business.currency}
+        </p>
+        <p className="mt-1 text-xs text-zinc-400">
+          Une fois des ventes enregistrées, la devise ne peut plus être modifiée sans fausser l&apos;historique.
+          Contactez le support si un changement est réellement nécessaire.
+        </p>
+      </CardBody>
+    </Card>
+  );
+
+  const expensesPanel = <ExpenseCategoriesPanel categories={businessSettings.expenseCategories} />;
+
+  const invoiceTemplatePanel = invoiceTemplatesEnabled && (
+    <InvoiceTemplatePanel
+      settings={businessSettings}
+      business={{
+        businessName: user.business.name,
+        businessActivity: user.business.activity,
+        businessPhone: user.business.phone,
+        businessAddress: user.business.address,
+        businessEmail: user.business.email,
+        businessCity: user.business.city,
+        logoUrl: user.business.logoUrl,
+        tagline: invoiceCustomization.invoiceTagline,
+        mobileMoneyInfo: invoiceCustomization.mobileMoneyInfo,
+        signerName: invoiceCustomization.invoiceSignerName,
+        returnPolicy: invoiceCustomization.invoiceReturnPolicy,
+        ifu: invoiceCustomization.ifu,
+        rccm: invoiceCustomization.rccm,
+        footerMessage: user.business.ticketFooter,
+        currency: user.business.currency,
+      }}
+    />
+  );
+
+  const modulesCard = (
+    <Card>
+      <CardHeader>
+        <h2 className="font-semibold text-zinc-900">Modules</h2>
+      </CardHeader>
+      <CardBody>
+        <ModuleTogglesPanel settings={businessSettings} hiddenModules={quotesEnabled ? [] : ["devis"]} />
+      </CardBody>
+    </Card>
+  );
+
+  const permissionsCard = (
+    <Card>
+      <CardHeader>
+        <h2 className="font-semibold text-zinc-900">Rôles et permissions</h2>
+      </CardHeader>
+      <CardBody>
+        <PermissionsPanel
+          overrides={(overrides ?? []) as unknown as { role: Role; permission: string; allowed: boolean }[]}
+        />
+      </CardBody>
+    </Card>
+  );
+
+  const dangerZone = <DangerZonePanel businessName={user.business.name} locations={locationOptions} />;
+
+  const header = (
+    <div>
+      <h1 className="text-xl font-bold text-zinc-900">Paramètres</h1>
+      <p className="text-sm text-zinc-500">Configurez votre commerce, vos moyens de paiement et vos permissions.</p>
+    </div>
+  );
+
+  if (tabsEnabled) {
+    const section = (title: string, children: React.ReactNode) => (
+      <Card>
+        <CardHeader>
+          <h2 className="font-semibold text-zinc-900">{title}</h2>
+        </CardHeader>
+        <CardBody className="space-y-4">{children}</CardBody>
+      </Card>
+    );
+
+    // Cabinet médical : pas de caisse ni de stock au sens des autres
+    // activités, donc ni onglets Stock, Factures et Modules, ni réglages de
+    // caisse (même règle que la page d'origine, plus bas).
+    const tabs: SettingsTab[] = isMedical
+      ? [
+          { key: "commerce", label: "Commerce", content: <>{activityCard}{businessCard}{currencyCard}</> },
+          { key: "paiements", label: "Paiements", content: paymentMethodsCard },
+          { key: "depenses", label: "Dépenses", content: section("Dépenses", expensesPanel) },
+          { key: "equipe", label: "Équipe", content: permissionsCard },
+          { key: "avance", label: "Avancé", content: dangerZone },
+        ]
+      : [
+          { key: "commerce", label: "Commerce", content: <>{activityCard}{businessCard}{currencyCard}</> },
+          {
+            key: "caisse",
+            label: "Caisse et paiements",
+            content: (
+              <>
+                {paymentMethodsCard}
+                {section(
+                  "Règles de la caisse",
+                  <>
+                    <BusinessRulesPanel settings={businessSettings} />
+                    {maxDiscountEnabled && <MaxDiscountPanel initialPercent={businessSettings.maxDiscountPercent} />}
+                    <QuantityInputModePanel settings={businessSettings} />
+                    <HideCustomerPanel settings={businessSettings} />
+                    <UnclaimedGoodsPanel settings={businessSettings} />
+                    <MobileMoneyPanel settings={businessSettings} />
+                    <AiCartPanel settings={businessSettings} />
+                  </>
+                )}
+                {section(
+                  "Tableau de bord",
+                  <>
+                    <PaymentBreakdownPanel settings={businessSettings} />
+                    <SalesLeaderboardPanel settings={businessSettings} />
+                  </>
+                )}
+              </>
+            ),
+          },
+          {
+            key: "stock",
+            label: "Stock et produits",
+            content: section(
+              "Stock et produits",
+              <>
+                <PackagingPriceModePanel settings={businessSettings} />
+                <BulkStockFillPanel settings={businessSettings} />
+              </>
+            ),
+          },
+          {
+            key: "factures",
+            label: "Factures et impression",
+            content: section(
+              "Factures et impression",
+              <>
+                <DualFormatPrintingPanel settings={businessSettings} />
+                {invoiceTemplatePanel}
+              </>
+            ),
+          },
+          { key: "depenses", label: "Dépenses", content: section("Dépenses", expensesPanel) },
+          { key: "modules", label: "Modules", content: modulesCard },
+          { key: "equipe", label: "Équipe", content: permissionsCard },
+          {
+            key: "avance",
+            label: "Avancé",
+            content: (
+              <>
+                {section("Accès développeurs", <ApiKeysPanel />)}
+                {dangerZone}
+              </>
+            ),
+          },
+        ];
+
+    return (
+      <div className="space-y-6">
+        {header}
+        <SettingsTabs tabs={tabs} initialTab={onglet} />
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-xl font-bold text-zinc-900">Paramètres</h1>
-        <p className="text-sm text-zinc-500">Configurez votre commerce, vos moyens de paiement et vos permissions.</p>
-      </div>
-
-      <Card>
-        <CardHeader>
-          <h2 className="font-semibold text-zinc-900">Mon activité</h2>
-        </CardHeader>
-        <CardBody className="flex items-center justify-between gap-3">
-          {activity ? (
-            <div className="flex items-center gap-3">
-              <span className="text-2xl">{activity.emoji}</span>
-              <div>
-                <p className="font-medium text-zinc-900">{activity.label}</p>
-                <p className="text-xs text-zinc-500">{activity.description}</p>
-              </div>
-            </div>
-          ) : (
-            <p className="text-sm text-zinc-500">Aucune activité définie.</p>
-          )}
-          <Link
-            href="/choisir-activite?change=1"
-            className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-zinc-200 px-3 py-2 text-sm font-medium text-zinc-600 hover:bg-zinc-50"
-          >
-            <Pencil className="h-3.5 w-3.5" /> Modifier
-          </Link>
-        </CardBody>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <h2 className="font-semibold text-zinc-900">Commerce</h2>
-        </CardHeader>
-        <CardBody>
-          <BusinessSettingsForm
-            business={{ ...user.business, ...invoiceCustomization }}
-            ticketPreview={
-              ticketPreviewEnabled ? { cashierName: `${user.firstName} ${user.lastName}`.trim() } : null
-            }
-            ticketTestEnabled={ticketTestEnabled}
-          />
-        </CardBody>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <h2 className="font-semibold text-zinc-900">Moyens de paiement</h2>
-        </CardHeader>
-        <CardBody>
-          <PaymentMethodsPanel methods={paymentMethods} />
-        </CardBody>
-      </Card>
-
-      {!isMedical && (
-        <Card>
-          <CardHeader>
-            <h2 className="font-semibold text-zinc-900">Intégration FasoStock</h2>
-          </CardHeader>
-          <CardBody>
-            <FasoStockPanel
-              initiallyConnected={!!fasoStockApiKey}
-              initialStores={fasoStockStores}
-              locations={locations.map((l) => ({ id: l.id as string, name: l.name as string }))}
-              initialMapping={fasoStockMapping}
-              lastSyncAt={(businessRow?.fasoStockLastSyncAt as string | null) ?? null}
-              lastSyncStatus={(businessRow?.fasoStockLastSyncStatus as string | null) ?? null}
-              lastSyncError={(businessRow?.fasoStockLastSyncError as string | null) ?? null}
-            />
-          </CardBody>
-        </Card>
-      )}
-
-      <Card>
-        <CardHeader>
-          <h2 className="font-semibold text-zinc-900">Devise</h2>
-        </CardHeader>
-        <CardBody>
-          <p className="text-sm text-zinc-500">
-            La monnaie utilisée dans toute l&apos;application : caisse, factures, reçus, rapports.
-          </p>
-          <p className="mt-2 text-sm font-medium text-zinc-900">
-            Devise actuelle : {user.business.currency === "XOF" ? "Franc CFA (UEMOA) (FCFA)" : user.business.currency}
-          </p>
-          <p className="mt-1 text-xs text-zinc-400">
-            Une fois des ventes enregistrées, la devise ne peut plus être modifiée sans fausser l&apos;historique.
-            Contactez le support si un changement est réellement nécessaire.
-          </p>
-        </CardBody>
-      </Card>
+      {header}
+      {activityCard}
+      {businessCard}
+      {paymentMethodsCard}
+      {fasoStockCard}
+      {currencyCard}
 
       {isMedical ? (
         // Cabinet médical : seules les catégories de dépenses restent
@@ -222,9 +397,7 @@ export default async function SettingsPage() {
           <CardHeader>
             <h2 className="font-semibold text-zinc-900">Dépenses</h2>
           </CardHeader>
-          <CardBody className="space-y-4">
-            <ExpenseCategoriesPanel categories={businessSettings.expenseCategories} />
-          </CardBody>
+          <CardBody className="space-y-4">{expensesPanel}</CardBody>
         </Card>
       ) : (
         <>
@@ -238,33 +411,12 @@ export default async function SettingsPage() {
               <SalesLeaderboardPanel settings={businessSettings} />
               <UnclaimedGoodsPanel settings={businessSettings} />
               <PaymentBreakdownPanel settings={businessSettings} />
-              <ExpenseCategoriesPanel categories={businessSettings.expenseCategories} />
+              {expensesPanel}
               <PackagingPriceModePanel settings={businessSettings} />
               <BulkStockFillPanel settings={businessSettings} />
               <HideCustomerPanel settings={businessSettings} />
               <DualFormatPrintingPanel settings={businessSettings} />
-              {invoiceTemplatesEnabled && (
-                <InvoiceTemplatePanel
-                  settings={businessSettings}
-                  business={{
-                    businessName: user.business.name,
-                    businessActivity: user.business.activity,
-                    businessPhone: user.business.phone,
-                    businessAddress: user.business.address,
-                    businessEmail: user.business.email,
-                    businessCity: user.business.city,
-                    logoUrl: user.business.logoUrl,
-                    tagline: invoiceCustomization.invoiceTagline,
-                    mobileMoneyInfo: invoiceCustomization.mobileMoneyInfo,
-                    signerName: invoiceCustomization.invoiceSignerName,
-                    returnPolicy: invoiceCustomization.invoiceReturnPolicy,
-                    ifu: invoiceCustomization.ifu,
-                    rccm: invoiceCustomization.rccm,
-                    footerMessage: user.business.ticketFooter,
-                    currency: user.business.currency,
-                  }}
-                />
-              )}
+              {invoiceTemplatePanel}
               <QuantityInputModePanel settings={businessSettings} />
               <MobileMoneyPanel settings={businessSettings} />
               <AiCartPanel settings={businessSettings} />
@@ -272,32 +424,12 @@ export default async function SettingsPage() {
             </CardBody>
           </Card>
 
-          <Card>
-            <CardHeader>
-              <h2 className="font-semibold text-zinc-900">Modules</h2>
-            </CardHeader>
-            <CardBody>
-              <ModuleTogglesPanel settings={businessSettings} hiddenModules={quotesEnabled ? [] : ["devis"]} />
-            </CardBody>
-          </Card>
+          {modulesCard}
         </>
       )}
 
-      <Card>
-        <CardHeader>
-          <h2 className="font-semibold text-zinc-900">Rôles et permissions</h2>
-        </CardHeader>
-        <CardBody>
-          <PermissionsPanel
-            overrides={(overrides ?? []) as unknown as { role: Role; permission: string; allowed: boolean }[]}
-          />
-        </CardBody>
-      </Card>
-
-      <DangerZonePanel
-        businessName={user.business.name}
-        locations={locations.map((l) => ({ id: l.id as string, name: l.name as string }))}
-      />
+      {permissionsCard}
+      {dangerZone}
     </div>
   );
 }
