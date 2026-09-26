@@ -4,8 +4,9 @@ import { cn } from "@/lib/cn";
 
 /**
  * Champ de recherche bien visible (caisse, liste des produits) : plus haut
- * qu'un champ ordinaire, bordure plus marquée, loupe verte et texte d'aide
- * plus foncé, pour qu'on le repère au premier coup d'œil.
+ * qu'un champ ordinaire, bordure et fond aux couleurs ZINDO (vert), loupe
+ * verte, pour qu'on le repère au premier coup d'œil. Le fond redevient
+ * blanc pendant la frappe, pour une lecture nette.
  */
 export function SearchInput({ className, ...props }: InputHTMLAttributes<HTMLInputElement>) {
   return (
@@ -14,7 +15,7 @@ export function SearchInput({ className, ...props }: InputHTMLAttributes<HTMLInp
       <input
         type="search"
         {...props}
-        className="h-12 w-full rounded-xl border-2 border-zinc-300 bg-white pl-11 pr-4 text-[15px] text-zinc-900 shadow-sm outline-none transition-[border-color,box-shadow] duration-150 placeholder:text-zinc-500 hover:border-zinc-400 focus:border-zindo-green-600 focus:ring-4 focus:ring-zindo-green-500/15 dark:border-slate-600 dark:bg-slate-900 dark:hover:border-slate-500"
+        className="h-12 w-full rounded-xl border-2 border-zindo-green-500 bg-zindo-green-100 pl-11 pr-4 text-[15px] font-medium text-zinc-900 shadow-sm shadow-zindo-green-900/10 outline-none transition-[border-color,box-shadow,background-color] duration-150 placeholder:font-normal placeholder:text-zindo-green-800/70 hover:border-zindo-green-600 focus:border-zindo-green-600 focus:bg-white focus:ring-4 focus:ring-zindo-green-500/20 dark:border-zindo-green-500 dark:bg-zindo-green-500/10 dark:placeholder:text-zindo-green-300/70 dark:focus:bg-slate-900"
       />
     </div>
   );
