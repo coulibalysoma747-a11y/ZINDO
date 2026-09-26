@@ -1,4 +1,5 @@
 import { formatMoney, formatDateTime } from "@/lib/format";
+import { ZindoMention } from "./ZindoMention";
 
 export type ReceiptItem = {
   name: string;
@@ -36,6 +37,8 @@ export type ReceiptData = {
   isReturn?: boolean;
   /** Part du retour déduite de la dette du client (plutôt que rendue). */
   returnDebtReduced?: number;
+  /** Flag « mention_zindo_ticket » : ligne « Géré avec ZINDO » en bas du ticket. */
+  zindoMention?: boolean;
 };
 
 export type ReceiptWidth = "58mm" | "80mm" | "A4";
@@ -448,6 +451,7 @@ export function Receipt({
         ) : (
           <ClassiqueBody data={data} width={width} money={money} qrSize={qrSize} />
         )}
+        {data.zindoMention && <ZindoMention className="mt-1" />}
       </div>
     </>
   );

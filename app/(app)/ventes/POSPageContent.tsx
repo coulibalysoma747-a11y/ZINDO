@@ -1,4 +1,5 @@
 import { requirePermission, hasPermission } from "@/lib/auth";
+import { isZindoMentionEnabled } from "@/lib/zindo-mention";
 import { PERMISSIONS } from "@/lib/permissions";
 import { supabase } from "@/lib/supabase";
 import { getCurrentLocation } from "@/lib/location";
@@ -62,7 +63,7 @@ export async function POSPageContent({ mode }: { mode: "pos" | "facture" }) {
     user: { firstName: string; lastName: string };
   };
 
-  const [{ data: customers }, paymentMethods, canEditProducts, canSeeMargin, manualSaleNumberEnabled, singlePanel, quickCashNotes, blockOutOfStock, posExtras] = await Promise.all([
+  const [{ data: customers }, paymentMethods, canEditProducts, canSeeMargin, manualSaleNumberEnabled, singlePanel, quickCashNotes, blockOutOfStock, posExtras, zindoMention] = await Promise.all([
     supabase.from("customers").select("id, name, phone").eq("business_id", user.businessId).order("name", { ascending: true }),
     getEnabledPaymentMethods(),
     hasPermission(user.businessId, user.role, PERMISSIONS.PRODUCTS_MANAGE, user.id),
@@ -72,6 +73,7 @@ export async function POSPageContent({ mode }: { mode: "pos" | "facture" }) {
     isQuickCashNotesEnabled(user.businessId),
     isOutOfStockBlockEnabled(user.businessId),
     getPosExtras(user.businessId),
+    isZindoMentionEnabled(user.businessId),
   ]);
   const suggestedManualNumber = manualSaleNumberEnabled ? await getSuggestedManualSaleNumber(user.businessId) : null;
 
@@ -119,6 +121,7 @@ export async function POSPageContent({ mode }: { mode: "pos" | "facture" }) {
         footerMessage: user.business.ticketFooter,
         verificationBaseUrl: await getVerificationBaseUrl(),
         qrCodeSize: user.business.qrCodeSize,
+        zindoMention,
       }}
     />
   );

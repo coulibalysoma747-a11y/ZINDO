@@ -35,6 +35,8 @@ export type CachedBusinessInfo = {
   /** Préfixe des liens de vérification (voir lib/verification.ts::getVerificationBaseUrl) — absent d'un ancien cache. */
   verificationBaseUrl?: string;
   qrCodeSize?: number;
+  /** Flag « mention_zindo_ticket » (lib/zindo-mention.ts) — absent d'un ancien cache. */
+  zindoMention?: boolean;
 };
 
 export type PendingWriteKind =

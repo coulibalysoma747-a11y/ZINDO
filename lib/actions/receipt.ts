@@ -8,6 +8,7 @@ import { generateQrDataUrl } from "@/lib/qrcode";
 import { getInvoiceCustomization } from "@/lib/invoice-customization";
 import { getBusinessSettings } from "@/lib/business-settings";
 import { isInvoiceTemplatesModuleEnabled } from "@/lib/actions/invoice-templates";
+import { isZindoMentionEnabled } from "@/lib/zindo-mention";
 import type { ReceiptData, ReceiptWidth } from "@/components/sales/Receipt";
 import type { FactureData } from "@/components/sales/Facture";
 import type { FactureEnginData } from "@/components/sales/FactureEngin";
@@ -148,6 +149,7 @@ export async function getSaleDocumentAction(saleId: string, formatOverride?: "TI
   const paymentMethodLabel = PAYMENT_LABELS[sale.paymentMethod] ?? sale.paymentMethod;
   const cashierName = `${sale.user.firstName} ${sale.user.lastName}`;
   const isCancelled = sale.status === "ANNULEE";
+  const zindoMention = await isZindoMentionEnabled(user.businessId);
 
   // "Choisir le format d'impression" (Paramètres) : formatOverride permet
   // d'imprimer la même vente dans l'autre format sans jamais changer le
@@ -280,6 +282,7 @@ export async function getSaleDocumentAction(saleId: string, formatOverride?: "TI
       ifu: customization.ifu,
       rccm: customization.rccm,
       templateId,
+      zindoMention,
     };
     return { success: true, saleId: sale.id, documentType: "FACTURE", data: factureData, isCancelled, canEdit };
   }
@@ -312,6 +315,7 @@ export async function getSaleDocumentAction(saleId: string, formatOverride?: "TI
     currency: business.currency,
     qrCodeDataUrl,
     qrCodeSize: business.qrCodeSize,
+    zindoMention,
     // Bon de retour (lib/actions/sale-returns.ts) : total et payé négatifs ;
     // payé - total = part déduite de la dette plutôt que rendue en argent.
     ...(sale.documentType === "RETOUR" && {

@@ -59,6 +59,8 @@ export type FactureData = {
   rccm?: string | null;
   /** Modèle visuel choisi (/parametres) — lu par components/sales/InvoiceDocument.tsx, ignoré par ce composant lui-même. */
   templateId?: string | null;
+  /** Flag « mention_zindo_ticket » : ligne « Géré avec ZINDO » sous la facture (ajoutée par InvoiceDocument). */
+  zindoMention?: boolean;
 };
 
 /**

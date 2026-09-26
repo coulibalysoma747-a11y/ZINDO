@@ -74,6 +74,7 @@ export function buildOfflineDocument(params: {
       footerMessage: params.business.footerMessage,
       currency: params.business.currency,
       qrCodeDataUrl: null,
+      zindoMention: params.business.zindoMention,
     };
     return { success: true, saleId: params.clientRef, documentType: "FACTURE", data, isCancelled: false, canEdit: false };
   }
@@ -101,6 +102,7 @@ export function buildOfflineDocument(params: {
     currency: params.business.currency,
     qrCodeDataUrl: null,
     qrCodeSize: params.business.qrCodeSize,
+    zindoMention: params.business.zindoMention,
   };
   return { success: true, saleId: params.clientRef, documentType: "TICKET", data, defaultWidth: params.defaultWidth, isCancelled: false, canEdit: false };
 }

@@ -1,4 +1,5 @@
 import { requirePermission } from "@/lib/auth";
+import { isZindoMentionEnabled } from "@/lib/zindo-mention";
 import { PERMISSIONS } from "@/lib/permissions";
 import { supabase } from "@/lib/supabase";
 import { getCurrentLocation } from "@/lib/location";
@@ -90,9 +91,10 @@ export async function CaissePageContent() {
     .eq("status", "OUVERTE")
     .maybeSingle();
 
-  const [businessSettings, paymentMethods] = await Promise.all([
+  const [businessSettings, paymentMethods, zindoMention] = await Promise.all([
     getBusinessSettings(user.businessId),
     getEnabledPaymentMethods(),
+    isZindoMentionEnabled(user.businessId),
   ]);
 
   const businessInfo: CachedBusinessInfo = {
@@ -106,6 +108,7 @@ export async function CaissePageContent() {
     locationAddress: currentLocation.address,
     currency: user.business.currency,
     footerMessage: user.business.ticketFooter,
+    zindoMention,
   };
   const cashierName = `${user.firstName} ${user.lastName}`;
 

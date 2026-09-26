@@ -9,6 +9,7 @@ import { FactureRestaurant } from "./FactureRestaurant";
 import { FactureEpicerie } from "./FactureEpicerie";
 import { FactureCabinet } from "./FactureCabinet";
 import { FactureElegante } from "./FactureElegante";
+import { ZindoMention } from "./ZindoMention";
 
 /**
  * Point d'aiguillage unique entre les modèles de Facture A4 (voir
@@ -18,6 +19,16 @@ import { FactureElegante } from "./FactureElegante";
  * modèle plutôt que de toucher les 3 sites à chaque fois.
  */
 export function InvoiceDocument({ data }: { data: FactureData }) {
+  if (!data.zindoMention) return <InvoiceTemplate data={data} />;
+  return (
+    <>
+      <InvoiceTemplate data={data} />
+      <ZindoMention className="mt-2" />
+    </>
+  );
+}
+
+function InvoiceTemplate({ data }: { data: FactureData }) {
   switch (data.templateId) {
     case "moderne":
       return <FactureModerne data={data} />;

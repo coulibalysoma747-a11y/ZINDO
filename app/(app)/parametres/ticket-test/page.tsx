@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { requireUser } from "@/lib/auth";
 import { isTicketTestEnabled } from "@/lib/ticket-test";
+import { isZindoMentionEnabled } from "@/lib/zindo-mention";
 import { generateQrDataUrl } from "@/lib/qrcode";
 import type { ReceiptData, ReceiptWidth } from "@/components/sales/Receipt";
 import { TicketTestView } from "./TicketTestView";
@@ -45,6 +46,7 @@ export default async function TicketTestPage() {
     currency: business.currency,
     qrCodeDataUrl,
     qrCodeSize: business.qrCodeSize,
+    zindoMention: await isZindoMentionEnabled(user.businessId),
   };
 
   return <TicketTestView data={data} defaultWidth={(user.printerTicketWidth ?? business.ticketWidth) as ReceiptWidth} />;
