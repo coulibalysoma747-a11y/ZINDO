@@ -420,6 +420,11 @@ async function createSaleImpl(input: CreateSaleInput): Promise<CreateSaleResult>
   );
   if (itemsError) {
     console.error("[createSaleAction] Échec de l'enregistrement des articles :", itemsError.message);
+    // Sans ses articles, la vente compterait quand même dans le chiffre
+    // d'affaires, et un nouvel essai (même client_ref) la retrouverait vide :
+    // on la retire. Rien d'autre n'a encore été écrit (ni stock, ni exemplaires).
+    const { error: cleanupError } = await supabase.from("sales").delete().eq("id", sale.id);
+    if (cleanupError) console.error("[createSaleAction] Vente sans articles non supprimée :", sale.id, cleanupError.message);
     return { success: false, error: "Impossible d'enregistrer les articles de la vente" };
   }
 
