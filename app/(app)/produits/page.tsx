@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Plus, FileUp, FileDown, QrCode } from "lucide-react";
+import { Plus, FileUp, FileDown, QrCode, Trash2 } from "lucide-react";
 import { requirePermission } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
 import { supabase } from "@/lib/supabase";
@@ -19,6 +19,7 @@ import { QuickPackagingButton } from "@/components/products/QuickPackagingModal"
 import { isPackagingUnitsModuleEnabled } from "@/lib/actions/packaging-units";
 import { ensureCatalogImportFlagRegistered } from "@/lib/actions/catalog-import";
 import { isFeatureEnabled } from "@/lib/feature-flags";
+import { isProductTrashEnabled } from "@/lib/product-trash";
 
 const PAGE_SIZE = 200;
 
@@ -31,13 +32,14 @@ export default async function ProductsPage({
   const { q, categorie, marque, conditionnement, filtre, page } = await searchParams;
   const currentPage = Math.max(1, parseInt(page ?? "1", 10) || 1);
   const offset = (currentPage - 1) * PAGE_SIZE;
-  const [currentLocation, activityConfig, packagingEnabled, catalogImportEnabled] = await Promise.all([
+  const [currentLocation, activityConfig, packagingEnabled, catalogImportEnabled, trashEnabled] = await Promise.all([
     getCurrentLocation(user.businessId),
     getActivityConfig(user.business.activityKey),
     isPackagingUnitsModuleEnabled(user.businessId),
     // Bouton « Importer un catalogue » montré seulement si la fonction est
     // activée : sinon il menait à « Fonctionnalité pas encore disponible ».
     ensureCatalogImportFlagRegistered().then(() => isFeatureEnabled("import_catalogue_pdf", user.businessId)),
+    isProductTrashEnabled(user.businessId),
   ]);
   const productsLabel = resolveTerm(activityConfig, "products");
 
@@ -185,6 +187,11 @@ export default async function ProductsPage({
           <ButtonLink href="/produits/etiquettes" variant="outline">
             <QrCode className="h-4 w-4" /> QR codes
           </ButtonLink>
+          {trashEnabled && (
+            <ButtonLink href="/produits/corbeille" variant="outline">
+              <Trash2 className="h-4 w-4" /> Corbeille
+            </ButtonLink>
+          )}
           {catalogImportEnabled && (
             <ButtonLink href="/produits/importer" variant="outline">
               <FileUp className="h-4 w-4" /> Importer un catalogue

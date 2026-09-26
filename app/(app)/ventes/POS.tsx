@@ -40,7 +40,7 @@ import {
 import { syncPendingSales } from "@/lib/offline/sync";
 import { buildOfflineDocument } from "@/lib/offline/build-document";
 import { getAvailableVehicleUnitsAction } from "@/lib/actions/vehicle-units";
-import { playAddToCartSound, playErrorSound } from "@/lib/sound";
+import { playAddToCartSound, playErrorSound, playWarningSound, vibrate } from "@/lib/sound";
 import { resolveTieredPrice } from "@/lib/pricing";
 import { QuickCashNotes } from "./QuickCashNotes";
 import { PosCalculator } from "./PosCalculator";
@@ -606,6 +606,7 @@ export function POS({
         .reduce((sum, l) => sum + l.quantity * (l.multiplier ?? 1), 0);
       if (inCart + multiplier > product.quantity) {
         playErrorSound();
+        if (extras.scanFeedback) vibrate([120, 60, 120]);
         setStockAlert(
           product.quantity <= 0
             ? `Rupture de stock : « ${product.name} » n'est plus en réserve. Produit non ajouté.`
@@ -619,7 +620,21 @@ export function POS({
       }
       setStockAlert(null);
     }
-    playAddToCartSound();
+    // Bips distincts (flag bips_scan) : ajout normal, ou ajout avec stock insuffisant.
+    const stockShort =
+      extras.scanFeedback &&
+      cart
+        .filter((l) => !l.vehicleUnitId && l.product.id === product.id)
+        .reduce((sum, l) => sum + l.quantity * (l.multiplier ?? 1), 0) +
+        multiplier >
+        product.quantity;
+    if (stockShort) {
+      playWarningSound();
+      vibrate([80, 60, 80]);
+    } else {
+      playAddToCartSound();
+      if (extras.scanFeedback) vibrate(50);
+    }
     const maxQty = Math.max(1, Math.floor(product.quantity / multiplier));
     setCart((prev) => {
       const existing = prev.find((l) => !l.vehicleUnitId && l.product.id === product.id && l.packagingUnitId === packaging?.id);
@@ -710,6 +725,14 @@ export function POS({
     setUnitPickerProduct(null);
   }
 
+  function codeNotFound(code: string) {
+    setError(`Aucun produit trouvé pour le code "${code}"`);
+    if (extras.scanFeedback) {
+      playErrorSound();
+      vibrate([200, 80, 200]);
+    }
+  }
+
   async function handleScan(code: string) {
     // Cherche d'abord localement (rapide, fonctionne hors ligne) avant
     // d'interroger le serveur — utile aussi en ligne pour un scan instantané.
@@ -726,16 +749,16 @@ export function POS({
       }
     }
     if (!isOnline) {
-      setError(`Aucun produit trouvé pour le code "${code}"`);
+      codeNotFound(code);
       return;
     }
     try {
       const product = await findProductByExactCodeAction(code, locationId);
       if (product) {
         addProduct(product, product.matchedPackaging ?? undefined);
-      } else setError(`Aucun produit trouvé pour le code "${code}"`);
+      } else codeNotFound(code);
     } catch {
-      setError(`Aucun produit trouvé pour le code "${code}"`);
+      codeNotFound(code);
     }
   }
 
@@ -790,6 +813,42 @@ export function POS({
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
   }, []);
+
+  // Raccourcis clavier (flag raccourcis_clavier) : F1 scanner, F2 recherche,
+  // F3 valider, F4 vider le panier. Actifs même quand le curseur est dans un champ.
+  const scannerWrapperRef = useRef<HTMLSpanElement>(null);
+  const shortcutActionsRef = useRef({ submit: () => {}, clear: () => {} });
+  useEffect(() => {
+    shortcutActionsRef.current = {
+      submit: () => {
+        if (queueOnlyMode) {
+          if (!sendingToQueue) handleSendToQueue();
+        } else if (!pending) {
+          handleSubmit();
+        }
+      },
+      clear: cancelSale,
+    };
+  });
+  useEffect(() => {
+    if (!extras.keyboardShortcuts) return;
+    function onKeyDown(e: KeyboardEvent) {
+      if (e.ctrlKey || e.altKey || e.metaKey || e.shiftKey) return;
+      if (!["F1", "F2", "F3", "F4"].includes(e.key)) return;
+      // Pas de raccourci quand une fenêtre (article divers, calculatrice...) est ouverte.
+      if (document.querySelector('[role="dialog"]')) return;
+      e.preventDefault();
+      if (e.key === "F1") scannerWrapperRef.current?.querySelector("button")?.click();
+      else if (e.key === "F2") {
+        const input = document.getElementById("pos-search") as HTMLInputElement | null;
+        input?.focus();
+        input?.select();
+      } else if (e.key === "F3") shortcutActionsRef.current.submit();
+      else shortcutActionsRef.current.clear();
+    }
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [extras.keyboardShortcuts]);
 
   /** "Caisse à deux" : envoie le panier à un caissier sans encaisser, le stock n'est pas touché. */
   function handleSendToQueue() {
@@ -1801,8 +1860,11 @@ export function POS({
               }}
               placeholder="Nom, référence ou code-barres…"
               autoFocus
+              id="pos-search"
             />
-          <BarcodeScannerButton onDetected={handleScan} />
+          <span ref={scannerWrapperRef} className="contents">
+            <BarcodeScannerButton onDetected={handleScan} />
+          </span>
           {aiCartEnabled && (
             <Button type="button" variant="outline" onClick={() => setAiCartOpen(true)}>
               <Sparkles className="h-4 w-4" /> Panier IA
@@ -1834,6 +1896,12 @@ export function POS({
             </Button>
           )}
         </div>
+        {extras.keyboardShortcuts && (
+          <p className="-mt-1 hidden text-[11px] text-zinc-500 lg:block">
+            <kbd className="font-semibold">F1</kbd> scanner · <kbd className="font-semibold">F2</kbd> recherche ·{" "}
+            <kbd className="font-semibold">F3</kbd> valider · <kbd className="font-semibold">F4</kbd> vider le panier
+          </p>
+        )}
 
         {stockAlert && (
           <p

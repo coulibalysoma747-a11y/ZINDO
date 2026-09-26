@@ -13,6 +13,7 @@ import { getActivityConfig } from "@/lib/activity-config";
 import { checkLimit } from "@/lib/subscription";
 import { MOTO_ACTIVITY_KEY } from "@/lib/activities";
 import { isPackagingUnitsModuleEnabled } from "@/lib/actions/packaging-units";
+import { findBarcodeDuplicate } from "@/lib/barcode-duplicates";
 
 export type ActionState = { error?: string; success?: string } | undefined;
 
@@ -302,13 +303,8 @@ async function createProductCore(
   }
 
   if (data.barcode) {
-    const { data: existingBarcode } = await supabase
-      .from("products")
-      .select("id")
-      .eq("business_id", user.businessId)
-      .eq("barcode", data.barcode)
-      .maybeSingle();
-    if (existingBarcode) return { success: false, error: "Ce code-barres est déjà utilisé par un autre produit" };
+    const duplicate = await findBarcodeDuplicate(user.businessId, data.barcode);
+    if (duplicate) return { success: false, error: duplicate };
   }
 
   const reference = data.reference?.trim() || (await generateProductReference(user.businessId));
@@ -408,14 +404,8 @@ export async function updateProductAction(
   if (!product) return { error: "Produit introuvable" };
 
   if (data.barcode) {
-    const { data: existingBarcode } = await supabase
-      .from("products")
-      .select("id")
-      .eq("business_id", user.businessId)
-      .eq("barcode", data.barcode)
-      .neq("id", id)
-      .maybeSingle();
-    if (existingBarcode) return { error: "Ce code-barres est déjà utilisé par un autre produit" };
+    const duplicate = await findBarcodeDuplicate(user.businessId, data.barcode, { productId: id });
+    if (duplicate) return { error: duplicate };
   }
 
   let photoUrl: string | null | undefined;
@@ -488,7 +478,10 @@ export async function toggleProductActiveAction(id: string, active: boolean) {
     .maybeSingle();
   if (!product) return { error: "Produit introuvable" };
 
-  const { error } = await supabase.from("products").update({ active }).eq("id", id);
+  const { error } = await supabase
+    .from("products")
+    .update({ active, updated_at: new Date().toISOString() })
+    .eq("id", id);
   if (error) {
     console.error("[toggleProductActiveAction] Échec de la mise à jour :", error.message);
     return { error: "Impossible de mettre à jour le produit" };

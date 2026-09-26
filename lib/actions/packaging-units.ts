@@ -7,6 +7,7 @@ import { requirePermission, requireUser } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
 import { generateProductBarcode } from "@/lib/reference";
 import { isFeatureEnabled, registerFeatureFlag } from "@/lib/feature-flags";
+import { findBarcodeDuplicate } from "@/lib/barcode-duplicates";
 
 export type PackagingUnit = {
   id: string;
@@ -88,13 +89,8 @@ export async function addPackagingUnitAction(productId: string, formData: FormDa
   if (product.trackUnits) return { error: "Un produit à suivi individuel ne peut pas avoir de conditionnement" };
 
   if (parsed.data.barcode) {
-    const { data: barcodeTaken } = await supabase
-      .from("product_packaging_units")
-      .select("id")
-      .eq("business_id", user.businessId)
-      .eq("barcode", parsed.data.barcode)
-      .maybeSingle();
-    if (barcodeTaken) return { error: "Ce code-barres est déjà utilisé par un autre conditionnement" };
+    const duplicate = await findBarcodeDuplicate(user.businessId, parsed.data.barcode);
+    if (duplicate) return { error: duplicate };
   }
 
   const { error } = await supabase.from("product_packaging_units").insert({

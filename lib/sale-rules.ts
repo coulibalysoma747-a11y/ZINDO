@@ -2,6 +2,7 @@ import { isFeatureEnabled, registerFeatureFlag } from "@/lib/feature-flags";
 import { formatMoney } from "@/lib/format";
 import { supabase } from "@/lib/supabase";
 import { sendPushToBusiness } from "@/lib/push";
+import { getBusinessSettings } from "@/lib/business-settings";
 import type { Role } from "@/lib/db-types";
 import { CANCEL_REASON_REQUIRED } from "@/lib/sale-rules-constants";
 
@@ -45,11 +46,20 @@ export async function checkBelowCost(
 
 /**
  * Règle « remise maximum » : désactivée par défaut. Quand elle est active,
- * un non-administrateur ne peut pas accorder plus de MAX_DISCOUNT_PERCENT %
- * de remise au total (remises par ligne + remise globale du panier).
+ * un non-administrateur ne peut pas accorder plus de X % de remise au total
+ * (remises par ligne + remise globale du panier). X se règle dans les
+ * Paramètres (réglage maxDiscountPercent, 10 % par défaut).
  */
 const MAX_DISCOUNT_FLAG = "max_discount_non_admin";
-const MAX_DISCOUNT_PERCENT = 10;
+
+export async function isMaxDiscountRuleEnabled(businessId: string): Promise<boolean> {
+  await registerFeatureFlag(
+    MAX_DISCOUNT_FLAG,
+    "Remise maximum pour les vendeurs",
+    "Bloque toute vente dont la remise totale dépasse le pourcentage réglé dans les Paramètres (10 % par défaut), sauf pour un administrateur."
+  );
+  return isFeatureEnabled(MAX_DISCOUNT_FLAG, businessId);
+}
 
 export async function checkMaxDiscount(
   businessId: string,
@@ -62,16 +72,12 @@ export async function checkMaxDiscount(
   const discount = items.reduce((sum, i) => sum + i.discount, 0) + globalDiscount;
   if (gross <= 0 || discount <= 0) return null;
 
-  await registerFeatureFlag(
-    MAX_DISCOUNT_FLAG,
-    `Remise maximum ${MAX_DISCOUNT_PERCENT} % pour les vendeurs`,
-    `Bloque toute vente dont la remise totale dépasse ${MAX_DISCOUNT_PERCENT} %, sauf pour un administrateur.`
-  );
-  if (!(await isFeatureEnabled(MAX_DISCOUNT_FLAG, businessId))) return null;
+  if (!(await isMaxDiscountRuleEnabled(businessId))) return null;
 
+  const maxPercent = (await getBusinessSettings(businessId)).maxDiscountPercent;
   const percent = (discount / gross) * 100;
-  if (percent > MAX_DISCOUNT_PERCENT) {
-    return `Remise trop élevée (${Math.round(percent)} %) : maximum ${MAX_DISCOUNT_PERCENT} % pour un vendeur. Demandez à un administrateur.`;
+  if (percent > maxPercent) {
+    return `Remise trop élevée (${Math.round(percent)} %) : maximum ${maxPercent} % pour un vendeur. Demandez à un administrateur.`;
   }
   return null;
 }

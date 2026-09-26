@@ -56,6 +56,8 @@ export type BusinessSettings = {
   invoiceTemplate: string;
   /** Modèle visuel des devis — null = même modèle que les factures (comportement historique). */
   quoteTemplate: string | null;
+  /** Remise maximum (en %) qu'un non-administrateur peut accorder — appliquée seulement si le flag max_discount_non_admin est actif (voir lib/sale-rules.ts). */
+  maxDiscountPercent: number;
 };
 
 // Comportement par défaut si la colonne n'est pas encore migrée ou vide :
@@ -93,6 +95,7 @@ const DEFAULTS: BusinessSettings = {
   },
   invoiceTemplate: "classique",
   quoteTemplate: null,
+  maxDiscountPercent: 10,
 };
 
 export type BusinessSettingsPatch = Partial<Omit<BusinessSettings, "modulesEnabled">> & {

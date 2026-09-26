@@ -1,6 +1,8 @@
 "use client";
 
 import { useActionState } from "react";
+import Link from "next/link";
+import { Printer } from "lucide-react";
 import { Field, Input, Select, Textarea } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { ImageUploadField } from "@/components/ui/ImageUploadField";
@@ -37,10 +39,13 @@ const QR_SIZE_OPTIONS = [
 export function BusinessSettingsForm({
   business,
   ticketPreview,
+  ticketTestEnabled = false,
 }: {
   business: Business;
   /** Présent seulement si le flag « apercu_ticket_parametres » est actif pour ce commerce. */
   ticketPreview?: { cashierName: string } | null;
+  /** Flag « ticket_test » : lien vers /parametres/ticket-test. */
+  ticketTestEnabled?: boolean;
 }) {
   const [state, formAction, pending] = useActionState<ActionState, FormData>(
     updateBusinessSettingsAction,
@@ -159,6 +164,14 @@ export function BusinessSettingsForm({
             cashierName={ticketPreview.cashierName}
             savedLogoUrl={business.logoUrl}
           />
+        )}
+        {ticketTestEnabled && (
+          <Link
+            href="/parametres/ticket-test"
+            className="inline-flex items-center gap-2 rounded-lg border border-zinc-300 px-3 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50"
+          >
+            <Printer className="h-4 w-4" /> Imprimer un ticket test
+          </Link>
         )}
       </div>
     </form>

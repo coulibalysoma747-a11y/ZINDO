@@ -9,6 +9,12 @@ import { supabase } from "@/lib/supabase";
 
 export async function updateBusinessSettingsAction(patch: BusinessSettingsPatch) {
   const user = await requirePermission(PERMISSIONS.SETTINGS_MANAGE);
+  if (
+    patch.maxDiscountPercent !== undefined &&
+    !(Number.isFinite(patch.maxDiscountPercent) && patch.maxDiscountPercent >= 0 && patch.maxDiscountPercent <= 100)
+  ) {
+    return { error: "La remise maximum doit être comprise entre 0 et 100 %" };
+  }
   const { error } = await updateBusinessSettings(user.businessId, patch);
   if (error) {
     console.error("[updateBusinessSettingsAction] Échec :", error.message);

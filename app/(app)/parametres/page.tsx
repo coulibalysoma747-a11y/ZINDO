@@ -9,6 +9,7 @@ import { getLocations } from "@/lib/location";
 import { getInvoiceCustomization } from "@/lib/invoice-customization";
 import { getBusinessSettings } from "@/lib/business-settings";
 import { isTicketPreviewEnabled } from "@/lib/ticket-preview";
+import { isTicketTestEnabled } from "@/lib/ticket-test";
 import { ensureInvoiceTemplatesFlagRegistered, isInvoiceTemplatesModuleEnabled } from "@/lib/actions/invoice-templates";
 import { listFasoStockStores, type FasoStockStore } from "@/lib/integrations/faso-stock";
 import { Card, CardBody, CardHeader } from "@/components/ui/Card";
@@ -17,6 +18,8 @@ import { PaymentMethodsPanel } from "./PaymentMethodsPanel";
 import { PermissionsPanel } from "./PermissionsPanel";
 import { FasoStockPanel } from "./FasoStockPanel";
 import { BusinessRulesPanel } from "./BusinessRulesPanel";
+import { MaxDiscountPanel } from "./MaxDiscountPanel";
+import { isMaxDiscountRuleEnabled } from "@/lib/sale-rules";
 import { SalesLeaderboardPanel } from "./SalesLeaderboardPanel";
 import { ModuleTogglesPanel } from "./ModuleTogglesPanel";
 import { ensureQuoteFlagRegistered, isQuoteModuleEnabled } from "@/lib/actions/quotes";
@@ -62,6 +65,8 @@ export default async function SettingsPage() {
     invoiceTemplatesEnabled,
     ticketPreviewEnabled,
     quotesEnabled,
+    ticketTestEnabled,
+    maxDiscountEnabled,
   ] = await Promise.all([
       supabase.from("payment_method_configs").select("method, label, enabled").eq("business_id", user.businessId),
       supabase.from("role_permissions").select("role, permission, allowed").eq("business_id", user.businessId),
@@ -78,6 +83,8 @@ export default async function SettingsPage() {
       isInvoiceTemplatesModuleEnabled(user.businessId),
       isTicketPreviewEnabled(user.businessId),
       ensureQuoteFlagRegistered().then(() => isQuoteModuleEnabled(user.businessId)),
+      isTicketTestEnabled(user.businessId),
+      isMaxDiscountRuleEnabled(user.businessId),
     ]);
 
   const configMap = new Map((configs ?? []).map((c) => [c.method as string, c]));
@@ -154,6 +161,7 @@ export default async function SettingsPage() {
             ticketPreview={
               ticketPreviewEnabled ? { cashierName: `${user.firstName} ${user.lastName}`.trim() } : null
             }
+            ticketTestEnabled={ticketTestEnabled}
           />
         </CardBody>
       </Card>
@@ -226,6 +234,7 @@ export default async function SettingsPage() {
             </CardHeader>
             <CardBody className="space-y-4">
               <BusinessRulesPanel settings={businessSettings} />
+              {maxDiscountEnabled && <MaxDiscountPanel initialPercent={businessSettings.maxDiscountPercent} />}
               <SalesLeaderboardPanel settings={businessSettings} />
               <UnclaimedGoodsPanel settings={businessSettings} />
               <PaymentBreakdownPanel settings={businessSettings} />

@@ -122,7 +122,7 @@ export function BarcodeScannerButton({ onDetected }: { onDetected: (code: string
         <ScanLine className="h-4 w-4" /> Scanner
       </Button>
       {open && (
-        <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-black/90 p-4">
+        <div role="dialog" aria-modal="true" className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-black/90 p-4">
           <button onClick={close} aria-label="Fermer" className="absolute right-4 top-4 rounded-full bg-white/10 p-2 text-white">
             <X className="h-5 w-5" />
           </button>

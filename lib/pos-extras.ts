@@ -37,6 +37,16 @@ const POS_EXTRA_FLAGS = {
     label: "Caisse : choix du conditionnement au clic",
     description: "Un produit qui a des conditionnements (carton, paquet...) ouvre au clic un menu pour choisir entre l'unité et chaque conditionnement, avec leur prix.",
   },
+  scanFeedback: {
+    key: "bips_scan",
+    label: "Caisse : bips et vibration selon le résultat du scan",
+    description: "Trois bips différents : ajout réussi, ajout avec stock insuffisant, code inconnu. Le téléphone vibre aussi (Android ; l’iPhone ne le permet pas aux pages web).",
+  },
+  keyboardShortcuts: {
+    key: "raccourcis_clavier",
+    label: "Caisse : raccourcis clavier (F1 à F4)",
+    description: "Sur ordinateur : F1 ouvre le scanner, F2 place le curseur dans la recherche, F3 valide la vente, F4 vide le panier (avec confirmation).",
+  },
 } as const;
 
 /** miscItem : flag article_divers, déclaré dans lib/misc-item.ts (le serveur de vente s'en sert aussi). */
