@@ -30,7 +30,9 @@ function subscribeOnline(onChange: () => void) {
 }
 
 const PROBE_INTERVAL_MS = 10000;
-const PROBE_TIMEOUT_MS = 3000;
+const PROBE_TIMEOUT_MS = 5000;
+// Un seul échec peut venir d'un réseau lent : la coupure n'est signalée qu'après deux échecs de suite.
+const PROBE_FAILURES_BEFORE_OFFLINE = 2;
 
 /** Petite requête sans cache vers un fichier statique : répond-elle à temps ? */
 async function probeNetwork(): Promise<boolean> {
@@ -100,12 +102,17 @@ export function OfflineShell({ enabled, userId }: { enabled: boolean; userId: st
     // Sonde régulière : la coupure est connue du service worker avant même
     // le prochain clic, qui ouvre alors la copie sans attendre.
     let probing = false;
+    let failures = 0;
     async function probe() {
       if (probing || document.visibilityState !== "visible") return;
       probing = true;
       const ok = await probeNetwork();
       probing = false;
-      navigator.serviceWorker.controller?.postMessage({ type: "ZINDO_NETWORK_PROBE", ok });
+      failures = ok ? 0 : failures + 1;
+      // navigator.onLine faux : coupure certaine, inutile d'attendre un second échec.
+      if (ok || failures >= PROBE_FAILURES_BEFORE_OFFLINE || !navigator.onLine) {
+        navigator.serviceWorker.controller?.postMessage({ type: "ZINDO_NETWORK_PROBE", ok });
+      }
     }
     const interval = setInterval(probe, PROBE_INTERVAL_MS);
     window.addEventListener("online", probe);

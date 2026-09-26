@@ -200,12 +200,13 @@ function noConnectionPage() {
 
 // Réseau « connecté mais qui ne passe pas » (Wi-Fi ou données sans
 // Internet, très fréquent) : le navigateur ne signale pas d'échec, il attend
-// indéfiniment. Au-delà de ce délai, on sert la copie ; puis pendant
+// indéfiniment. Au-delà de ce délai, si Internet ne passe vraiment plus
+// (voir isInternetReachable), on sert la copie ; puis pendant
 // NETWORK_DOWN_MS, on bascule directement sur les copies sans réattendre.
 // La page sonde aussi le réseau en continu (components/layout/OfflineShell.tsx,
 // message ZINDO_NETWORK_PROBE) : le plus souvent, la coupure est déjà connue
 // avant le clic, et la copie s'affiche sans aucune attente.
-const NETWORK_TIMEOUT_MS = 4000;
+const NETWORK_TIMEOUT_MS = 3000;
 const NETWORK_DOWN_MS = 30000;
 let networkDownUntil = 0;
 
@@ -230,34 +231,49 @@ function markNetworkUp() {
   broadcastNetwork(false);
 }
 
-/** fetch() qui renvoie une erreur si le réseau ne répond pas à temps ; la requête continue, et `late` reçoit une réponse tardive. */
-function fetchWithTimeout(request, late) {
-  return new Promise((resolve, reject) => {
-    let settled = false;
-    const timer = setTimeout(() => {
-      settled = true;
-      reject(new Error("timeout"));
-    }, NETWORK_TIMEOUT_MS);
-    fetch(request).then(
-      (res) => {
-        clearTimeout(timer);
-        markNetworkUp();
-        if (settled) {
-          if (late) late(res);
-        } else {
-          settled = true;
-          resolve(res);
-        }
-      },
-      (err) => {
-        clearTimeout(timer);
-        if (!settled) {
-          settled = true;
-          reject(err);
-        }
-      }
-    );
+/**
+ * Internet passe-t-il vraiment ? Petite requête sans cache vers un fichier
+ * statique minuscule, servi instantanément quand le réseau fonctionne. Sert
+ * à ne pas confondre une page lente à préparer par le serveur (réseau
+ * correct) avec une vraie coupure.
+ */
+async function isInternetReachable() {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 3000);
+  try {
+    const res = await fetch(`/manifest.json?ping=${Date.now()}`, { method: "HEAD", cache: "no-store", signal: controller.signal });
+    return res.ok;
+  } catch {
+    return false;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+const TIMED_OUT = Symbol("timeout");
+
+/**
+ * fetch() qui abandonne seulement si le réseau est réellement coupé : après
+ * NETWORK_TIMEOUT_MS sans réponse, on vérifie Internet ; s'il passe, le
+ * serveur est juste lent et on continue d'attendre la vraie réponse. En cas
+ * d'abandon, la requête continue et `late` reçoit une réponse tardive.
+ */
+async function fetchUnlessOffline(request, late) {
+  const real = fetch(request).then((res) => {
+    markNetworkUp();
+    return res;
   });
+  const first = await Promise.race([
+    real.then((res) => ({ res }), (err) => ({ err })),
+    new Promise((resolve) => setTimeout(() => resolve(TIMED_OUT), NETWORK_TIMEOUT_MS)),
+  ]);
+  if (first !== TIMED_OUT) {
+    if (first.err) throw first.err;
+    return first.res;
+  }
+  if (await isInternetReachable()) return real;
+  if (late) real.then(late, () => {});
+  throw new Error("offline");
 }
 
 async function saveVisitedPage(pathname, res) {
@@ -301,7 +317,7 @@ async function handleNavigation(request) {
     return offlineResponse(url.pathname);
   }
   try {
-    const res = await fetchWithTimeout(request, (lateRes) => saveVisitedPage(url.pathname, lateRes));
+    const res = await fetchUnlessOffline(request, (lateRes) => saveVisitedPage(url.pathname, lateRes));
     await saveVisitedPage(url.pathname, res.clone());
     return res;
   } catch {
@@ -317,8 +333,11 @@ async function handleNavigation(request) {
  */
 async function handleRscRequest(request) {
   if (isNetworkDown()) return Response.error();
+  // Préchargement discret des liens par Next.js : jamais utilisé pour
+  // décider d'une coupure (il peut être lent sans que personne n'attende).
+  if (request.headers.get("Next-Router-Prefetch")) return fetch(request);
   try {
-    return await fetchWithTimeout(request);
+    return await fetchUnlessOffline(request);
   } catch {
     markNetworkDown();
     return Response.error();

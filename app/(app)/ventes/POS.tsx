@@ -577,6 +577,58 @@ export function POS({
     if (cart.some((l) => l.vehicleUnitId) && !isOnline) {
       setError("La vente d'un engin à suivi unitaire nécessite une connexion. Réessayez une fois en ligne.");
       return;
+  /**
+   * Entrée dans la recherche (douchette branchée, ou code tapé à la main) :
+   * un code exact, ou un seul produit trouvé, part directement au panier et
+   * la recherche se vide pour le scan suivant.
+   */
+  function handleSearchEnter() {
+    const q = search.trim();
+    if (!q) return;
+    const isExactCode = products.some(
+      (p) => p.barcode === q || p.reference === q || p.packagingUnits?.some((pu) => pu.barcode === q)
+    );
+    if (isExactCode || localMatches.length === 0) {
+      setSearch("");
+      void handleScan(q);
+      return;
+    }
+    if (localMatches.length === 1) {
+      setSearch("");
+      addProduct(localMatches[0]);
+    }
+  }
+
+  // Douchette utilisée alors que le curseur n'est dans aucun champ : elle
+  // « tape » le code très vite puis Entrée. On reconnaît cette rafale
+  // (moins de 50 ms entre deux touches) pour ajouter le produit au panier.
+  const handleScanRef = useRef(handleScan);
+  useEffect(() => {
+    handleScanRef.current = handleScan;
+  });
+  useEffect(() => {
+    let buffer = "";
+    let lastKeyAt = 0;
+    function onKeyDown(e: KeyboardEvent) {
+      const target = e.target as HTMLElement | null;
+      if (target && (target.isContentEditable || ["INPUT", "TEXTAREA", "SELECT"].includes(target.tagName))) return;
+      const now = Date.now();
+      if (now - lastKeyAt > 50) buffer = "";
+      lastKeyAt = now;
+      if (e.key === "Enter") {
+        if (buffer.length >= 3) {
+          e.preventDefault();
+          void handleScanRef.current(buffer);
+        }
+        buffer = "";
+        return;
+      }
+      if (e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) buffer += e.key;
+    }
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, []);
+
     }
     setSendingToQueue(true);
     sendCartToQueueAction({
@@ -1198,6 +1250,12 @@ export function POS({
             <Button type="button" variant="outline" onClick={() => setAiCartOpen(true)}>
               <Sparkles className="h-4 w-4" /> Panier IA
             </Button>
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  handleSearchEnter();
+                }
+              }}
           )}
           {cart.length > 0 && (
             <Button type="button" variant="outline" onClick={holdSale}>
