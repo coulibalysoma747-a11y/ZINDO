@@ -17,7 +17,8 @@
     "electron:dev": "cross-env ELECTRON_DEV_SERVER_URL=http://localhost:3000 concurrently -k \"next dev\" \"npm:electron:build -- --watch\" \"wait-on http://localhost:3000 && electron .\"",
     "build:desktop": "cross-env ZINDO_BUILD_TARGET=desktop next build && node scripts/copy-standalone-assets.mjs",
     "electron:rebuild": "electron-builder install-app-deps",
-    "electron:pack": "npm run build:desktop && npm run electron:env && npm run electron:build && npm run electron:rebuild && electron-builder --win"
+    "electron:pack": "npm run build:desktop && npm run electron:env && npm run electron:build && npm run electron:rebuild && electron-builder --win",
+    "test": "tsx --test \"lib/**/*.test.ts\""
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.124.0",

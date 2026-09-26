@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { computeSaleTotals, saleLineTotal, saleStatus } from "@/lib/sale-totals";
 import { supabase } from "@/lib/supabase";
 import { requireSuperAdmin } from "@/lib/superadmin-auth";
 import { logAdminAction } from "@/lib/admin-audit";
@@ -105,13 +106,11 @@ export async function adminUpdateSaleAction(
     }
   }
 
-  const subtotal = input.items.reduce((sum, i) => sum + i.unitPrice * i.quantity - i.discount, 0);
-  const total = Math.max(0, subtotal - input.discount);
-  const amountPaid = Math.max(0, input.amountPaid);
+  const { subtotal, total, amountPaid } = computeSaleTotals(input.items, input.discount, input.amountPaid);
   if (amountPaid < total && !input.customerId && !sale.customerId) {
     return { error: "Sélectionnez un client pour une vente à crédit ou partielle" };
   }
-  const status = amountPaid >= total ? "PAYEE" : amountPaid > 0 ? "PARTIELLE" : "CREDIT";
+  const status = saleStatus(total, amountPaid);
 
   const newQtyMap = new Map(input.items.map((i) => [i.productId, i.quantity * (i.multiplier ?? 1)]));
   const changedProductIds = productIds.filter((productId) => (oldQtyMap.get(productId) ?? 0) - (newQtyMap.get(productId) ?? 0) !== 0);
@@ -164,7 +163,7 @@ export async function adminUpdateSaleAction(
       unit_price: i.unitPrice,
       unit_cost: product.purchasePrice,
       discount: i.discount,
-      total: i.unitPrice * i.quantity - i.discount,
+      total: saleLineTotal(i),
       packaging_unit_id: i.packagingUnitId ?? null,
       multiplier: i.multiplier ?? 1,
       unit_label: i.unitLabel ?? null,

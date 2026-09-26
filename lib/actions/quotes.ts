@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { computeSaleTotals, saleLineTotal } from "@/lib/sale-totals";
 import { supabase } from "@/lib/supabase";
 import { requirePermission, requireUser, hasPermission } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
@@ -80,8 +81,7 @@ async function createQuoteImpl(input: CreateQuoteInput): Promise<QuoteActionResu
     .maybeSingle();
   if (!location) return { error: "Boutique introuvable" };
 
-  const subtotal = input.items.reduce((sum, i) => sum + i.unitPrice * i.quantity - i.discount, 0);
-  const total = Math.max(0, subtotal - input.discount);
+  const { subtotal, total } = computeSaleTotals(input.items, input.discount, 0);
   const number = await generateQuoteNumber(user.businessId);
 
   const { data: quote, error: quoteError } = await supabase
@@ -117,7 +117,7 @@ async function createQuoteImpl(input: CreateQuoteInput): Promise<QuoteActionResu
       quantity: i.quantity,
       unit_price: i.unitPrice,
       discount: i.discount,
-      total: i.unitPrice * i.quantity - i.discount,
+      total: saleLineTotal(i),
     }))
   );
   if (itemsError) {

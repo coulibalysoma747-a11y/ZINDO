@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { computeSaleTotals, saleLineTotal, saleStatus } from "@/lib/sale-totals";
 import { loadSaleItemsInBaseUnits } from "@/lib/sale-items";
 import { getReturnLinks } from "@/lib/sale-returns";
 import { after } from "next/server";
@@ -297,9 +298,7 @@ async function createSaleImpl(input: CreateSaleInput): Promise<CreateSaleResult>
   const discountError = await checkMaxDiscount(user.businessId, user.role, input.items, input.discount);
   if (discountError) return { success: false, error: discountError };
 
-  const subtotal = input.items.reduce((sum, i) => sum + i.unitPrice * i.quantity - i.discount, 0);
-  const total = Math.max(0, subtotal - input.discount);
-  const amountPaid = Math.max(0, input.amountPaid);
+  const { subtotal, total, amountPaid } = computeSaleTotals(input.items, input.discount, input.amountPaid);
 
   if (amountPaid < total && !input.customerId) {
     return { success: false, error: "Sélectionnez un client pour une vente à crédit ou partielle" };
@@ -335,7 +334,7 @@ async function createSaleImpl(input: CreateSaleInput): Promise<CreateSaleResult>
     }
   }
 
-  const status = amountPaid >= total ? "PAYEE" : amountPaid > 0 ? "PARTIELLE" : "CREDIT";
+  const status = saleStatus(total, amountPaid);
   let number: string | undefined;
   let numberNote: string | null = null;
   const manualNumber = cleanManualSaleNumber(input.manualNumber);
@@ -412,7 +411,7 @@ async function createSaleImpl(input: CreateSaleInput): Promise<CreateSaleResult>
         unit_price: i.unitPrice,
         unit_cost: product.purchasePrice,
         discount: i.discount,
-        total: i.unitPrice * i.quantity - i.discount,
+        total: saleLineTotal(i),
         packaging_unit_id: i.packagingUnitId ?? null,
         multiplier: i.multiplier ?? 1,
         unit_label: i.packagingLabel ?? null,
@@ -574,15 +573,13 @@ async function updateSaleImpl(input: UpdateSaleInput): Promise<CreateSaleResult>
   const discountError = await checkMaxDiscount(user.businessId, user.role, input.items, input.discount);
   if (discountError) return { success: false, error: discountError };
 
-  const subtotal = input.items.reduce((sum, i) => sum + i.unitPrice * i.quantity - i.discount, 0);
-  const total = Math.max(0, subtotal - input.discount);
-  const amountPaid = Math.max(0, input.amountPaid);
+  const { subtotal, total, amountPaid } = computeSaleTotals(input.items, input.discount, input.amountPaid);
 
   if (amountPaid < total && !input.customerId) {
     return { success: false, error: "Sélectionnez un client pour une vente à crédit ou partielle" };
   }
 
-  const status = amountPaid >= total ? "PAYEE" : amountPaid > 0 ? "PARTIELLE" : "CREDIT";
+  const status = saleStatus(total, amountPaid);
 
   const newQtyMap = new Map(input.items.map((i) => [i.productId, i.quantity * (i.multiplier ?? 1)]));
   const changedProductIds = productIds.filter((productId) => {
@@ -637,7 +634,7 @@ async function updateSaleImpl(input: UpdateSaleInput): Promise<CreateSaleResult>
         unit_price: i.unitPrice,
         unit_cost: product.purchasePrice,
         discount: i.discount,
-        total: i.unitPrice * i.quantity - i.discount,
+        total: saleLineTotal(i),
         packaging_unit_id: i.packagingUnitId ?? null,
         multiplier: i.multiplier ?? 1,
         unit_label: i.packagingLabel ?? null,
