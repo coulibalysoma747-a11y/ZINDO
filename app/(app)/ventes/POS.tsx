@@ -567,16 +567,6 @@ export function POS({
     }
   }
 
-  /** "Caisse à deux" : envoie le panier à un caissier sans encaisser, le stock n'est pas touché. */
-  function handleSendToQueue() {
-    setError(null);
-    if (cart.length === 0) {
-      setError("Ajoutez au moins un produit au panier");
-      return;
-    }
-    if (cart.some((l) => l.vehicleUnitId) && !isOnline) {
-      setError("La vente d'un engin à suivi unitaire nécessite une connexion. Réessayez une fois en ligne.");
-      return;
   /**
    * Entrée dans la recherche (douchette branchée, ou code tapé à la main) :
    * un code exact, ou un seul produit trouvé, part directement au panier et
@@ -629,6 +619,16 @@ export function POS({
     return () => window.removeEventListener("keydown", onKeyDown);
   }, []);
 
+  /** "Caisse à deux" : envoie le panier à un caissier sans encaisser, le stock n'est pas touché. */
+  function handleSendToQueue() {
+    setError(null);
+    if (cart.length === 0) {
+      setError("Ajoutez au moins un produit au panier");
+      return;
+    }
+    if (cart.some((l) => l.vehicleUnitId) && !isOnline) {
+      setError("La vente d'un engin à suivi unitaire nécessite une connexion. Réessayez une fois en ligne.");
+      return;
     }
     setSendingToQueue(true);
     sendCartToQueueAction({
@@ -1240,6 +1240,12 @@ export function POS({
             <Input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  handleSearchEnter();
+                }
+              }}
               placeholder="Rechercher un produit par nom, référence ou code-barres..."
               className="pl-9"
               autoFocus
@@ -1250,12 +1256,6 @@ export function POS({
             <Button type="button" variant="outline" onClick={() => setAiCartOpen(true)}>
               <Sparkles className="h-4 w-4" /> Panier IA
             </Button>
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  e.preventDefault();
-                  handleSearchEnter();
-                }
-              }}
           )}
           {cart.length > 0 && (
             <Button type="button" variant="outline" onClick={holdSale}>
