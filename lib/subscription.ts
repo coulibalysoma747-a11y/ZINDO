@@ -6,7 +6,7 @@ import { cache } from "react";
 
 export { FEATURE_CATALOG } from "@/lib/subscription-features";
 
-const TRIAL_DURATION_DAYS = 7;
+export const TRIAL_DURATION_DAYS = 14;
 export const ACTIVE_PLAN_KEY = "pro";
 
 export type BusinessLimits = {
@@ -56,7 +56,7 @@ export async function checkLimit(
 }
 
 // ---------------------------------------------------------------------------
-// Essai gratuit de 7 jours puis abonnement payant obligatoire (7 500
+// Essai gratuit de 14 jours puis abonnement payant obligatoire (7 500
 // FCFA/mois ou 75 000 FCFA/an, sans palier gratuit) — indépendant des
 // limites par fonctionnalité ci-dessus (désactivées) : ici on ne contrôle que
 // l'ACCÈS à l'application, pas le nombre de produits/utilisateurs/boutiques.
@@ -131,6 +131,22 @@ async function ensureSubscriptionRow(businessId: string): Promise<SubscriptionRo
     currentPeriodEnd: null,
     plan: { key: plan.key as string, label: plan.label as string },
   };
+}
+
+/**
+ * La fonction SQL register_business() crée l'essai avec sa propre durée
+ * (7 jours historiquement) : on le porte ici à TRIAL_DURATION_DAYS juste
+ * après l'inscription. Ne raccourcit jamais un essai déjà plus long.
+ */
+export async function applyStandardTrial(businessId: string): Promise<void> {
+  const trialEndsAt = new Date(Date.now() + TRIAL_DURATION_DAYS * 24 * 60 * 60 * 1000).toISOString();
+  const { error } = await supabase
+    .from("business_subscriptions")
+    .update({ trial_ends_at: trialEndsAt })
+    .eq("business_id", businessId)
+    .eq("status", "TRIAL")
+    .lt("trial_ends_at", trialEndsAt);
+  if (error) console.error("[applyStandardTrial] Échec de l'allongement de l'essai :", error.message);
 }
 
 export async function getSubscriptionState(businessId: string): Promise<SubscriptionState> {

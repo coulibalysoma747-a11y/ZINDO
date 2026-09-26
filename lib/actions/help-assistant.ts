@@ -39,7 +39,7 @@ function buildKnowledgeBase(): string {
 
 function buildSystemPrompt(publicVisitor: boolean): string {
   const audienceNote = publicVisitor
-    ? "Tu réponds ici à un visiteur du site public qui n'a pas forcément encore de compte — reste accueillant, et si sa question montre qu'il n'est pas encore inscrit, tu peux mentionner l'essai gratuit de 7 jours."
+    ? "Tu réponds ici à un visiteur du site public qui n'a pas forcément encore de compte — reste accueillant, et si sa question montre qu'il n'est pas encore inscrit, tu peux mentionner l'essai gratuit de 14 jours."
     : "Tu réponds ici à un utilisateur déjà connecté à son compte ZINDO.";
 
   return `Tu es l'assistant d'aide de ZINDO, une application de gestion de stock et de ventes pour les commerces d'Afrique de l'Ouest.

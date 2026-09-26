@@ -128,7 +128,7 @@ const FAQS = [
   {
     question: "Combien coûte ZINDO ?",
     answer:
-      "ZINDO propose 7 jours d'essai gratuit, sans engagement. Ensuite, l'abonnement coûte 7 500 FCFA par mois, ou 75 000 FCFA par an (soit 15 000 FCFA d'économie par rapport au paiement mensuel).",
+      "ZINDO propose 14 jours d'essai gratuit, sans engagement. Ensuite, l'abonnement coûte 7 500 FCFA par mois, ou 75 000 FCFA par an (soit 15 000 FCFA d'économie par rapport au paiement mensuel).",
   },
   {
     question: "Est-ce que je peux utiliser ZINDO sans connexion Internet ?",
@@ -291,7 +291,7 @@ export default async function RootPage() {
               href="/inscription"
               className="flex w-full items-center justify-center gap-2 rounded-2xl bg-zindo-green-500 px-6 py-3.5 text-base font-bold text-white shadow-lg shadow-zindo-green-500/30 transition hover:-translate-y-0.5 hover:bg-zindo-green-600 sm:w-auto"
             >
-              Essai gratuit de 7 jours <ArrowRight className="h-4 w-4" />
+              Essai gratuit de 14 jours <ArrowRight className="h-4 w-4" />
             </Link>
             <Link
               href="/login"

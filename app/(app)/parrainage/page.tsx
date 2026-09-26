@@ -69,7 +69,7 @@ export default async function ReferralPage() {
           <h1 className="text-xl font-bold text-zinc-900 dark:text-slate-100">Parrainage</h1>
           <p className="text-sm text-zinc-500">
             Invitez d&apos;autres commerçants : {REFERRAL_REWARD_MONTHS} mois de Pro offert pour vous dès que votre filleul paie son
-            premier abonnement. Lui profite de {REFERRAL_TRIAL_DAYS} jours d&apos;essai au lieu de 7.
+            premier abonnement. Lui profite de {REFERRAL_TRIAL_DAYS} jours d&apos;essai au lieu de 14.
           </p>
         </div>
       </div>

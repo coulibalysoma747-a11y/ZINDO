@@ -10,7 +10,7 @@ const PLANS = [
     badgeClass: "bg-zindo-green-500/15 text-zindo-green-400",
     icon: Gift,
     title: "Essai gratuit",
-    price: "7 jours",
+    price: "14 jours",
     priceSuffix: null,
     features: ["Accès complet", "Aucune carte requise", "Support inclus"],
     cta: "Commencer l'essai gratuit",

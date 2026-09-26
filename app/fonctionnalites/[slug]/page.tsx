@@ -74,7 +74,7 @@ export default async function SeoFeaturePage({ params }: { params: Promise<{ slu
           href="/inscription"
           className="mt-6 inline-flex items-center gap-2 rounded-2xl bg-zindo-green-500 px-6 py-3 text-base font-bold text-white shadow-lg shadow-zindo-green-500/30 transition hover:bg-zindo-green-600"
         >
-          Essai gratuit de 7 jours <ArrowRight className="h-4 w-4" />
+          Essai gratuit de 14 jours <ArrowRight className="h-4 w-4" />
         </Link>
       </header>
 

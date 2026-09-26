@@ -96,7 +96,7 @@ export default async function SubscriptionPage() {
                   {state.status === "ACTIVE"
                     ? `${formatMoney(state.billingCycle === "ANNUAL" ? ANNUAL_PRICE : MONTHLY_PRICE, currency)} / ${state.billingCycle === "ANNUAL" ? "an" : "mois"}`
                     : state.status === "TRIAL"
-                      ? "0 FCFA pendant 7 jours"
+                      ? "0 FCFA pendant 14 jours"
                       : "Accès bloqué jusqu'au paiement"}
                 </p>
               </div>

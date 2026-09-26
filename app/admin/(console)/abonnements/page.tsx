@@ -123,7 +123,7 @@ export default async function AdminSubscriptionsPage() {
         <div>
           <h1 className="text-xl font-bold text-zinc-900">Abonnements &amp; revenus</h1>
           <p className="max-w-2xl text-sm text-zinc-500">
-            Chaque commerce démarre avec 7 jours d&apos;essai gratuit, puis doit régler son abonnement (7 500
+            Chaque commerce démarre avec 14 jours d&apos;essai gratuit, puis doit régler son abonnement (7 500
             FCFA/mois ou 75 000 FCFA/an) pour continuer à utiliser ZINDO — l&apos;accès est bloqué automatiquement
             à l&apos;expiration de l&apos;essai ou de la période payée.
           </p>
