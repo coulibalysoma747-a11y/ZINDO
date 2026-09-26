@@ -62,10 +62,9 @@ export default async function CustomersPage() {
             </TableHead>
             <TableBody>
               {customers.map((c) => {
-                const totalBought = c.sales.reduce((s, sale) => s + sale.total, 0);
-                const credit = c.sales
-                  .filter((s) => s.status !== "ANNULEE")
-                  .reduce((s, sale) => s + (sale.total - sale.amountPaid), 0);
+                const activeSales = c.sales.filter((s) => s.status !== "ANNULEE");
+                const totalBought = activeSales.reduce((s, sale) => s + sale.total, 0);
+                const credit = activeSales.reduce((s, sale) => s + Math.max(0, sale.total - sale.amountPaid), 0);
                 return (
                   <TableRow key={c.id}>
                     <TableCell>

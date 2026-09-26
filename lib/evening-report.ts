@@ -2,6 +2,7 @@ import "server-only";
 import { isFeatureEnabled, registerFeatureFlag } from "@/lib/feature-flags";
 import { supabase } from "@/lib/supabase";
 import { formatMoney } from "@/lib/format";
+import { cashedInAmount } from "@/lib/sale-totals";
 
 const EVENING_REPORT_FLAG = "rapport_soir_whatsapp";
 
@@ -47,15 +48,15 @@ export async function buildEveningReportText(input: {
   if (input.mobileCollected > 0) {
     const { data } = await supabase
       .from("sales")
-      .select("amountPaid:amount_paid, operator:mobile_money_operator")
+      .select("total, amountPaid:amount_paid, operator:mobile_money_operator")
       .eq("business_id", input.businessId)
       .eq("session_id", input.sessionId)
       .eq("payment_method", "MOBILE_MONEY")
       .neq("status", "ANNULEE");
     const byOperator = new Map<string, number>();
-    for (const s of (data ?? []) as Array<{ amountPaid: number; operator: string | null }>) {
+    for (const s of (data ?? []) as Array<{ total: number; amountPaid: number; operator: string | null }>) {
       const key = s.operator ?? "";
-      byOperator.set(key, (byOperator.get(key) ?? 0) + s.amountPaid);
+      byOperator.set(key, (byOperator.get(key) ?? 0) + cashedInAmount(s.total, s.amountPaid));
     }
     const sum = [...byOperator.values()].reduce((a, b) => a + b, 0);
     if (!byOperator.has("") && byOperator.size > 0 && Math.round(sum) === Math.round(input.mobileCollected)) {

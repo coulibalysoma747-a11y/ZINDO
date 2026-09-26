@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { computeSaleTotals, saleLineTotal, saleStatus } from "./sale-totals";
+import { cashedInAmount, cashedInMixedPortions, computeSaleTotals, saleLineTotal, saleStatus } from "./sale-totals";
 
 test("ligne : prix × quantité moins la remise de la ligne", () => {
   assert.equal(saleLineTotal({ unitPrice: 5000, quantity: 2, discount: 0 }), 10000);
@@ -54,4 +54,22 @@ test("dette restante d'une vente partielle", () => {
   const { total, amountPaid } = computeSaleTotals([{ unitPrice: 15000, quantity: 50, discount: 0 }], 0, 500000);
   assert.equal(total, 750000);
   assert.equal(total - amountPaid, 250000);
+});
+
+test("encaissé : la monnaie rendue n'est pas comptée", () => {
+  assert.equal(cashedInAmount(390, 1000), 390);
+  assert.equal(cashedInAmount(910, 910), 910);
+  assert.equal(cashedInAmount(520, 200), 200);
+  assert.equal(cashedInAmount(520, 0), 0);
+});
+
+test("encaissé : un bon de retour garde son montant négatif", () => {
+  assert.equal(cashedInAmount(-4290, -4290), -4290);
+  assert.equal(cashedInAmount(-4290, 0), 0);
+});
+
+test("paiement mixte : la monnaie sort de la part espèces", () => {
+  assert.deepEqual(cashedInMixedPortions(7000, 5000, 3000), { cash: 4000, mobile: 3000 });
+  assert.deepEqual(cashedInMixedPortions(8000, 5000, 3000), { cash: 5000, mobile: 3000 });
+  assert.deepEqual(cashedInMixedPortions(2000, 1000, 3000), { cash: 0, mobile: 2000 });
 });

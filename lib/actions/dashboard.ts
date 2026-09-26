@@ -2,6 +2,7 @@ import "server-only";
 import { supabase } from "@/lib/supabase";
 import { startOfToday, startOfMonth, startOfWeek } from "@/lib/format";
 import { getStockReport } from "@/lib/actions/reports";
+import { cashedInAmount, cashedInMixedPortions } from "@/lib/sale-totals";
 
 export async function getDashboardData(businessId: string, locationId: string) {
   const today = startOfToday();
@@ -171,7 +172,7 @@ async function fetchSalesForPeriod(businessId: string, locationId: string, from:
   const initial = await supabase
     .from("sales")
     .select(
-      `id, userId:user_id, amountPaid:amount_paid, paymentMethod:payment_method, cashPortion:cash_portion, mobilePortion:mobile_portion, ${ITEMS_SELECT}`
+      `id, userId:user_id, total, amountPaid:amount_paid, paymentMethod:payment_method, cashPortion:cash_portion, mobilePortion:mobile_portion, ${ITEMS_SELECT}`
     )
     .eq("business_id", businessId)
     .eq("location_id", locationId)
@@ -186,7 +187,7 @@ async function fetchSalesForPeriod(businessId: string, locationId: string, from:
   if (initial.error && /cash_portion|mobile_portion/.test(initial.error.message)) {
     const fallback = await supabase
       .from("sales")
-      .select(`id, userId:user_id, amountPaid:amount_paid, paymentMethod:payment_method, ${ITEMS_SELECT}`)
+      .select(`id, userId:user_id, total, amountPaid:amount_paid, paymentMethod:payment_method, ${ITEMS_SELECT}`)
       .eq("business_id", businessId)
       .eq("location_id", locationId)
       .neq("status", "ANNULEE")
@@ -194,7 +195,20 @@ async function fetchSalesForPeriod(businessId: string, locationId: string, from:
       .lt("created_at", to.toISOString());
     data = fallback.data ? fallback.data.map((s) => ({ ...s, cashPortion: null, mobilePortion: null })) : null;
   }
-  return (data ?? []) as unknown as SaleAgg[];
+  // amount_paid est le montant reçu (monnaie rendue comprise, pour le
+  // ticket) : on ne garde que l'argent réellement encaissé.
+  return ((data ?? []) as unknown as Array<SaleAgg & { total: number }>).map((sale) => {
+    if (sale.paymentMethod !== "MIXTE" || (sale.cashPortion === null && sale.mobilePortion === null)) {
+      return { ...sale, amountPaid: cashedInAmount(sale.total, sale.amountPaid) };
+    }
+    const parts = cashedInMixedPortions(sale.total, sale.cashPortion ?? 0, sale.mobilePortion ?? 0);
+    return {
+      ...sale,
+      amountPaid: parts.cash + parts.mobile,
+      cashPortion: sale.cashPortion === null ? null : parts.cash,
+      mobilePortion: sale.mobilePortion === null ? null : parts.mobile,
+    };
+  });
 }
 
 // Les remboursements de crédit (customer_payments) n'ont pas de location_id —

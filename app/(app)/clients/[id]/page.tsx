@@ -25,6 +25,13 @@ type CustomerRow = {
 };
 
 type SaleRow = { id: string; number: string; createdAt: string; status: string; total: number; amountPaid: number };
+
+const STATUS_LABELS: Record<string, string> = {
+  PAYEE: "Payée",
+  PARTIELLE: "Partielle",
+  CREDIT: "Crédit",
+  ANNULEE: "Annulée",
+};
 type PaymentRow = { id: string; createdAt: string; method: string; note: string | null; amount: number };
 
 export default async function CustomerDetailPage({
@@ -70,10 +77,11 @@ export default async function CustomerDetailPage({
   const payments = (paymentsData ?? []) as unknown as PaymentRow[];
 
   const currency = user.business.currency;
-  const totalBought = sales.reduce((s, sale) => s + sale.total, 0);
-  const creditBalance = sales
-    .filter((s) => s.status !== "ANNULEE")
-    .reduce((s, sale) => s + (sale.total - sale.amountPaid), 0);
+  // Les ventes annulées ne comptent ni dans le total acheté ni dans la dette ;
+  // la monnaie rendue (payé > total) ne réduit pas la dette des autres ventes.
+  const activeSales = sales.filter((s) => s.status !== "ANNULEE");
+  const totalBought = activeSales.reduce((s, sale) => s + sale.total, 0);
+  const creditBalance = activeSales.reduce((s, sale) => s + Math.max(0, sale.total - sale.amountPaid), 0);
 
   return (
     <div className="space-y-6">
@@ -161,7 +169,7 @@ export default async function CustomerDetailPage({
                         <TableCell className="text-zinc-600 dark:text-slate-400">{formatDate(new Date(s.createdAt))}</TableCell>
                         <TableCell>
                           <Badge tone={s.status === "PAYEE" ? "emerald" : s.status === "CREDIT" ? "red" : "amber"}>
-                            {s.status}
+                            {STATUS_LABELS[s.status] ?? s.status}
                           </Badge>
                         </TableCell>
                         <TableCell align="right" className="tabular-nums text-zinc-900 dark:text-slate-100">

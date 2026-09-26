@@ -1,5 +1,6 @@
 import "server-only";
 import { supabase } from "@/lib/supabase";
+import { cashedInAmount, cashedInMixedPortions } from "@/lib/sale-totals";
 
 export type SessionStats = {
   salesCount: number;
@@ -35,7 +36,9 @@ export async function computeSessionStats(session: {
   const salesQuery = () =>
     supabase
       .from("sales")
-      .select("total, amountPaid:amount_paid, paymentMethod:payment_method, items:sale_items(unitCost:unit_cost, quantity)")
+      .select(
+        "total, amountPaid:amount_paid, paymentMethod:payment_method, cashPortion:cash_portion, mobilePortion:mobile_portion, items:sale_items(unitCost:unit_cost, quantity)"
+      )
       .eq("business_id", session.businessId)
       .eq("location_id", session.locationId)
       .neq("status", "ANNULEE")
@@ -72,6 +75,8 @@ export async function computeSessionStats(session: {
     total: number;
     amountPaid: number;
     paymentMethod: string;
+    cashPortion: number | null;
+    mobilePortion: number | null;
     items: Array<{ unitCost: number; quantity: number }>;
   }>;
 
@@ -86,21 +91,34 @@ export async function computeSessionStats(session: {
   for (const sale of salesRows) {
     totalRevenue += sale.total;
     for (const item of sale.items) totalCost += item.unitCost * item.quantity;
+    // Montant reçu moins la monnaie rendue : seul l'argent gardé est dans le tiroir.
+    const kept = cashedInAmount(sale.total, sale.amountPaid);
     switch (sale.paymentMethod) {
       case "ESPECES":
-        cashCollected += sale.amountPaid;
+        cashCollected += kept;
         break;
       case "MOBILE_MONEY":
-        mobileCollected += sale.amountPaid;
+        mobileCollected += kept;
         break;
       case "CARTE":
-        cardCollected += sale.amountPaid;
+        cardCollected += kept;
         break;
       case "CREDIT":
-        creditCollected += sale.amountPaid;
+        creditCollected += kept;
         break;
+      case "MIXTE": {
+        // La part espèces d'un paiement mixte est bien dans le tiroir.
+        if (sale.cashPortion === null && sale.mobilePortion === null) {
+          otherCollected += kept;
+          break;
+        }
+        const parts = cashedInMixedPortions(sale.total, sale.cashPortion ?? 0, sale.mobilePortion ?? 0);
+        cashCollected += parts.cash;
+        mobileCollected += parts.mobile;
+        break;
+      }
       default:
-        otherCollected += sale.amountPaid;
+        otherCollected += kept;
         break;
     }
   }

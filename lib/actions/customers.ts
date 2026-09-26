@@ -6,6 +6,7 @@ import { supabase } from "@/lib/supabase";
 import { requirePermission } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
 import { logAction } from "@/lib/audit";
+import { formatMoney } from "@/lib/format";
 
 export type ActionState = { error?: string; success?: string } | undefined;
 
@@ -221,8 +222,17 @@ export async function recordCustomerPaymentAction(
     left = Math.round((left - paid) * 100) / 100;
     allocations.push({ saleId: sale.id, amount: paid, newAmountPaid: Math.round((sale.amountPaid + paid) * 100) / 100, total: sale.total });
   }
-  // Trop-perçu (ou aucune vente à crédit) : gardé tel quel, sans vente liée.
-  if (left > 0) allocations.push({ saleId: null, amount: left });
+  // Trop-perçu : refusé ici aussi (le formulaire le bloque déjà), sinon
+  // l'argent en trop était enregistré sans vente liée et gonflait l'encaissé.
+  if (left > 0) {
+    const debt = Math.round((amount - left) * 100) / 100;
+    return {
+      error:
+        debt > 0
+          ? `Le montant dépasse la dette du client (${formatMoney(debt, user.business.currency)}).`
+          : "Ce client n'a aucune dette à rembourser.",
+    };
+  }
 
   const { error } = await supabase.from("customer_payments").insert(
     allocations.map((a) => ({ customer_id: customerId, sale_id: a.saleId, amount: a.amount, method, note, user_id: user.id }))
