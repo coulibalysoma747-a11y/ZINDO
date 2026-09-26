@@ -9,6 +9,7 @@ const NAV_ITEMS = [
   { label: "Tableau de bord", href: "/admin", founderOnly: false },
   { label: "Utilisateurs", href: "/admin/utilisateurs", founderOnly: false },
   { label: "Commerçants", href: "/admin/commercants", founderOnly: false },
+  { label: "Suivi", href: "/admin/suivi", founderOnly: false },
   { label: "Activités", href: "/admin/activites", founderOnly: false },
   { label: "Abonnements", href: "/admin/abonnements", founderOnly: true },
   { label: "Permissions", href: "/admin/permissions", founderOnly: false },
