@@ -1,8 +1,8 @@
 "use client";
 
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
-import { Search } from "lucide-react";
-import { Input, Select, Field } from "@/components/ui/Input";
+import { Select, Field } from "@/components/ui/Input";
+import { SearchInput } from "@/components/ui/SearchInput";
 import { useTransition } from "react";
 
 export function ProductSearchBar({
@@ -30,15 +30,12 @@ export function ProductSearchBar({
 
   return (
     <div className="space-y-3">
-      <div className="relative">
-        <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" />
-        <Input
-          placeholder="Rechercher par nom, référence, code-barres ou autre nom..."
-          defaultValue={searchParams.get("q") ?? ""}
-          onChange={(e) => updateParam("q", e.target.value)}
-          className="pl-9"
-        />
-      </div>
+      <SearchInput
+        placeholder="Rechercher par nom, référence, code-barres ou autre nom…"
+        aria-label="Rechercher un produit"
+        defaultValue={searchParams.get("q") ?? ""}
+        onChange={(e) => updateParam("q", e.target.value)}
+      />
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
         <Field label="Catégorie" htmlFor="categorie-filter">
           <Select

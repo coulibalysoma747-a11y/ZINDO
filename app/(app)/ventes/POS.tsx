@@ -2,12 +2,13 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState, useTransition, type FocusEvent } from "react";
 import Link from "next/link";
-import { Trash2, Plus, Minus, UserPlus, Search, Loader2, Wallet, Lock, WifiOff, RefreshCw, Sparkles } from "lucide-react";
+import { Trash2, Plus, Minus, UserPlus, Loader2, Wallet, Lock, WifiOff, RefreshCw, Sparkles } from "lucide-react";
 import { ProductGrid, type PosProduct, type PackagingUnitOption } from "@/components/products/ProductGrid";
 import { BarcodeScannerButton } from "@/components/products/BarcodeScannerButton";
 import { Card, CardBody, CardHeader } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Field, Input, Select } from "@/components/ui/Input";
+import { SearchInput } from "@/components/ui/SearchInput";
 import { Table, TableHead, TableBody, TableRow, TableHeaderCell, TableCell } from "@/components/ui/Table";
 import { formatMoney, formatDateTime } from "@/lib/format";
 import { createSaleAction, reserveSaleNumberAction } from "@/lib/actions/sales";
@@ -581,16 +582,6 @@ export function POS({
     }
   }
 
-  /** "Caisse à deux" : envoie le panier à un caissier sans encaisser, le stock n'est pas touché. */
-  function handleSendToQueue() {
-    setError(null);
-    if (cart.length === 0) {
-      setError("Ajoutez au moins un produit au panier");
-      return;
-    }
-    if (cart.some((l) => l.vehicleUnitId) && !isOnline) {
-      setError("La vente d'un engin à suivi unitaire nécessite une connexion. Réessayez une fois en ligne.");
-      return;
   /**
    * Entrée dans la recherche (douchette branchée, ou code tapé à la main) :
    * un code exact, ou un seul produit trouvé, part directement au panier et
@@ -643,6 +634,16 @@ export function POS({
     return () => window.removeEventListener("keydown", onKeyDown);
   }, []);
 
+  /** "Caisse à deux" : envoie le panier à un caissier sans encaisser, le stock n'est pas touché. */
+  function handleSendToQueue() {
+    setError(null);
+    if (cart.length === 0) {
+      setError("Ajoutez au moins un produit au panier");
+      return;
+    }
+    if (cart.some((l) => l.vehicleUnitId) && !isOnline) {
+      setError("La vente d'un engin à suivi unitaire nécessite une connexion. Réessayez une fois en ligne.");
+      return;
     }
     setSendingToQueue(true);
     sendCartToQueueAction({
@@ -1248,28 +1249,26 @@ export function POS({
           </div>
         )}
 
-        <div className="flex flex-wrap gap-2">
-          <div className="relative min-w-[220px] flex-1">
-            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" />
-            <Input
+        <div className="flex flex-wrap items-center gap-2">
+            <SearchInput
+              className="min-w-[220px] flex-1"
+              aria-label="Rechercher un produit"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Rechercher un produit par nom, référence ou code-barres..."
-              className="pl-9"
-              autoFocus
-            />
-          </div>
-          <BarcodeScannerButton onDetected={handleScan} />
-          {aiCartEnabled && (
-            <Button type="button" variant="outline" onClick={() => setAiCartOpen(true)}>
-              <Sparkles className="h-4 w-4" /> Panier IA
-            </Button>
               onKeyDown={(e) => {
                 if (e.key === "Enter") {
                   e.preventDefault();
                   handleSearchEnter();
                 }
               }}
+              placeholder="Nom, référence ou code-barres…"
+              autoFocus
+            />
+          <BarcodeScannerButton onDetected={handleScan} />
+          {aiCartEnabled && (
+            <Button type="button" variant="outline" onClick={() => setAiCartOpen(true)}>
+              <Sparkles className="h-4 w-4" /> Panier IA
+            </Button>
           )}
           {cart.length > 0 && (
             <Button type="button" variant="outline" onClick={holdSale}>
