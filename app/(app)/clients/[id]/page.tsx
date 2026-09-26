@@ -11,6 +11,9 @@ import { EmptyState } from "@/components/ui/Empty";
 import { Table, TableHead, TableBody, TableRow, TableHeaderCell, TableCell } from "@/components/ui/Table";
 import { ClientEditButton } from "./ClientEditButton";
 import { RecordPaymentButton } from "./RecordPaymentButton";
+import { DebtExemptionToggle } from "./DebtExemptionToggle";
+import { isDebtExemptionEnabled } from "@/lib/debt-exemption";
+import { getBusinessSettings } from "@/lib/business-settings";
 
 type CustomerRow = {
   id: string;
@@ -33,9 +36,12 @@ export default async function CustomerDetailPage({
   // Le module "Ventes" est piloté par SALES_CREATE (même droit que le lien
   // "Vente / Caisse" du menu) : si un compte n'y a plus accès, aucune trace du
   // module ne doit apparaître ailleurs dans l'application, y compris ici.
-  const [canManage, canSeeSales] = await Promise.all([
+  const [canManage, canSeeSales, canManageSettings, debtExemptionEnabled, businessSettings] = await Promise.all([
     hasPermission(user.businessId, user.role, PERMISSIONS.CUSTOMERS_MANAGE, user.id),
     hasPermission(user.businessId, user.role, PERMISSIONS.SALES_CREATE, user.id),
+    hasPermission(user.businessId, user.role, PERMISSIONS.SETTINGS_MANAGE, user.id),
+    isDebtExemptionEnabled(user.businessId),
+    getBusinessSettings(user.businessId),
   ]);
   const { id } = await params;
 
@@ -113,6 +119,13 @@ export default async function CustomerDetailPage({
           </CardBody>
         </Card>
       </div>
+
+      {debtExemptionEnabled && canManageSettings && businessSettings.blockSaleIfCustomerDebt && (
+        <DebtExemptionToggle
+          customerId={customer.id}
+          initialExempt={businessSettings.debtBlockExemptCustomerIds.includes(customer.id)}
+        />
+      )}
 
       {canSeeSales && (
         <Card>

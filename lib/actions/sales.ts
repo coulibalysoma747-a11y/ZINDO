@@ -15,6 +15,7 @@ import { isValidReservedSaleNumber, signReservedSaleNumber } from "@/lib/sale-nu
 import { adjustStock } from "@/lib/stock";
 import { rethrowIfNavigationSignal } from "@/lib/action-errors";
 import { getBusinessSettings } from "@/lib/business-settings";
+import { isDebtExemptionEnabled } from "@/lib/debt-exemption";
 import { sendPushToBusiness } from "@/lib/push";
 import { formatMoney } from "@/lib/format";
 import { consumeExpiryBatchesFefo } from "@/lib/actions/expiry";
@@ -299,7 +300,11 @@ async function createSaleImpl(input: CreateSaleInput): Promise<CreateSaleResult>
   const creditLimitError = await checkCreditLimit(user.businessId, user.role, input.customerId, total - amountPaid);
   if (creditLimitError) return { success: false, error: creditLimitError };
 
-  if (businessSettings.blockSaleIfCustomerDebt && input.customerId) {
+  const debtExempt =
+    !!input.customerId &&
+    businessSettings.debtBlockExemptCustomerIds.includes(input.customerId) &&
+    (await isDebtExemptionEnabled(user.businessId));
+  if (businessSettings.blockSaleIfCustomerDebt && input.customerId && !debtExempt) {
     const { data: pastSales } = await supabase
       .from("sales")
       .select("total, amountPaid:amount_paid")

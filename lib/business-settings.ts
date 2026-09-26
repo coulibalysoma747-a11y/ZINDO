@@ -7,6 +7,8 @@ export type BusinessSettings = {
   requireCustomerOnSale: boolean;
   /** "Refuser la vente si le client a une dette" — bloque l'encaissement tant que le solde n'est pas soldé. */
   blockSaleIfCustomerDebt: boolean;
+  /** Clients dispensés de ce blocage (flag exception_dette_client) — voir lib/debt-exemption.ts. */
+  debtBlockExemptCustomerIds: string[];
   /** "Montrer mes chiffres de vente à mes employés" — sinon le classement des vendeurs reste réservé à l'administrateur. */
   showSalesLeaderboardToEmployees: boolean;
   /** "Suivre les marchandises à retirer" — permet de marquer une vente payée mais pas encore emportée. */
@@ -63,6 +65,7 @@ export type BusinessSettings = {
 const DEFAULTS: BusinessSettings = {
   requireCustomerOnSale: false,
   blockSaleIfCustomerDebt: false,
+  debtBlockExemptCustomerIds: [],
   showSalesLeaderboardToEmployees: true,
   trackUnclaimedGoods: true,
   dashboardShowPaymentBreakdown: true,
