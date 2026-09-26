@@ -33,6 +33,13 @@ import { PublicHelpChat } from "@/components/PublicHelpChat";
 import { HeroCarousel } from "@/components/landing/HeroCarousel";
 import { DemoVideo } from "@/components/landing/DemoVideo";
 import { WhatsAppFloat } from "@/components/landing/WhatsAppFloat";
+import {
+  PertesSection,
+  MetiersSection,
+  AccompagnementSection,
+  TarifsSection,
+  EXTRA_FAQS,
+} from "@/components/landing/AccueilComplet";
 
 // Cycle tricolore (vert/or/rouge, drapeau du Burkina Faso et logo ZINDO)
 // appliqué aux puces d'icônes de la page publique pour une identité visuelle
@@ -208,7 +215,7 @@ const STRUCTURED_DATA = [
   },
 ];
 
-export default async function RootPage() {
+export default async function RootPage({ searchParams }: { searchParams: Promise<{ apercu?: string }> }) {
   const trialDays = await getTrialDays();
   const user = await getCurrentUser();
   if (user) redirect("/dashboard");
@@ -218,6 +225,14 @@ export default async function RootPage() {
     "Page publique /marche qui rassemble les produits de toutes les boutiques en ligne publiées. À activer globalement."
   );
   const marketOpen = await isFeatureEnabledGlobally("marche_zindo");
+  await registerFeatureFlag(
+    "accueil_complet",
+    "Page d'accueil complète",
+    "Ajoute à la page d'accueil publique : les pertes du commerçant, les métiers couverts, l'accompagnement, les tarifs et 5 questions fréquentes. Aperçu sans activation : /?apercu=accueil. À activer globalement."
+  );
+  const fullLanding =
+    (await searchParams).apercu === "accueil" || (await isFeatureEnabledGlobally("accueil_complet"));
+  const faqs = fullLanding ? [...FAQS, ...EXTRA_FAQS] : FAQS;
 
   return (
     <div className="theme-locked relative overflow-x-hidden bg-zindo-cream">
@@ -311,6 +326,14 @@ export default async function RootPage() {
               Continuer avec Google
             </a>
           </div>
+          {fullLanding && (
+            <p className="mt-4 text-sm text-zinc-200">
+              Ensuite 7 500 FCFA par mois, sans engagement ·{" "}
+              <a href="#tarifs" className="font-semibold text-zindo-green-400 underline-offset-2 hover:underline">
+                Voir les tarifs
+              </a>
+            </p>
+          )}
         </div>
         </HeroCarousel>
 
@@ -325,6 +348,8 @@ export default async function RootPage() {
             className="h-auto w-full"
           />
         </section>
+
+        {fullLanding && <PertesSection />}
 
         {/* Ce que ZINDO change */}
         <section className="mt-24">
@@ -389,6 +414,8 @@ export default async function RootPage() {
           </div>
         </section>
 
+        {fullLanding && <MetiersSection />}
+
         {/* Fondateur */}
         <section className="mt-24">
           <div className="mx-auto max-w-2xl text-center">
@@ -440,6 +467,8 @@ export default async function RootPage() {
           </div>
         </section>
 
+        {fullLanding && <AccompagnementSection whatsappHref="https://wa.me/22604059929" />}
+
         {/* Assistant d'aide public */}
         <section className="mt-16">
           <div className="mx-auto max-w-2xl text-center">
@@ -479,6 +508,8 @@ export default async function RootPage() {
           </div>
         </section>
 
+        {fullLanding && <TarifsSection trialDays={trialDays} />}
+
         {/* Questions fréquentes */}
         <section className="mt-24">
           <div className="mx-auto max-w-2xl text-center">
@@ -487,7 +518,7 @@ export default async function RootPage() {
             </h2>
           </div>
           <div className="mx-auto mt-10 max-w-2xl divide-y divide-zinc-200 overflow-hidden rounded-2xl border border-zinc-200 bg-white">
-            {FAQS.map((faq) => (
+            {faqs.map((faq) => (
               <details key={faq.question} className="group px-5 py-4 open:bg-zindo-green-50/40">
                 <summary className="flex cursor-pointer list-none items-center justify-between gap-3 font-semibold text-zindo-ink-900">
                   {faq.question}
