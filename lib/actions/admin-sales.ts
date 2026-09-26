@@ -7,6 +7,7 @@ import { logAdminAction } from "@/lib/admin-audit";
 import { logAction } from "@/lib/audit";
 import { adjustStock } from "@/lib/stock";
 import { recordStockMovements, insertSaleItems, type SaleItemRow } from "@/lib/actions/sales";
+import { loadSaleItemsInBaseUnits } from "@/lib/sale-items";
 import type { PaymentMethod } from "@/lib/db-types";
 
 /**
@@ -205,9 +206,9 @@ export async function adminCancelSaleAction(businessId: string, saleId: string):
   if (!sale) return { error: "Vente introuvable" };
   if (sale.status === "ANNULEE") return { error: "Cette vente est déjà annulée" };
 
-  const { data: items } = await supabase.from("sale_items").select("productId:product_id, quantity").eq("sale_id", sale.id);
+  const items = await loadSaleItemsInBaseUnits(sale.id);
 
-  await recordStockMovements((items ?? []) as Array<{ productId: string; quantity: number }>, {
+  await recordStockMovements(items, {
     businessId,
     locationId: sale.locationId,
     userId: sale.userId,

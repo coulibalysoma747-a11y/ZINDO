@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { loadSaleItemsInBaseUnits } from "@/lib/sale-items";
 import { after } from "next/server";
 import { supabase } from "@/lib/supabase";
 import { requirePermission, requireUser } from "@/lib/auth";
@@ -670,9 +671,9 @@ async function cancelSaleImpl(saleId: string, reason?: string) {
   if (!sale) return { error: "Vente introuvable" };
   if (sale.status === "ANNULEE") return { error: "Cette vente est déjà annulée" };
 
-  const { data: items } = await supabase.from("sale_items").select("productId:product_id, quantity").eq("sale_id", sale.id);
+  const items = await loadSaleItemsInBaseUnits(sale.id as string);
 
-  await recordStockMovements((items ?? []) as Array<{ productId: string; quantity: number }>, {
+  await recordStockMovements(items, {
     businessId: user.businessId,
     locationId: sale.locationId as string,
     userId: user.id,
