@@ -29,39 +29,45 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   // Enregistrement paresseux, sans attendre le résultat (idempotent, ne doit
   // pas ajouter de latence à chaque page) — voir lib/actions/desktop-offline.ts.
   void ensureDesktopOfflineFlagRegistered();
-  // Attendus, eux : ils conditionnent des entrées du menu, et un flag jamais
-  // enregistré serait considéré comme activé (voir lib/feature-flags.ts).
-  await Promise.all([ensurePurchaseOrdersFlagRegistered(), ensureReferralFlagRegistered()]);
+  // Tout est lancé en même temps plutôt que l'un après l'autre : chaque
+  // attente coûte un aller-retour vers Supabase, et ces lectures ne dépendent
+  // pas les unes des autres. Les flags enregistrés ici sont attendus : ils
+  // conditionnent des entrées du menu, et un flag jamais enregistré serait
+  // considéré comme activé (voir lib/feature-flags.ts).
+  const [, adminSession, platformConfig, subscriptionBlocked, businessSettings, marketSeller, locations, currentLocation, requestHeaders] =
+    await Promise.all([
+      Promise.all([ensurePurchaseOrdersFlagRegistered(), ensureReferralFlagRegistered()]),
+      getAdminSession(),
+      getPlatformConfig(),
+      isSubscriptionBlocked(user.businessId),
+      getBusinessSettings(user.businessId),
+      isMarketSeller(user.businessId),
+      getLocations(user.businessId),
+      getCurrentLocation(user.businessId),
+      headers(),
+    ]);
 
   // Un Fondateur "en tant que" ce commerçant (voir lib/actions/impersonation.ts)
   // garde son cookie admin en plus du cookie commerçant — sa présence indique
   // une usurpation active, qui doit pouvoir contourner le mode maintenance et
   // le blocage d'abonnement (c'est justement pour déboguer ces cas-là).
-  const isImpersonating = !!(await getAdminSession());
+  const isImpersonating = !!adminSession;
 
-  const [platformConfig, subscriptionBlocked, businessSettings] = await Promise.all([
-    getPlatformConfig(),
-    isImpersonating ? Promise.resolve(false) : isSubscriptionBlocked(user.businessId),
-    getBusinessSettings(user.businessId),
-  ]);
-
-  const pathname = (await headers()).get("x-zindo-pathname") ?? "";
+  const pathname = requestHeaders.get("x-zindo-pathname") ?? "";
   const isBillingPage = pathname === "/abonnement" || pathname.startsWith("/abonnement/");
 
   if (!isImpersonating && platformConfig.maintenanceMode) redirect("/maintenance");
   // /abonnement doit rester accessible même en cas de blocage (essai expiré,
   // impayé) — sans quoi ce serait la seule page permettant de régler le
   // problème qui se retrouverait elle-même redirigée vers elle-même.
-  if (!isBillingPage && subscriptionBlocked) redirect("/abonnement");
+  if (!isImpersonating && !isBillingPage && subscriptionBlocked) redirect("/abonnement");
 
   // Vendeur du Marché sans boutique : espace vendeur uniquement, jamais
   // l'application complète (caisse, stock, rapports…), même par URL directe.
-  if (await isMarketSeller(user.businessId)) {
+  if (marketSeller) {
     if (pathname && !isPathAllowedForMarketSeller(pathname)) redirect(MARKET_SELLER_HOME);
     return <MarketSellerShell sellerName={user.business.name}>{children}</MarketSellerShell>;
   }
-
-  const [locations, currentLocation] = await Promise.all([getLocations(user.businessId), getCurrentLocation(user.businessId)]);
 
   const [navItems, canSell, canManageProducts, canManageStock, canManagePurchases, offlineEnabled] = await Promise.all([
     getVisibleNavItems(user.businessId, user.role, user.id, user.business.activityKey, currentLocation?.id),

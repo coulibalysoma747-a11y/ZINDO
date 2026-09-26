@@ -2,6 +2,7 @@ import "server-only";
 import { supabase } from "@/lib/supabase";
 import { FEATURE_CATALOG } from "@/lib/subscription-features";
 import type { SubscriptionStatus, BillingCycle } from "@/lib/db-types";
+import { cache } from "react";
 
 export { FEATURE_CATALOG } from "@/lib/subscription-features";
 
@@ -38,7 +39,7 @@ const UNRESTRICTED: BusinessLimits = {
  * l'application des limites se ferait ici en restaurant la lecture du plan
  * ci-dessous.
  */
-export async function getBusinessLimits(_businessId: string): Promise<BusinessLimits> {
+async function getBusinessLimitsUncached(_businessId: string): Promise<BusinessLimits> {
   return UNRESTRICTED;
 }
 
@@ -175,7 +176,13 @@ export async function getSubscriptionState(businessId: string): Promise<Subscrip
   };
 }
 
-export async function isSubscriptionBlocked(businessId: string): Promise<boolean> {
+async function isSubscriptionBlockedUncached(businessId: string): Promise<boolean> {
   const state = await getSubscriptionState(businessId);
   return state.blocked;
 }
+
+/** Mémorisé le temps d'une requête : le layout et la page l'appellent tous les deux. */
+export const getBusinessLimits = cache(getBusinessLimitsUncached);
+
+/** Mémorisé le temps d'une requête : le layout et la page l'appellent tous les deux. */
+export const isSubscriptionBlocked = cache(isSubscriptionBlockedUncached);

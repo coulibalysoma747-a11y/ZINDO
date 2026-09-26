@@ -1,4 +1,5 @@
 import "server-only";
+import { cache } from "react";
 import { supabase } from "@/lib/supabase";
 
 /**
@@ -20,48 +21,85 @@ import { supabase } from "@/lib/supabase";
  * après coup avec cette activité, contrairement à une simple activation en
  * masse ponctuelle) > désactivé par défaut.
  */
+// Chargements groupés et mémorisés le temps d'une requête : le menu vérifie
+// une quinzaine de flags à chaque page, et chaque vérification faisait
+// jusqu'à 5 requêtes à la suite. Désormais, une requête par table au total.
+type FlagRow = { id: string; enabledGlobally: boolean };
+
+const loadFlags = cache(async () => {
+  const { data } = await supabase.from("feature_flags").select("id, key, enabledGlobally:enabled_globally");
+  return new Map((data ?? []).map((f) => [f.key as string, { id: f.id as string, enabledGlobally: !!f.enabledGlobally }]));
+});
+
+const loadFlag = cache(async (key: string): Promise<FlagRow | null> => {
+  const known = (await loadFlags()).get(key);
+  if (known) return known;
+  // Absent de la liste chargée en début de requête : peut-être enregistré
+  // entre-temps (registerFeatureFlag) — on revérifie pour ce seul flag.
+  const { data } = await supabase
+    .from("feature_flags")
+    .select("id, enabledGlobally:enabled_globally")
+    .eq("key", key)
+    .maybeSingle();
+  return data ? { id: data.id as string, enabledGlobally: !!data.enabledGlobally } : null;
+});
+
+function overridesById(data: unknown): Map<string, boolean> {
+  const rows = (data ?? []) as { featureFlagId: string; enabled: boolean }[];
+  return new Map(rows.map((r) => [r.featureFlagId, r.enabled]));
+}
+
+const loadLocationOverrides = cache(async (locationId: string) => {
+  const { data } = await supabase
+    .from("feature_flag_locations")
+    .select("featureFlagId:feature_flag_id, enabled")
+    .eq("location_id", locationId);
+  return overridesById(data);
+});
+
+const loadBusinessOverrides = cache(async (businessId: string) => {
+  const { data } = await supabase
+    .from("feature_flag_businesses")
+    .select("featureFlagId:feature_flag_id, enabled")
+    .eq("business_id", businessId);
+  return overridesById(data);
+});
+
+const loadActivityRules = cache(async (businessId: string) => {
+  const { data: business } = await supabase.from("businesses").select("activityKey:activity_key").eq("id", businessId).maybeSingle();
+  if (!business?.activityKey) return new Map<string, boolean>();
+  const { data } = await supabase
+    .from("feature_flag_activities")
+    .select("featureFlagId:feature_flag_id, enabled")
+    .eq("activity_key", business.activityKey);
+  return overridesById(data);
+});
+
 export async function isFeatureEnabled(
   key: string,
   businessId: string,
   locationId?: string | null
 ): Promise<boolean> {
-  const { data: flag } = await supabase
-    .from("feature_flags")
-    .select("id, enabledGlobally:enabled_globally")
-    .eq("key", key)
-    .maybeSingle();
+  // Lancés ensemble (et mémorisés pour la requête) plutôt que l'un après
+  // l'autre : chaque attente coûte un aller-retour vers Supabase.
+  const [flag, locationOverrides, businessOverrides, activityRules] = await Promise.all([
+    loadFlag(key),
+    locationId ? loadLocationOverrides(locationId) : null,
+    loadBusinessOverrides(businessId),
+    loadActivityRules(businessId),
+  ]);
   if (!flag) return true;
 
-  if (locationId) {
-    const { data: locationOverride } = await supabase
-      .from("feature_flag_locations")
-      .select("enabled")
-      .eq("feature_flag_id", flag.id)
-      .eq("location_id", locationId)
-      .maybeSingle();
-    if (locationOverride) return locationOverride.enabled;
-  }
+  const locationOverride = locationOverrides?.get(flag.id);
+  if (locationOverride !== undefined) return locationOverride;
 
   if (flag.enabledGlobally) return true;
 
-  const { data: businessOverride } = await supabase
-    .from("feature_flag_businesses")
-    .select("enabled")
-    .eq("feature_flag_id", flag.id)
-    .eq("business_id", businessId)
-    .maybeSingle();
-  if (businessOverride) return businessOverride.enabled;
+  const businessOverride = businessOverrides.get(flag.id);
+  if (businessOverride !== undefined) return businessOverride;
 
-  const { data: business } = await supabase.from("businesses").select("activityKey:activity_key").eq("id", businessId).maybeSingle();
-  if (business?.activityKey) {
-    const { data: activityRule } = await supabase
-      .from("feature_flag_activities")
-      .select("enabled")
-      .eq("feature_flag_id", flag.id)
-      .eq("activity_key", business.activityKey)
-      .maybeSingle();
-    if (activityRule) return activityRule.enabled;
-  }
+  const activityRule = activityRules.get(flag.id);
+  if (activityRule !== undefined) return activityRule;
 
   return false;
 }
@@ -104,6 +142,7 @@ export async function registerFeatureFlag(key: string, label: string, descriptio
   // il finira par s'exécuter lors d'un appel authentifié (web, ou desktop
   // après connexion).
   try {
+    if ((await loadFlags()).has(key)) return;
     const { data: existing } = await supabase.from("feature_flags").select("id").eq("key", key).maybeSingle();
     if (existing) return;
     const { error } = await supabase.from("feature_flags").insert({ key, label, description: description ?? null });

@@ -1,5 +1,6 @@
 import "server-only";
 import { supabase } from "@/lib/supabase";
+import { cache } from "react";
 
 export type PlatformConfig = {
   maintenanceMode: boolean;
@@ -19,7 +20,7 @@ const DEFAULT_CONFIG: PlatformConfig = {
   announcementTone: "info",
 };
 
-export async function getPlatformConfig(): Promise<PlatformConfig> {
+async function getPlatformConfigUncached(): Promise<PlatformConfig> {
   // Sur l'app Windows, appelé notamment depuis /login — donc potentiellement
   // avant toute connexion, alors qu'aucun accès Supabase n'est encore
   // possible (voir lib/supabase.ts resolveClient). On applique ici la même
@@ -39,3 +40,6 @@ export async function getPlatformConfig(): Promise<PlatformConfig> {
     return DEFAULT_CONFIG;
   }
 }
+
+/** Mémorisé le temps d'une requête : le layout et la page l'appellent tous les deux. */
+export const getPlatformConfig = cache(getPlatformConfigUncached);

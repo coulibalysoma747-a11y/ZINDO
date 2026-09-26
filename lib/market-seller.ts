@@ -1,4 +1,5 @@
 import { supabase } from "@/lib/supabase";
+import { cache } from "react";
 
 /**
  * Vendeurs du Marché ZINDO sans boutique (businesses.market_seller, posé par
@@ -14,9 +15,12 @@ export function isPathAllowedForMarketSeller(pathname: string): boolean {
   return ALLOWED_PREFIXES.some((p) => pathname === p || pathname.startsWith(`${p}/`));
 }
 
-export async function isMarketSeller(businessId: string): Promise<boolean> {
+async function isMarketSellerUncached(businessId: string): Promise<boolean> {
   const { data, error } = await supabase.from("businesses").select("market_seller").eq("id", businessId).maybeSingle();
   // Colonne absente (migration pas encore exécutée) : comportement normal.
   if (error || !data) return false;
   return data.market_seller === true;
 }
+
+/** Mémorisé le temps d'une requête : le layout et la page l'appellent tous les deux. */
+export const isMarketSeller = cache(isMarketSellerUncached);

@@ -1,5 +1,6 @@
 import "server-only";
 import { supabase } from "@/lib/supabase";
+import { cache } from "react";
 
 export type BusinessSettings = {
   /** "Toute vente au nom d'un client" — un client devient obligatoire sur chaque vente. */
@@ -105,7 +106,7 @@ function merge(base: BusinessSettings, patch: BusinessSettingsPatch): BusinessSe
   };
 }
 
-export async function getBusinessSettings(businessId: string): Promise<BusinessSettings> {
+async function getBusinessSettingsUncached(businessId: string): Promise<BusinessSettings> {
   const { data } = await supabase.from("businesses").select("settings").eq("id", businessId).maybeSingle();
   const raw = data?.settings as string | null | undefined;
   if (!raw) return DEFAULTS;
@@ -122,3 +123,6 @@ export async function updateBusinessSettings(businessId: string, patch: Business
   const { error } = await supabase.from("businesses").update({ settings: JSON.stringify(next) }).eq("id", businessId);
   return { error, settings: next };
 }
+
+/** Mémorisé le temps d'une requête : le layout et la page l'appellent tous les deux. */
+export const getBusinessSettings = cache(getBusinessSettingsUncached);

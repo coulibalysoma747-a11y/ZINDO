@@ -1,5 +1,6 @@
 import "server-only";
 import { redirect } from "next/navigation";
+import { cache } from "react";
 import { supabase } from "@/lib/supabase";
 import { getSession } from "@/lib/session";
 import { isSubscriptionBlocked } from "@/lib/subscription";
@@ -32,7 +33,7 @@ const USER_SELECT_FALLBACK =
 // de retour à partir du corps de la fonction, qui appelle
 // lib/offline/auth-cache.ts — lequel référence CurrentUser (défini plus bas à
 // partir du retour de cette même fonction), créant une dépendance circulaire.
-export async function getCurrentUser(): Promise<Awaited<ReturnType<typeof loadUserType>> | null> {
+async function getCurrentUserUncached(): Promise<Awaited<ReturnType<typeof loadUserType>> | null> {
   const session = await getSession();
   if (!session) return null;
 
@@ -56,6 +57,9 @@ export async function getCurrentUser(): Promise<Awaited<ReturnType<typeof loadUs
   if (isDesktopBuild()) void writeAuthCache(user.id, { user });
   return user;
 }
+
+/** Mémorisé le temps d'une requête : le layout, la page et requirePermission le rappellent tous. */
+export const getCurrentUser = cache(getCurrentUserUncached);
 
 // Type helper uniquement — ne s'exécute jamais.
 async function loadUserType() {
@@ -151,59 +155,62 @@ export async function requireUserForBilling() {
  * quand il est fourni, une dérogation individuelle (UserPermission, définie
  * depuis la console administrateur /admin) prend le pas sur tout le reste.
  */
+type PermissionRows = { map: Map<string, boolean>; error: { message: string } | null };
+
+function toPermissionRows(data: unknown, error: { message: string } | null): PermissionRows {
+  const rows = (data ?? []) as { permission: string; allowed: boolean }[];
+  return { map: new Map(rows.map((r) => [r.permission, r.allowed])), error };
+}
+
+// Chargement groupé et mémorisé le temps d'une requête : le menu vérifie une
+// cinquantaine de permissions à chaque page. Auparavant, chacune faisait
+// jusqu'à 3 requêtes Supabase à la suite, soit plus de 150 allers-retours
+// avant d'afficher quoi que ce soit ; désormais 3 au total.
+const loadUserPermissions = cache(async (userId: string) => {
+  const { data, error } = await supabase.from("user_permissions").select("permission, allowed").eq("user_id", userId);
+  return toPermissionRows(data, error);
+});
+
+const loadRolePermissions = cache(async (businessId: string, role: Role) => {
+  const { data, error } = await supabase
+    .from("role_permissions")
+    .select("permission, allowed")
+    .eq("business_id", businessId)
+    .eq("role", role);
+  return toPermissionRows(data, error);
+});
+
+const loadGlobalRolePermissions = cache(async (role: Role) => {
+  const { data, error } = await supabase.from("global_role_permissions").select("permission, allowed").eq("role", role);
+  return toPermissionRows(data, error);
+});
+
 export async function hasPermission(
   businessId: string,
   role: Role,
   permission: Permission,
   userId?: string
 ) {
-  const userOverrideQuery = userId
-    ? await supabase
-        .from("user_permissions")
-        .select("allowed")
-        .eq("user_id", userId)
-        .eq("permission", permission)
-        .maybeSingle()
-    : null;
-  if (userOverrideQuery?.error && isDesktopBuild() && isNetworkError(userOverrideQuery.error)) {
-    return resolvePermissionOffline(userId, role, permission);
-  }
-  if (userOverrideQuery?.data) {
-    const allowed = userOverrideQuery.data.allowed as boolean;
-    if (userId) void rememberPermission(userId, permission, allowed);
-    return allowed;
-  }
+  const [userRows, roleRows, globalRows] = await Promise.all([
+    userId ? loadUserPermissions(userId) : null,
+    loadRolePermissions(businessId, role),
+    loadGlobalRolePermissions(role),
+  ]);
 
-  const { data: override, error: overrideError } = await supabase
-    .from("role_permissions")
-    .select("allowed")
-    .eq("business_id", businessId)
-    .eq("role", role)
-    .eq("permission", permission)
-    .maybeSingle();
-  if (overrideError && isDesktopBuild() && isNetworkError(overrideError)) {
-    return resolvePermissionOffline(userId, role, permission);
-  }
-  if (override) {
-    if (userId) void rememberPermission(userId, permission, override.allowed);
-    return override.allowed;
-  }
-
-  // Personnalisation par défaut définie par l'administrateur de la
-  // plateforme (console /admin), appliquée à tous les commerces qui n'ont pas
-  // leur propre override — sinon on retombe sur la matrice codée en dur.
-  const { data: globalOverride, error: globalError } = await supabase
-    .from("global_role_permissions")
-    .select("allowed")
-    .eq("role", role)
-    .eq("permission", permission)
-    .maybeSingle();
-  if (globalError && isDesktopBuild() && isNetworkError(globalError)) {
-    return resolvePermissionOffline(userId, role, permission);
-  }
-  if (globalOverride) {
-    if (userId) void rememberPermission(userId, permission, globalOverride.allowed);
-    return globalOverride.allowed;
+  // Même ordre de priorité qu'avant : dérogation individuelle, puis
+  // dérogation du commerce pour ce rôle, puis personnalisation par défaut
+  // définie par l'administrateur de la plateforme (console /admin), sinon la
+  // matrice codée en dur.
+  for (const rows of [userRows, roleRows, globalRows]) {
+    if (!rows) continue;
+    if (rows.error && isDesktopBuild() && isNetworkError(rows.error)) {
+      return resolvePermissionOffline(userId, role, permission);
+    }
+    const allowed = rows.map.get(permission);
+    if (allowed !== undefined) {
+      if (userId) void rememberPermission(userId, permission, allowed);
+      return allowed;
+    }
   }
 
   const result = DEFAULT_ROLE_PERMISSIONS[role].includes(permission);
