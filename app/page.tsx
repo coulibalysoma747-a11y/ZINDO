@@ -540,10 +540,6 @@ export default async function RootPage() {
             +226 04 05 99 29
           </a>
         </p>
-        <p className="mt-1">
-          Partenaire : <span className="font-medium text-zinc-500">Faso Stock</span> — Propriétaire Mohamed
-          Sare
-        </p>
         <div className="mt-3 flex items-center justify-center gap-4">
           {SOCIAL_LINKS.map((social) => (
             <a

@@ -11,7 +11,6 @@ import { isGlobalSearchEnabled } from "@/lib/global-search";
 import { isMenuSearchEnabled } from "@/lib/menu-search";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { Topbar } from "@/components/layout/Topbar";
-import { AppFooter } from "@/components/layout/AppFooter";
 import { MobileTabBar } from "@/components/layout/MobileTabBar";
 import { ImpersonationBanner } from "@/components/layout/ImpersonationBanner";
 import { AnnouncementBanner } from "@/components/layout/AnnouncementBanner";
@@ -120,9 +119,6 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           />
         </div>
         <main className="flex-1 overflow-y-auto p-4 pb-28 sm:pb-6 md:p-6 lg:p-8 print:overflow-visible print:p-0">{children}</main>
-        <div className="print:hidden">
-          <AppFooter />
-        </div>
       </div>
       <OfflineShell enabled={offlineEnabled} userId={user.id} />
       <div className="print:hidden">

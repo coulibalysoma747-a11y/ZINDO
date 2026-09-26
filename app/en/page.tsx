@@ -369,9 +369,6 @@ export default async function EnglishRootPage() {
             +226 04 05 99 29
           </a>
         </p>
-        <p className="mt-1">
-          Partner: <span className="font-medium text-zinc-500">Faso Stock</span> — Owner Mohamed Sare
-        </p>
         <p className="mt-2">
           <Link href="/en/cgu" className="hover:text-zindo-green-600">
             Terms of Service

@@ -19,7 +19,6 @@ const TEXT = {
     createdBy: "Créé par Coulibaly Soma",
     founderName: "Coulibaly Soma",
     founderTagline: "Fondateur ZINDO — à vos côtés à chaque étape.",
-    partner: "En partenariat avec",
     mobileTagline: (
       <>
         L&apos;application de gestion de{" "}
@@ -47,7 +46,6 @@ const TEXT = {
     createdBy: "Created by Coulibaly Soma",
     founderName: "Coulibaly Soma",
     founderTagline: "ZINDO Founder — with you every step of the way.",
-    partner: "In partnership with",
     mobileTagline: (
       <>
         The <span className="font-semibold text-zindo-green-600">stock, checkout, and sales</span> management app
@@ -127,9 +125,6 @@ export function AuthShell({ children, locale = "fr" }: { children: React.ReactNo
           <p className="text-xs text-slate-500">
             © {new Date().getFullYear()} ZINDO — {t.createdBy}
           </p>
-          <span className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[11px] font-medium text-slate-300">
-            {t.partner} <span className="text-white">Faso Stock</span>
-          </span>
         </div>
       </div>
 
