@@ -34,3 +34,40 @@ export function playAddToCartSound() {
     // Le son n'est qu'un confort — jamais bloquant.
   }
 }
+
+/**
+ * Bip d'erreur (deux notes graves et descendantes), bien distinct du bip
+ * d'ajout : produit refusé à la caisse, par exemple en rupture de stock.
+ */
+export function playErrorSound() {
+  if (typeof window === "undefined") return;
+  try {
+    if (!audioContext) {
+      const Ctor =
+        window.AudioContext ??
+        (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+      if (!Ctor) return;
+      audioContext = new Ctor();
+    }
+    const ctx = audioContext;
+    if (ctx.state === "suspended") ctx.resume();
+
+    [
+      { frequency: 440, start: 0 },
+      { frequency: 294, start: 0.16 },
+    ].forEach(({ frequency, start }) => {
+      const oscillator = ctx.createOscillator();
+      const gain = ctx.createGain();
+      oscillator.type = "square";
+      oscillator.frequency.setValueAtTime(frequency, ctx.currentTime + start);
+      gain.gain.setValueAtTime(0.12, ctx.currentTime + start);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + start + 0.14);
+      oscillator.connect(gain);
+      gain.connect(ctx.destination);
+      oscillator.start(ctx.currentTime + start);
+      oscillator.stop(ctx.currentTime + start + 0.14);
+    });
+  } catch {
+    // Le son n'est qu'un confort — jamais bloquant.
+  }
+}

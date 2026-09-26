@@ -40,7 +40,7 @@ import {
 import { syncPendingSales } from "@/lib/offline/sync";
 import { buildOfflineDocument } from "@/lib/offline/build-document";
 import { getAvailableVehicleUnitsAction } from "@/lib/actions/vehicle-units";
-import { playAddToCartSound } from "@/lib/sound";
+import { playAddToCartSound, playErrorSound } from "@/lib/sound";
 import { resolveTieredPrice } from "@/lib/pricing";
 import { QuickCashNotes } from "./QuickCashNotes";
 
@@ -135,6 +135,7 @@ export function POS({
   manualSaleNumberEnabled = false,
   suggestedManualNumber = null,
   quickCashNotes = false,
+  blockOutOfStock = false,
   singlePanel = false,
   initialProducts,
 }: {
@@ -162,6 +163,8 @@ export function POS({
   suggestedManualNumber?: string | null;
   /** Boutons de billets sous le montant reçu (flag billets_rapides) — voir QuickCashNotes. */
   quickCashNotes?: boolean;
+  /** Refus au panier des produits sans stock disponible (flag refus_rupture_caisse) — voir lib/out-of-stock-block.ts. */
+  blockOutOfStock?: boolean;
   /** Caisse en une colonne (flag caisse_une_colonne) — voir lib/pos-single-panel.ts. */
   singlePanel?: boolean;
   /** Produits dont la lecture a démarré côté serveur, dès le rendu de la page (voir POSPageContent). */
@@ -280,6 +283,14 @@ export function POS({
   const [aiCartOpen, setAiCartOpen] = useState(false);
   const [sendingToQueue, setSendingToQueue] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Produit refusé faute de stock (flag refus_rupture_caisse) : message affiché
+  // sous la recherche, là où regarde le vendeur qui scanne, puis effacé seul.
+  const [stockAlert, setStockAlert] = useState<string | null>(null);
+  useEffect(() => {
+    if (!stockAlert) return;
+    const timer = setTimeout(() => setStockAlert(null), 5000);
+    return () => clearTimeout(timer);
+  }, [stockAlert]);
 
   // Caisse en une colonne : hauteur calée sur l'écran (du haut du panneau au
   // bas de la fenêtre), pour que « Valider » soit toujours visible.
@@ -491,8 +502,28 @@ export function POS({
       openUnitPicker(product);
       return;
     }
-    playAddToCartSound();
     const multiplier = packaging?.multiplier ?? 1;
+    if (blockOutOfStock) {
+      // Unités de base déjà au panier pour ce produit, tous conditionnements confondus.
+      const inCart = cart
+        .filter((l) => !l.vehicleUnitId && l.product.id === product.id)
+        .reduce((sum, l) => sum + l.quantity * (l.multiplier ?? 1), 0);
+      if (inCart + multiplier > product.quantity) {
+        playErrorSound();
+        setStockAlert(
+          product.quantity <= 0
+            ? `Rupture de stock : « ${product.name} » n'est plus en réserve. Produit non ajouté.`
+            : inCart === 0
+              ? `Stock insuffisant pour « ${product.name} » : ${product.quantity} en réserve, pas assez pour « ${packaging?.name ?? "une unité"} ». Produit non ajouté.`
+              : product.quantity === 1
+                ? `Stock insuffisant pour « ${product.name} » : la seule unité en réserve est déjà dans le panier. Produit non ajouté.`
+                : `Stock insuffisant pour « ${product.name} » : les ${product.quantity} unités en réserve sont déjà dans le panier. Produit non ajouté.`
+        );
+        return;
+      }
+      setStockAlert(null);
+    }
+    playAddToCartSound();
     const maxQty = Math.max(1, Math.floor(product.quantity / multiplier));
     setCart((prev) => {
       const existing = prev.find((l) => !l.vehicleUnitId && l.product.id === product.id && l.packagingUnitId === packaging?.id);
@@ -1638,6 +1669,15 @@ export function POS({
             </Button>
           )}
         </div>
+
+        {stockAlert && (
+          <p
+            role="alert"
+            className="rounded-lg border border-red-300 bg-red-50 px-3 py-2 text-sm font-semibold text-red-700 dark:border-red-500/40 dark:bg-red-500/10 dark:text-red-400"
+          >
+            {stockAlert}
+          </p>
+        )}
 
         <Modal open={heldSalesOpen} onClose={() => setHeldSalesOpen(false)} title="Ventes en attente">
           {heldSales.length === 0 ? (
