@@ -14,6 +14,7 @@ import { getSuggestedManualSaleNumber, isManualSaleNumberEnabled } from "@/lib/m
 import { isQuickCashNotesEnabled } from "@/lib/quick-cash-notes";
 import { isOutOfStockBlockEnabled } from "@/lib/out-of-stock-block";
 import { isPosSinglePanelEnabled } from "@/lib/pos-single-panel";
+import { getPosExtras } from "@/lib/pos-extras";
 
 /**
  * Chargement de données partagé entre les deux modules de vente — "Vente /
@@ -61,7 +62,7 @@ export async function POSPageContent({ mode }: { mode: "pos" | "facture" }) {
     user: { firstName: string; lastName: string };
   };
 
-  const [{ data: customers }, paymentMethods, canEditProducts, canSeeMargin, manualSaleNumberEnabled, singlePanel, quickCashNotes, blockOutOfStock] = await Promise.all([
+  const [{ data: customers }, paymentMethods, canEditProducts, canSeeMargin, manualSaleNumberEnabled, singlePanel, quickCashNotes, blockOutOfStock, posExtras] = await Promise.all([
     supabase.from("customers").select("id, name, phone").eq("business_id", user.businessId).order("name", { ascending: true }),
     getEnabledPaymentMethods(),
     hasPermission(user.businessId, user.role, PERMISSIONS.PRODUCTS_MANAGE, user.id),
@@ -70,6 +71,7 @@ export async function POSPageContent({ mode }: { mode: "pos" | "facture" }) {
     isPosSinglePanelEnabled(user.businessId),
     isQuickCashNotesEnabled(user.businessId),
     isOutOfStockBlockEnabled(user.businessId),
+    getPosExtras(user.businessId),
   ]);
   const suggestedManualNumber = manualSaleNumberEnabled ? await getSuggestedManualSaleNumber(user.businessId) : null;
 
@@ -94,6 +96,7 @@ export async function POSPageContent({ mode }: { mode: "pos" | "facture" }) {
       singlePanel={singlePanel}
       quickCashNotes={quickCashNotes}
       blockOutOfStock={blockOutOfStock}
+      extras={posExtras}
       initialProducts={initialProducts}
       autoPrintReceipt={user.autoPrintReceipt}
       printerTicketWidth={user.printerTicketWidth}

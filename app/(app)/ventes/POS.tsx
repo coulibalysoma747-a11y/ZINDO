@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState, useTransition, type FocusEvent } from "react";
 import Link from "next/link";
-import { Trash2, Plus, Minus, UserPlus, Loader2, Wallet, Lock, WifiOff, RefreshCw, Sparkles } from "lucide-react";
+import { Trash2, Plus, Minus, UserPlus, Loader2, Wallet, Lock, WifiOff, RefreshCw, Sparkles, Calculator, Printer } from "lucide-react";
 import { ProductGrid, type PosProduct, type PackagingUnitOption } from "@/components/products/ProductGrid";
 import { BarcodeScannerButton } from "@/components/products/BarcodeScannerButton";
 import { Card, CardBody, CardHeader } from "@/components/ui/Card";
@@ -43,6 +43,8 @@ import { getAvailableVehicleUnitsAction } from "@/lib/actions/vehicle-units";
 import { playAddToCartSound, playErrorSound } from "@/lib/sound";
 import { resolveTieredPrice } from "@/lib/pricing";
 import { QuickCashNotes } from "./QuickCashNotes";
+import { PosCalculator } from "./PosCalculator";
+import type { PosExtras } from "@/lib/pos-extras";
 
 type CartLine = {
   product: PosProduct;
@@ -137,6 +139,7 @@ export function POS({
   quickCashNotes = false,
   blockOutOfStock = false,
   singlePanel = false,
+  extras = {},
   initialProducts,
 }: {
   mode?: "pos" | "facture";
@@ -167,6 +170,8 @@ export function POS({
   blockOutOfStock?: boolean;
   /** Caisse en une colonne (flag caisse_une_colonne) — voir lib/pos-single-panel.ts. */
   singlePanel?: boolean;
+  /** Petits outils de caisse, chacun derrière son flag — voir lib/pos-extras.ts. */
+  extras?: Partial<PosExtras>;
   /** Produits dont la lecture a démarré côté serveur, dès le rendu de la page (voir POSPageContent). */
   initialProducts?: Promise<PosProduct[]>;
 }) {
@@ -317,6 +322,38 @@ export function POS({
   const [receiptDoc, setReceiptDoc] = useState<Extract<SaleDocument, { success: true }> | null>(null);
   /** clientRef de la vente dont le ticket définitif est attendu du serveur (voir handleSubmit). */
   const [finalizingRef, setFinalizingRef] = useState<string | null>(null);
+
+  // Outils de caisse (lib/pos-extras.ts).
+  const [calculatorOpen, setCalculatorOpen] = useState(false);
+  const [packagingPickerProduct, setPackagingPickerProduct] = useState<PosProduct | null>(null);
+  // Dernier ticket émis sur ce poste, gardé aussi après un rechargement de la
+  // page : l'imprimante sans papier ou le client qui revient le demander.
+  const lastReceiptKey = `zindo_last_receipt_${locationId}`;
+  const [lastReceipt, setLastReceipt] = useState<Extract<SaleDocument, { success: true }> | null>(null);
+  const [reprintOpen, setReprintOpen] = useState(false);
+  useEffect(() => {
+    if (!extras.reprintLast) return;
+    try {
+      const raw = window.localStorage.getItem(lastReceiptKey);
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- lecture unique du stockage du navigateur
+      if (raw) setLastReceipt(JSON.parse(raw));
+    } catch {
+      // stockage indisponible : le bouton apparaîtra après la prochaine vente
+    }
+  }, [extras.reprintLast, lastReceiptKey]);
+
+  /** Ferme le ticket affiché en le gardant comme « dernier ticket » (flag reimpression_dernier_ticket). */
+  function closeReceipt() {
+    if (extras.reprintLast && receiptDoc) {
+      setLastReceipt(receiptDoc);
+      try {
+        window.localStorage.setItem(lastReceiptKey, JSON.stringify(receiptDoc));
+      } catch {
+        // stockage plein/indisponible : le dernier ticket reste en mémoire pour cette session
+      }
+    }
+    setReceiptDoc(null);
+  }
 
   // Numéro de la prochaine vente, réservé d'avance auprès du serveur : le
   // ticket imprimé à la validation instantanée porte ainsi tout de suite son
@@ -744,6 +781,17 @@ export function POS({
       setError("Sélectionnez un client pour une vente à crédit ou un paiement partiel");
       return;
     }
+    // Faute de frappe probable (100 000 au lieu de 10 000) : on fait confirmer.
+    if (
+      extras.highChangeWarning &&
+      total > 0 &&
+      amountPaid > 5 * total &&
+      !window.confirm(
+        `Attention, confirmez-vous avoir reçu ${formatMoney(amountPaid, currency)} ?\n\nTotal : ${formatMoney(total, currency)}\nMonnaie à rendre : ${formatMoney(change, currency)}`
+      )
+    ) {
+      return;
+    }
 
     const items = cart.map((l) => ({
       productId: l.product.id,
@@ -971,6 +1019,30 @@ export function POS({
     );
   }
 
+  // « Tout effacer » (flag vider_panier) : le client annule tout son achat.
+  const clearCartButton = extras.clearCart ? (
+    <button
+      type="button"
+      onClick={cancelSale}
+      className="inline-flex items-center gap-1.5 rounded-lg bg-red-600 px-3 py-1.5 text-xs font-bold text-white shadow-sm transition-colors hover:bg-red-700 active:scale-95"
+    >
+      <Trash2 className="h-3.5 w-3.5" /> Tout effacer
+    </button>
+  ) : null;
+
+  // Calculatrice (flag calculatrice_caisse), à côté du total.
+  const calculatorButton = extras.calculator ? (
+    <button
+      type="button"
+      onClick={() => setCalculatorOpen(true)}
+      aria-label="Calculatrice"
+      title="Calculatrice"
+      className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-zinc-300 text-zinc-600 transition-colors hover:bg-zinc-100 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+    >
+      <Calculator className="h-4 w-4" />
+    </button>
+  ) : null;
+
   // Panier : sous les produits sur téléphone/tablette ; dans la colonne de
   // droite (toujours visible, à côté du bouton Valider) sur ordinateur.
   const renderCart = (compact: boolean) => (
@@ -978,9 +1050,12 @@ export function POS({
       <CardHeader className="px-4 py-2.5 sm:px-4">
         <h2 className="font-semibold tracking-tight text-zinc-900">Panier</h2>
         {cart.length > 0 && (
-          <span className="rounded-full bg-zindo-green-50 px-2.5 py-0.5 text-xs font-semibold text-zindo-green-700 dark:bg-emerald-500/10 dark:text-emerald-400">
-            {cart.length} article{cart.length > 1 ? "s" : ""}
-          </span>
+          <div className="flex items-center gap-2">
+            <span className="rounded-full bg-zindo-green-50 px-2.5 py-0.5 text-xs font-semibold text-zindo-green-700 dark:bg-emerald-500/10 dark:text-emerald-400">
+              {cart.length} article{cart.length > 1 ? "s" : ""}
+            </span>
+            {clearCartButton}
+          </div>
         )}
       </CardHeader>
       <CardBody className="p-0">{renderCartLines(compact)}</CardBody>
@@ -1344,6 +1419,21 @@ export function POS({
     setError(null);
   }
 
+  // Couleur du bouton de validation selon le paiement (flag couleur_mode_paiement) :
+  // vert espèces, bleu mobile money / carte, orange crédit.
+  // « ! » : prioritaire sur le vert de la variante primary (cn ne fusionne pas les classes).
+  const PAYMENT_COLORS: Partial<Record<PaymentMethod, string>> = {
+    ESPECES: "bg-emerald-600! hover:bg-emerald-700! active:bg-emerald-800!",
+    MOBILE_MONEY: "bg-blue-600! hover:bg-blue-700! active:bg-blue-800!",
+    CARTE: "bg-blue-600! hover:bg-blue-700! active:bg-blue-800!",
+    CREDIT: "bg-amber-500! hover:bg-amber-600! active:bg-amber-700!",
+  };
+  const payColor = extras.paymentColors && !isFacture ? PAYMENT_COLORS[paymentMethod] ?? "" : "";
+  const payLabel =
+    extras.paymentColors && !isFacture
+      ? `Valider — ${paymentMethod === "MOBILE_MONEY" ? "Mobile Money" : paymentMethod === "MIXTE" ? "Mixte" : PAYMENT_LABELS[paymentMethod]}`
+      : null;
+
   // Libellés courts pour tenir sur une seule rangée de boutons.
   const SHORT_PAYMENT_LABELS: Partial<Record<PaymentMethod, string>> = {
     MOBILE_MONEY: "Mobile",
@@ -1370,6 +1460,7 @@ export function POS({
         <h2 className="font-semibold tracking-tight text-zinc-900">
           Panier{cart.length > 0 && ` · ${cart.length} article${cart.length > 1 ? "s" : ""}`}
         </h2>
+        {cart.length > 0 && clearCartButton}
       </div>
 
       <div className="flex min-h-0 flex-1 flex-col">
@@ -1385,7 +1476,7 @@ export function POS({
             </div>
           )}
           <div className="flex items-baseline justify-between">
-            <span className="font-semibold uppercase text-zinc-900">Total</span>
+            <span className="flex items-center gap-2 font-semibold uppercase text-zinc-900">Total {calculatorButton}</span>
             <span className="text-2xl font-bold tracking-tight tabular-nums text-zindo-green-700 dark:text-emerald-400">
               {formatMoney(total, currency)}
             </span>
@@ -1422,7 +1513,7 @@ export function POS({
                 title={m.label}
                 className={`min-w-0 flex-1 truncate rounded-lg px-1.5 py-1.5 text-[11px] font-semibold uppercase transition-colors ${
                   paymentMethod === m.value
-                    ? "bg-zindo-green-600 text-white shadow-sm"
+                    ? `bg-zindo-green-600 text-white shadow-sm ${payColor}`
                     : "border border-zinc-300 text-zinc-700 hover:bg-zinc-100 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
                 }`}
               >
@@ -1547,8 +1638,8 @@ export function POS({
               {sendingToQueue ? "Envoi..." : "Envoyer à la caisse"}
             </Button>
           ) : (
-            <Button className="h-11 flex-1 text-base" disabled={pending} onClick={handleSubmit}>
-              {pending ? "Enregistrement..." : isFacture ? "Générer la facture" : "Valider"}
+            <Button className={`h-11 flex-1 text-base ${payColor}`} disabled={pending} onClick={handleSubmit}>
+              {pending ? "Enregistrement..." : isFacture ? "Générer la facture" : payLabel ?? "Valider"}
             </Button>
           )}
         </div>
@@ -1668,6 +1759,16 @@ export function POS({
               En attente ({heldSales.length})
             </Button>
           )}
+          {extras.reprintLast && lastReceipt && (
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setReprintOpen(true)}
+              title="Réimprimer le ticket de la dernière vente"
+            >
+              <Printer className="h-4 w-4" /> Dernier ticket
+            </Button>
+          )}
         </div>
 
         {stockAlert && (
@@ -1730,7 +1831,11 @@ export function POS({
           ) : (
             <ProductGrid
               products={filteredProducts}
-              onSelect={addProduct}
+              onSelect={(product, packaging) =>
+                extras.packagingPicker && !packaging && !product.trackUnits && product.packagingUnits?.length
+                  ? setPackagingPickerProduct(product)
+                  : addProduct(product, packaging)
+              }
               currency={currency}
               canEditProducts={canEditProducts}
             />
@@ -1918,7 +2023,7 @@ export function POS({
                 </div>
               )}
               <div className="flex items-baseline justify-between">
-                <span className="font-semibold text-zinc-900">Total</span>
+                <span className="flex items-center gap-2 font-semibold text-zinc-900">Total {calculatorButton}</span>
                 <span className="text-2xl font-semibold tracking-tight tabular-nums text-zinc-900">
                   {formatMoney(total, currency)}
                 </span>
@@ -1954,8 +2059,8 @@ export function POS({
                 {sendingToQueue ? "Envoi..." : "Envoyer à la caisse"}
               </Button>
             ) : (
-              <Button className="h-12 w-full text-base" size="lg" disabled={pending} onClick={handleSubmit}>
-                {pending ? "Enregistrement..." : isFacture ? "Générer la facture" : "Valider la vente"}
+              <Button className={`h-12 w-full text-base ${payColor}`} size="lg" disabled={pending} onClick={handleSubmit}>
+                {pending ? "Enregistrement..." : isFacture ? "Générer la facture" : payLabel ?? "Valider la vente"}
               </Button>
             )}
           </CardBody>
@@ -1964,6 +2069,64 @@ export function POS({
       )}
 
       <ClientFormModal open={newClientOpen} onClose={() => setNewClientOpen(false)} />
+
+      {extras.calculator && calculatorOpen && (
+        <PosCalculator
+          onClose={() => setCalculatorOpen(false)}
+          total={total}
+          onUseAsAmountReceived={
+            queueOnlyMode || isMixed ? undefined : (value) => setAmountPaidInput(String(value))
+          }
+        />
+      )}
+
+      {/* Choix du conditionnement au clic (flag choix_conditionnement). */}
+      <Modal
+        open={!!packagingPickerProduct}
+        onClose={() => setPackagingPickerProduct(null)}
+        title={packagingPickerProduct ? `Vendre « ${packagingPickerProduct.name} »` : ""}
+      >
+        {packagingPickerProduct && (
+          <ul className="space-y-2">
+            {[
+              { id: "", name: `À l'unité (${packagingPickerProduct.unit})`, salePrice: packagingPickerProduct.salePrice, multiplier: 1 },
+              ...(packagingPickerProduct.packagingUnits ?? []),
+            ].map((pu) => {
+              const enough = packagingPickerProduct.quantity >= pu.multiplier;
+              return (
+                <li key={pu.id || "unit"}>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const product = packagingPickerProduct;
+                      setPackagingPickerProduct(null);
+                      addProduct(product, pu.id ? (pu as PackagingUnitOption) : undefined);
+                    }}
+                    className={`flex w-full items-center justify-between gap-3 rounded-xl border px-4 py-3 text-left transition-colors active:scale-[0.99] ${
+                      enough
+                        ? "border-zinc-200 hover:border-zindo-green-400 hover:bg-zindo-green-50 dark:border-slate-700 dark:hover:bg-zindo-green-500/10"
+                        : "border-zinc-200 opacity-60 dark:border-slate-700"
+                    }`}
+                  >
+                    <span>
+                      <span className="block font-semibold text-zinc-900">{pu.name}</span>
+                      <span className="block text-xs text-zinc-500">
+                        {pu.multiplier > 1 ? `${pu.multiplier} ${packagingPickerProduct.unit} — ` : ""}
+                        {enough
+                          ? `${Math.floor(packagingPickerProduct.quantity / pu.multiplier)} disponible(s)`
+                          : "Stock insuffisant"}
+                      </span>
+                    </span>
+                    <span className="text-lg font-bold tabular-nums text-zindo-green-700 dark:text-emerald-400">
+                      {formatMoney(pu.salePrice, currency)}
+                    </span>
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </Modal>
 
       <Modal
         open={!!unitPickerProduct}
@@ -2002,8 +2165,11 @@ export function POS({
           doc={receiptDoc}
           autoPrint={autoPrintReceipt}
           finalizing={finalizingRef !== null && receiptDoc.saleId === finalizingRef}
-          onClose={() => setReceiptDoc(null)}
+          onClose={closeReceipt}
         />
+      )}
+      {!receiptDoc && reprintOpen && lastReceipt && (
+        <ReceiptPrintPanel doc={lastReceipt} autoPrint onClose={() => setReprintOpen(false)} />
       )}
     </>
   );
