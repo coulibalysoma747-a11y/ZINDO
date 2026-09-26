@@ -3,6 +3,7 @@ import { requirePermission } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
 import { supabase } from "@/lib/supabase";
 import { SessionReportView } from "./SessionReportView";
+import { buildEveningReportText, isEveningReportEnabled } from "@/lib/evening-report";
 
 type SessionRow = {
   id: string;
@@ -50,13 +51,34 @@ export default async function SessionReportPage({
   const session = data as unknown as SessionRow;
   if (session.status === "OUVERTE") redirect(`/ventes/session/${session.id}/fermer`);
 
+  const cashierName = `${session.user.firstName} ${session.user.lastName}`;
+  const eveningReportText = (await isEveningReportEnabled(user.businessId))
+    ? await buildEveningReportText({
+        sessionId: session.id,
+        businessId: user.businessId,
+        locationName: session.location.name,
+        closedAt: new Date(session.closedAt!),
+        cashierName,
+        salesCount: session.salesCount ?? 0,
+        totalRevenue: session.totalRevenue ?? 0,
+        cashCollected: session.cashCollected ?? 0,
+        mobileCollected: session.mobileCollected ?? 0,
+        cardCollected: session.cardCollected ?? 0,
+        otherCollected: session.otherCollected ?? 0,
+        creditCollected: session.creditCollected ?? 0,
+        variance: session.variance ?? 0,
+        currency: user.business.currency,
+      })
+    : null;
+
   return (
     <SessionReportView
+      eveningReportText={eveningReportText}
       data={{
         businessName: user.business.name,
         locationName: session.location.name,
         sessionNumber: session.number,
-        cashierName: `${session.user.firstName} ${session.user.lastName}`,
+        cashierName,
         openedAt: new Date(session.openedAt),
         closedAt: new Date(session.closedAt!),
         salesCount: session.salesCount ?? 0,
