@@ -1,6 +1,11 @@
+import { getTrialDays } from "@/lib/platform-config";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { LegalPage, LegalSection } from "@/components/legal/LegalPage";
+
+// Durée de l'essai réglable depuis la console admin (qui revalide aussi
+// cette page à l'enregistrement) : relecture au plus toutes les heures.
+export const revalidate = 3600;
 
 export const metadata: Metadata = {
   title: "Terms of Service",
@@ -9,7 +14,8 @@ export const metadata: Metadata = {
 
 const UPDATED_AT = "September 16, 2026";
 
-export default function EnglishCguPage() {
+export default async function EnglishCguPage() {
+  const trialDays = await getTrialDays();
   return (
     <LegalPage title="Terms of Service" updatedAt={UPDATED_AT} updatedAtLabel="Last updated" homeHref="/en" homeLabel="Home">
       <LegalSection title="1. Purpose">
@@ -45,7 +51,7 @@ export default function EnglishCguPage() {
 
       <LegalSection title="4. Pricing">
         <p>
-          ZINDO offers a 14-day free trial, no commitment, when you create your account. After this period, using
+          ZINDO offers a {trialDays}-day free trial, no commitment, when you create your account. After this period, using
           ZINDO requires a paid subscription: 10,000 FCFA per month or 100,000 FCFA per year. Payment is made via
           Mobile Money (Orange Money, Moov Money, Wave); the transaction reference must be entered on the
           &ldquo;Subscription&rdquo; page for confirmation. Any substantial change to pricing would be communicated to you

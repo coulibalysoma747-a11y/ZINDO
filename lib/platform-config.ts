@@ -41,5 +41,28 @@ async function getPlatformConfigUncached(): Promise<PlatformConfig> {
   }
 }
 
+/** Durée de l'essai gratuit si le réglage est absent ou illisible. */
+export const DEFAULT_TRIAL_DAYS = 14;
+export const MAX_TRIAL_DAYS = 365;
+
+/**
+ * Durée de l'essai gratuit des nouveaux commerces, réglable depuis
+ * /admin/abonnements. Lue à part (et non dans getPlatformConfig) : si la
+ * colonne trial_days n'est pas encore migrée, seule cette lecture échoue et
+ * retombe sur la valeur par défaut.
+ */
+async function getTrialDaysUncached(): Promise<number> {
+  try {
+    const { data, error } = await supabase.from("platform_config").select("trialDays:trial_days").eq("id", 1).maybeSingle();
+    const days = Number((data as { trialDays?: unknown } | null)?.trialDays);
+    if (error || !Number.isInteger(days) || days < 1 || days > MAX_TRIAL_DAYS) return DEFAULT_TRIAL_DAYS;
+    return days;
+  } catch {
+    return DEFAULT_TRIAL_DAYS;
+  }
+}
+
+export const getTrialDays = cache(getTrialDaysUncached);
+
 /** Mémorisé le temps d'une requête : le layout et la page l'appellent tous les deux. */
 export const getPlatformConfig = cache(getPlatformConfigUncached);

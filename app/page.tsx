@@ -1,3 +1,4 @@
+import { getTrialDays } from "@/lib/platform-config";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
@@ -128,7 +129,7 @@ const FAQS = [
   {
     question: "Combien coûte ZINDO ?",
     answer:
-      "ZINDO propose 14 jours d'essai gratuit, sans engagement. Ensuite, l'abonnement coûte 7 500 FCFA par mois, ou 75 000 FCFA par an (soit 15 000 FCFA d'économie par rapport au paiement mensuel).",
+      "ZINDO propose {trialDays} jours d'essai gratuit, sans engagement. Ensuite, l'abonnement coûte 7 500 FCFA par mois, ou 75 000 FCFA par an (soit 15 000 FCFA d'économie par rapport au paiement mensuel).",
   },
   {
     question: "Est-ce que je peux utiliser ZINDO sans connexion Internet ?",
@@ -208,6 +209,7 @@ const STRUCTURED_DATA = [
 ];
 
 export default async function RootPage() {
+  const trialDays = await getTrialDays();
   const user = await getCurrentUser();
   if (user) redirect("/dashboard");
   await registerFeatureFlag(
@@ -220,7 +222,7 @@ export default async function RootPage() {
   return (
     <div className="theme-locked relative overflow-x-hidden bg-zindo-cream">
       {/* eslint-disable-next-line react/no-danger */}
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(STRUCTURED_DATA) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(STRUCTURED_DATA).replaceAll("{trialDays}", String(trialDays)) }} />
       <div aria-hidden className="pointer-events-none fixed inset-0 overflow-hidden">
         <div className="absolute -right-24 -top-24 h-96 w-96 rounded-full bg-zindo-green-100/70 blur-3xl" />
         <div className="absolute top-1/3 -left-16 h-72 w-72 rounded-full bg-zindo-gold-100/60 blur-3xl" />
@@ -291,7 +293,7 @@ export default async function RootPage() {
               href="/inscription"
               className="flex w-full items-center justify-center gap-2 rounded-2xl bg-zindo-green-500 px-6 py-3.5 text-base font-bold text-white shadow-lg shadow-zindo-green-500/30 transition hover:-translate-y-0.5 hover:bg-zindo-green-600 sm:w-auto"
             >
-              Essai gratuit de 14 jours <ArrowRight className="h-4 w-4" />
+              Essai gratuit de {trialDays} jours <ArrowRight className="h-4 w-4" />
             </Link>
             <Link
               href="/login"
@@ -491,7 +493,7 @@ export default async function RootPage() {
                   {faq.question}
                   <span className="shrink-0 text-zindo-green-600 transition group-open:rotate-45">+</span>
                 </summary>
-                <p className="mt-2 text-sm leading-relaxed text-zinc-500">{faq.answer}</p>
+                <p className="mt-2 text-sm leading-relaxed text-zinc-500">{faq.answer.replaceAll("{trialDays}", String(trialDays))}</p>
               </details>
             ))}
           </div>

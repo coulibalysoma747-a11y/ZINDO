@@ -3,10 +3,10 @@ import { supabase } from "@/lib/supabase";
 import { FEATURE_CATALOG } from "@/lib/subscription-features";
 import type { SubscriptionStatus, BillingCycle } from "@/lib/db-types";
 import { cache } from "react";
+import { getTrialDays } from "@/lib/platform-config";
 
 export { FEATURE_CATALOG } from "@/lib/subscription-features";
 
-export const TRIAL_DURATION_DAYS = 14;
 export const ACTIVE_PLAN_KEY = "pro";
 
 export type BusinessLimits = {
@@ -56,7 +56,7 @@ export async function checkLimit(
 }
 
 // ---------------------------------------------------------------------------
-// Essai gratuit de 14 jours puis abonnement payant obligatoire (7 500
+// Essai gratuit (durée réglable, voir getTrialDays) puis abonnement payant obligatoire (7 500
 // FCFA/mois ou 75 000 FCFA/an, sans palier gratuit) — indépendant des
 // limites par fonctionnalité ci-dessus (désactivées) : ici on ne contrôle que
 // l'ACCÈS à l'application, pas le nombre de produits/utilisateurs/boutiques.
@@ -112,7 +112,8 @@ async function ensureSubscriptionRow(businessId: string): Promise<SubscriptionRo
     .maybeSingle();
   if (!plan) return null; // Palier pas encore configuré en base : pas de blocage tant que ce n'est pas prêt.
 
-  const trialEndsAt = new Date(Date.now() + TRIAL_DURATION_DAYS * 24 * 60 * 60 * 1000).toISOString();
+  const trialDays = await getTrialDays();
+  const trialEndsAt = new Date(Date.now() + trialDays * 24 * 60 * 60 * 1000).toISOString();
   const { error } = await supabase.from("business_subscriptions").insert({
     business_id: businessId,
     plan_id: plan.id,
@@ -135,17 +136,18 @@ async function ensureSubscriptionRow(businessId: string): Promise<SubscriptionRo
 
 /**
  * La fonction SQL register_business() crée l'essai avec sa propre durée
- * (7 jours historiquement) : on le porte ici à TRIAL_DURATION_DAYS juste
- * après l'inscription. Ne raccourcit jamais un essai déjà plus long.
+ * (7 jours historiquement) : on la remplace ici par la durée réglée dans la
+ * console admin, juste après l'inscription et avant le parrainage (qui peut
+ * ensuite l'allonger à REFERRAL_TRIAL_DAYS).
  */
 export async function applyStandardTrial(businessId: string): Promise<void> {
-  const trialEndsAt = new Date(Date.now() + TRIAL_DURATION_DAYS * 24 * 60 * 60 * 1000).toISOString();
+  const trialDays = await getTrialDays();
+  const trialEndsAt = new Date(Date.now() + trialDays * 24 * 60 * 60 * 1000).toISOString();
   const { error } = await supabase
     .from("business_subscriptions")
     .update({ trial_ends_at: trialEndsAt })
     .eq("business_id", businessId)
-    .eq("status", "TRIAL")
-    .lt("trial_ends_at", trialEndsAt);
+    .eq("status", "TRIAL");
   if (error) console.error("[applyStandardTrial] Échec de l'allongement de l'essai :", error.message);
 }
 

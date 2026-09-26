@@ -7,6 +7,7 @@ import { requireSuperAdmin } from "@/lib/superadmin-auth";
 import { logAdminAction } from "@/lib/admin-audit";
 import { activateInvoicePayment } from "@/lib/subscription-fulfillment";
 import { FEATURE_CATALOG } from "@/lib/subscription";
+import { MAX_TRIAL_DAYS } from "@/lib/platform-config";
 
 export type ActionState = { error?: string; success?: string } | undefined;
 
@@ -70,6 +71,38 @@ export async function cancelInvoiceAction(invoiceId: string) {
 }
 
 /** Prolonge manuellement l'essai gratuit d'un commerce (support client). */
+export async function updateTrialDaysAction(_prevState: ActionState, formData: FormData): Promise<ActionState> {
+  const admin = await requireSuperAdmin();
+  const days = Number(formData.get("trialDays"));
+  if (!Number.isInteger(days) || days < 1 || days > MAX_TRIAL_DAYS) {
+    return { error: `Indiquez un nombre de jours entre 1 et ${MAX_TRIAL_DAYS}` };
+  }
+
+  const { error } = await supabase
+    .from("platform_config")
+    .update({ trial_days: days, updated_at: new Date().toISOString() })
+    .eq("id", 1);
+  if (error) {
+    console.error("[updateTrialDaysAction] Échec de l'enregistrement :", error.message);
+    return { error: "Impossible d'enregistrer : la migration de la base n'est peut-être pas encore appliquée" };
+  }
+
+  await logAdminAction({
+    superAdminId: admin.id,
+    actorName: admin.name,
+    action: "UPDATE",
+    entity: "PlatformConfig",
+    details: `Durée de l'essai gratuit : ${days} jour(s)`,
+  });
+
+  revalidatePath("/admin/abonnements");
+  revalidatePath("/tarifs");
+  revalidatePath("/cgu");
+  revalidatePath("/en/cgu");
+  revalidatePath("/fonctionnalites/[slug]", "page");
+  return { success: `Les nouveaux commerces auront ${days} jour(s) d'essai gratuit` };
+}
+
 export async function extendTrialAction(businessId: string, days: number) {
   const admin = await requireSuperAdmin();
   const { data: sub } = await supabase

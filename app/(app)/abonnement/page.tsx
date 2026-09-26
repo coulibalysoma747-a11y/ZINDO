@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Award, Gift, ShieldAlert, RefreshCw, FileText } from "lucide-react";
 import { requireUserForBilling } from "@/lib/auth";
 import { getSubscriptionState } from "@/lib/subscription";
+import { getTrialDays } from "@/lib/platform-config";
 import { supabase } from "@/lib/supabase";
 import { formatMoney, formatLongDate } from "@/lib/format";
 import { Card, CardBody, CardHeader } from "@/components/ui/Card";
@@ -27,6 +28,7 @@ type InvoiceRow = {
 };
 
 export default async function SubscriptionPage() {
+  const trialDays = await getTrialDays();
   const user = await requireUserForBilling();
   const currency = user.business.currency;
 
@@ -96,7 +98,7 @@ export default async function SubscriptionPage() {
                   {state.status === "ACTIVE"
                     ? `${formatMoney(state.billingCycle === "ANNUAL" ? ANNUAL_PRICE : MONTHLY_PRICE, currency)} / ${state.billingCycle === "ANNUAL" ? "an" : "mois"}`
                     : state.status === "TRIAL"
-                      ? "0 FCFA pendant 14 jours"
+                      ? `0 FCFA pendant ${trialDays} jours`
                       : "Accès bloqué jusqu'au paiement"}
                 </p>
               </div>

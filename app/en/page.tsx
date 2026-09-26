@@ -1,3 +1,4 @@
+import { getTrialDays } from "@/lib/platform-config";
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import Link from "next/link";
@@ -113,7 +114,7 @@ const FAQS = [
   {
     question: "How much does ZINDO cost?",
     answer:
-      "ZINDO offers a 14-day free trial, no commitment. Afterwards, the subscription costs 10,000 FCFA per month, or 100,000 FCFA per year (a 20,000 FCFA saving compared to paying monthly).",
+      "ZINDO offers a {trialDays}-day free trial, no commitment. Afterwards, the subscription costs 10,000 FCFA per month, or 100,000 FCFA per year (a 20,000 FCFA saving compared to paying monthly).",
   },
   {
     question: "Can I use ZINDO without an internet connection?",
@@ -182,13 +183,14 @@ const STRUCTURED_DATA = [
 ];
 
 export default async function EnglishRootPage() {
+  const trialDays = await getTrialDays();
   const user = await getCurrentUser();
   if (user) redirect("/dashboard");
 
   return (
     <div className="theme-locked relative overflow-x-hidden bg-zindo-cream">
       {/* eslint-disable-next-line react/no-danger */}
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(STRUCTURED_DATA) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(STRUCTURED_DATA).replaceAll("{trialDays}", String(trialDays)) }} />
       <div aria-hidden className="pointer-events-none fixed inset-0 overflow-hidden">
         <div className="absolute -right-24 -top-24 h-96 w-96 rounded-full bg-zindo-green-100/70 blur-3xl" />
         <div className="absolute top-1/3 -left-16 h-72 w-72 rounded-full bg-zindo-gold-100/60 blur-3xl" />
@@ -240,7 +242,7 @@ export default async function EnglishRootPage() {
               href="/en/inscription"
               className="flex w-full items-center justify-center gap-2 rounded-2xl bg-zindo-green-500 px-6 py-3.5 text-base font-bold text-white shadow-lg shadow-zindo-green-500/30 transition hover:-translate-y-0.5 hover:bg-zindo-green-600 sm:w-auto"
             >
-              Start your 14-day free trial <ArrowRight className="h-4 w-4" />
+              Start your {trialDays}-day free trial <ArrowRight className="h-4 w-4" />
             </Link>
             <Link
               href="/en/login"
@@ -336,7 +338,7 @@ export default async function EnglishRootPage() {
                   {faq.question}
                   <span className="shrink-0 text-zindo-green-600 transition group-open:rotate-45">+</span>
                 </summary>
-                <p className="mt-2 text-sm leading-relaxed text-zinc-500">{faq.answer}</p>
+                <p className="mt-2 text-sm leading-relaxed text-zinc-500">{faq.answer.replaceAll("{trialDays}", String(trialDays))}</p>
               </details>
             ))}
           </div>

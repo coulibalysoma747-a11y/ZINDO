@@ -11,6 +11,8 @@ import { EmptyState } from "@/components/ui/Empty";
 import { InvoiceActions } from "./InvoiceActions";
 import { BusinessPlanSelect } from "./BusinessPlanSelect";
 import { ExtendTrialButton } from "./ExtendTrialButton";
+import { TrialDaysForm } from "./TrialDaysForm";
+import { getTrialDays, MAX_TRIAL_DAYS } from "@/lib/platform-config";
 
 const CYCLE_LABELS = { MONTHLY: "Mensuel", ANNUAL: "Annuel" } as const;
 const INVOICE_STATUS_TONE = { EN_ATTENTE: "amber", PAYEE: "emerald", ANNULEE: "zinc" } as const;
@@ -44,6 +46,7 @@ type InvoiceRow = {
 };
 
 export default async function AdminSubscriptionsPage() {
+  const trialDays = await getTrialDays();
   await requireSuperAdmin();
 
   const monthStart = new Date();
@@ -123,7 +126,7 @@ export default async function AdminSubscriptionsPage() {
         <div>
           <h1 className="text-xl font-bold text-zinc-900">Abonnements &amp; revenus</h1>
           <p className="max-w-2xl text-sm text-zinc-500">
-            Chaque commerce démarre avec 14 jours d&apos;essai gratuit, puis doit régler son abonnement (7 500
+            Chaque commerce démarre avec {trialDays} jours d&apos;essai gratuit, puis doit régler son abonnement (7 500
             FCFA/mois ou 75 000 FCFA/an) pour continuer à utiliser ZINDO — l&apos;accès est bloqué automatiquement
             à l&apos;expiration de l&apos;essai ou de la période payée.
           </p>
@@ -132,6 +135,12 @@ export default async function AdminSubscriptionsPage() {
           <Settings2 className="h-4 w-4" /> Gérer les paliers
         </ButtonLink>
       </div>
+
+      <Card>
+        <CardBody>
+          <TrialDaysForm trialDays={trialDays} maxDays={MAX_TRIAL_DAYS} />
+        </CardBody>
+      </Card>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {stats.map((s) => (

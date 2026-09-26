@@ -1,3 +1,4 @@
+import { getTrialDays } from "@/lib/platform-config";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -9,6 +10,10 @@ const BASE_URL = "https://www.zindo.site";
 
 // Seules les pages déclarées dans lib/seo-pages.ts existent — toute autre URL
 // renvoie une 404 plutôt qu'une page vide indexable.
+// Durée de l'essai réglable depuis la console admin (qui revalide aussi
+// cette page à l'enregistrement) : relecture au plus toutes les heures.
+export const revalidate = 3600;
+
 export const dynamicParams = false;
 
 export function generateStaticParams() {
@@ -29,6 +34,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 }
 
 export default async function SeoFeaturePage({ params }: { params: Promise<{ slug: string }> }) {
+  const trialDays = await getTrialDays();
   const { slug } = await params;
   const page = getSeoPage(slug);
   if (!page) notFound();
@@ -74,7 +80,7 @@ export default async function SeoFeaturePage({ params }: { params: Promise<{ slu
           href="/inscription"
           className="mt-6 inline-flex items-center gap-2 rounded-2xl bg-zindo-green-500 px-6 py-3 text-base font-bold text-white shadow-lg shadow-zindo-green-500/30 transition hover:bg-zindo-green-600"
         >
-          Essai gratuit de 14 jours <ArrowRight className="h-4 w-4" />
+          Essai gratuit de {trialDays} jours <ArrowRight className="h-4 w-4" />
         </Link>
       </header>
 

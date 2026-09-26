@@ -1,7 +1,12 @@
+import { getTrialDays } from "@/lib/platform-config";
 import Link from "next/link";
 import { Check, Gift, Calendar, CreditCard, ShieldCheck, Lock, Headphones, RefreshCw, ArrowRight } from "lucide-react";
 import { ZindoLogo } from "@/components/auth/ZindoLogo";
 import { GoogleIcon } from "@/components/icons/GoogleIcon";
+
+// Durée de l'essai réglable depuis la console admin (qui revalide aussi
+// cette page à l'enregistrement) : relecture au plus toutes les heures.
+export const revalidate = 3600;
 
 const PLANS = [
   {
@@ -10,7 +15,7 @@ const PLANS = [
     badgeClass: "bg-zindo-green-500/15 text-zindo-green-400",
     icon: Gift,
     title: "Essai gratuit",
-    price: "14 jours",
+    price: "",
     priceSuffix: null,
     features: ["Accès complet", "Aucune carte requise", "Support inclus"],
     cta: "Commencer l'essai gratuit",
@@ -52,7 +57,8 @@ const TRUST_BADGES = [
   { icon: RefreshCw, title: "Mises à jour incluses", text: "Toujours la meilleure version" },
 ];
 
-export default function TarifsPage() {
+export default async function TarifsPage() {
+  const trialDays = await getTrialDays();
   return (
     <div className="theme-locked min-h-screen bg-zindo-ink-900">
       <div aria-hidden className="zindo-flag-stripe h-1 w-full" />
@@ -115,7 +121,7 @@ export default function TarifsPage() {
                 </span>
               )}
               <p className={`font-bold text-white ${plan.highlighted ? "mt-6" : "mt-3"}`}>{plan.title}</p>
-              <p className="mt-2 text-3xl font-extrabold text-white">{plan.price}</p>
+              <p className="mt-2 text-3xl font-extrabold text-white">{plan.key === "trial" ? `${trialDays} jours` : plan.price}</p>
               {plan.priceSuffix && <p className="text-sm font-medium text-slate-400">{plan.priceSuffix}</p>}
 
               <ul className="mt-5 space-y-2.5">

@@ -1,4 +1,5 @@
 /* eslint-disable @next/next/no-img-element -- QR code en data URL. */
+import { getTrialDays } from "@/lib/platform-config";
 import { notFound } from "next/navigation";
 import { Gift, Users, CheckCircle2, Crown } from "lucide-react";
 import { requirePermission } from "@/lib/auth";
@@ -32,6 +33,7 @@ type ReferralRow = {
 const ACTIVE_SALES_THRESHOLD = 10;
 
 export default async function ReferralPage() {
+  const trialDays = await getTrialDays();
   const user = await requirePermission(PERMISSIONS.SETTINGS_MANAGE);
   if (!(await isReferralModuleEnabled(user.businessId))) notFound();
 
@@ -69,7 +71,7 @@ export default async function ReferralPage() {
           <h1 className="text-xl font-bold text-zinc-900 dark:text-slate-100">Parrainage</h1>
           <p className="text-sm text-zinc-500">
             Invitez d&apos;autres commerçants : {REFERRAL_REWARD_MONTHS} mois de Pro offert pour vous dès que votre filleul paie son
-            premier abonnement. Lui profite de {REFERRAL_TRIAL_DAYS} jours d&apos;essai au lieu de 14.
+            premier abonnement. Lui profite de {REFERRAL_TRIAL_DAYS} jours d&apos;essai au lieu de {trialDays}.
           </p>
         </div>
       </div>

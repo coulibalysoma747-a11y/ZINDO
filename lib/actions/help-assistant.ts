@@ -1,5 +1,6 @@
 "use server";
 
+import { getTrialDays } from "@/lib/platform-config";
 import crypto from "crypto";
 import { headers } from "next/headers";
 import { requireUser } from "@/lib/auth";
@@ -37,9 +38,9 @@ function buildKnowledgeBase(): string {
   return `${modules}\n\n${EXTRA_KNOWLEDGE}`;
 }
 
-function buildSystemPrompt(publicVisitor: boolean): string {
+function buildSystemPrompt(publicVisitor: boolean, trialDays: number): string {
   const audienceNote = publicVisitor
-    ? "Tu réponds ici à un visiteur du site public qui n'a pas forcément encore de compte — reste accueillant, et si sa question montre qu'il n'est pas encore inscrit, tu peux mentionner l'essai gratuit de 14 jours."
+    ? `Tu réponds ici à un visiteur du site public qui n'a pas forcément encore de compte — reste accueillant, et si sa question montre qu'il n'est pas encore inscrit, tu peux mentionner l'essai gratuit de ${trialDays} jours.`
     : "Tu réponds ici à un utilisateur déjà connecté à son compte ZINDO.";
 
   return `Tu es l'assistant d'aide de ZINDO, une application de gestion de stock et de ventes pour les commerces d'Afrique de l'Ouest.
@@ -73,7 +74,7 @@ async function runHelpAssistant(history: ChatMessage[], question: string, public
   const boundedHistory = history.slice(-8);
 
   const messages: DeepSeekMessage[] = [
-    { role: "system", content: buildSystemPrompt(publicVisitor) },
+    { role: "system", content: buildSystemPrompt(publicVisitor, await getTrialDays()) },
     ...boundedHistory.map((m): DeepSeekMessage => ({ role: m.role, content: m.content })),
     { role: "user", content: question },
   ];
