@@ -10,6 +10,7 @@ import { LocationSwitcher } from "./LocationSwitcher";
 import { InstallAppButton } from "@/components/InstallAppButton";
 import { clearOfflineCopies } from "./OfflineShell";
 import { ZindoLogo } from "@/components/auth/ZindoLogo";
+import { GlobalSearch } from "./GlobalSearch";
 import type { NavItem } from "@/lib/nav";
 
 type LocationOption = { id: string; name: string; type: "BOUTIQUE" | "DEPOT" };
@@ -21,6 +22,7 @@ export function Topbar({
   businessName,
   locations,
   currentLocationId,
+  globalSearchCurrency,
 }: {
   userName: string;
   role: string;
@@ -28,6 +30,8 @@ export function Topbar({
   businessName: string;
   locations: LocationOption[];
   currentLocationId: string;
+  /** Devise des montants affichés dans la recherche globale ; null quand le flag « recherche_globale » est désactivé. */
+  globalSearchCurrency: string | null;
 }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
@@ -56,6 +60,7 @@ export function Topbar({
           <LocationSwitcher locations={locations} currentLocationId={currentLocationId} />
         </div>
         <div className="flex items-center gap-2">
+          {globalSearchCurrency && <GlobalSearch currency={globalSearchCurrency} />}
           <InstallAppButton
             iconOnly
             className="flex items-center gap-1.5 rounded-lg border border-zinc-200 bg-white px-2.5 py-1.5 text-xs font-medium text-zinc-600 hover:bg-zinc-50 hover:text-zinc-900 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 sm:px-3"
