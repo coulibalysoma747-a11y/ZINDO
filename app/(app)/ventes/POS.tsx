@@ -135,6 +135,7 @@ export function POS({
   manualSaleNumberEnabled = false,
   suggestedManualNumber = null,
   quickCashNotes = false,
+  singlePanel = false,
   initialProducts,
 }: {
   mode?: "pos" | "facture";
@@ -161,6 +162,8 @@ export function POS({
   suggestedManualNumber?: string | null;
   /** Boutons de billets sous le montant reçu (flag billets_rapides) — voir QuickCashNotes. */
   quickCashNotes?: boolean;
+  /** Caisse en une colonne (flag caisse_une_colonne) — voir lib/pos-single-panel.ts. */
+  singlePanel?: boolean;
   /** Produits dont la lecture a démarré côté serveur, dès le rendu de la page (voir POSPageContent). */
   initialProducts?: Promise<PosProduct[]>;
 }) {
@@ -277,6 +280,28 @@ export function POS({
   const [aiCartOpen, setAiCartOpen] = useState(false);
   const [sendingToQueue, setSendingToQueue] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Caisse en une colonne : hauteur calée sur l'écran (du haut du panneau au
+  // bas de la fenêtre), pour que « Valider » soit toujours visible.
+  const singlePanelRef = useRef<HTMLDivElement>(null);
+  const [singlePanelMaxH, setSinglePanelMaxH] = useState<number | null>(null);
+  useEffect(() => {
+    if (!singlePanel) return;
+    const measure = () => {
+      const el = singlePanelRef.current;
+      if (!el || window.innerWidth < 768) return setSinglePanelMaxH(null);
+      const top = Math.max(16, el.getBoundingClientRect().top);
+      setSinglePanelMaxH(Math.max(360, window.innerHeight - top - 16));
+    };
+    const raf = requestAnimationFrame(measure);
+    window.addEventListener("resize", measure);
+    window.addEventListener("scroll", measure, true);
+    return () => {
+      cancelAnimationFrame(raf);
+      window.removeEventListener("resize", measure);
+      window.removeEventListener("scroll", measure, true);
+    };
+  }, [singlePanel]);
   const [pending, startTransition] = useTransition();
   const [receiptDoc, setReceiptDoc] = useState<Extract<SaleDocument, { success: true }> | null>(null);
   /** clientRef de la vente dont le ticket définitif est attendu du serveur (voir handleSubmit). */
@@ -927,7 +952,14 @@ export function POS({
           </span>
         )}
       </CardHeader>
-      <CardBody className="p-0">
+      <CardBody className="p-0">{renderCartLines(compact)}</CardBody>
+    </Card>
+  );
+
+  // listClass : hauteur de la liste en version carte (compact) — la caisse en
+  // une colonne la laisse occuper toute la place restante.
+  const renderCartLines = (compact: boolean, listClass = "max-h-[40vh]", dense = false) => (
+      <>
         {cart.length === 0 ? (
           <p className="p-4 text-center text-sm text-zinc-500">Le panier est vide.</p>
         ) : (
@@ -1056,11 +1088,109 @@ export function POS({
             <ul
               className={
                 compact
-                  ? "max-h-[40vh] divide-y divide-zinc-100 overflow-y-auto dark:divide-slate-800"
+                  ? `${listClass} divide-y divide-zinc-100 overflow-y-auto dark:divide-slate-800`
                   : "divide-y divide-zinc-100 sm:hidden dark:divide-slate-800"
               }
             >
-              {cart.map((line) => (
+              {cart.map((line) => dense ? (
+                // Ligne resserrée (caisse en une colonne) : deux rangées au lieu de trois.
+                <li key={lineKey(line)} className="space-y-1.5 px-3 py-2">
+                  <div className="flex items-center gap-2">
+                    <p className="min-w-0 flex-1 truncate text-sm font-medium text-zinc-900" title={line.product.name}>
+                      {line.product.name}
+                      {line.packagingLabel && (
+                        <span className="ml-1.5 rounded-md bg-zindo-green-50 px-1.5 py-0.5 text-[10px] font-semibold text-zindo-green-700 dark:bg-emerald-500/10 dark:text-emerald-400">
+                          {line.packagingLabel}
+                        </span>
+                      )}
+                      {line.chassisNumber && (
+                        <span className="ml-1.5 font-mono text-xs text-zinc-500">{line.chassisNumber}</span>
+                      )}
+                    </p>
+                    <span className="shrink-0 text-sm font-semibold tabular-nums text-zindo-green-700 dark:text-emerald-400">
+                      {formatMoney(line.unitPrice * line.quantity - line.discount, currency)}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => removeLine(lineKey(line))}
+                      aria-label={`Retirer ${line.product.name} du panier`}
+                      className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-red-500 transition-colors hover:bg-red-50 dark:hover:bg-red-500/10"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    {line.vehicleUnitId ? (
+                      <span className="text-xs text-zinc-500">1 {line.product.unit}</span>
+                    ) : (
+                      <>
+                        {quantityInputMode !== "input" && (
+                          <button
+                            type="button"
+                            aria-label="Diminuer la quantité"
+                            onClick={() => setLineQuantity(lineKey(line), Math.max(1, line.quantity - 1))}
+                            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-zinc-300 text-zinc-600 hover:bg-zinc-100 active:scale-95 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+                          >
+                            <Minus className="h-3.5 w-3.5" />
+                          </button>
+                        )}
+                        {quantityInputMode !== "buttons" ? (
+                          <input
+                            type="number"
+                            min={1}
+                            max={lineMaxQty(line)}
+                            aria-label="Quantité"
+                            value={line.quantity}
+                            onChange={(e) =>
+                              setLineQuantity(
+                                lineKey(line),
+                                Math.min(lineMaxQty(line), Math.max(1, Number(e.target.value) || 1))
+                              )
+                            }
+                            onFocus={revealAboveKeyboard}
+                            className="h-8 w-12 rounded-lg border border-zinc-300 text-center text-sm tabular-nums dark:border-slate-700 dark:bg-slate-900"
+                          />
+                        ) : (
+                          <span className="w-6 text-center text-sm tabular-nums text-zinc-700">{line.quantity}</span>
+                        )}
+                        {quantityInputMode !== "input" && (
+                          <button
+                            type="button"
+                            aria-label="Augmenter la quantité"
+                            onClick={() => setLineQuantity(lineKey(line), Math.min(lineMaxQty(line), line.quantity + 1))}
+                            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-zinc-300 text-zinc-600 hover:bg-zinc-100 active:scale-95 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+                          >
+                            <Plus className="h-3.5 w-3.5" />
+                          </button>
+                        )}
+                      </>
+                    )}
+                    <label className="ml-auto flex items-center gap-1 text-xs text-zinc-500">
+                      P.U.
+                      <input
+                        type="number"
+                        min={0}
+                        inputMode="decimal"
+                        value={line.unitPrice || ""}
+                        onChange={(e) => updateLine(lineKey(line), { unitPrice: Number(e.target.value) || 0 })}
+                        onFocus={revealAboveKeyboard}
+                        className="h-8 w-20 rounded-lg border border-zinc-300 px-2 text-right text-sm tabular-nums text-zinc-900 dark:border-slate-700 dark:bg-slate-900"
+                      />
+                    </label>
+                    <input
+                      type="number"
+                      min={0}
+                      inputMode="decimal"
+                      aria-label="Remise sur la ligne"
+                      placeholder="Remise"
+                      value={line.discount || ""}
+                      onChange={(e) => updateLine(lineKey(line), { discount: Number(e.target.value) || 0 })}
+                      onFocus={revealAboveKeyboard}
+                      className="h-8 w-16 rounded-lg border border-zinc-300 px-2 text-right text-sm tabular-nums dark:border-slate-700 dark:bg-slate-900"
+                    />
+                  </div>
+                </li>
+              ) : (
                 <li key={lineKey(line)} className="space-y-3 p-3">
                   <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0">
@@ -1170,8 +1300,230 @@ export function POS({
             </ul>
           </>
         )}
-      </CardBody>
+      </>
+  );
+
+  function cancelSale() {
+    if (cart.length > 0 && !window.confirm("Vider le panier et annuler cette vente ?")) return;
+    setCart([]);
+    setCustomerId("");
+    setDiscount(0);
+    setAmountPaidInput(""); setCashPortionInput(""); setMobilePortionInput("");
+    setManualNumberInput("");
+    setError(null);
+  }
+
+  // Libellés courts pour tenir sur une seule rangée de boutons.
+  const SHORT_PAYMENT_LABELS: Partial<Record<PaymentMethod, string>> = {
+    MOBILE_MONEY: "Mobile",
+    CARTE: "Carte",
+  };
+  const methodChoices: { value: PaymentMethod; label: string }[] = [
+    ...paymentMethods.map((m) => ({
+      value: m.method,
+      label: !m.label || m.label === PAYMENT_LABELS[m.method] ? SHORT_PAYMENT_LABELS[m.method] ?? PAYMENT_LABELS[m.method] : m.label,
+    })),
+    ...(allowMixedPayment ? [{ value: "MIXTE" as PaymentMethod, label: "Mixte" }] : []),
+  ];
+
+  // Caisse en une colonne : panier qui défile, puis tout le paiement en
+  // dessous, toujours visible sans faire défiler la page.
+  const renderSinglePanel = () => (
+    <div
+      ref={singlePanelRef}
+      style={singlePanelMaxH ? { maxHeight: singlePanelMaxH } : undefined}
+      className="flex flex-col md:sticky md:top-4 md:self-start"
+    >
+    <Card className="flex min-h-0 flex-1 flex-col overflow-hidden">
+      <div className="flex shrink-0 items-center justify-between border-b border-zinc-200 px-4 py-2.5 dark:border-slate-800">
+        <h2 className="font-semibold tracking-tight text-zinc-900">
+          Panier{cart.length > 0 && ` · ${cart.length} article${cart.length > 1 ? "s" : ""}`}
+        </h2>
+      </div>
+
+      <div className="flex min-h-0 flex-1 flex-col">
+        {renderCartLines(true, "max-h-[40vh] md:max-h-none md:min-h-0 md:flex-1", true)}
+      </div>
+
+      <div className="shrink-0 space-y-2.5 border-t border-zinc-200 p-3 dark:border-slate-800">
+        <div className="space-y-0.5 text-sm">
+          {subtotal !== total && (
+            <div className="flex justify-between text-zinc-600">
+              <span>Sous-total</span>
+              <span className="tabular-nums">{formatMoney(subtotal, currency)}</span>
+            </div>
+          )}
+          <div className="flex items-baseline justify-between">
+            <span className="font-semibold uppercase text-zinc-900">Total</span>
+            <span className="text-2xl font-bold tracking-tight tabular-nums text-zindo-green-700 dark:text-emerald-400">
+              {formatMoney(total, currency)}
+            </span>
+          </div>
+          {canSeeMargin && cart.length > 0 && (
+            <div className={`flex justify-between text-xs font-medium ${cartMargin < 0 ? "text-red-600" : "text-emerald-700"}`}>
+              <span>Marge estimée</span>
+              <span className="tabular-nums">{formatMoney(cartMargin, currency)}</span>
+            </div>
+          )}
+          {!queueOnlyMode && change > 0 && (
+            <div className="flex justify-between font-medium text-emerald-600">
+              <span>Monnaie à rendre</span>
+              <span className="tabular-nums">{formatMoney(change, currency)}</span>
+            </div>
+          )}
+          {!queueOnlyMode && remaining > 0 && cart.length > 0 && (
+            <div className="flex justify-between font-medium text-red-600">
+              <span>Reste à payer (crédit)</span>
+              <span className="tabular-nums">{formatMoney(remaining, currency)}</span>
+            </div>
+          )}
+        </div>
+
+        {!queueOnlyMode && (
+          <div className="flex gap-1.5" role="radiogroup" aria-label="Moyen de paiement">
+            {methodChoices.map((m) => (
+              <button
+                key={m.value}
+                type="button"
+                role="radio"
+                aria-checked={paymentMethod === m.value}
+                onClick={() => setPaymentMethod(m.value)}
+                title={m.label}
+                className={`min-w-0 flex-1 truncate rounded-lg px-1.5 py-1.5 text-[11px] font-semibold uppercase transition-colors ${
+                  paymentMethod === m.value
+                    ? "bg-zindo-green-600 text-white shadow-sm"
+                    : "border border-zinc-300 text-zinc-700 hover:bg-zinc-100 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
+                }`}
+              >
+                {m.label}
+              </button>
+            ))}
+          </div>
+        )}
+
+        {!queueOnlyMode && paymentMethod === "MOBILE_MONEY" && mobileMoneyOperators.length > 1 && (
+          <Select
+            aria-label="Opérateur mobile money"
+            value={mobileMoneyOperator}
+            onChange={(e) => setMobileMoneyOperator(e.target.value as "ORANGE" | "MOOV" | "WAVE")}
+            className="h-9"
+          >
+            {mobileMoneyOperators.map((op) => (
+              <option key={op} value={op}>
+                {MOBILE_MONEY_OPERATOR_LABELS[op]}
+              </option>
+            ))}
+          </Select>
+        )}
+
+        {(!hideCustomerInPos || isCreditOnly) && (
+          <div className="flex gap-2">
+            <Select
+              value={customerId}
+              onChange={(e) => setCustomerId(e.target.value)}
+              className="h-9 flex-1"
+              aria-label="Client"
+            >
+              <option value="">Client de passage</option>
+              {customers.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.name} {c.phone ? `(${c.phone})` : ""}
+                </option>
+              ))}
+            </Select>
+            <Button type="button" variant="outline" className="h-9" onClick={() => setNewClientOpen(true)} aria-label="Ajouter un client">
+              <UserPlus className="h-4 w-4" />
+            </Button>
+          </div>
+        )}
+
+        {manualSaleNumberEnabled && !queueOnlyMode && (
+          <div className="flex gap-2">
+            <Input
+              aria-label="N° de ticket (facultatif)"
+              value={manualNumberInput}
+              onChange={(e) => setManualNumberInput(e.target.value)}
+              placeholder="N° de ticket : automatique"
+              maxLength={40}
+              className="h-9 flex-1"
+            />
+            {nextManualNumber && manualNumberInput.trim() !== nextManualNumber && (
+              <Button type="button" variant="outline" className="h-9" onClick={() => setManualNumberInput(nextManualNumber)}>
+                {nextManualNumber}
+              </Button>
+            )}
+          </div>
+        )}
+
+        {isMixed && !queueOnlyMode ? (
+          <div className="grid grid-cols-3 gap-2">
+            <label className="block">
+              <span className="mb-1 block text-xs font-semibold text-zinc-600">Remise</span>
+              <Input type="number" min={0} value={discount} onChange={(e) => setDiscount(Number(e.target.value) || 0)} className="h-9" />
+            </label>
+            <label className="block">
+              <span className="mb-1 block text-xs font-semibold text-zinc-600">Espèces</span>
+              <Input type="number" min={0} value={cashPortionInput} onChange={(e) => setCashPortionInput(e.target.value)} className="h-9" />
+            </label>
+            <label className="block">
+              <span className="mb-1 block text-xs font-semibold text-zinc-600">Mobile money</span>
+              <Input type="number" min={0} value={mobilePortionInput} onChange={(e) => setMobilePortionInput(e.target.value)} className="h-9" />
+            </label>
+          </div>
+        ) : (
+          <div className={`grid gap-2 ${queueOnlyMode ? "grid-cols-1" : "grid-cols-2"}`}>
+            <label className="block">
+              <span className="mb-1 block text-xs font-semibold text-zinc-600">Remise ({currency})</span>
+              <Input type="number" min={0} value={discount} onChange={(e) => setDiscount(Number(e.target.value) || 0)} className="h-9" />
+            </label>
+            {!queueOnlyMode && (
+              <label className="block">
+                <span className="mb-1 block text-xs font-semibold text-zinc-600">
+                  Montant reçu{isCreditOnly && " (0 = crédit total)"}
+                </span>
+                <Input
+                  type="number"
+                  min={0}
+                  value={amountPaidInput}
+                  onChange={(e) => setAmountPaidInput(e.target.value)}
+                  placeholder={formatMoney(total, currency)}
+                  className="h-9"
+                />
+              </label>
+            )}
+          </div>
+        )}
+
+        {showQuickCashNotes && (
+          <QuickCashNotes
+            total={total}
+            currency={currency}
+            amountPaidInput={amountPaidInput}
+            onAmountPaidChange={setAmountPaidInput}
+          />
+        )}
+
+        {error && (
+          <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700 dark:bg-red-500/10 dark:text-red-400">{error}</p>
+        )}
+
+        <div className="flex gap-2">
+          <Button type="button" variant="outline" className="h-11" onClick={cancelSale}>
+            Annuler
+          </Button>
+          {queueOnlyMode ? (
+            <Button className="h-11 flex-1 text-base" disabled={sendingToQueue} onClick={handleSendToQueue}>
+              {sendingToQueue ? "Envoi..." : "Envoyer à la caisse"}
+            </Button>
+          ) : (
+            <Button className="h-11 flex-1 text-base" disabled={pending} onClick={handleSubmit}>
+              {pending ? "Enregistrement..." : isFacture ? "Générer la facture" : "Valider"}
+            </Button>
+          )}
+        </div>
+      </div>
     </Card>
+    </div>
   );
 
   return (
@@ -1345,9 +1697,12 @@ export function POS({
           )}
         </div>
 
-        <div className="md:hidden">{renderCart(false)}</div>
+        {!singlePanel && <div className="md:hidden">{renderCart(false)}</div>}
       </div>
 
+      {singlePanel ? (
+        renderSinglePanel()
+      ) : (
       <div className="space-y-3 md:sticky md:top-4 md:self-start md:max-h-[calc(100vh-2rem)] md:overflow-y-auto">
         <div className="hidden md:block">{renderCart(true)}</div>
         {(!hideCustomerInPos || isCreditOnly) && (
@@ -1566,6 +1921,7 @@ export function POS({
           </CardBody>
         </Card>
       </div>
+      )}
 
       <ClientFormModal open={newClientOpen} onClose={() => setNewClientOpen(false)} />
 
