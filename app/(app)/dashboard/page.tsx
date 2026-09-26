@@ -127,7 +127,7 @@ export default async function DashboardPage({
       {(canSell || canViewStock) && (
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <h2 className="text-lg font-bold text-zinc-900">Vue d&apos;ensemble</h2>
+            <h2 className="text-lg font-semibold text-zinc-900">Vue d&apos;ensemble</h2>
             <p className="text-sm text-zinc-500">Chiffres de {currentLocation.name}</p>
           </div>
           <HistoryFilters paramName="periode" periods={DASHBOARD_PERIODS} defaultValue="aujourdhui" />
@@ -386,7 +386,7 @@ export default async function DashboardPage({
                         <span className="flex min-w-0 items-center gap-2.5 text-zinc-700">
                           <span
                             className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-lg text-[11px] font-bold tabular-nums ${
-                              i === 0 ? "bg-zindo-gold-100 text-zindo-gold-700" : "bg-zinc-100 text-zinc-500"
+                              i === 0 ? "bg-zindo-green-50 text-zindo-green-700" : "bg-zinc-100 text-zinc-500"
                             }`}
                           >
                             {i + 1}
@@ -420,7 +420,7 @@ export default async function DashboardPage({
                         <span className="flex min-w-0 items-center gap-2.5 text-zinc-700">
                           <span
                             className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-lg text-[11px] font-bold tabular-nums ${
-                              i === 0 ? "bg-zindo-gold-100 text-zindo-gold-700" : "bg-zinc-100 text-zinc-500"
+                              i === 0 ? "bg-zindo-green-50 text-zindo-green-700" : "bg-zinc-100 text-zinc-500"
                             }`}
                           >
                             {i + 1}

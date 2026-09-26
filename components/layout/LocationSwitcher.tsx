@@ -21,7 +21,7 @@ export function LocationSwitcher({
     const only = locations[0];
     if (!only) return null;
     return (
-      <div className="flex items-center gap-2 rounded-lg bg-zinc-50 px-3 py-1.5 text-sm text-zinc-600">
+      <div className="flex items-center gap-2 rounded-lg border border-zinc-200 px-3 py-1.5 text-sm font-medium text-zinc-700 dark:border-slate-700">
         {only.type === "DEPOT" ? <Warehouse className="h-4 w-4" /> : <Store className="h-4 w-4" />}
         {only.name}
       </div>
@@ -35,7 +35,7 @@ export function LocationSwitcher({
 
   return (
     <div className="flex items-center gap-2 rounded-lg border border-zinc-200 bg-white px-2 py-1 dark:border-slate-700 dark:bg-slate-900">
-      <Store className="h-4 w-4 shrink-0 text-zindo-green-600" />
+      <Store className="h-4 w-4 shrink-0 text-zinc-400" />
       <select
         value={currentLocationId}
         disabled={pending}
@@ -44,7 +44,7 @@ export function LocationSwitcher({
       >
         {locations.map((l) => (
           <option key={l.id} value={l.id}>
-            {l.type === "DEPOT" ? "🏭 " : "🏪 "}
+            {l.type === "DEPOT" ? "Dépôt · " : ""}
             {l.name}
           </option>
         ))}

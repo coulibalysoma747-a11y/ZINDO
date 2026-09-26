@@ -1403,14 +1403,14 @@ export function POS({
               </>
             )}
 
-            <div className="space-y-1.5 rounded-2xl border border-zindo-green-100 bg-zindo-green-50/60 p-3.5 text-sm dark:border-zindo-green-500/20 dark:bg-zindo-green-500/5">
+            <div className="space-y-1.5 rounded-lg border border-zinc-200 bg-zinc-50 p-3.5 text-sm dark:border-zindo-green-500/20 dark:bg-zindo-green-500/5">
               <div className="flex justify-between text-zinc-600">
                 <span>Sous-total</span>
                 <span className="tabular-nums">{formatMoney(subtotal, currency)}</span>
               </div>
-              <div className="flex items-baseline justify-between border-t border-dashed border-zindo-green-200 pt-2 dark:border-zindo-green-500/20">
+              <div className="flex items-baseline justify-between border-t border-zinc-200 pt-2 dark:border-slate-700">
                 <span className="font-semibold text-zinc-900">Total</span>
-                <span className="text-2xl font-extrabold tracking-tight tabular-nums text-zindo-green-800 dark:text-zindo-green-300">
+                <span className="text-2xl font-semibold tracking-tight tabular-nums text-zinc-900">
                   {formatMoney(total, currency)}
                 </span>
               </div>
@@ -1441,11 +1441,11 @@ export function POS({
             )}
 
             {queueOnlyMode ? (
-              <Button className="h-14 w-full text-base" size="lg" disabled={sendingToQueue} onClick={handleSendToQueue}>
+              <Button className="h-12 w-full text-base" size="lg" disabled={sendingToQueue} onClick={handleSendToQueue}>
                 {sendingToQueue ? "Envoi..." : "Envoyer à la caisse"}
               </Button>
             ) : (
-              <Button className="h-14 w-full text-base" size="lg" disabled={pending} onClick={handleSubmit}>
+              <Button className="h-12 w-full text-base" size="lg" disabled={pending} onClick={handleSubmit}>
                 {pending ? "Enregistrement..." : isFacture ? "Générer la facture" : "Valider la vente"}
               </Button>
             )}

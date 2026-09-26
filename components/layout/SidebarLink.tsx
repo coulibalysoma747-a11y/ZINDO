@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/cn";
 import type { NavItem } from "@/lib/nav";
-import { NAV_ICONS, ICON_BADGE_COLORS } from "./nav-icons";
+import { NAV_ICONS } from "./nav-icons";
 
 export function SidebarLink({ item }: { item: NavItem }) {
   const pathname = usePathname();
@@ -23,31 +23,23 @@ export function SidebarLink({ item }: { item: NavItem }) {
       href={href}
       aria-current={active ? "page" : undefined}
       className={cn(
-        "group relative flex items-center justify-between rounded-xl px-2.5 py-2 text-sm transition-colors duration-150",
+        "group flex items-center justify-between gap-2 rounded-lg px-2.5 py-[7px] text-[13.5px] transition-colors duration-100",
         active
           ? "bg-zindo-green-50 font-semibold text-zindo-green-800 dark:bg-zindo-green-500/10 dark:text-zindo-green-300"
-          : "font-medium text-zindo-ink-500 hover:bg-zinc-100/80 hover:text-zindo-ink-900 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-white"
+          : "font-medium text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-white"
       )}
     >
-      {active && <span className="absolute -left-3 top-1/2 h-5 w-1 -translate-y-1/2 rounded-r-full bg-zindo-green-500" />}
-      <div className="flex min-w-0 items-center gap-3">
-        <span
+      <div className="flex min-w-0 items-center gap-2.5">
+        <Icon
           className={cn(
-            "flex h-7 w-7 shrink-0 items-center justify-center rounded-lg shadow-sm transition-transform duration-200 group-hover:scale-105",
-            ICON_BADGE_COLORS[item.icon]
+            "h-[17px] w-[17px] shrink-0",
+            active ? "text-zindo-green-600 dark:text-zindo-green-400" : "text-zinc-400 group-hover:text-zinc-600 dark:text-slate-500"
           )}
-        >
-          <Icon className="h-4 w-4 text-white" />
-        </span>
+        />
         <span className="truncate">{item.label}</span>
       </div>
       {item.badge && (
-        <span
-          className={cn(
-            "ml-2 shrink-0 rounded-md px-1.5 py-0.5 text-[10px] font-bold",
-            active ? "bg-zindo-green-500 text-white" : "bg-zindo-gold-100 text-zindo-gold-700 dark:bg-zindo-gold-500/15 dark:text-zindo-gold-300"
-          )}
-        >
+        <span className="shrink-0 rounded border border-zinc-200 px-1 text-[10px] font-semibold text-zinc-500 dark:border-slate-700 dark:text-slate-400">
           {item.badge}
         </span>
       )}

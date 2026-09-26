@@ -190,3 +190,47 @@ export const NAV_ICONS: Record<NavItem["icon"], React.ComponentType<{ className?
   appointments: CalendarCheck2,
   services: Sparkles,
 };
+
+// Sections du menu (menu latéral et menu mobile) : un menu de 20 à 30
+// entrées se lit bien mieux découpé en quelques rubriques qu'en une seule
+// longue liste. L'ordre des entrées à l'intérieur d'une rubrique reste
+// celui de lib/nav.ts.
+const NAV_SECTIONS: { title: string | null; icons: NavItem["icon"][] }[] = [
+  { title: null, icons: ["dashboard", "notifications", "assistant"] },
+  {
+    title: "Ventes",
+    icons: [
+      "sales", "cashier", "vehicle-sales", "vehicle-registration", "invoices", "quotes", "rentals",
+      "history", "cash-sessions", "tables", "repairs", "custom-orders", "warranty", "appointments",
+      "services", "shipments",
+    ],
+  },
+  {
+    title: "Consultations",
+    icons: ["consultations", "medical-stats", "medical-acts", "diagnostics", "posologies"],
+  },
+  {
+    title: "Catalogue et stock",
+    icons: [
+      "products", "cost-price", "product-photos", "categories", "brands", "stock", "restock", "expiry",
+      "transfers", "quick-supply", "pickups", "inventory",
+    ],
+  },
+  { title: "Achats", icons: ["purchases", "purchase-orders", "suppliers", "expenses"] },
+  { title: "Clients", icons: ["customers", "credits", "credit-reminders"] },
+  { title: "Suivi", icons: ["reports", "history-global"] },
+  { title: "Administration", icons: ["locations", "online-store", "users", "referral", "subscription"] },
+];
+
+export function groupNavItems(items: NavItem[]): { title: string | null; items: NavItem[] }[] {
+  const placed = new Set<NavItem>();
+  const groups = NAV_SECTIONS.map((section) => {
+    const sectionItems = items.filter((item) => !placed.has(item) && section.icons.includes(item.icon));
+    sectionItems.forEach((item) => placed.add(item));
+    return { title: section.title, items: sectionItems };
+  });
+  // Toute entrée non classée (nouveau module) reste visible, en fin de menu.
+  const rest = items.filter((item) => !placed.has(item));
+  if (rest.length > 0) groups.push({ title: "Autres", items: rest });
+  return groups.filter((g) => g.items.length > 0);
+}

@@ -2,7 +2,7 @@ import { cn } from "@/lib/cn";
 import type { InputHTMLAttributes, LabelHTMLAttributes, SelectHTMLAttributes, TextareaHTMLAttributes } from "react";
 
 const FIELD_BASE =
-  "w-full rounded-xl border border-zinc-200 bg-white text-sm text-zinc-900 shadow-[0_1px_2px_rgb(16_24_20/0.04)] outline-none transition-[border-color,box-shadow] duration-150 placeholder:text-zinc-400 hover:border-zinc-300 focus:border-zindo-green-500 focus:ring-4 focus:ring-zindo-green-500/15 disabled:cursor-not-allowed disabled:bg-zinc-50 disabled:text-zinc-400 disabled:hover:border-zinc-200 dark:border-slate-700 dark:bg-slate-900 dark:hover:border-slate-600 dark:focus:ring-zindo-green-700/30 dark:disabled:bg-slate-800/60";
+  "w-full rounded-lg border border-zinc-200 bg-white text-sm text-zinc-900 shadow-[0_1px_2px_rgb(16_24_20/0.04)] outline-none transition-[border-color,box-shadow] duration-150 placeholder:text-zinc-400 hover:border-zinc-300 focus:border-zindo-green-500 focus:ring-4 focus:ring-zindo-green-500/15 disabled:cursor-not-allowed disabled:bg-zinc-50 disabled:text-zinc-400 disabled:hover:border-zinc-200 dark:border-slate-700 dark:bg-slate-900 dark:hover:border-slate-600 dark:focus:ring-zindo-green-700/30 dark:disabled:bg-slate-800/60";
 
 export function Label(props: LabelHTMLAttributes<HTMLLabelElement>) {
   return (

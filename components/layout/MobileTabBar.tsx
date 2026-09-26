@@ -58,10 +58,10 @@ export function MobileTabBar({
             onClick={() => setSheetOpen(false)}
             className="animate-zindo-fade-in absolute inset-0 bg-zindo-ink-950/50 backdrop-blur-[2px]"
           />
-          <div className="absolute inset-x-0 bottom-0 rounded-t-3xl bg-white p-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] shadow-zindo-float animate-zindo-fade-in-up dark:bg-slate-900">
+          <div className="absolute inset-x-0 bottom-0 rounded-t-2xl bg-white p-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] shadow-zindo-float animate-zindo-fade-in-up dark:bg-slate-900">
             <div className="mx-auto mb-2 h-1 w-10 rounded-full bg-zinc-200" />
             <div className="flex items-center justify-between px-2 pb-2">
-              <p className="text-base font-bold text-zinc-900">Action rapide</p>
+              <p className="text-base font-semibold text-zinc-900">Action rapide</p>
               <button type="button" aria-label="Fermer" onClick={() => setSheetOpen(false)} className="rounded-full bg-zinc-100 p-1.5 text-zinc-500 hover:bg-zinc-200">
                 <X className="h-4 w-4" />
               </button>
@@ -72,9 +72,9 @@ export function MobileTabBar({
                 key={a.href}
                 href={a.href}
                 onClick={() => setSheetOpen(false)}
-                className="flex flex-col items-start gap-3 rounded-2xl border border-zinc-200/80 bg-zinc-50/60 p-3.5 text-sm font-semibold text-zinc-800 active:scale-[0.98] active:bg-zindo-green-50 dark:border-slate-800 dark:bg-slate-800/50"
+                className="flex flex-col items-start gap-2.5 rounded-xl border border-zinc-200 p-3.5 text-sm font-medium text-zinc-800 active:bg-zinc-50 dark:border-slate-800"
               >
-                <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-zindo-green-400 to-zindo-green-600 text-white shadow-sm">
+                <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-zindo-green-50 text-zindo-green-700">
                   <a.icon className="h-5 w-5" />
                 </span>
                 {a.label}
@@ -85,7 +85,7 @@ export function MobileTabBar({
         </div>
       )}
 
-      <nav className="fixed inset-x-0 bottom-0 z-30 border-t border-zinc-200/70 bg-white/90 pb-[env(safe-area-inset-bottom)] shadow-[0_-4px_20px_-8px_rgb(16_24_20/0.12)] backdrop-blur-md sm:hidden print:hidden dark:border-slate-800 dark:bg-slate-900/90">
+      <nav className="fixed inset-x-0 bottom-0 z-30 border-t border-zinc-200 bg-white pb-[env(safe-area-inset-bottom)] sm:hidden print:hidden dark:border-slate-800 dark:bg-slate-900/90">
         <div className="grid grid-cols-5 items-center">
           {leftTabs.map((t) => (
             <TabLink key={t.href} {...t} active={pathname === t.href || pathname.startsWith(`${t.href}/`)} />
@@ -96,7 +96,7 @@ export function MobileTabBar({
               type="button"
               onClick={() => (quickActions.length > 0 ? setSheetOpen(true) : undefined)}
               aria-label="Action rapide"
-              className="flex h-14 w-14 -translate-y-4 items-center justify-center rounded-2xl bg-gradient-to-br from-zindo-green-400 to-zindo-green-600 text-white shadow-lg shadow-zindo-green-800/30 ring-4 ring-white transition-transform active:scale-95 dark:ring-slate-900"
+              className="flex h-12 w-12 -translate-y-2 items-center justify-center rounded-full bg-zindo-green-600 text-white shadow-md shadow-zindo-green-900/20 ring-4 ring-white active:bg-zindo-green-700 dark:ring-slate-900"
             >
               <Plus className="h-6 w-6" />
             </button>
