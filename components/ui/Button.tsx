@@ -14,7 +14,7 @@ const variantClasses: Record<Variant, string> = {
     "bg-red-600 text-white shadow-sm shadow-red-900/10 hover:bg-red-700 active:bg-red-800 disabled:bg-red-300 disabled:shadow-none",
   ghost: "bg-transparent text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 active:bg-zinc-200 dark:hover:bg-slate-800",
   outline:
-    "bg-white text-zinc-700 border border-zinc-200 shadow-zindo-card hover:border-zinc-300 hover:bg-zinc-50 hover:text-zinc-900 active:bg-zinc-100 dark:bg-slate-900 dark:border-slate-700 dark:hover:bg-slate-800",
+    "bg-white text-zinc-800 border border-zinc-300 shadow-zindo-card hover:border-zinc-400 hover:bg-zinc-50 hover:text-zinc-900 active:bg-zinc-100 dark:bg-slate-900 dark:border-slate-700 dark:hover:bg-slate-800",
 };
 
 const sizeClasses: Record<Size, string> = {

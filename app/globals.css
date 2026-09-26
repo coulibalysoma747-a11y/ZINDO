@@ -17,7 +17,7 @@
   --foreground: #171717;
   /* Fond de l'espace commerçant : gris très légèrement teinté de vert, pour
      que les cartes blanches ressortent nettement. */
-  --app-canvas: #f3f5f3;
+  --app-canvas: #eceee9;
 }
 
 @theme inline {

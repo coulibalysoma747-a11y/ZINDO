@@ -19,7 +19,7 @@ export function StatCard({
   delta?: number | null;
 }) {
   return (
-    <div className="rounded-xl border border-zinc-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
+    <div className="rounded-xl border border-zinc-300/80 bg-white p-5 shadow-[0_1px_3px_rgb(16_24_20/0.08)] dark:border-slate-800 dark:bg-slate-900 dark:shadow-none">
       <div className="flex items-center justify-between gap-3">
         <p className="truncate text-[13px] font-medium text-zinc-500">{label}</p>
         <Icon className="h-4 w-4 shrink-0 text-zinc-400" />

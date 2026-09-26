@@ -111,6 +111,6 @@ export const config = {
     // quoi les robots d'indexation (Google...) se font rediriger vers /login
     // et reçoivent une page de connexion HTML à la place — empêchant ZINDO
     // d'être indexé du tout, quel que soit le contenu réel de ces fichiers.
-    "/((?!_next/static|_next/image|favicon.ico|manifest.json|robots.txt|sitemap.xml|sw.js|icons/|.*\\.(?:svg|png|jpg|jpeg|webp)$).*)",
+    "/((?!_next/static|_next/image|favicon.ico|manifest.json|robots.txt|sitemap.xml|sw.js|icons/|.*\\.(?:svg|png|jpg|jpeg|webp|wasm)$).*)",
   ],
 };
