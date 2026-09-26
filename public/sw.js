@@ -134,6 +134,15 @@ let refreshing = null;
 
 self.addEventListener("message", (event) => {
   const data = event.data || {};
+  if (data.type === "ZINDO_NETWORK_PROBE") {
+    if (data.ok) markNetworkUp();
+    else markNetworkDown();
+    return;
+  }
+  if (data.type === "ZINDO_NETWORK_QUERY") {
+    if (event.source) event.source.postMessage({ type: "ZINDO_NETWORK", down: isNetworkDown() });
+    return;
+  }
   if (data.type === "ZINDO_OFFLINE_DISABLE") {
     event.waitUntil(purgeOfflineCaches());
     return;
@@ -182,25 +191,137 @@ function offlineFallbackPage(availablePages) {
   return new Response(html, { status: 503, headers: { "Content-Type": "text/html; charset=utf-8" } });
 }
 
+function noConnectionPage() {
+  const html = `<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>ZINDO — Pas de connexion</title>
+<style>body{font-family:system-ui,sans-serif;margin:0;padding:24px 16px;background:#f8fafc;color:#18181b}main{max-width:420px;margin:0 auto}h1{font-size:20px}p{color:#52525b;font-size:14px;line-height:1.5}button{margin-top:8px;padding:12px 16px;border:0;border-radius:12px;background:#18181b;color:#fff;font-weight:600;font-size:14px}@media (prefers-color-scheme:dark){body{background:#0f172a;color:#f4f4f5}p{color:#a1a1aa}button{background:#f4f4f5;color:#18181b}}</style></head>
+<body><main><h1>Pas de connexion Internet</h1><p>ZINDO n'a pas pu joindre le serveur. Vérifiez votre connexion (données mobiles ou Wi-Fi), puis réessayez.</p><button onclick="location.reload()">Réessayer</button></main></body></html>`;
+  return new Response(html, { status: 503, headers: { "Content-Type": "text/html; charset=utf-8" } });
+}
+
+// Réseau « connecté mais qui ne passe pas » (Wi-Fi ou données sans
+// Internet, très fréquent) : le navigateur ne signale pas d'échec, il attend
+// indéfiniment. Au-delà de ce délai, on sert la copie ; puis pendant
+// NETWORK_DOWN_MS, on bascule directement sur les copies sans réattendre.
+// La page sonde aussi le réseau en continu (components/layout/OfflineShell.tsx,
+// message ZINDO_NETWORK_PROBE) : le plus souvent, la coupure est déjà connue
+// avant le clic, et la copie s'affiche sans aucune attente.
+const NETWORK_TIMEOUT_MS = 4000;
+const NETWORK_DOWN_MS = 30000;
+let networkDownUntil = 0;
+
+function isNetworkDown() {
+  return Date.now() < networkDownUntil;
+}
+
+async function broadcastNetwork(down) {
+  const clientsArr = await self.clients.matchAll({ type: "window" });
+  clientsArr.forEach((c) => c.postMessage({ type: "ZINDO_NETWORK", down }));
+}
+
+function markNetworkDown() {
+  const wasDown = isNetworkDown();
+  networkDownUntil = Date.now() + NETWORK_DOWN_MS;
+  if (!wasDown) broadcastNetwork(true);
+}
+
+function markNetworkUp() {
+  if (networkDownUntil === 0) return;
+  networkDownUntil = 0;
+  broadcastNetwork(false);
+}
+
+/** fetch() qui renvoie une erreur si le réseau ne répond pas à temps ; la requête continue, et `late` reçoit une réponse tardive. */
+function fetchWithTimeout(request, late) {
+  return new Promise((resolve, reject) => {
+    let settled = false;
+    const timer = setTimeout(() => {
+      settled = true;
+      reject(new Error("timeout"));
+    }, NETWORK_TIMEOUT_MS);
+    fetch(request).then(
+      (res) => {
+        clearTimeout(timer);
+        markNetworkUp();
+        if (settled) {
+          if (late) late(res);
+        } else {
+          settled = true;
+          resolve(res);
+        }
+      },
+      (err) => {
+        clearTimeout(timer);
+        if (!settled) {
+          settled = true;
+          reject(err);
+        }
+      }
+    );
+  });
+}
+
+async function saveVisitedPage(pathname, res) {
+  const meta = await readMeta();
+  if (meta && !isNeverCached(pathname) && isCacheablePage(res)) {
+    const cache = await caches.open(PAGES_CACHE);
+    await rememberVisitedPage(cache, pathname, res, meta);
+  }
+}
+
+async function offlineResponse(pathname) {
+  const meta = await readMeta();
+  // Aucune copie sur cet appareil (mode hors ligne non activé, ou jamais
+  // ouvert en ligne depuis) : message clair plutôt que l'erreur brute
+  // « ERR_FAILED » du navigateur.
+  if (!meta) return noConnectionPage();
+  const cache = await caches.open(PAGES_CACHE);
+  const cached = await cache.match(pathname, { ignoreVary: true });
+  if (cached) return cached;
+  const available = (await cache.keys()).map((r) => new URL(r.url).pathname);
+  return offlineFallbackPage(meta.pages.filter((p) => available.includes(p)));
+}
+
 async function handleNavigation(request) {
   const url = new URL(request.url);
-  try {
-    const res = await fetch(request);
-    // Garde (ou met à jour) la copie de chaque page visitée en ligne.
-    const meta = await readMeta();
-    if (meta && !isNeverCached(url.pathname) && isCacheablePage(res)) {
-      const cache = await caches.open(PAGES_CACHE);
-      await rememberVisitedPage(cache, url.pathname, res.clone(), meta);
+  const enabled = !!(await readMeta());
+  if (!enabled) {
+    try {
+      return await fetch(request);
+    } catch {
+      return noConnectionPage();
     }
+  }
+  if (isNetworkDown()) {
+    // Réseau déjà constaté coupé : copie tout de suite ; on retente le réseau
+    // en arrière-plan pour détecter son retour.
+    fetch(request).then((res) => {
+      markNetworkUp();
+      saveVisitedPage(url.pathname, res);
+    }, () => {});
+    return offlineResponse(url.pathname);
+  }
+  try {
+    const res = await fetchWithTimeout(request, (lateRes) => saveVisitedPage(url.pathname, lateRes));
+    await saveVisitedPage(url.pathname, res.clone());
     return res;
-  } catch (err) {
-    const meta = await readMeta();
-    if (!meta) throw err;
-    const cache = await caches.open(PAGES_CACHE);
-    const cached = await cache.match(url.pathname, { ignoreVary: true });
-    if (cached) return cached;
-    const available = (await cache.keys()).map((r) => new URL(r.url).pathname);
-    return offlineFallbackPage(meta.pages.filter((p) => available.includes(p)));
+  } catch {
+    markNetworkDown();
+    return offlineResponse(url.pathname);
+  }
+}
+
+/**
+ * Données d'un changement de page Next.js (en-tête RSC). Si le réseau ne
+ * répond pas, on échoue vite : Next.js bascule alors sur une navigation
+ * complète, servie par handleNavigation depuis la copie.
+ */
+async function handleRscRequest(request) {
+  if (isNetworkDown()) return Response.error();
+  try {
+    return await fetchWithTimeout(request);
+  } catch {
+    markNetworkDown();
+    return Response.error();
   }
 }
 
@@ -223,14 +344,19 @@ self.addEventListener("fetch", (event) => {
     event.respondWith(handleNavigation(request));
     return;
   }
+  if (request.headers.get("RSC") === "1") {
+    event.respondWith(
+      caches.has(PAGES_CACHE).then((enabled) => (enabled ? handleRscRequest(request) : fetch(request)))
+    );
+    return;
+  }
   if (url.pathname.startsWith("/_next/static/")) {
     event.respondWith(
       caches.has(STATIC_CACHE).then((enabled) => (enabled ? handleStatic(request) : fetch(request)))
     );
   }
-  // Tout le reste (données des pages, actions serveur, API) : le navigateur
-  // gère normalement. Hors ligne, un changement de page qui échoue retombe
-  // sur une navigation complète, servie ci-dessus depuis la copie.
+  // Tout le reste (actions serveur, API, images) : le navigateur gère
+  // normalement.
 });
 
 // Notifications push (voir /profil > Notifications push et lib/push.ts) —

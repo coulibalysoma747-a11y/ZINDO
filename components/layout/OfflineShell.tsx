@@ -29,6 +29,24 @@ function subscribeOnline(onChange: () => void) {
   };
 }
 
+const PROBE_INTERVAL_MS = 10000;
+const PROBE_TIMEOUT_MS = 3000;
+
+/** Petite requête sans cache vers un fichier statique : répond-elle à temps ? */
+async function probeNetwork(): Promise<boolean> {
+  if (!navigator.onLine) return false;
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), PROBE_TIMEOUT_MS);
+  try {
+    const res = await fetch(`/manifest.json?ping=${Date.now()}`, { method: "HEAD", cache: "no-store", signal: controller.signal });
+    return res.ok;
+  } catch {
+    return false;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 function isDesktopApp() {
   return typeof window !== "undefined" && "zindoDesktop" in window;
 }
@@ -61,6 +79,46 @@ export async function clearOfflineCopies() {
 export function OfflineShell({ enabled, userId }: { enabled: boolean; userId: string }) {
   const online = useSyncExternalStore(subscribeOnline, () => navigator.onLine, () => true);
   const [pendingCount, setPendingCount] = useState(0);
+  // Réseau « connecté mais qui ne passe pas », détecté par le service worker
+  // (navigator.onLine reste vrai dans ce cas).
+  const [networkDown, setNetworkDown] = useState(false);
+
+  useEffect(() => {
+    if (!enabled || isDesktopApp() || !("serviceWorker" in navigator)) return;
+    function handleMessage(event: MessageEvent) {
+      const data = event.data as { type?: string; down?: boolean } | null;
+      if (data?.type !== "ZINDO_NETWORK") return;
+      setNetworkDown(!!data.down);
+      getPendingWrites()
+        .then((writes) => setPendingCount(writes.length))
+        .catch(() => {});
+      if (!data.down) syncPendingWrites().catch(() => {});
+    }
+    navigator.serviceWorker.addEventListener("message", handleMessage);
+    navigator.serviceWorker.ready.then((reg) => reg.active?.postMessage({ type: "ZINDO_NETWORK_QUERY" })).catch(() => {});
+
+    // Sonde régulière : la coupure est connue du service worker avant même
+    // le prochain clic, qui ouvre alors la copie sans attendre.
+    let probing = false;
+    async function probe() {
+      if (probing || document.visibilityState !== "visible") return;
+      probing = true;
+      const ok = await probeNetwork();
+      probing = false;
+      navigator.serviceWorker.controller?.postMessage({ type: "ZINDO_NETWORK_PROBE", ok });
+    }
+    const interval = setInterval(probe, PROBE_INTERVAL_MS);
+    window.addEventListener("online", probe);
+    window.addEventListener("offline", probe);
+    document.addEventListener("visibilitychange", probe);
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener("online", probe);
+      window.removeEventListener("offline", probe);
+      document.removeEventListener("visibilitychange", probe);
+      navigator.serviceWorker.removeEventListener("message", handleMessage);
+    };
+  }, [enabled]);
 
   useEffect(() => {
     if (isDesktopApp()) return;
@@ -93,7 +151,7 @@ export function OfflineShell({ enabled, userId }: { enabled: boolean; userId: st
     };
   }, [enabled, userId]);
 
-  if (!enabled || online) return null;
+  if (!enabled || (online && !networkDown)) return null;
 
   return (
     <div className="pointer-events-none fixed inset-x-0 top-2 z-50 flex justify-center px-4 print:hidden">
