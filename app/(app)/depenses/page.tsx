@@ -1,4 +1,6 @@
+import { FileText } from "lucide-react";
 import { requirePermission } from "@/lib/auth";
+import { isDocumentEnabled } from "@/lib/documents";
 import { PERMISSIONS } from "@/lib/permissions";
 import { supabase } from "@/lib/supabase";
 import { getCurrentLocation } from "@/lib/location";
@@ -33,6 +35,7 @@ export default async function ExpensesPage({
 }) {
   const user = await requirePermission(PERMISSIONS.EXPENSES_MANAGE);
   const { periode } = await searchParams;
+  const expensesPdf = await isDocumentEnabled("pdf_depenses", user.businessId);
   const [currentLocation, businessSettings] = await Promise.all([
     getCurrentLocation(user.businessId),
     getBusinessSettings(user.businessId),
@@ -87,7 +90,14 @@ export default async function ExpensesPage({
         </CardBody>
       </Card>
 
-      <HistoryFilters paramName="periode" />
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <HistoryFilters paramName="periode" />
+        {expensesPdf && (
+          <ButtonLink href={periode ? `/depenses/document?periode=${periode}` : "/depenses/document"} variant="outline">
+            <FileText className="h-4 w-4" /> État PDF
+          </ButtonLink>
+        )}
+      </div>
 
       {expenses.length === 0 ? (
         <EmptyState title="Aucune dépense sur cette période" description="Enregistrez votre première dépense." />

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { FileText } from "lucide-react";
 import { requirePermission } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
 import { supabase } from "@/lib/supabase";
@@ -7,6 +8,8 @@ import { getUpcomingInstallmentsAction } from "@/lib/actions/installments";
 import { Card, CardBody, CardHeader } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { EmptyState } from "@/components/ui/Empty";
+import { isDocumentEnabled } from "@/lib/documents";
+import { ButtonLink } from "@/components/ui/Button";
 import { Table, TableHead, TableBody, TableRow, TableHeaderCell, TableCell } from "@/components/ui/Table";
 
 type SaleRow = {
@@ -20,7 +23,10 @@ export default async function CreditsPage() {
   const user = await requirePermission(PERMISSIONS.CUSTOMERS_VIEW);
   const currency = user.business.currency;
 
-  const upcomingInstallments = await getUpcomingInstallmentsAction();
+  const [upcomingInstallments, debtorsPdf] = await Promise.all([
+    getUpcomingInstallmentsAction(),
+    isDocumentEnabled("pdf_liste_debiteurs", user.businessId),
+  ]);
 
   const { data } = await supabase
     .from("sales")
@@ -60,9 +66,16 @@ export default async function CreditsPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-xl font-bold text-zinc-900">Crédits clients</h1>
-        <p className="text-sm text-zinc-500">Suivi des ventes à crédit et paiements partiels.</p>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h1 className="text-xl font-bold text-zinc-900">Crédits clients</h1>
+          <p className="text-sm text-zinc-500">Suivi des ventes à crédit et paiements partiels.</p>
+        </div>
+        {debtorsPdf && (
+          <ButtonLink href="/credits/document" variant="outline">
+            <FileText className="h-4 w-4" /> Liste PDF
+          </ButtonLink>
+        )}
       </div>
 
       <Card>

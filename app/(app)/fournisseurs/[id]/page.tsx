@@ -1,6 +1,8 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, FileText } from "lucide-react";
+import { isDocumentEnabled } from "@/lib/documents";
+import { ButtonLink } from "@/components/ui/Button";
 import { requirePermission } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
 import { supabase } from "@/lib/supabase";
@@ -31,6 +33,7 @@ export default async function SupplierDetailPage({
 }) {
   const user = await requirePermission(PERMISSIONS.SUPPLIERS_MANAGE);
   const { id } = await params;
+  const statementPdf = await isDocumentEnabled("pdf_releve_fournisseur", user.businessId);
 
   const { data: supplierRow } = await supabase
     .from("suppliers")
@@ -129,7 +132,14 @@ export default async function SupplierDetailPage({
 
       <Card>
         <CardHeader>
-          <h2 className="font-semibold text-zinc-900">Historique des achats</h2>
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <h2 className="font-semibold text-zinc-900">Historique des achats</h2>
+            {statementPdf && (
+              <ButtonLink href={`/fournisseurs/${supplier.id}/releve`} variant="outline" size="sm">
+                <FileText className="h-4 w-4" /> Relevé PDF
+              </ButtonLink>
+            )}
+          </div>
         </CardHeader>
         <CardBody className="p-0">
           {purchases.length === 0 ? (

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Plus } from "lucide-react";
+import { FileText, Plus } from "lucide-react";
 import { requirePermission } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
 import { supabase } from "@/lib/supabase";
@@ -8,6 +8,7 @@ import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { EmptyState } from "@/components/ui/Empty";
 import { ButtonLink } from "@/components/ui/Button";
+import { isDocumentEnabled } from "@/lib/documents";
 import { Table, TableHead, TableBody, TableRow, TableHeaderCell, TableCell } from "@/components/ui/Table";
 
 type InventoryRow = {
@@ -22,6 +23,7 @@ type InventoryRow = {
 export default async function InventoryListPage() {
   const user = await requirePermission(PERMISSIONS.INVENTORY_MANAGE);
 
+  const countSheetPdf = await isDocumentEnabled("pdf_inventaire", user.businessId);
   const { data } = await supabase
     .from("inventories")
     .select("id, reference, createdAt:created_at, status, location:locations(name), items:inventory_items(id)")
@@ -36,9 +38,16 @@ export default async function InventoryListPage() {
           <h1 className="text-xl font-bold text-zinc-900">Inventaire</h1>
           <p className="text-sm text-zinc-500">Comparez le stock théorique au stock réel.</p>
         </div>
-        <ButtonLink href="/inventaire/nouveau">
-          <Plus className="h-4 w-4" /> Nouvel inventaire
-        </ButtonLink>
+        <div className="flex flex-wrap gap-2">
+          {countSheetPdf && (
+            <ButtonLink href="/inventaire/feuille" variant="outline">
+              <FileText className="h-4 w-4" /> Feuille de comptage
+            </ButtonLink>
+          )}
+          <ButtonLink href="/inventaire/nouveau">
+            <Plus className="h-4 w-4" /> Nouvel inventaire
+          </ButtonLink>
+        </div>
       </div>
 
       {inventories.length === 0 ? (

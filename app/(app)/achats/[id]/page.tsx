@@ -1,12 +1,14 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, FileText } from "lucide-react";
 import { requirePermission } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
 import { supabase } from "@/lib/supabase";
 import { formatMoney, formatDateTime } from "@/lib/format";
 import { Card, CardBody, CardHeader } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
+import { isDocumentEnabled } from "@/lib/documents";
+import { ButtonLink } from "@/components/ui/Button";
 import { Table, TableHead, TableBody, TableRow, TableHeaderCell, TableCell } from "@/components/ui/Table";
 
 type PurchaseRow = {
@@ -28,6 +30,7 @@ export default async function PurchaseDetailPage({
 }) {
   const user = await requirePermission(PERMISSIONS.PURCHASES_MANAGE);
   const { id } = await params;
+  const receiptPdf = await isDocumentEnabled("pdf_bon_reception", user.businessId);
 
   const { data } = await supabase
     .from("purchases")
@@ -65,7 +68,14 @@ export default async function PurchaseDetailPage({
 
       <Card>
         <CardHeader>
-          <h2 className="font-semibold text-zinc-900">Produits reçus</h2>
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <h2 className="font-semibold text-zinc-900">Produits reçus</h2>
+            {receiptPdf && (
+              <ButtonLink href={`/achats/${purchase.id}/document`} variant="outline" size="sm">
+                <FileText className="h-4 w-4" /> Bon de réception PDF
+              </ButtonLink>
+            )}
+          </div>
         </CardHeader>
         <CardBody className="p-0">
           <div className="overflow-x-auto">

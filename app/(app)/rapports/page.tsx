@@ -1,3 +1,4 @@
+import { FileText } from "lucide-react";
 import { requirePermission } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
 import { getSalesReport, getStockReport, getPurchasesReport } from "@/lib/actions/reports";
@@ -7,6 +8,7 @@ import { Card, CardBody, CardHeader } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { EmptyState } from "@/components/ui/Empty";
 import { ButtonLink } from "@/components/ui/Button";
+import { isDocumentEnabled } from "@/lib/documents";
 import { HistoryFilters } from "@/components/history/HistoryFilters";
 
 export default async function ReportsPage({
@@ -17,7 +19,11 @@ export default async function ReportsPage({
   const user = await requirePermission(PERMISSIONS.REPORTS_VIEW);
   const { periode } = await searchParams;
   const currency = user.business.currency;
-  const currentLocation = await getCurrentLocation(user.businessId);
+  const [currentLocation, activityPdf, stockPdf] = await Promise.all([
+    getCurrentLocation(user.businessId),
+    isDocumentEnabled("pdf_rapport_activite", user.businessId),
+    isDocumentEnabled("pdf_etat_stock", user.businessId),
+  ]);
 
   if (!currentLocation) {
     return (
@@ -47,7 +53,19 @@ export default async function ReportsPage({
           <h1 className="text-xl font-bold text-zinc-900">Rapports</h1>
           <p className="text-sm text-zinc-500">Synthèse de l&apos;activité de {currentLocation.name}.</p>
         </div>
-        <HistoryFilters paramName="periode" />
+        <div className="flex flex-wrap items-center gap-2">
+          <HistoryFilters paramName="periode" />
+          {activityPdf && (
+            <ButtonLink href={periode ? `/rapports/document?periode=${periode}` : "/rapports/document"} variant="outline">
+              <FileText className="h-4 w-4" /> Rapport PDF
+            </ButtonLink>
+          )}
+          {stockPdf && (
+            <ButtonLink href="/stock/etat" variant="outline">
+              <FileText className="h-4 w-4" /> État du stock PDF
+            </ButtonLink>
+          )}
+        </div>
       </div>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">

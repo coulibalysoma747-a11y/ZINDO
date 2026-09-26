@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowDownCircle, ArrowUpCircle, CheckSquare, RefreshCw } from "lucide-react";
+import { ArrowDownCircle, ArrowUpCircle, CheckSquare, FileText, RefreshCw } from "lucide-react";
 import { requirePermission, hasPermission } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
 import { supabase } from "@/lib/supabase";
@@ -10,6 +10,7 @@ import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { EmptyState } from "@/components/ui/Empty";
 import { ButtonLink } from "@/components/ui/Button";
+import { isDocumentEnabled } from "@/lib/documents";
 import { HistoryFilters } from "@/components/history/HistoryFilters";
 import { Table, TableHead, TableBody, TableRow, TableHeaderCell, TableCell } from "@/components/ui/Table";
 
@@ -34,7 +35,13 @@ export default async function StockPage({
 }) {
   const user = await requirePermission(PERMISSIONS.STOCK_VIEW);
   const { periode } = await searchParams;
-  const businessSettings = await getBusinessSettings(user.businessId);
+  const [businessSettings, stockPdf] = await Promise.all([
+    getBusinessSettings(user.businessId),
+    // L'état du stock montre les prix d'achat et la valeur : réservé à qui voit les rapports.
+    (async () =>
+      (await isDocumentEnabled("pdf_etat_stock", user.businessId)) &&
+      hasPermission(user.businessId, user.role, PERMISSIONS.REPORTS_VIEW, user.id))(),
+  ]);
   const showFasoSync =
     (await isFeatureEnabled("synchro_fasostock_fichier", user.businessId)) &&
     (await hasPermission(user.businessId, user.role, PERMISSIONS.STOCK_MANAGE, user.id));
@@ -77,6 +84,11 @@ export default async function StockPage({
           <p className="text-sm text-zinc-500">{movements.length} mouvement(s)</p>
         </div>
         <div className="flex flex-wrap gap-2">
+          {stockPdf && (
+            <ButtonLink href="/stock/etat?retour=stock" variant="outline">
+              <FileText className="h-4 w-4" /> État du stock PDF
+            </ButtonLink>
+          )}
           {businessSettings.bulkStockFillEnabled && (
             <ButtonLink href="/stock/remplissage" variant="outline">
               <CheckSquare className="h-4 w-4" /> Remplir en un clic
