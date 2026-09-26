@@ -10,6 +10,7 @@ import { EmptyState } from "@/components/ui/Empty";
 import { Table, TableBody, TableRow, TableCell } from "@/components/ui/Table";
 import { OnlineStoreTabs } from "../OnlineStoreTabs";
 import { OrderStatusControls } from "./OrderStatusControls";
+import { isOnlineOrderSaleEnabled } from "@/lib/actions/online-store";
 
 const STATUS_TONE = {
   EN_ATTENTE: "amber",
@@ -89,6 +90,7 @@ export default async function OnlineOrdersPage({
   const orders = statut ? allOrders.filter((o) => o.status === statut) : allOrders;
 
   const currency = user.business.currency;
+  const encashEnabled = await isOnlineOrderSaleEnabled(user.businessId);
   const sorted = [...orders].sort((a, b) => {
     if (a.status === "EN_ATTENTE" && b.status !== "EN_ATTENTE") return -1;
     if (a.status !== "EN_ATTENTE" && b.status === "EN_ATTENTE") return 1;
@@ -148,7 +150,14 @@ export default async function OnlineOrdersPage({
                   </div>
                   <div className="flex items-center gap-2">
                     <Badge tone={STATUS_TONE[order.status]}>{STATUS_LABELS[order.status]}</Badge>
-                    <OrderStatusControls orderId={order.id} status={order.status} />
+                    <OrderStatusControls
+                      orderId={order.id}
+                      status={order.status}
+                      encashEnabled={encashEnabled}
+                      amountDue={Math.max(0, order.total - order.deliveryFee)}
+                      deliveryFee={order.deliveryFee}
+                      currency={currency}
+                    />
                   </div>
                 </div>
 

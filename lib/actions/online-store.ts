@@ -7,6 +7,9 @@ import { requirePermission } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
 import { logAction } from "@/lib/audit";
 import { saveOnlineStoreCoverPhoto, deleteUploadedImage } from "@/lib/photo-upload";
+import { isFeatureEnabled, registerFeatureFlag } from "@/lib/feature-flags";
+import { createSaleAction, type CartItemInput } from "@/lib/actions/sales";
+import { rethrowIfNavigationSignal } from "@/lib/action-errors";
 import type { OnlineOrderStatus } from "@/lib/db-types";
 
 export type ActionState = { error?: string; success?: string } | undefined;
@@ -170,11 +173,25 @@ export async function updateOnlineOrderStatusAction(
 
   const { data: order } = await supabase
     .from("online_orders")
-    .select("id, merchantNote:merchant_note, store:online_stores!inner(businessId:business_id)")
+    .select("id, status, merchantNote:merchant_note, store:online_stores!inner(businessId:business_id)")
     .eq("id", orderId)
     .eq("online_stores.business_id", user.businessId)
     .maybeSingle();
   if (!order) return { error: "Commande introuvable" };
+
+  if (await isOnlineOrderSaleEnabled(user.businessId)) {
+    // « Encaissée » ne s'obtient que par encashOnlineOrderAction (vraie vente).
+    if (status === "LIVREE" && order.status !== "LIVREE") return { error: "Utilisez « Encaisser » pour enregistrer la vente" };
+    if (order.status === "LIVREE" && status !== "LIVREE") {
+      const { data: sale } = await supabase
+        .from("sales")
+        .select("id")
+        .eq("business_id", user.businessId)
+        .eq("client_ref", `online-order:${orderId}`)
+        .maybeSingle();
+      if (sale) return { error: "Commande déjà encaissée : faites un retour sur la vente pour l'annuler" };
+    }
+  }
 
   const { error } = await supabase
     .from("online_orders")
@@ -196,4 +213,123 @@ export async function updateOnlineOrderStatusAction(
 
   revalidatePath("/boutique-en-ligne/commandes");
   return { success: "Commande mise à jour" };
+}
+
+// ---------------------------------------------------------------------------
+// Encaissement réel d'une commande en ligne : passer une commande à
+// « Encaissée » ne changeait que son statut — ni stock, ni caisse, ni ticket.
+// Derrière ce flag, l'encaissement crée une vraie vente (même chemin que la
+// caisse et les tables : contrôles de stock, session de caisse, ticket).
+// ---------------------------------------------------------------------------
+const ONLINE_ORDER_SALE_FLAG = "commande_en_ligne_vente";
+
+export async function isOnlineOrderSaleEnabled(businessId: string): Promise<boolean> {
+  await registerFeatureFlag(
+    ONLINE_ORDER_SALE_FLAG,
+    "Commande en ligne encaissée = vraie vente",
+    "Passer une commande de la boutique en ligne à « Encaissée » crée une vraie vente : le stock baisse, l'argent entre en caisse et un ticket est disponible."
+  );
+  return isFeatureEnabled(ONLINE_ORDER_SALE_FLAG, businessId);
+}
+
+const encashSchema = z.object({
+  paymentMethod: z.enum(["ESPECES", "MOBILE_MONEY", "CARTE", "AUTRE"], { message: "Choisissez un moyen de paiement" }),
+  mobileMoneyOperator: z.enum(["ORANGE", "MOOV", "WAVE"]).optional(),
+});
+
+type EncashOrderRow = {
+  id: string;
+  number: string;
+  status: OnlineOrderStatus;
+  customerName: string;
+  customerPhone: string;
+  discount: number | null;
+  store: { businessId: string; locationId: string | null };
+  items: { productId: string; quantity: number; unitPrice: number }[];
+};
+
+export async function encashOnlineOrderAction(
+  orderId: string,
+  formData: FormData
+): Promise<{ error?: string; success?: string; saleId?: string }> {
+  try {
+    const user = await requirePermission(PERMISSIONS.SALES_CREATE);
+    if (!(await isOnlineOrderSaleEnabled(user.businessId))) return { error: "Fonctionnalité non disponible pour le moment" };
+
+    const parsed = encashSchema.safeParse({
+      paymentMethod: formData.get("paymentMethod"),
+      mobileMoneyOperator: formData.get("mobileMoneyOperator") || undefined,
+    });
+    if (!parsed.success) return { error: parsed.error.issues[0]?.message };
+
+    const { data } = await supabase
+      .from("online_orders")
+      .select(
+        "id, number, status, customerName:customer_name, customerPhone:customer_phone, discount, " +
+          "store:online_stores!inner(businessId:business_id, locationId:location_id), " +
+          "items:online_order_items(productId:product_id, quantity, unitPrice:unit_price)"
+      )
+      .eq("id", orderId)
+      .eq("online_stores.business_id", user.businessId)
+      .maybeSingle();
+    const order = data as unknown as EncashOrderRow | null;
+    if (!order) return { error: "Commande introuvable" };
+    if (order.status === "ANNULEE") return { error: "Cette commande est annulée : elle ne peut pas être encaissée" };
+    if (order.items.length === 0) return { error: "Cette commande ne contient aucun article" };
+
+    let locationId = order.store.locationId;
+    if (!locationId) {
+      const { data: location } = await supabase
+        .from("locations")
+        .select("id")
+        .eq("business_id", user.businessId)
+        .order("is_default", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      locationId = (location?.id as string | undefined) ?? null;
+    }
+    if (!locationId) return { error: "Aucune boutique trouvée pour sortir le stock" };
+
+    const items: CartItemInput[] = order.items.map((i) => ({
+      productId: i.productId,
+      quantity: i.quantity,
+      unitPrice: Number(i.unitPrice),
+      discount: 0,
+    }));
+    const discount = Math.max(0, Number(order.discount) || 0);
+    const total = Math.max(0, items.reduce((sum, i) => sum + i.quantity * i.unitPrice, 0) - discount);
+
+    // clientRef : une commande ne crée jamais plus d'une vente, même en cas de
+    // double clic ou de nouvel encaissement après un changement de statut.
+    const saleResult = await createSaleAction({
+      locationId,
+      items,
+      discount,
+      paymentMethod: parsed.data.paymentMethod,
+      amountPaid: total,
+      mobileMoneyOperator: parsed.data.paymentMethod === "MOBILE_MONEY" ? parsed.data.mobileMoneyOperator : undefined,
+      note: `Boutique en ligne — commande ${order.number} (${order.customerName}, ${order.customerPhone})`,
+      clientRef: `online-order:${order.id}`,
+    });
+    if (!saleResult.success) return { error: saleResult.error };
+
+    const { error: statusError } = await supabase.from("online_orders").update({ status: "LIVREE" }).eq("id", order.id);
+    if (statusError) console.error("[encashOnlineOrderAction] Échec de la mise à jour du statut :", statusError.message);
+
+    await logAction({
+      businessId: user.businessId,
+      userId: user.id,
+      action: "UPDATE",
+      entity: "OnlineOrder",
+      entityId: order.id,
+      details: `Encaissée — vente ${saleResult.saleId}`,
+    });
+
+    revalidatePath("/boutique-en-ligne/commandes");
+    return { success: "Commande encaissée", saleId: saleResult.saleId };
+  } catch (e) {
+    rethrowIfNavigationSignal(e);
+    console.error("[encashOnlineOrderAction] Erreur inattendue :", e);
+    return { error: "Une erreur inattendue est survenue" };
+  }
 }
