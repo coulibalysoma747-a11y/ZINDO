@@ -8,7 +8,8 @@ import { PERMISSIONS } from "@/lib/permissions";
 import { logAction } from "@/lib/audit";
 import { formatMoney } from "@/lib/format";
 
-export type ActionState = { error?: string; success?: string } | undefined;
+/** receiptId : première ligne d'un remboursement, adresse de son reçu (/clients/[id]/recu/[receiptId]). */
+export type ActionState = { error?: string; success?: string; receiptId?: string } | undefined;
 
 const customerSchema = z.object({
   name: z.string().min(1, "Le nom est requis"),
@@ -234,9 +235,12 @@ export async function recordCustomerPaymentAction(
     };
   }
 
-  const { error } = await supabase.from("customer_payments").insert(
-    allocations.map((a) => ({ customer_id: customerId, sale_id: a.saleId, amount: a.amount, method, note, user_id: user.id }))
-  );
+  const { data: inserted, error } = await supabase
+    .from("customer_payments")
+    .insert(
+      allocations.map((a) => ({ customer_id: customerId, sale_id: a.saleId, amount: a.amount, method, note, user_id: user.id }))
+    )
+    .select("id");
   if (error) {
     console.error("[recordCustomerPaymentAction] Échec de l'enregistrement :", error.message);
     return { error: "Impossible d'enregistrer le paiement" };
@@ -263,5 +267,5 @@ export async function recordCustomerPaymentAction(
   revalidatePath(`/clients/${customerId}`);
   revalidatePath("/credits");
   revalidatePath("/ventes/historique");
-  return { success: "Paiement enregistré" };
+  return { success: "Paiement enregistré", receiptId: (inserted?.[0]?.id as string | undefined) ?? undefined };
 }

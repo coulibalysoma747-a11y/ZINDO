@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Printer } from "lucide-react";
+import { ArrowLeft, FileText, Printer } from "lucide-react";
 import { requirePermission, hasPermission } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
 import { supabase } from "@/lib/supabase";
@@ -14,6 +14,8 @@ import { RecordPaymentButton } from "./RecordPaymentButton";
 import { DebtExemptionToggle } from "./DebtExemptionToggle";
 import { isDebtExemptionEnabled } from "@/lib/debt-exemption";
 import { getBusinessSettings } from "@/lib/business-settings";
+import { groupPayments, isClientDocumentsEnabled } from "@/lib/client-documents";
+import { ButtonLink } from "@/components/ui/Button";
 
 type CustomerRow = {
   id: string;
@@ -32,7 +34,7 @@ const STATUS_LABELS: Record<string, string> = {
   CREDIT: "Crédit",
   ANNULEE: "Annulée",
 };
-type PaymentRow = { id: string; createdAt: string; method: string; note: string | null; amount: number };
+type PaymentRow = { id: string; createdAt: string; method: string; note: string | null; amount: number; saleId: string | null };
 
 export default async function CustomerDetailPage({
   params,
@@ -43,12 +45,13 @@ export default async function CustomerDetailPage({
   // Le module "Ventes" est piloté par SALES_CREATE (même droit que le lien
   // "Vente / Caisse" du menu) : si un compte n'y a plus accès, aucune trace du
   // module ne doit apparaître ailleurs dans l'application, y compris ici.
-  const [canManage, canSeeSales, canManageSettings, debtExemptionEnabled, businessSettings] = await Promise.all([
+  const [canManage, canSeeSales, canManageSettings, debtExemptionEnabled, businessSettings, clientDocuments] = await Promise.all([
     hasPermission(user.businessId, user.role, PERMISSIONS.CUSTOMERS_MANAGE, user.id),
     hasPermission(user.businessId, user.role, PERMISSIONS.SALES_CREATE, user.id),
     hasPermission(user.businessId, user.role, PERMISSIONS.SETTINGS_MANAGE, user.id),
     isDebtExemptionEnabled(user.businessId),
     getBusinessSettings(user.businessId),
+    isClientDocumentsEnabled(user.businessId),
   ]);
   const { id } = await params;
 
@@ -69,12 +72,15 @@ export default async function CustomerDetailPage({
       .order("created_at", { ascending: false }),
     supabase
       .from("customer_payments")
-      .select("id, createdAt:created_at, method, note, amount")
+      .select("id, createdAt:created_at, method, note, amount, saleId:sale_id")
       .eq("customer_id", id)
       .order("created_at", { ascending: false }),
   ]);
   const sales = (salesData ?? []) as unknown as SaleRow[];
-  const payments = (paymentsData ?? []) as unknown as PaymentRow[];
+  const paymentRows = (paymentsData ?? []) as unknown as PaymentRow[];
+  // Avec le flag « documents_client_pdf », un remboursement réparti sur
+  // plusieurs ventes s'affiche sur une seule ligne, avec son reçu.
+  const payments = clientDocuments ? groupPayments(paymentRows) : paymentRows;
 
   const currency = user.business.currency;
   // Les ventes annulées ne comptent ni dans le total acheté ni dans la dette ;
@@ -93,10 +99,17 @@ export default async function CustomerDetailPage({
           <h1 className="mt-1 text-xl font-bold text-zinc-900">{customer.name}</h1>
           <p className="text-sm text-zinc-500">{customer.phone}</p>
         </div>
-        {canManage && (
-          <div className="flex gap-2">
-            {creditBalance > 0 && <RecordPaymentButton customerId={customer.id} maxAmount={creditBalance} />}
-            <ClientEditButton customer={customer} />
+        {(canManage || (clientDocuments && canSeeSales)) && (
+          <div className="flex flex-wrap gap-2">
+            {clientDocuments && canSeeSales && (
+              <ButtonLink href={`/clients/${customer.id}/releve`} variant="outline">
+                <FileText className="h-4 w-4" /> Relevé PDF
+              </ButtonLink>
+            )}
+            {canManage && creditBalance > 0 && (
+              <RecordPaymentButton customerId={customer.id} maxAmount={creditBalance} receiptEnabled={clientDocuments} />
+            )}
+            {canManage && <ClientEditButton customer={customer} />}
           </div>
         )}
       </div>
@@ -204,12 +217,23 @@ export default async function CustomerDetailPage({
           </CardHeader>
           <CardBody className="space-y-2">
             {payments.map((p) => (
-              <div key={p.id} className="flex justify-between text-sm">
+              <div key={p.id} className="flex items-center justify-between gap-2 text-sm">
                 <span className="text-zinc-600">
                   {formatDate(new Date(p.createdAt))} · {p.method}
                   {p.note ? ` · ${p.note}` : ""}
                 </span>
-                <span className="font-medium text-emerald-600">{formatMoney(p.amount, currency)}</span>
+                <span className="flex items-center gap-1">
+                  <span className="font-medium text-emerald-600">{formatMoney(p.amount, currency)}</span>
+                  {clientDocuments && (
+                    <Link
+                      href={`/clients/${customer.id}/recu/${p.id}`}
+                      title="Imprimer le reçu"
+                      className="inline-flex items-center rounded-lg p-1.5 text-zinc-400 hover:bg-emerald-50 hover:text-emerald-700 dark:hover:bg-emerald-900/30"
+                    >
+                      <Printer className="h-4 w-4" />
+                    </Link>
+                  )}
+                </span>
               </div>
             ))}
           </CardBody>
