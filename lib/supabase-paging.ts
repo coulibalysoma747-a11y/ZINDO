@@ -21,3 +21,31 @@ export async function fetchAllPages<T>(
   }
   return rows;
 }
+
+/**
+ * Variante de fetchAllPages qui lit plusieurs pages en même temps (par
+ * vagues de `concurrency`), au lieu d'attendre chaque page avant de demander
+ * la suivante : pour 4 000 lignes, un seul aller-retour au lieu de quatre.
+ * `fetchPage` doit trier sur une colonne unique pour que les pages ne se
+ * chevauchent pas.
+ */
+export async function fetchAllPagesConcurrently<T>(
+  fetchPage: (from: number, to: number) => PromiseLike<{ data: T[] | null; error: { message: string } | null }>,
+  { pageSize = 1000, maxRows = 50000, concurrency = 4 }: { pageSize?: number; maxRows?: number; concurrency?: number } = {}
+): Promise<T[]> {
+  const rows: T[] = [];
+  for (let start = 0; start < maxRows; start += pageSize * concurrency) {
+    const froms: number[] = [];
+    for (let from = start; from < Math.min(start + pageSize * concurrency, maxRows); from += pageSize) froms.push(from);
+    const pages = await Promise.all(froms.map((from) => fetchPage(from, from + pageSize - 1)));
+    for (const { data, error } of pages) {
+      if (error) {
+        console.error("[fetchAllPagesConcurrently] Échec de lecture :", error.message);
+        return rows;
+      }
+      rows.push(...(data ?? []));
+      if (!data || data.length < pageSize) return rows;
+    }
+  }
+  return rows;
+}

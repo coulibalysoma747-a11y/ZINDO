@@ -132,6 +132,7 @@ export function POS({
   cashierQueueEnabled = false,
   manualSaleNumberEnabled = false,
   suggestedManualNumber = null,
+  initialProducts,
 }: {
   mode?: "pos" | "facture";
   customers: { id: string; name: string; phone: string | null }[];
@@ -155,6 +156,8 @@ export function POS({
   /** Champ facultatif "N° de ticket" (continuité d'un ancien logiciel) — voir lib/manual-sale-number.ts. */
   manualSaleNumberEnabled?: boolean;
   suggestedManualNumber?: string | null;
+  /** Produits dont la lecture a démarré côté serveur, dès le rendu de la page (voir POSPageContent). */
+  initialProducts?: Promise<PosProduct[]>;
 }) {
   const isFacture = mode === "facture";
   const [cart, setCart] = useState<CartLine[]>([]);
@@ -208,10 +211,21 @@ export function POS({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Premier chargement : les produits arrivent avec la page elle-même (lecture
+  // lancée côté serveur pendant le rendu) au lieu d'être demandés seulement
+  // après l'affichage, ce qui ajoutait un aller-retour complet.
+  const initialProductsRef = useRef(initialProducts);
+
   useEffect(() => {
     setCart([]);
     setLoadingProducts(true);
-    getPosProductsAction(locationId)
+    // Promise.resolve : ce qui arrive du serveur est un « thenable » React dont
+    // .then() ne renvoie rien — on le convertit en vraie promesse chaînable.
+    const pending = initialProductsRef.current
+      ? Promise.resolve(initialProductsRef.current)
+      : getPosProductsAction(locationId);
+    initialProductsRef.current = undefined;
+    pending
       .then((result) => {
         setProducts(result);
         setLoadingProducts(false);

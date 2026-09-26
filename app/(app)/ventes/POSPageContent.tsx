@@ -8,6 +8,7 @@ import { EmptyState } from "@/components/ui/Empty";
 import { ButtonLink } from "@/components/ui/Button";
 import { OpenSessionForm } from "./OpenSessionForm";
 import { POS } from "./POS";
+import { getPosProductsAction } from "@/lib/actions/product-search";
 import { getVerificationBaseUrl } from "@/lib/verification";
 import { getSuggestedManualSaleNumber, isManualSaleNumberEnabled } from "@/lib/manual-sale-number";
 
@@ -30,6 +31,12 @@ export async function POSPageContent({ mode }: { mode: "pos" | "facture" }) {
       />
     );
   }
+
+  // Lecture des produits lancée tout de suite, en parallèle du reste, et
+  // transmise à la caisse sans l'attendre : la page s'affiche sans délai et
+  // les produits arrivent dans la même réponse.
+  const initialProducts = getPosProductsAction(currentLocation.id);
+  initialProducts.catch(() => {}); // Caisse fermée : promesse inutilisée.
 
   const businessSettings = await getBusinessSettings(user.businessId);
 
@@ -78,6 +85,7 @@ export async function POSPageContent({ mode }: { mode: "pos" | "facture" }) {
       cashierQueueEnabled={businessSettings.modulesEnabled.cashierQueue}
       manualSaleNumberEnabled={manualSaleNumberEnabled}
       suggestedManualNumber={suggestedManualNumber}
+      initialProducts={initialProducts}
       autoPrintReceipt={user.autoPrintReceipt}
       printerTicketWidth={user.printerTicketWidth}
       session={{

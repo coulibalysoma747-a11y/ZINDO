@@ -4,9 +4,10 @@ import { supabase } from "@/lib/supabase";
 import { requireUser } from "@/lib/auth";
 import { isPackagingUnitsModuleEnabled } from "@/lib/actions/packaging-units";
 import { isPriceTiersModuleEnabled } from "@/lib/actions/price-tiers";
-import { getNearestExpiryByProduct } from "@/lib/actions/expiry";
+import { getNearestExpiryByProduct, isExpiryModuleEnabled } from "@/lib/actions/expiry";
+import { EXPIRY_ACTIVITIES } from "@/lib/nav";
 import type { PriceTierOption } from "@/lib/pricing";
-import { fetchAllPages } from "@/lib/supabase-paging";
+import { fetchAllPagesConcurrently } from "@/lib/supabase-paging";
 
 const PRODUCT_FIELDS =
   "id, businessId:business_id, reference, name, categoryId:category_id, brand, description, unit, purchasePrice:purchase_price, salePrice:sale_price, minStock:min_stock, shelfLocation:shelf_location, supplierId:supplier_id, photoUrl:photo_url, barcode, customFields:custom_fields, active, createdAt:created_at, updatedAt:updated_at, trackUnits:track_units";
@@ -72,18 +73,6 @@ async function fetchPriceTiersByProduct(businessId: string, productIds: string[]
   return map;
 }
 
-/**
- * Un filtre `.in(...)` avec des milliers d'identifiants dépasse la longueur
- * d'URL acceptée par PostgREST : on interroge par lots puis on fusionne.
- */
-async function mergeChunks<V>(ids: string[], fetchChunk: (ids: string[]) => Promise<Map<string, V>>, size = 150) {
-  const merged = new Map<string, V>();
-  for (let i = 0; i < ids.length; i += size) {
-    for (const [k, v] of await fetchChunk(ids.slice(i, i + size))) merged.set(k, v);
-  }
-  return merged;
-}
-
 export async function searchProductsAction(query: string, locationId: string) {
   const user = await requireUser();
 
@@ -142,31 +131,92 @@ export async function searchProductsAction(query: string, locationId: string) {
  */
 export async function getPosProductsAction(locationId: string) {
   const user = await requireUser();
+  const { businessId } = user;
 
-  // Tout le stock de la boutique, page par page : un plafond fixe (anciennement
-  // 300 lignes, sans ordre) rendait des produits pourtant en stock introuvables
-  // à la caisse, puisque la recherche filtre cette liste côté navigateur.
+  // Tout part en une seule vague : le stock (plusieurs pages à la fois),
+  // les conditionnements, les paliers de prix et les dates de péremption de
+  // tout le commerce, ainsi que les vérifications de modules. Auparavant, ces
+  // compléments étaient lus par paquets de 150 produits, l'un après l'autre,
+  // avec une vérification de module à chaque paquet : des dizaines
+  // d'allers-retours en file pour un catalogue de quelques milliers de
+  // produits, d'où l'attente avant l'affichage des produits à la caisse.
+  //
+  // Tout le stock de la boutique : un plafond fixe (anciennement 300 lignes,
+  // sans ordre) rendait des produits pourtant en stock introuvables à la
+  // caisse, puisque la recherche filtre cette liste côté navigateur.
   type StockRow = { quantity: number; product: ProductRow };
-  const rows = await fetchAllPages<StockRow>(
-    (from, to) =>
-      supabase
-        .from("product_stocks")
-        .select(`quantity, product:products!inner(${PRODUCT_FIELDS})`)
-        .eq("location_id", locationId)
-        .gt("quantity", 0)
-        .eq("products.business_id", user.businessId)
-        .eq("products.active", true)
-        .order("product_id", { ascending: true })
-        .range(from, to) as unknown as PromiseLike<{ data: StockRow[] | null; error: { message: string } | null }>,
-    { maxRows: 10000 }
-  );
+  const expiryApplies = EXPIRY_ACTIVITIES.includes(user.business.activityKey ?? "");
+  const [rows, packagingEnabled, priceTiersEnabled, expiryEnabled, packagingRows, priceTierRows, expiryRows] =
+    await Promise.all([
+      fetchAllPagesConcurrently<StockRow>(
+        (from, to) =>
+          supabase
+            .from("product_stocks")
+            .select(`quantity, product:products!inner(${PRODUCT_FIELDS})`)
+            .eq("location_id", locationId)
+            .gt("quantity", 0)
+            .eq("products.business_id", businessId)
+            .eq("products.active", true)
+            .order("product_id", { ascending: true })
+            .range(from, to) as unknown as PromiseLike<{ data: StockRow[] | null; error: { message: string } | null }>,
+        { maxRows: 10000 }
+      ),
+      isPackagingUnitsModuleEnabled(businessId),
+      isPriceTiersModuleEnabled(businessId),
+      expiryApplies ? isExpiryModuleEnabled(businessId) : false,
+      fetchAllPagesConcurrently<PackagingUnitOption>((from, to) =>
+        supabase
+          .from("product_packaging_units")
+          .select("id, productId:product_id, name, multiplier, salePrice:sale_price, barcode")
+          .eq("business_id", businessId)
+          .order("id", { ascending: true })
+          .range(from, to) as unknown as PromiseLike<{ data: PackagingUnitOption[] | null; error: { message: string } | null }>
+      ),
+      fetchAllPagesConcurrently<PriceTierOption & { productId: string }>((from, to) =>
+        supabase
+          .from("product_price_tiers")
+          .select("id, productId:product_id, minQuantity:min_quantity, unitPrice:unit_price")
+          .eq("business_id", businessId)
+          .order("id", { ascending: true })
+          .range(from, to) as unknown as PromiseLike<{
+          data: (PriceTierOption & { productId: string })[] | null;
+          error: { message: string } | null;
+        }>
+      ),
+      expiryApplies
+        ? fetchAllPagesConcurrently<{ productId: string; expiryDate: string }>((from, to) =>
+            supabase
+              .from("product_expiry_batches")
+              .select("productId:product_id, expiryDate:expiry_date")
+              .eq("business_id", businessId)
+              .eq("location_id", locationId)
+              .order("expiry_date", { ascending: true })
+              .order("id", { ascending: true })
+              .range(from, to) as unknown as PromiseLike<{
+              data: { productId: string; expiryDate: string }[] | null;
+              error: { message: string } | null;
+            }>
+          )
+        : [],
+    ]);
 
-  const productIds = rows.map((r) => r.product.id);
-  const [packagingByProduct, priceTiersByProduct, nearestExpiryByProduct] = await Promise.all([
-    mergeChunks(productIds, (ids) => fetchPackagingUnitsByProduct(user.businessId, ids)),
-    mergeChunks(productIds, (ids) => fetchPriceTiersByProduct(user.businessId, ids)),
-    mergeChunks(productIds, (ids) => getNearestExpiryByProduct(user.businessId, locationId, ids, user.business.activityKey)),
-  ]);
+  const packagingByProduct = new Map<string, PackagingUnitOption[]>();
+  if (packagingEnabled) {
+    for (const row of packagingRows) packagingByProduct.set(row.productId, [...(packagingByProduct.get(row.productId) ?? []), row]);
+  }
+  const priceTiersByProduct = new Map<string, PriceTierOption[]>();
+  if (priceTiersEnabled) {
+    for (const { productId, ...tier } of priceTierRows) {
+      priceTiersByProduct.set(productId, [...(priceTiersByProduct.get(productId) ?? []), tier as PriceTierOption]);
+    }
+  }
+  // Lots triés par date de péremption croissante : le premier vu par produit
+  // est le plus proche (même règle que getNearestExpiryByProduct).
+  const nearestExpiryByProduct = new Map<string, string>();
+  if (expiryEnabled) {
+    for (const row of expiryRows) if (!nearestExpiryByProduct.has(row.productId)) nearestExpiryByProduct.set(row.productId, row.expiryDate);
+  }
+
   return rows
     .map((s) => ({
       ...s.product,

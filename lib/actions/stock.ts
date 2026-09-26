@@ -204,17 +204,24 @@ export async function bulkFillStockAction(
     .maybeSingle();
   if (!location) return { error: "Boutique introuvable" };
 
+  // Par paquets de 150 : un seul .in() avec des centaines d'identifiants
+  // dépasse la longueur d'URL acceptée par PostgREST — la requête échouait,
+  // aucun produit n'était reconnu et rien n'était mis à jour, sans message.
   const productIds = parsed.data.entries.map((e) => e.productId);
-  const { data: products } = await supabase
-    .from("products")
-    .select("id")
-    .in("id", productIds)
-    .eq("business_id", user.businessId);
-  const validProductIds = new Set((products ?? []).map((p) => p.id as string));
+  const chunks: string[][] = [];
+  for (let i = 0; i < productIds.length; i += 150) chunks.push(productIds.slice(i, i + 150));
+  const chunkResults = await Promise.all(
+    chunks.map((ids) => supabase.from("products").select("id").in("id", ids).eq("business_id", user.businessId))
+  );
+  const failed = chunkResults.find((r) => r.error);
+  if (failed?.error) return { error: `Vérification des produits impossible : ${failed.error.message}` };
+  const validProductIds = new Set(chunkResults.flatMap((r) => (r.data ?? []).map((p) => p.id as string)));
 
+  // Plusieurs produits traités à la fois (adjust_stock est atomique côté
+  // base) : un par un, 500 produits demandaient plusieurs minutes.
   let updated = 0;
-  for (const entry of parsed.data.entries) {
-    if (!validProductIds.has(entry.productId)) continue;
+  const fillOne = async (entry: (typeof parsed.data.entries)[number]) => {
+    if (!validProductIds.has(entry.productId)) return;
 
     let delta: number;
     if (parsed.data.mode === "add") {
@@ -223,7 +230,7 @@ export async function bulkFillStockAction(
       const current = await getStockQuantity(entry.productId, location.id as string);
       delta = entry.quantity - current;
     }
-    if (delta === 0) continue;
+    if (delta === 0) return;
 
     const { oldStock, newStock } = await adjustStock({ productId: entry.productId, locationId: location.id as string, delta });
     await supabase.from("stock_movements").insert({
@@ -239,7 +246,13 @@ export async function bulkFillStockAction(
       user_id: user.id,
     });
     updated += 1;
-  }
+  };
+  const queue = [...parsed.data.entries];
+  await Promise.all(
+    Array.from({ length: Math.min(8, queue.length) }, async () => {
+      for (let entry = queue.shift(); entry; entry = queue.shift()) await fillOne(entry);
+    })
+  );
 
   await logAction({
     businessId: user.businessId,
