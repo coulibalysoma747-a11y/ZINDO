@@ -1,10 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Input } from "@/components/ui/Input";
 import { PACKAGING_TYPE_PRESETS } from "@/lib/packaging-presets";
 
-/** Puces de types de conditionnement courants + champ libre — un seul input "name" au final, pour rester une simple valeur texte côté serveur. */
+/** Puces de types de conditionnement courants + « Autre » (champ libre) — un seul input "name" au final, pour rester une simple valeur texte côté serveur. */
 export function PackagingTypePicker({
   name,
   id,
@@ -15,9 +15,11 @@ export function PackagingTypePicker({
   defaultValue?: string;
 }) {
   const [value, setValue] = useState(defaultValue);
+  const wrapperRef = useRef<HTMLDivElement>(null);
+  const isCustom = value !== "" && !(PACKAGING_TYPE_PRESETS as readonly string[]).includes(value);
 
   return (
-    <div className="space-y-2">
+    <div ref={wrapperRef} className="space-y-2">
       <div className="flex flex-wrap gap-1.5">
         {PACKAGING_TYPE_PRESETS.map((preset) => (
           <button
@@ -33,6 +35,20 @@ export function PackagingTypePicker({
             {preset}
           </button>
         ))}
+        <button
+          type="button"
+          onClick={() => {
+            setValue("");
+            wrapperRef.current?.querySelector("input")?.focus();
+          }}
+          className={`rounded-full border px-2.5 py-1 text-xs font-medium transition-colors ${
+            isCustom
+              ? "border-zindo-green-500 bg-zindo-green-50 text-zindo-green-700"
+              : "border-zinc-200 text-zinc-600 hover:bg-zinc-50"
+          }`}
+        >
+          Autre
+        </button>
       </div>
       <Input
         id={id}

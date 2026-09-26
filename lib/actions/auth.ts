@@ -10,6 +10,7 @@ import { getCurrentUser } from "@/lib/auth";
 import {
   createSession,
   destroySession,
+  getSession,
   createPending2FASession,
   getPending2FASession,
   destroyPending2FASession,
@@ -23,6 +24,7 @@ import {
 import { verifyTotp, consumeBackupCode } from "@/lib/totp";
 import type { Role } from "@/lib/db-types";
 import { attachReferralFromSignup } from "@/lib/referral-signup";
+import { getSubscriptionState } from "@/lib/subscription";
 import { isCountryCode, countryNameFr } from "@/lib/countries";
 
 export type ActionState = { error?: string } | undefined;
@@ -356,9 +358,18 @@ export async function registerAction(
 }
 
 export async function logoutAction() {
+  // Le rappel des formules d'abonnement ne s'affiche à la déconnexion qu'aux
+  // commerces qui n'ont pas payé : un abonné dont la période payée est en
+  // cours retourne directement à la connexion (demande du propriétaire).
+  let hasPaid = false;
+  const session = await getSession();
+  if (session?.businessId) {
+    try {
+      hasPaid = (await getSubscriptionState(session.businessId)).status === "ACTIVE";
+    } catch (e) {
+      console.error("[logoutAction] Lecture de l'abonnement impossible :", e);
+    }
+  }
   await destroySession();
-  // Redirige vers la page de tarifs plutôt que /login directement — la
-  // demande explicite du propriétaire est que le rappel des formules
-  // d'abonnement s'affiche systématiquement à la déconnexion.
-  redirect("/tarifs");
+  redirect(hasPaid ? "/login" : "/tarifs");
 }
