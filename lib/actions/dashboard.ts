@@ -164,7 +164,7 @@ type SaleAgg = {
   items: Array<{ productId: string; quantity: number; total: number; unitPrice: number; unitCost: number }>;
 };
 
-type PaymentAgg = { amount: number; method: string; userId: string };
+type PaymentAgg = { amount: number; method: string; userId: string; saleId: string | null };
 
 async function fetchSalesForPeriod(businessId: string, locationId: string, from: Date, to: Date): Promise<SaleAgg[]> {
   const ITEMS_SELECT = "items:sale_items(productId:product_id, quantity, total, unitPrice:unit_price, unitCost:unit_cost)";
@@ -204,7 +204,7 @@ async function fetchSalesForPeriod(businessId: string, locationId: string, from:
 async function fetchPaymentsForPeriod(businessId: string, from: Date, to: Date): Promise<PaymentAgg[]> {
   const { data } = await supabase
     .from("customer_payments")
-    .select("amount, method, userId:user_id, customer:customers!inner(businessId:business_id)")
+    .select("amount, method, userId:user_id, saleId:sale_id, customer:customers!inner(businessId:business_id)")
     .eq("customers.business_id", businessId)
     .gte("created_at", from.toISOString())
     .lt("created_at", to.toISOString());
@@ -329,7 +329,7 @@ function buildOverview(
 export async function getDashboardOverview(businessId: string, locationId: string, period: Period) {
   const { from, to, prevFrom, prevTo } = getPeriodRange(period);
 
-  const [sales, payments, expenses, purchases, prevSales, prevPayments, prevExpenses, prevPurchases, stockReport] =
+  const [sales, allPayments, expenses, purchases, prevSales, allPrevPayments, prevExpenses, prevPurchases, stockReport] =
     await Promise.all([
       fetchSalesForPeriod(businessId, locationId, from, to),
       fetchPaymentsForPeriod(businessId, from, to),
@@ -341,6 +341,15 @@ export async function getDashboardOverview(businessId: string, locationId: strin
       sumPurchases(businessId, locationId, prevFrom, prevTo),
       getStockReport(businessId, locationId),
     ]);
+
+  // Un remboursement imputé sur une vente de la même période est déjà dans
+  // son montant payé (sale.amount_paid) : ne pas le compter une seconde fois.
+  const withoutSalesOf = (list: PaymentAgg[], periodSales: SaleAgg[]) => {
+    const ids = new Set(periodSales.map((s) => s.id));
+    return list.filter((p) => !p.saleId || !ids.has(p.saleId));
+  };
+  const payments = withoutSalesOf(allPayments, sales);
+  const prevPayments = withoutSalesOf(allPrevPayments, prevSales);
 
   const current = await summarize(sales, payments, expenses, purchases);
   const previous = await summarize(prevSales, prevPayments, prevExpenses, prevPurchases);

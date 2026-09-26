@@ -197,12 +197,48 @@ export async function recordCustomerPaymentAction(
     .maybeSingle();
   if (!customer) return { error: "Client introuvable" };
 
-  const { error } = await supabase
-    .from("customer_payments")
-    .insert({ customer_id: customerId, amount, method, note, user_id: user.id });
+  // Le remboursement solde les ventes à crédit du client, de la plus
+  // ancienne à la plus récente : sans ça, la dette (calculée partout à
+  // partir de sale.total - sale.amount_paid : fiche client, Crédits, refus
+  // de vente si dette, plafond de crédit) ne baissait jamais. Même logique
+  // que payInstallmentAction (lib/actions/installments.ts). Une ligne de
+  // remboursement par vente soldée, avec son sale_id : le tableau de bord
+  // s'en sert pour ne pas compter deux fois le même argent.
+  const { data: openSales } = await supabase
+    .from("sales")
+    .select("id, total, amountPaid:amount_paid")
+    .eq("business_id", user.businessId)
+    .eq("customer_id", customerId)
+    .in("status", ["CREDIT", "PARTIELLE"])
+    .order("created_at", { ascending: true });
+  const allocations: { saleId: string | null; amount: number; newAmountPaid?: number; total?: number }[] = [];
+  let left = amount;
+  for (const sale of (openSales ?? []) as Array<{ id: string; total: number; amountPaid: number }>) {
+    if (left <= 0) break;
+    const due = Math.max(0, sale.total - sale.amountPaid);
+    if (due <= 0) continue;
+    const paid = Math.min(due, left);
+    left = Math.round((left - paid) * 100) / 100;
+    allocations.push({ saleId: sale.id, amount: paid, newAmountPaid: Math.round((sale.amountPaid + paid) * 100) / 100, total: sale.total });
+  }
+  // Trop-perçu (ou aucune vente à crédit) : gardé tel quel, sans vente liée.
+  if (left > 0) allocations.push({ saleId: null, amount: left });
+
+  const { error } = await supabase.from("customer_payments").insert(
+    allocations.map((a) => ({ customer_id: customerId, sale_id: a.saleId, amount: a.amount, method, note, user_id: user.id }))
+  );
   if (error) {
     console.error("[recordCustomerPaymentAction] Échec de l'enregistrement :", error.message);
     return { error: "Impossible d'enregistrer le paiement" };
+  }
+
+  for (const a of allocations) {
+    if (!a.saleId || a.newAmountPaid === undefined || a.total === undefined) continue;
+    const { error: saleError } = await supabase
+      .from("sales")
+      .update({ amount_paid: a.newAmountPaid, status: a.newAmountPaid >= a.total ? "PAYEE" : "PARTIELLE" })
+      .eq("id", a.saleId);
+    if (saleError) console.error("[recordCustomerPaymentAction] Échec de l'imputation sur la vente :", saleError.message);
   }
 
   await logAction({
@@ -216,5 +252,6 @@ export async function recordCustomerPaymentAction(
 
   revalidatePath(`/clients/${customerId}`);
   revalidatePath("/credits");
+  revalidatePath("/ventes/historique");
   return { success: "Paiement enregistré" };
 }
