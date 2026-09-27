@@ -4,7 +4,9 @@ import { Package2, MessageCircle } from "lucide-react";
 import { requirePermission } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
 import { getBusinessSettings } from "@/lib/business-settings";
-import { getShipmentsAction } from "@/lib/actions/shipments";
+import { getShipmentsAction, deleteShipmentAction } from "@/lib/actions/shipments";
+import { isExtendedEditEnabled } from "@/lib/extended-edit";
+import { DeleteRedirectButton } from "@/components/ui/DeleteRedirectButton";
 import { formatMoney, formatDate } from "@/lib/format";
 import { toWhatsAppDigits } from "@/lib/countries";
 import { Card, CardBody } from "@/components/ui/Card";
@@ -22,7 +24,7 @@ export default async function ShipmentsPage() {
   if (!businessSettings.modulesEnabled.shipments) notFound();
 
   const currency = user.business.currency;
-  const shipments = await getShipmentsAction();
+  const [shipments, extendedEdit] = await Promise.all([getShipmentsAction(), isExtendedEditEnabled(user.businessId)]);
   const totalCost = shipments.reduce((s, sh) => s + sh.cost, 0);
 
   return (
@@ -83,6 +85,14 @@ export default async function ShipmentsPage() {
                     <Badge tone={STATUS_TONE[sh.status]}>{STATUS_LABELS[sh.status]}</Badge>
                   </div>
                   <ShipmentStatusButtons shipmentId={sh.id} status={sh.status} />
+                  {extendedEdit && (
+                    <DeleteRedirectButton
+                      action={deleteShipmentAction.bind(null, sh.id)}
+                      redirectTo="/expeditions"
+                      confirmTitle="Supprimer l'expédition"
+                      confirmMessage={`Supprimer l'expédition ${sh.number} ? Le stock n'est pas touché.`}
+                    />
+                  )}
                   {waHref && (
                     <a
                       href={waHref}

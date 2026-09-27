@@ -3,7 +3,9 @@ import { Send, MessageCircle } from "lucide-react";
 import { requirePermission } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
 import { getBusinessSettings } from "@/lib/business-settings";
-import { getPickupsAction } from "@/lib/actions/pickups";
+import { getPickupsAction, deletePickupAction } from "@/lib/actions/pickups";
+import { isExtendedEditEnabled } from "@/lib/extended-edit";
+import { DeleteRedirectButton } from "@/components/ui/DeleteRedirectButton";
 import { formatMoney, formatDate } from "@/lib/format";
 import { toWhatsAppDigits } from "@/lib/countries";
 import { Card, CardBody } from "@/components/ui/Card";
@@ -19,7 +21,7 @@ export default async function PickupsPage() {
   if (!businessSettings.modulesEnabled.pickups) notFound();
 
   const currency = user.business.currency;
-  const pickups = await getPickupsAction();
+  const [pickups, extendedEdit] = await Promise.all([getPickupsAction(), isExtendedEditEnabled(user.businessId)]);
   const totalDue = pickups.reduce((s, p) => s + Math.max(0, p.total - p.amountPaid), 0);
 
   return (
@@ -79,6 +81,15 @@ export default async function PickupsPage() {
                     )}
                   </div>
                   {remaining > 0 && <PickupPaymentButton pickupId={p.id} remaining={remaining} />}
+                  {extendedEdit && (
+                    <DeleteRedirectButton
+                      action={deletePickupAction.bind(null, p.id)}
+                      redirectTo="/enlevements"
+                      label="Annuler"
+                      confirmTitle="Annuler l'enlèvement"
+                      confirmMessage={`Annuler l'enlèvement ${p.number} de ${p.partnerName} ? Les ${p.quantity} article(s) reviennent dans votre stock et les paiements enregistrés sont effacés.`}
+                    />
+                  )}
                   {remaining > 0 && waHref && (
                     <a
                       href={waHref}

@@ -182,3 +182,63 @@ export async function recordPickupPaymentAction(pickupId: string, amount: number
   revalidatePath("/enlevements");
   return { success: "Paiement enregistré" };
 }
+
+/**
+ * Annule un enlèvement saisi par erreur (flag modifier_supprimer_partout) :
+ * la marchandise revient dans le stock de la boutique, avec un mouvement
+ * « Correction » pour garder la trace, puis l'enlèvement et ses paiements
+ * sont effacés.
+ */
+export async function deletePickupAction(pickupId: string): Promise<{ error?: string; success?: string }> {
+  const user = await requirePermission(PERMISSIONS.PICKUPS_MANAGE);
+  const { data: pickup } = await supabase
+    .from("pickups")
+    .select("id, number, partnerName:partner_name, productId:product_id, locationId:location_id, quantity")
+    .eq("id", pickupId)
+    .eq("business_id", user.businessId)
+    .maybeSingle();
+  if (!pickup) return { error: "Enlèvement introuvable" };
+  const number = pickup.number as string;
+
+  if (pickup.productId) {
+    const { oldStock, newStock } = await adjustStock({
+      productId: pickup.productId as string,
+      locationId: pickup.locationId as string,
+      delta: pickup.quantity as number,
+    });
+    const { error: movementError } = await supabase.from("stock_movements").insert({
+      business_id: user.businessId,
+      location_id: pickup.locationId,
+      product_id: pickup.productId,
+      direction: "IN",
+      reason: "CORRECTION",
+      quantity: pickup.quantity,
+      old_stock: oldStock,
+      new_stock: newStock,
+      user_id: user.id,
+      note: `Annulation de l'enlèvement ${number}`,
+    });
+    if (movementError) console.error("[deletePickupAction] Échec de l'écriture du mouvement de stock :", movementError.message);
+  }
+
+  await supabase.from("pickup_payments").delete().eq("pickup_id", pickupId);
+  const { error } = await supabase.from("pickups").delete().eq("id", pickupId);
+  if (error) {
+    console.error("[deletePickupAction] Échec de la suppression :", error.message);
+    return { error: "Le stock a été remis, mais l'enlèvement n'a pas pu être supprimé" };
+  }
+
+  await logAction({
+    businessId: user.businessId,
+    userId: user.id,
+    action: "DELETE",
+    entity: "Pickup",
+    entityId: pickupId,
+    details: `Enlèvement ${number} (${pickup.partnerName as string}) annulé, marchandise remise en stock`,
+  });
+
+  revalidatePath("/enlevements");
+  revalidatePath("/stock");
+  revalidatePath("/produits");
+  return { success: "Enlèvement annulé" };
+}

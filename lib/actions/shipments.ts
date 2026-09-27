@@ -132,3 +132,36 @@ export async function updateShipmentStatusAction(shipmentId: string, status: Shi
   revalidatePath("/expeditions");
   return { success: true };
 }
+
+/**
+ * Supprime une expédition saisie par erreur (flag modifier_supprimer_partout).
+ * Une expédition ne touche jamais au stock : rien d'autre à corriger.
+ */
+export async function deleteShipmentAction(shipmentId: string): Promise<{ error?: string; success?: string }> {
+  const user = await requirePermission(PERMISSIONS.SHIPMENTS_MANAGE);
+  const { data: shipment } = await supabase
+    .from("shipments")
+    .select("id, number")
+    .eq("id", shipmentId)
+    .eq("business_id", user.businessId)
+    .maybeSingle();
+  if (!shipment) return { error: "Expédition introuvable" };
+
+  const { error } = await supabase.from("shipments").delete().eq("id", shipmentId);
+  if (error) {
+    console.error("[deleteShipmentAction] Échec de la suppression :", error.message);
+    return { error: "Impossible de supprimer l'expédition" };
+  }
+
+  await logAction({
+    businessId: user.businessId,
+    userId: user.id,
+    action: "DELETE",
+    entity: "Shipment",
+    entityId: shipmentId,
+    details: `Expédition ${shipment.number as string} supprimée`,
+  });
+
+  revalidatePath("/expeditions");
+  return { success: "Expédition supprimée" };
+}
