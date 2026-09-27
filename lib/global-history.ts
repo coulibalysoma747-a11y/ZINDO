@@ -8,7 +8,7 @@ import { supabase } from "@/lib/supabase";
  */
 export type HistoryRow = {
   date: Date;
-  type: "Vente" | "Achat" | "Entrée" | "Sortie" | "Crédit remboursé" | "Paiement fournisseur";
+  type: "Vente" | "Vente annulée" | "Achat" | "Entrée" | "Sortie" | "Crédit remboursé" | "Paiement fournisseur";
   description: string;
   location: string;
   amount: number;
@@ -17,7 +17,7 @@ export type HistoryRow = {
 };
 
 export const TYPE_TO_FILTER: Record<string, HistoryRow["type"][]> = {
-  ventes: ["Vente"],
+  ventes: ["Vente", "Vente annulée"],
   achats: ["Achat"],
   entrees: ["Entrée"],
   sorties: ["Sortie"],
@@ -69,7 +69,7 @@ export async function loadGlobalHistory(
     applyDateFilter(
       supabase
         .from("sales")
-        .select("createdAt:created_at, number, total, location:locations(name), customer:customers(name), user:users(firstName:first_name, lastName:last_name)")
+        .select("createdAt:created_at, number, total, status, location:locations(name), customer:customers(name), user:users(firstName:first_name, lastName:last_name)")
         .eq("business_id", businessId)
         .order("created_at", { ascending: false })
         .limit(limitPerSource),
@@ -123,6 +123,7 @@ export async function loadGlobalHistory(
     createdAt: string;
     number: string;
     total: number;
+    status: string;
     location: { name: string };
     customer: { name: string } | null;
     user: { firstName: string; lastName: string };
@@ -161,12 +162,14 @@ export async function loadGlobalHistory(
     ...sales.map(
       (s): HistoryRow => ({
         date: new Date(s.createdAt),
-        type: "Vente",
+        // Une vente annulée reste visible dans le journal, mais sous un autre
+        // type pour ne pas gonfler le total des ventes.
+        type: s.status === "ANNULEE" ? "Vente annulée" : "Vente",
         description: `${s.number} — ${s.customer?.name ?? "Client de passage"}`,
         location: s.location.name,
         amount: s.total,
         user: `${s.user.firstName} ${s.user.lastName}`,
-        tone: "emerald",
+        tone: s.status === "ANNULEE" ? "zinc" : "emerald",
       })
     ),
     ...purchases.map(
