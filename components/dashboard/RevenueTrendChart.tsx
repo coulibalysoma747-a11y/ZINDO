@@ -51,9 +51,9 @@ export function RevenueTrendChart({ values, currency }: { values: number[]; curr
 
       {points.map((p, i) => (
         <circle key={i} cx={p.x} cy={p.y} r={i === points.length - 1 ? 4 : 3} fill={LINE_COLOR} stroke="#fcfcfb" strokeWidth={2}>
-          <title>
-            {dayLabels[i]} — {formatMoney(p.value, currency)}
-          </title>
+          {/* Un seul nœud texte : plusieurs morceaux dans <title> sont fusionnés
+              par le navigateur, d'où une erreur d'hydratation React. */}
+          <title>{`${dayLabels[i]} — ${formatMoney(p.value, currency)}`}</title>
         </circle>
       ))}
 

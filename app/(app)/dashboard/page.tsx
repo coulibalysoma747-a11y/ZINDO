@@ -14,6 +14,8 @@ import { HistoryFilters } from "@/components/history/HistoryFilters";
 import { RevenueTrendChart } from "@/components/dashboard/RevenueTrendChart";
 import { PaymentBreakdownDetail } from "@/components/dashboard/PaymentBreakdownDetail";
 import { MobileHome } from "./MobileHome";
+import { FirstStepsCard } from "@/components/dashboard/FirstStepsCard";
+import { isFirstStepsEnabled, getFirstSteps } from "@/lib/first-steps";
 import {
   Wallet,
   Percent,
@@ -43,11 +45,11 @@ const DASHBOARD_PERIODS = [
 export default async function DashboardPage({
   searchParams,
 }: {
-  searchParams: Promise<{ periode?: string }>;
+  searchParams: Promise<{ periode?: string; apercu?: string }>;
 }) {
   const user = await requireUser();
   const currency = user.business.currency;
-  const { periode } = await searchParams;
+  const { periode, apercu } = await searchParams;
   const period = periode === "semaine" || periode === "mois" ? periode : "aujourdhui";
   const currentLocation = await getCurrentLocation(user.businessId);
 
@@ -91,6 +93,13 @@ export default async function DashboardPage({
     getBusinessSettings(user.businessId),
   ]);
 
+  // Carte « Premiers pas » : seulement pour l'administrateur, qui est
+  // celui qui installe le commerce.
+  const firstSteps =
+    user.role === "ADMIN" && (await isFirstStepsEnabled(user.businessId))
+      ? await getFirstSteps(user.businessId, apercu === "premiers-pas")
+      : null;
+
   const totalStockValue = locationsOverview.reduce((s, l) => s + l.stockValue, 0);
 
   // "Montrer mes chiffres de vente à mes employés" (Paramètres) : un non-admin
@@ -105,6 +114,8 @@ export default async function DashboardPage({
 
   return (
     <div className="space-y-6">
+      {firstSteps && <FirstStepsCard steps={firstSteps} />}
+
       {/* Accueil (hero + raccourcis + alertes), calqué sur la maquette fournie
           par l'utilisateur — commun au téléphone et à l'ordinateur. Les stats
           détaillées et tableaux ci-dessous n'apparaissent qu'à partir de sm,
