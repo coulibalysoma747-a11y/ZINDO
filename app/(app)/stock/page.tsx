@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/Badge";
 import { EmptyState } from "@/components/ui/Empty";
 import { ButtonLink } from "@/components/ui/Button";
 import { isDocumentEnabled } from "@/lib/documents";
+import { isMobilePagesEnabled } from "@/lib/mobile-pages";
 import { HistoryFilters } from "@/components/history/HistoryFilters";
 import { Table, TableHead, TableBody, TableRow, TableHeaderCell, TableCell } from "@/components/ui/Table";
 
@@ -35,12 +36,13 @@ export default async function StockPage({
 }) {
   const user = await requirePermission(PERMISSIONS.STOCK_VIEW);
   const { periode } = await searchParams;
-  const [businessSettings, stockPdf] = await Promise.all([
+  const [businessSettings, stockPdf, mobileLayout] = await Promise.all([
     getBusinessSettings(user.businessId),
     // L'état du stock montre les prix d'achat et la valeur : réservé à qui voit les rapports.
     (async () =>
       (await isDocumentEnabled("pdf_etat_stock", user.businessId)) &&
       hasPermission(user.businessId, user.role, PERMISSIONS.REPORTS_VIEW, user.id))(),
+    isMobilePagesEnabled(user.businessId),
   ]);
   const showFasoSync =
     (await isFeatureEnabled("synchro_fasostock_fichier", user.businessId)) &&
@@ -84,6 +86,18 @@ export default async function StockPage({
           <p className="text-sm text-zinc-500">{movements.length} mouvement(s)</p>
         </div>
         <div className="flex flex-wrap gap-2">
+          {/* Téléphone (flag pages_mobile) : les deux actions du quotidien en
+              premier et en grand, au lieu d'arriver en gris après les PDF. */}
+          {mobileLayout && (
+            <div className="grid w-full grid-cols-2 gap-2 sm:hidden">
+              <ButtonLink href="/stock/entree" className="justify-center py-3 text-base">
+                <ArrowDownCircle className="h-5 w-5" /> Entrée
+              </ButtonLink>
+              <ButtonLink href="/stock/sortie" variant="outline" className="justify-center py-3 text-base">
+                <ArrowUpCircle className="h-5 w-5" /> Sortie
+              </ButtonLink>
+            </div>
+          )}
           {stockPdf && (
             <ButtonLink href="/stock/etat?retour=stock" variant="outline">
               <FileText className="h-4 w-4" /> État du stock PDF
@@ -99,12 +113,14 @@ export default async function StockPage({
               <RefreshCw className="h-4 w-4" /> Synchro FasoStock
             </ButtonLink>
           )}
-          <ButtonLink href="/stock/entree" variant="secondary">
-            <ArrowDownCircle className="h-4 w-4" /> Entrée
-          </ButtonLink>
-          <ButtonLink href="/stock/sortie" variant="secondary">
-            <ArrowUpCircle className="h-4 w-4" /> Sortie
-          </ButtonLink>
+          <span className={mobileLayout ? "hidden gap-2 sm:flex" : "flex gap-2"}>
+            <ButtonLink href="/stock/entree" variant="secondary">
+              <ArrowDownCircle className="h-4 w-4" /> Entrée
+            </ButtonLink>
+            <ButtonLink href="/stock/sortie" variant="secondary">
+              <ArrowUpCircle className="h-4 w-4" /> Sortie
+            </ButtonLink>
+          </span>
         </div>
       </div>
 

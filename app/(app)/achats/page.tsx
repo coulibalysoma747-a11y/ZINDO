@@ -10,6 +10,10 @@ import { Badge } from "@/components/ui/Badge";
 import { EmptyState } from "@/components/ui/Empty";
 import { ButtonLink } from "@/components/ui/Button";
 import { Table, TableHead, TableBody, TableRow, TableHeaderCell, TableCell } from "@/components/ui/Table";
+import { isMobilePagesEnabled } from "@/lib/mobile-pages";
+
+// Libellés affichés : le code brut (« RECUE ») apparaissait tel quel.
+const STATUS_LABELS: Record<string, string> = { RECUE: "Reçue", PARTIELLE: "Partielle", COMMANDEE: "Commandée" };
 
 type PurchaseRow = {
   id: string;
@@ -36,7 +40,10 @@ export default async function PurchasesPage() {
   const purchases = (data ?? []) as unknown as PurchaseRow[];
 
   const currency = user.business.currency;
-  const ordersEnabled = await isPurchaseOrdersModuleEnabled(user.businessId);
+  const [ordersEnabled, mobileCards] = await Promise.all([
+    isPurchaseOrdersModuleEnabled(user.businessId),
+    isMobilePagesEnabled(user.businessId),
+  ]);
 
   return (
     <div className="space-y-6">
@@ -68,7 +75,37 @@ export default async function PurchasesPage() {
           }
         />
       ) : (
-        <Card className="overflow-x-auto">
+        <>
+        {/* Téléphone (flag pages_mobile) : le tableau à 7 colonnes coupait le
+            numéro en deux et cachait le fournisseur et le montant. */}
+        {mobileCards && (
+          <div className="space-y-2 sm:hidden">
+            {purchases.map((p) => {
+              const remaining = Math.max(0, p.total - p.amountPaid);
+              return (
+                <Link key={p.id} href={`/achats/${p.id}`} className="block">
+                  <Card className="flex items-center justify-between gap-3 p-3">
+                    <div className="min-w-0">
+                      <p className="truncate font-semibold text-zinc-900 dark:text-slate-100">{p.supplier.name}</p>
+                      <p className="text-xs text-zinc-500">
+                        {p.number} · {formatDateTime(new Date(p.createdAt))}
+                      </p>
+                    </div>
+                    <div className="shrink-0 text-right">
+                      <p className="font-bold tabular-nums text-zinc-900 dark:text-slate-100">{formatMoney(p.total, currency)}</p>
+                      {remaining > 0 ? (
+                        <Badge tone="red">Reste {formatMoney(remaining, currency)}</Badge>
+                      ) : (
+                        <Badge tone="emerald">Payé</Badge>
+                      )}
+                    </div>
+                  </Card>
+                </Link>
+              );
+            })}
+          </div>
+        )}
+        <Card className={`overflow-x-auto ${mobileCards ? "hidden sm:block" : ""}`}>
           <Table className="min-w-[700px]">
             <TableHead>
               <TableRow interactive={false}>
@@ -94,7 +131,7 @@ export default async function PurchasesPage() {
                   <TableCell className="text-zinc-600 dark:text-slate-400">{p.supplier.name}</TableCell>
                   <TableCell>
                     <Badge tone={p.status === "RECUE" ? "emerald" : p.status === "PARTIELLE" ? "amber" : "zinc"}>
-                      {p.status}
+                      {STATUS_LABELS[p.status] ?? p.status}
                     </Badge>
                   </TableCell>
                   <TableCell align="right" className="font-medium text-zinc-900 tabular-nums dark:text-slate-100">
@@ -108,6 +145,7 @@ export default async function PurchasesPage() {
             </TableBody>
           </Table>
         </Card>
+        </>
       )}
     </div>
   );

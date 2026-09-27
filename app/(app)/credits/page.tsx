@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { FileText } from "lucide-react";
+import { FileText, Phone } from "lucide-react";
 import { requirePermission } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
 import { supabase } from "@/lib/supabase";
@@ -9,6 +9,7 @@ import { Card, CardBody, CardHeader } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { EmptyState } from "@/components/ui/Empty";
 import { isDocumentEnabled } from "@/lib/documents";
+import { isMobilePagesEnabled } from "@/lib/mobile-pages";
 import { ButtonLink } from "@/components/ui/Button";
 import { Table, TableHead, TableBody, TableRow, TableHeaderCell, TableCell } from "@/components/ui/Table";
 
@@ -23,9 +24,10 @@ export default async function CreditsPage() {
   const user = await requirePermission(PERMISSIONS.CUSTOMERS_VIEW);
   const currency = user.business.currency;
 
-  const [upcomingInstallments, debtorsPdf] = await Promise.all([
+  const [upcomingInstallments, debtorsPdf, mobileCards] = await Promise.all([
     getUpcomingInstallmentsAction(),
     isDocumentEnabled("pdf_liste_debiteurs", user.businessId),
+    isMobilePagesEnabled(user.businessId),
   ]);
 
   const { data } = await supabase
@@ -88,7 +90,30 @@ export default async function CreditsPage() {
       {rows.length === 0 ? (
         <EmptyState title="Aucun crédit en cours" description="Tous les clients sont à jour." />
       ) : (
-        <Card className="overflow-x-auto">
+        <>
+        {/* Téléphone (flag pages_mobile) : dans le tableau, le montant dû
+            était hors de l'écran, à droite. */}
+        {mobileCards && (
+          <div className="space-y-2 sm:hidden">
+            {rows.map((r) => (
+              <Card key={r.customerId} className="flex items-center justify-between gap-3 p-3">
+                <div className="min-w-0">
+                  <Link href={`/clients/${r.customerId}`} className="block truncate font-semibold text-zinc-900 dark:text-slate-100">
+                    {r.name}
+                  </Link>
+                  <p className="text-xs text-zinc-500">Crédit depuis le {formatDate(r.oldest)}</p>
+                  {r.phone && (
+                    <a href={`tel:${r.phone}`} className="mt-1 inline-flex items-center gap-1 text-sm font-medium text-zindo-green-700">
+                      <Phone className="h-3.5 w-3.5" /> {r.phone}
+                    </a>
+                  )}
+                </div>
+                <p className="shrink-0 text-base font-bold text-red-600">{formatMoney(r.total, currency)}</p>
+              </Card>
+            ))}
+          </div>
+        )}
+        <Card className={`overflow-x-auto ${mobileCards ? "hidden sm:block" : ""}`}>
           <Table className="min-w-[600px]">
             <TableHead>
               <TableRow interactive={false}>
@@ -116,6 +141,7 @@ export default async function CreditsPage() {
             </TableBody>
           </Table>
         </Card>
+        </>
       )}
 
       {upcomingInstallments.length > 0 && (
