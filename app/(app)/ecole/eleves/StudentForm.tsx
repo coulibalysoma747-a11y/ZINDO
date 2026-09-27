@@ -44,7 +44,7 @@ export function StudentForm({
                 ))}
               </Select>
             </Field>
-            <Field label="Matricule (facultatif)" htmlFor="matricule">
+            <Field label="Matricule" htmlFor="matricule" hint={student ? undefined : "Laissez vide : il sera créé automatiquement."}>
               <Input id="matricule" name="matricule" defaultValue={student?.matricule ?? ""} />
             </Field>
             <Field label="Sexe" htmlFor="sex">
@@ -57,11 +57,26 @@ export function StudentForm({
             <Field label="Date de naissance (facultatif)" htmlFor="birthDate">
               <Input id="birthDate" name="birthDate" type="date" defaultValue={student?.birthDate ?? ""} />
             </Field>
+            <Field label="Lieu de naissance (facultatif)" htmlFor="birthPlace">
+              <Input id="birthPlace" name="birthPlace" defaultValue={student?.birthPlace ?? ""} />
+            </Field>
+            <Field label="Adresse / quartier (facultatif)" htmlFor="address">
+              <Input id="address" name="address" defaultValue={student?.address ?? ""} />
+            </Field>
             <Field label="Nom du parent / tuteur" htmlFor="parentName">
               <Input id="parentName" name="parentName" defaultValue={student?.parentName ?? ""} />
             </Field>
             <Field label="Téléphone du parent" htmlFor="parentPhone">
               <Input id="parentPhone" name="parentPhone" type="tel" defaultValue={student?.parentPhone ?? ""} />
+            </Field>
+            <Field label="WhatsApp du parent (si différent)" htmlFor="parentWhatsapp">
+              <Input id="parentWhatsapp" name="parentWhatsapp" type="tel" defaultValue={student?.parentWhatsapp ?? ""} />
+            </Field>
+            <Field label="Lien avec l'élève" htmlFor="parentRelation">
+              <Input id="parentRelation" name="parentRelation" placeholder="Père, mère, oncle, tuteur…" defaultValue={student?.parentRelation ?? ""} />
+            </Field>
+            <Field label="Date d'inscription" htmlFor="enrolledAt">
+              <Input id="enrolledAt" name="enrolledAt" type="date" defaultValue={student?.enrolledAt ?? new Date().toISOString().slice(0, 10)} />
             </Field>
           </div>
 

@@ -105,6 +105,16 @@ export type NavItem = {
     | "students"
     | "school-classes"
     | "school-fees"
+    | "school-dashboard"
+    | "school-subjects"
+    | "teachers"
+    | "attendance"
+    | "grades"
+    | "report-cards"
+    | "timetable"
+    | "lessons"
+    | "homework"
+    | "school-fee-types"
     | "expiry"
     | "repairs"
     | "tables"
@@ -201,6 +211,14 @@ export const NAV_ITEMS: NavItem[] = [
     featureFlag: CONSULTATIONS_FLAG,
   },
   {
+    label: "Tableau de bord école",
+    href: "/ecole/tableau-de-bord",
+    icon: "school-dashboard",
+    permission: PERMISSIONS.SCHOOL_MANAGE,
+    requireActivity: SCHOOL_ACTIVITY_KEY,
+    featureFlag: SCHOOL_FLAG,
+  },
+  {
     label: "Élèves",
     href: "/ecole/eleves",
     icon: "students",
@@ -212,6 +230,78 @@ export const NAV_ITEMS: NavItem[] = [
     label: "Classes",
     href: "/ecole/classes",
     icon: "school-classes",
+    permission: PERMISSIONS.SCHOOL_MANAGE,
+    requireActivity: SCHOOL_ACTIVITY_KEY,
+    featureFlag: SCHOOL_FLAG,
+  },
+  {
+    label: "Matières",
+    href: "/ecole/matieres",
+    icon: "school-subjects",
+    permission: PERMISSIONS.SCHOOL_MANAGE,
+    requireActivity: SCHOOL_ACTIVITY_KEY,
+    featureFlag: SCHOOL_FLAG,
+  },
+  {
+    label: "Enseignants",
+    href: "/ecole/enseignants",
+    icon: "teachers",
+    permission: PERMISSIONS.SCHOOL_MANAGE,
+    requireActivity: SCHOOL_ACTIVITY_KEY,
+    featureFlag: SCHOOL_FLAG,
+  },
+  {
+    label: "Présences",
+    href: "/ecole/presences",
+    icon: "attendance",
+    permission: PERMISSIONS.SCHOOL_TEACH,
+    requireActivity: SCHOOL_ACTIVITY_KEY,
+    featureFlag: SCHOOL_FLAG,
+  },
+  {
+    label: "Notes",
+    href: "/ecole/notes",
+    icon: "grades",
+    permission: PERMISSIONS.SCHOOL_TEACH,
+    requireActivity: SCHOOL_ACTIVITY_KEY,
+    featureFlag: SCHOOL_FLAG,
+  },
+  {
+    label: "Bulletins",
+    href: "/ecole/bulletins",
+    icon: "report-cards",
+    permission: PERMISSIONS.SCHOOL_MANAGE,
+    requireActivity: SCHOOL_ACTIVITY_KEY,
+    featureFlag: SCHOOL_FLAG,
+  },
+  {
+    label: "Emploi du temps",
+    href: "/ecole/emploi-du-temps",
+    icon: "timetable",
+    permission: PERMISSIONS.SCHOOL_TEACH,
+    requireActivity: SCHOOL_ACTIVITY_KEY,
+    featureFlag: SCHOOL_FLAG,
+  },
+  {
+    label: "Leçons",
+    href: "/ecole/lecons",
+    icon: "lessons",
+    permission: PERMISSIONS.SCHOOL_TEACH,
+    requireActivity: SCHOOL_ACTIVITY_KEY,
+    featureFlag: SCHOOL_FLAG,
+  },
+  {
+    label: "Devoirs",
+    href: "/ecole/devoirs",
+    icon: "homework",
+    permission: PERMISSIONS.SCHOOL_TEACH,
+    requireActivity: SCHOOL_ACTIVITY_KEY,
+    featureFlag: SCHOOL_FLAG,
+  },
+  {
+    label: "Frais scolaires",
+    href: "/ecole/frais",
+    icon: "school-fee-types",
     permission: PERMISSIONS.SCHOOL_MANAGE,
     requireActivity: SCHOOL_ACTIVITY_KEY,
     featureFlag: SCHOOL_FLAG,

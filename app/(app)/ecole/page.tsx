@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
 
 export default function SchoolHome() {
-  redirect("/ecole/eleves");
+  redirect("/ecole/tableau-de-bord");
 }

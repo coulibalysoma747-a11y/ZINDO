@@ -35,6 +35,8 @@ export const PERMISSIONS = {
   WARRANTY_MANAGE: "garantie.gerer",
   APPOINTMENTS_MANAGE: "rendez_vous.gerer",
   SCHOOL_MANAGE: "ecole.gerer",
+  /** Espace enseignant : appel, notes, emploi du temps, leçons et devoirs de SES classes (fiche enseignant reliée au compte). */
+  SCHOOL_TEACH: "ecole.enseigner",
 } as const;
 
 export type Permission = (typeof PERMISSIONS)[keyof typeof PERMISSIONS];
@@ -115,5 +117,6 @@ export const PERMISSION_LABELS: Record<string, string> = {
   [PERMISSIONS.CUSTOM_ORDERS_MANAGE]: "Gérer les commandes sur mesure (atelier artisanal)",
   [PERMISSIONS.WARRANTY_MANAGE]: "Gérer les garanties produits (électronique / téléphonie)",
   [PERMISSIONS.APPOINTMENTS_MANAGE]: "Gérer les rendez-vous (cosmétique / beauté)",
-  [PERMISSIONS.SCHOOL_MANAGE]: "Gérer les élèves, les classes et la scolarité (école)",
+  [PERMISSIONS.SCHOOL_MANAGE]: "Diriger l'école : élèves, classes, scolarité, enseignants, bulletins",
+  [PERMISSIONS.SCHOOL_TEACH]: "Enseigner : appel, notes, leçons et devoirs de ses classes (école)",
 };

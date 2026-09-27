@@ -62,7 +62,7 @@ export function ClassesManager({ classes, currency }: { classes: SchoolClass[]; 
           {classes.map((c) => (
             <CardBody key={c.id} className="flex flex-wrap items-center justify-between gap-3">
               <div>
-                <Link href={`/ecole/eleves?classe=${c.id}`} className="font-medium text-zinc-900 hover:underline">
+                <Link href={`/ecole/classes/${c.id}`} className="font-medium text-zinc-900 hover:underline">
                   {c.name}
                 </Link>
                 <p className="text-xs text-zinc-500">

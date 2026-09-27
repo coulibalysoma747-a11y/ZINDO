@@ -4,21 +4,28 @@ import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { supabase } from "@/lib/supabase";
-import { requirePermission } from "@/lib/auth";
-import { PERMISSIONS } from "@/lib/permissions";
-import { registerFeatureFlag, isFeatureEnabled } from "@/lib/feature-flags";
 import { logAction } from "@/lib/audit";
-import { SCHOOL_ACTIVITY_KEY, SCHOOL_FLAG } from "@/lib/nav";
+import { requireSchoolAccess } from "@/lib/school-access";
+import { SCHOOL_FEE_TYPES, type SchoolFeeType } from "@/lib/school-constants";
 
 /**
- * École (étape 1) : classes, élèves et scolarité payée par tranches.
+ * École : classes, élèves, frais scolaires et paiements par tranches.
  * Désactivée par défaut (flag gestion_scolaire) et jamais visible hors de
- * l'activité « ecole » — voir la règle du memory « Feature rollout rule ».
+ * l'activité « ecole » — voir lib/school-access.ts.
  */
 
 export type ActionState = { error?: string; success?: string } | undefined;
 
-export type SchoolClass = { id: string; name: string; level: string | null; annualFee: number; studentCount: number };
+export type SchoolClass = {
+  id: string;
+  name: string;
+  level: string | null;
+  annualFee: number;
+  mainTeacherId: string | null;
+  studentCount: number;
+};
+
+export type FeeLine = { feeType: SchoolFeeType; label: string; due: number; paid: number };
 
 export type StudentRow = {
   id: string;
@@ -27,8 +34,13 @@ export type StudentRow = {
   firstName: string;
   sex: string | null;
   birthDate: string | null;
+  birthPlace: string | null;
+  address: string | null;
   parentName: string | null;
   parentPhone: string | null;
+  parentWhatsapp: string | null;
+  parentRelation: string | null;
+  enrolledAt: string | null;
   customFee: number | null;
   active: boolean;
   classId: string | null;
@@ -36,27 +48,30 @@ export type StudentRow = {
   fee: number;
   paid: number;
   remaining: number;
+  lines: FeeLine[];
 };
 
-export type StudentPayment = { id: string; number: string; amount: number; method: string; note: string | null; paidAt: string };
+export type StudentPayment = {
+  id: string;
+  number: string;
+  amount: number;
+  method: string;
+  feeType: string;
+  note: string | null;
+  paidAt: string;
+  cashier: string | null;
+};
 
-/** Vérifie l'accès au module et renvoie l'utilisateur ; redirige sinon. */
+export type SchoolFee = { id: string; classId: string | null; className: string | null; feeType: SchoolFeeType; label: string; amount: number };
+
 async function requireSchool() {
-  const user = await requirePermission(PERMISSIONS.SCHOOL_MANAGE);
-  await registerFeatureFlag(
-    SCHOOL_FLAG,
-    "Gestion scolaire (école)",
-    "Élèves, classes, frais de scolarité par tranches, impayés et reçus pour les écoles."
-  );
-  if (user.business.activityKey !== SCHOOL_ACTIVITY_KEY) redirect("/dashboard");
-  if (!(await isFeatureEnabled(SCHOOL_FLAG, user.businessId))) redirect("/dashboard");
-  return user;
+  return (await requireSchoolAccess("manage")).user;
 }
 
 export async function getSchoolContextAction() {
   const user = await requireSchool();
   const b = user.business;
-  return { currency: b.currency, businessName: b.name, phone: b.phone ?? null, address: b.address ?? null, city: b.city ?? null, logoUrl: b.logoUrl ?? null };
+  return { currency: b.currency, businessName: b.name, phone: b.phone ?? null, address: b.address ?? null, city: b.city ?? null, country: b.country ?? null, logoUrl: b.logoUrl ?? null };
 }
 
 // ---------------------------------------------------------------------------
@@ -67,7 +82,7 @@ export async function getSchoolClassesAction(): Promise<SchoolClass[]> {
   const user = await requireSchool();
   const { data } = await supabase
     .from("school_classes")
-    .select("id, name, level, annualFee:annual_fee, students(id, active)")
+    .select("id, name, level, annualFee:annual_fee, mainTeacherId:main_teacher_id, students(id, active)")
     .eq("business_id", user.businessId)
     .order("name");
   return ((data ?? []) as unknown as (Omit<SchoolClass, "studentCount"> & { students: { active: boolean }[] })[]).map(
@@ -120,45 +135,131 @@ export async function deleteSchoolClassAction(id: string): Promise<ActionState> 
 }
 
 // ---------------------------------------------------------------------------
+// Frais scolaires (en plus de la scolarité annuelle de la classe)
+// ---------------------------------------------------------------------------
+
+export async function getSchoolFeesAction(): Promise<SchoolFee[]> {
+  const user = await requireSchool();
+  return loadFees(user.businessId);
+}
+
+async function loadFees(businessId: string): Promise<SchoolFee[]> {
+  const { data } = await supabase
+    .from("school_fees")
+    .select("id, classId:class_id, feeType:fee_type, label, amount, class:school_classes(name)")
+    .eq("business_id", businessId)
+    .order("created_at");
+  return ((data ?? []) as unknown as (Omit<SchoolFee, "className"> & { class: { name: string } | null })[]).map(({ class: c, ...f }) => ({
+    ...f,
+    amount: Number(f.amount),
+    className: c?.name ?? null,
+  }));
+}
+
+const FEE_TYPE_KEYS = Object.keys(SCHOOL_FEE_TYPES) as [SchoolFeeType, ...SchoolFeeType[]];
+
+const feeSchema = z.object({
+  label: z.string().trim().min(1, "Le libellé est requis"),
+  feeType: z.enum(FEE_TYPE_KEYS),
+  amount: z.coerce.number().min(0, "Montant invalide"),
+  classId: z.string().optional(),
+});
+
+export async function saveSchoolFeeAction(_prev: ActionState, formData: FormData): Promise<ActionState> {
+  const user = await requireSchool();
+  const parsed = feeSchema.safeParse({
+    label: formData.get("label"),
+    feeType: formData.get("feeType"),
+    amount: formData.get("amount") || 0,
+    classId: formData.get("classId") || undefined,
+  });
+  if (!parsed.success) return { error: parsed.error.issues[0]?.message };
+  if (parsed.data.feeType === "SCOLARITE") return { error: "La scolarité se règle dans Classes (montant annuel de chaque classe)" };
+  const id = String(formData.get("id") || "");
+  const row = { label: parsed.data.label, fee_type: parsed.data.feeType, amount: parsed.data.amount, class_id: parsed.data.classId ?? null };
+  const { error } = id
+    ? await supabase.from("school_fees").update(row).eq("id", id).eq("business_id", user.businessId)
+    : await supabase.from("school_fees").insert({ ...row, business_id: user.businessId });
+  if (error) {
+    console.error("[saveSchoolFeeAction]", error.message);
+    return { error: "Impossible d'enregistrer ces frais" };
+  }
+  await logAction({ businessId: user.businessId, userId: user.id, action: id ? "UPDATE" : "CREATE", entity: "SchoolFee", entityId: id || undefined, details: `${row.label} · ${row.amount}` });
+  revalidatePath("/ecole/frais");
+  return { success: id ? "Frais modifiés" : "Frais ajoutés" };
+}
+
+export async function deleteSchoolFeeAction(id: string): Promise<ActionState> {
+  const user = await requireSchool();
+  const { error } = await supabase.from("school_fees").delete().eq("id", id).eq("business_id", user.businessId);
+  if (error) return { error: "Impossible de supprimer ces frais" };
+  await logAction({ businessId: user.businessId, userId: user.id, action: "DELETE", entity: "SchoolFee", entityId: id });
+  revalidatePath("/ecole/frais");
+  return { success: "Frais supprimés" };
+}
+
+// ---------------------------------------------------------------------------
 // Élèves
 // ---------------------------------------------------------------------------
 
-type RawStudent = Omit<StudentRow, "className" | "fee" | "paid" | "remaining"> & {
+type RawStudent = Omit<StudentRow, "className" | "fee" | "paid" | "remaining" | "lines"> & {
   class: { name: string; annualFee: number } | null;
-  payments: { amount: number }[];
+  payments: { amount: number; feeType: string }[];
 };
 
 const STUDENT_SELECT =
-  "id, matricule, lastName:last_name, firstName:first_name, sex, birthDate:birth_date, parentName:parent_name, parentPhone:parent_phone, customFee:custom_fee, active, classId:class_id, class:school_classes(name, annualFee:annual_fee), payments:student_payments(amount)";
+  "id, matricule, lastName:last_name, firstName:first_name, sex, birthDate:birth_date, birthPlace:birth_place, address, parentName:parent_name, parentPhone:parent_phone, parentWhatsapp:parent_whatsapp, parentRelation:parent_relation, enrolledAt:enrolled_at, customFee:custom_fee, active, classId:class_id, class:school_classes(name, annualFee:annual_fee), payments:student_payments(amount, feeType:fee_type)";
 
-function toStudentRow({ class: cls, payments, ...s }: RawStudent): StudentRow {
-  const fee = s.customFee ?? cls?.annualFee ?? 0;
+function toStudentRow({ class: cls, payments, ...s }: RawStudent, fees: SchoolFee[]): StudentRow {
+  const lines: FeeLine[] = [{ feeType: "SCOLARITE", label: "Scolarité", due: Number(s.customFee ?? cls?.annualFee ?? 0), paid: 0 }];
+  for (const f of fees) {
+    if (f.classId && f.classId !== s.classId) continue;
+    lines.push({ feeType: f.feeType, label: f.label, due: f.amount, paid: 0 });
+  }
+  // Chaque paiement est réparti sur les frais de son type, dans l'ordre.
+  for (const p of payments) {
+    let left = Number(p.amount);
+    const sameType = lines.filter((l) => l.feeType === p.feeType);
+    for (const l of sameType) {
+      const take = Math.min(left, Math.max(0, l.due - l.paid));
+      l.paid += take;
+      left -= take;
+    }
+    if (left > 0) (sameType[0] ?? lines[0]).paid += left;
+  }
+  const fee = lines.reduce((sum, l) => sum + l.due, 0);
   const paid = payments.reduce((sum, p) => sum + Number(p.amount), 0);
-  return { ...s, className: cls?.name ?? null, fee, paid, remaining: Math.max(0, fee - paid) };
+  return { ...s, className: cls?.name ?? null, fee, paid, remaining: Math.max(0, fee - paid), lines };
 }
 
 export async function getStudentsAction(): Promise<StudentRow[]> {
   const user = await requireSchool();
-  const { data } = await supabase
-    .from("students")
-    .select(STUDENT_SELECT)
-    .eq("business_id", user.businessId)
-    .order("last_name")
-    .order("first_name");
-  return ((data ?? []) as unknown as RawStudent[]).map(toStudentRow);
+  const [{ data }, fees] = await Promise.all([
+    supabase.from("students").select(STUDENT_SELECT).eq("business_id", user.businessId).order("last_name").order("first_name"),
+    loadFees(user.businessId),
+  ]);
+  return ((data ?? []) as unknown as RawStudent[]).map((s) => toStudentRow(s, fees));
 }
 
 export async function getStudentAction(id: string): Promise<{ student: StudentRow; payments: StudentPayment[] } | null> {
   const user = await requireSchool();
-  const { data } = await supabase.from("students").select(STUDENT_SELECT).eq("id", id).eq("business_id", user.businessId).maybeSingle();
+  const [{ data }, fees] = await Promise.all([
+    supabase.from("students").select(STUDENT_SELECT).eq("id", id).eq("business_id", user.businessId).maybeSingle(),
+    loadFees(user.businessId),
+  ]);
   if (!data) return null;
   const { data: payments } = await supabase
     .from("student_payments")
-    .select("id, number, amount, method, note, paidAt:paid_at")
+    .select("id, number, amount, method, feeType:fee_type, note, paidAt:paid_at, user:users(first_name, last_name)")
     .eq("student_id", id)
     .eq("business_id", user.businessId)
     .order("paid_at", { ascending: false });
-  return { student: toStudentRow(data as unknown as RawStudent), payments: (payments ?? []) as StudentPayment[] };
+  return {
+    student: toStudentRow(data as unknown as RawStudent, fees),
+    payments: ((payments ?? []) as unknown as (Omit<StudentPayment, "cashier"> & { user: { first_name: string; last_name: string } | null })[]).map(
+      ({ user: u, ...p }) => ({ ...p, cashier: u ? `${u.first_name} ${u.last_name}` : null })
+    ),
+  };
 }
 
 const studentSchema = z.object({
@@ -168,10 +269,23 @@ const studentSchema = z.object({
   classId: z.string().optional(),
   sex: z.enum(["M", "F"]).optional(),
   birthDate: z.string().optional(),
+  birthPlace: z.string().trim().optional(),
+  address: z.string().trim().optional(),
   parentName: z.string().trim().optional(),
   parentPhone: z.string().trim().optional(),
+  parentWhatsapp: z.string().trim().optional(),
+  parentRelation: z.string().trim().optional(),
+  enrolledAt: z.string().optional(),
   customFee: z.coerce.number().min(0, "Montant invalide").optional(),
 });
+
+/** Matricule automatique « AAAA-0001 », unique dans l'établissement. */
+async function nextMatricule(businessId: string) {
+  const year = new Date().getFullYear();
+  const { data } = await supabase.from("students").select("matricule").eq("business_id", businessId).like("matricule", `${year}-%`);
+  const max = (data ?? []).reduce((m, r) => Math.max(m, Number(String(r.matricule).split("-")[1]) || 0), 0);
+  return `${year}-${String(max + 1).padStart(4, "0")}`;
+}
 
 export async function saveStudentAction(_prev: ActionState, formData: FormData): Promise<ActionState> {
   const user = await requireSchool();
@@ -183,8 +297,13 @@ export async function saveStudentAction(_prev: ActionState, formData: FormData):
     classId: get("classId"),
     sex: get("sex"),
     birthDate: get("birthDate"),
+    birthPlace: get("birthPlace"),
+    address: get("address"),
     parentName: get("parentName"),
     parentPhone: get("parentPhone"),
+    parentWhatsapp: get("parentWhatsapp"),
+    parentRelation: get("parentRelation"),
+    enrolledAt: get("enrolledAt"),
     customFee: get("customFee"),
   });
   if (!parsed.success) return { error: parsed.error.issues[0]?.message };
@@ -193,15 +312,27 @@ export async function saveStudentAction(_prev: ActionState, formData: FormData):
   const row = {
     last_name: d.lastName.toUpperCase(),
     first_name: d.firstName,
-    matricule: d.matricule ?? null,
+    matricule: d.matricule ?? (id ? null : await nextMatricule(user.businessId)),
     class_id: d.classId ?? null,
     sex: d.sex ?? null,
     birth_date: d.birthDate ?? null,
+    birth_place: d.birthPlace ?? null,
+    address: d.address ?? null,
     parent_name: d.parentName ?? null,
     parent_phone: d.parentPhone ?? null,
+    parent_whatsapp: d.parentWhatsapp ?? null,
+    parent_relation: d.parentRelation ?? null,
+    enrolled_at: d.enrolledAt ?? new Date().toISOString().slice(0, 10),
     custom_fee: d.customFee ?? null,
     active: formData.get("active") !== "off",
   };
+
+  if (row.matricule) {
+    let dup = supabase.from("students").select("id").eq("business_id", user.businessId).eq("matricule", row.matricule);
+    if (id) dup = dup.neq("id", id);
+    const { data: other } = await dup.limit(1);
+    if (other?.length) return { error: `Le matricule ${row.matricule} est déjà utilisé par un autre élève` };
+  }
 
   let studentId = id;
   if (id) {
@@ -217,7 +348,7 @@ export async function saveStudentAction(_prev: ActionState, formData: FormData):
   }
   await logAction({ businessId: user.businessId, userId: user.id, action: id ? "UPDATE" : "CREATE", entity: "Student", entityId: studentId, details: `${row.last_name} ${row.first_name}` });
   revalidatePath("/ecole/eleves");
-  redirect(`/ecole/eleves/${studentId}`);
+  redirect(`/ecole/eleves/${studentId}${id ? "" : "?inscrit=1"}`);
 }
 
 export async function deleteStudentAction(id: string): Promise<ActionState> {
@@ -236,13 +367,14 @@ export async function deleteStudentAction(id: string): Promise<ActionState> {
 }
 
 // ---------------------------------------------------------------------------
-// Paiements de scolarité
+// Paiements
 // ---------------------------------------------------------------------------
 
 const paymentSchema = z.object({
   studentId: z.string().min(1),
   amount: z.coerce.number().positive("Le montant doit être supérieur à 0"),
   method: z.enum(["ESPECES", "MOBILE_MONEY", "VIREMENT", "AUTRE"]),
+  feeType: z.enum(FEE_TYPE_KEYS),
   note: z.string().trim().optional(),
 });
 
@@ -252,6 +384,7 @@ export async function addStudentPaymentAction(_prev: ActionState, formData: Form
     studentId: formData.get("studentId"),
     amount: formData.get("amount"),
     method: formData.get("method") || "ESPECES",
+    feeType: formData.get("feeType") || "SCOLARITE",
     note: formData.get("note") || undefined,
   });
   if (!parsed.success) return { error: parsed.error.issues[0]?.message };
@@ -259,8 +392,11 @@ export async function addStudentPaymentAction(_prev: ActionState, formData: Form
 
   const current = await getStudentAction(d.studentId);
   if (!current) return { error: "Élève introuvable" };
-  if (d.amount > current.student.remaining + 0.001) {
-    return { error: `Le montant dépasse le reste à payer (${current.student.remaining})` };
+  const lines = current.student.lines.filter((l) => l.feeType === d.feeType);
+  if (lines.length === 0) return { error: "Ces frais ne concernent pas cet élève" };
+  const lineLeft = lines.reduce((sum, l) => sum + Math.max(0, l.due - l.paid), 0);
+  if (d.amount > lineLeft + 0.001) {
+    return { error: `Le montant dépasse le reste à payer pour ces frais (${lineLeft.toLocaleString("fr-FR")})` };
   }
 
   const year = new Date().getFullYear();
@@ -270,13 +406,13 @@ export async function addStudentPaymentAction(_prev: ActionState, formData: Form
     .eq("business_id", user.businessId)
     .like("number", `SCO-${year}-%`);
   let seq = (count ?? 0) + 1;
-  // Numéro unique par commerce : en cas de collision (deux paiements au même
-  // instant), on essaie le suivant.
+  // Numéro unique par établissement : en cas de collision (deux paiements au
+  // même instant), on essaie le suivant.
   for (let attempt = 0; attempt < 5; attempt++, seq++) {
     const number = `SCO-${year}-${String(seq).padStart(4, "0")}`;
     const { data, error } = await supabase
       .from("student_payments")
-      .insert({ business_id: user.businessId, student_id: d.studentId, number, amount: d.amount, method: d.method, note: d.note ?? null, user_id: user.id })
+      .insert({ business_id: user.businessId, student_id: d.studentId, number, amount: d.amount, method: d.method, fee_type: d.feeType, note: d.note ?? null, user_id: user.id })
       .select("id")
       .single();
     if (!error && data) {
@@ -307,9 +443,11 @@ export async function getStudentPaymentAction(paymentId: string) {
   const user = await requireSchool();
   const { data } = await supabase
     .from("student_payments")
-    .select("id, number, amount, method, note, paidAt:paid_at, studentId:student_id")
+    .select("id, number, amount, method, feeType:fee_type, note, paidAt:paid_at, studentId:student_id, user:users(first_name, last_name)")
     .eq("id", paymentId)
     .eq("business_id", user.businessId)
     .maybeSingle();
-  return data as (StudentPayment & { studentId: string }) | null;
+  if (!data) return null;
+  const { user: u, ...p } = data as unknown as Omit<StudentPayment, "cashier"> & { studentId: string; user: { first_name: string; last_name: string } | null };
+  return { ...p, cashier: u ? `${u.first_name} ${u.last_name}` : null };
 }

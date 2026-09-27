@@ -1,13 +1,24 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import { Field, Input, Select } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { Card, CardBody } from "@/components/ui/Card";
 import { addStudentPaymentAction, type ActionState } from "@/lib/actions/school";
-import { SCHOOL_PAYMENT_METHODS } from "@/lib/school-constants";
+import { SCHOOL_PAYMENT_METHODS, SCHOOL_FEE_TYPES, type SchoolFeeType } from "@/lib/school-constants";
 
-export function PaymentForm({ studentId, remaining, currency }: { studentId: string; remaining: number; currency: string }) {
+export function PaymentForm({
+  studentId,
+  currency,
+  dueByType,
+}: {
+  studentId: string;
+  currency: string;
+  /** Reste à payer par type de frais (seuls les types encore dus sont proposés). */
+  dueByType: { feeType: SchoolFeeType; left: number }[];
+}) {
+  const [feeType, setFeeType] = useState<SchoolFeeType>(dueByType[0]?.feeType ?? "SCOLARITE");
+  const remaining = dueByType.find((d) => d.feeType === feeType)?.left ?? 0;
   // « n » change à chaque paiement réussi : il sert de clé pour vider le formulaire.
   const [state, formAction, pending] = useActionState<(ActionState & { n?: number }) | undefined, FormData>(async (prev, fd) => {
     const res = await addStudentPaymentAction(prev, fd);
@@ -21,6 +32,15 @@ export function PaymentForm({ studentId, remaining, currency }: { studentId: str
         <h2 className="mb-3 font-semibold text-zinc-900">Enregistrer un paiement</h2>
         <form key={state?.n ?? 0} action={formAction} className="space-y-3">
           <input type="hidden" name="studentId" value={studentId} />
+          <Field label="Frais payés" htmlFor="feeType">
+            <Select id="feeType" name="feeType" value={feeType} onChange={(e) => setFeeType(e.target.value as SchoolFeeType)}>
+              {dueByType.map((d) => (
+                <option key={d.feeType} value={d.feeType}>
+                  {SCHOOL_FEE_TYPES[d.feeType]} — reste {d.left.toLocaleString("fr-FR")} {unit}
+                </option>
+              ))}
+            </Select>
+          </Field>
           <div className="grid gap-3 sm:grid-cols-2">
             <Field label={`Montant (${unit})`} htmlFor="amount" hint={`Reste à payer : ${remaining.toLocaleString("fr-FR")} ${unit}`}>
               <Input id="amount" name="amount" type="number" min={1} max={remaining} step="1" required />

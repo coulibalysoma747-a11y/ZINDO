@@ -3,7 +3,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { getStudentAction, getStudentPaymentAction, getSchoolContextAction } from "@/lib/actions/school";
-import { SCHOOL_PAYMENT_METHODS, type SchoolPaymentMethod } from "@/lib/school-constants";
+import { SCHOOL_PAYMENT_METHODS, SCHOOL_FEE_TYPES, type SchoolPaymentMethod, type SchoolFeeType } from "@/lib/school-constants";
+import { toWhatsAppDigits } from "@/lib/countries";
 import { formatMoney, formatDateTime } from "@/lib/format";
 import { PrintDocumentButton } from "@/components/purchase-orders/PrintDocumentButton";
 
@@ -13,6 +14,15 @@ export default async function SchoolReceiptPage({ params }: { params: Promise<{ 
   const [ctx, data, payment] = await Promise.all([getSchoolContextAction(), getStudentAction(id), getStudentPaymentAction(paymentId)]);
   if (!data || !payment || payment.studentId !== id) notFound();
   const { student: s } = data;
+  const motif = SCHOOL_FEE_TYPES[payment.feeType as SchoolFeeType] ?? payment.feeType;
+  const phone = s.parentWhatsapp || s.parentPhone;
+  const waText = `${ctx.businessName} — Reçu N° ${payment.number} du ${formatDateTime(payment.paidAt)}
+Élève : ${s.lastName} ${s.firstName} (${s.className ?? "—"})
+Motif : ${motif}${payment.note ? ` (${payment.note})` : ""}
+Montant reçu : ${formatMoney(payment.amount, ctx.currency)}
+Reste à payer : ${formatMoney(s.remaining, ctx.currency)}
+Merci.`;
+  const waLink = `https://wa.me/${phone ? toWhatsAppDigits(phone, ctx.country) : ""}?text=${encodeURIComponent(waText)}`;
 
   return (
     <div className="max-w-2xl space-y-4">
@@ -20,7 +30,12 @@ export default async function SchoolReceiptPage({ params }: { params: Promise<{ 
         <Link href={`/ecole/eleves/${id}`} className="inline-flex items-center gap-1 text-sm text-zinc-500 hover:text-zinc-800">
           <ArrowLeft className="h-4 w-4" /> Retour à l&apos;élève
         </Link>
-        <PrintDocumentButton />
+        <div className="flex items-center gap-2">
+          <a href={waLink} target="_blank" rel="noreferrer" className="rounded-lg border border-emerald-600 px-3 py-2 text-sm font-medium text-emerald-700 hover:bg-emerald-50">
+            WhatsApp
+          </a>
+          <PrintDocumentButton />
+        </div>
       </div>
 
       <div className="space-y-5 rounded-xl border border-zinc-300 bg-white p-6 text-sm text-black">
@@ -63,15 +78,24 @@ export default async function SchoolReceiptPage({ params }: { params: Promise<{ 
         <table className="w-full border-collapse">
           <tbody>
             <tr className="border-y border-zinc-300">
-              <td className="py-2">Montant reçu{payment.note ? ` (${payment.note})` : ""}</td>
+              <td className="py-2">
+                Montant reçu — {motif}
+                {payment.note ? ` (${payment.note})` : ""}
+              </td>
               <td className="py-2 text-right text-base font-bold">{formatMoney(payment.amount, ctx.currency)}</td>
             </tr>
             <tr>
               <td className="py-1 text-zinc-600">Moyen de paiement</td>
               <td className="py-1 text-right">{SCHOOL_PAYMENT_METHODS[payment.method as SchoolPaymentMethod] ?? payment.method}</td>
             </tr>
+            {payment.cashier && (
+              <tr>
+                <td className="py-1 text-zinc-600">Reçu par</td>
+                <td className="py-1 text-right">{payment.cashier}</td>
+              </tr>
+            )}
             <tr>
-              <td className="py-1 text-zinc-600">Scolarité annuelle</td>
+              <td className="py-1 text-zinc-600">Total des frais de l&apos;année</td>
               <td className="py-1 text-right">{formatMoney(s.fee, ctx.currency)}</td>
             </tr>
             <tr>
