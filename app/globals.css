@@ -133,7 +133,7 @@
 }
 
 /* Fond à pois discret (menu mobile) : crème de marque + petits points verts,
-   inspiré de références commerçantes locales (FasoStock) mais recoloré avec
+   inspiré de références commerçantes locales, mais recoloré avec
    la palette ZINDO (vert au lieu d'orange). */
 .zindo-dotted-bg {
   background-color: var(--color-zindo-cream);

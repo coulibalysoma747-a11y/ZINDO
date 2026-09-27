@@ -59,8 +59,8 @@ import {
 // composant/objet exporté depuis un module "use client" devient une
 // référence client opaque, illisible (indexation cassée à l'exécution) une
 // fois importé côté serveur — d'où ce fichier neutre séparé.
-// Couleur du badge derrière chaque icône de module (accent visuel façon
-// FasoStock — un point de couleur distinct par module pour repérer vite un
+// Couleur du badge derrière chaque icône de module (accent visuel :
+// un point de couleur distinct par module pour repérer vite un
 // module dans une longue liste). Purement décoratif : le rouge/l'amber
 // restent réservés aux états sémantiques danger/attention, donc absents ici.
 const BADGE_PALETTE = [

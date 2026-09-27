@@ -110,8 +110,10 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
 
   const fasoStockApiKey = businessRow?.fasoStockApiKey as string | null;
   // Les paramètres en onglets n'affichent plus FasoStock : inutile alors
-  // d'interroger son API à chaque ouverture de la page.
-  const showFasoStock = !isMedical && !tabsEnabled;
+  // d'interroger son API à chaque ouverture de la page. Ailleurs, la carte
+  // ne s'affiche plus qu'aux commerces qui ont déjà branché une clé (migration
+  // en cours) : pas de publicité pour un concurrent chez tous les autres.
+  const showFasoStock = !isMedical && !tabsEnabled && !!fasoStockApiKey;
   let fasoStockStores: FasoStockStore[] = [];
   if (fasoStockApiKey && showFasoStock) {
     try {
