@@ -3,22 +3,29 @@
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { Select, Field } from "@/components/ui/Input";
 import { SearchInput } from "@/components/ui/SearchInput";
-import { useTransition } from "react";
+import { useState, useTransition } from "react";
+import { SlidersHorizontal } from "lucide-react";
 
 export function ProductSearchBar({
   categories,
   brands,
   showPackagingFilter = false,
+  compactOnMobile = false,
 }: {
   categories: { id: string; name: string }[];
   brands: { id: string; name: string }[];
   /** N'affiche le filtre "Conditionnement" que si la fonctionnalité est activée pour ce commerce. */
   showPackagingFilter?: boolean;
+  /** Téléphone : filtres repliés derrière un bouton « Filtres » (flag produits_mobile). */
+  compactOnMobile?: boolean;
 }) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const [, startTransition] = useTransition();
+  const activeFilters = ["categorie", "marque", "conditionnement", "filtre"].filter((k) => searchParams.get(k)).length;
+  const [filtersOpen, setFiltersOpen] = useState(activeFilters > 0);
+  const hideOnMobile = compactOnMobile && !filtersOpen ? "hidden sm:grid" : "";
 
   function updateParam(key: string, value: string) {
     const params = new URLSearchParams(searchParams.toString());
@@ -36,7 +43,20 @@ export function ProductSearchBar({
         defaultValue={searchParams.get("q") ?? ""}
         onChange={(e) => updateParam("q", e.target.value)}
       />
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+      {compactOnMobile && (
+        <button
+          type="button"
+          onClick={() => setFiltersOpen((o) => !o)}
+          aria-expanded={filtersOpen}
+          className="inline-flex items-center gap-2 rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm font-medium text-zinc-700 sm:hidden dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
+        >
+          <SlidersHorizontal className="h-4 w-4" /> Filtres
+          {activeFilters > 0 && (
+            <span className="rounded-full bg-zindo-green-600 px-1.5 text-xs font-bold text-white">{activeFilters}</span>
+          )}
+        </button>
+      )}
+      <div className={`grid grid-cols-1 gap-3 sm:grid-cols-3 ${hideOnMobile}`}>
         <Field label="Catégorie" htmlFor="categorie-filter">
           <Select
             id="categorie-filter"
@@ -82,7 +102,7 @@ export function ProductSearchBar({
       <Select
         defaultValue={searchParams.get("filtre") ?? ""}
         onChange={(e) => updateParam("filtre", e.target.value)}
-        className="sm:w-48"
+        className={`sm:w-48 ${compactOnMobile && !filtersOpen ? "hidden sm:block" : ""}`}
       >
         <option value="">Tous les statuts</option>
         <option value="stock-faible">Stock faible</option>

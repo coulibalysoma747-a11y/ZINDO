@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Plus, FileUp, FileDown, QrCode, Trash2 } from "lucide-react";
+import { Plus, FileUp, FileDown, QrCode, Trash2, Wrench, ChevronDown } from "lucide-react";
 import { requirePermission } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
 import { supabase } from "@/lib/supabase";
@@ -18,7 +18,7 @@ import { ProductRowMenu } from "@/components/products/ProductRowMenu";
 import { QuickPackagingButton } from "@/components/products/QuickPackagingModal";
 import { isPackagingUnitsModuleEnabled } from "@/lib/actions/packaging-units";
 import { ensureCatalogImportFlagRegistered } from "@/lib/actions/catalog-import";
-import { isFeatureEnabled } from "@/lib/feature-flags";
+import { isFeatureEnabled, registerFeatureFlag } from "@/lib/feature-flags";
 import { isProductTrashEnabled } from "@/lib/product-trash";
 
 const PAGE_SIZE = 200;
@@ -32,7 +32,7 @@ export default async function ProductsPage({
   const { q, categorie, marque, conditionnement, filtre, page } = await searchParams;
   const currentPage = Math.max(1, parseInt(page ?? "1", 10) || 1);
   const offset = (currentPage - 1) * PAGE_SIZE;
-  const [currentLocation, activityConfig, packagingEnabled, catalogImportEnabled, trashEnabled] = await Promise.all([
+  const [currentLocation, activityConfig, packagingEnabled, catalogImportEnabled, trashEnabled, mobileLayout] = await Promise.all([
     getCurrentLocation(user.businessId),
     getActivityConfig(user.business.activityKey),
     isPackagingUnitsModuleEnabled(user.businessId),
@@ -40,6 +40,11 @@ export default async function ProductsPage({
     // activée : sinon il menait à « Fonctionnalité pas encore disponible ».
     ensureCatalogImportFlagRegistered().then(() => isFeatureEnabled("import_catalogue_pdf", user.businessId)),
     isProductTrashEnabled(user.businessId),
+    registerFeatureFlag(
+      "produits_mobile",
+      "Produits : page adaptée au téléphone",
+      "Sur téléphone : grand bouton « Nouveau produit » en haut, outils (export, import, QR, corbeille) rangés sous « Outils », filtres repliés sous « Filtres » ; les produits sont visibles dès l'ouverture."
+    ).then(() => isFeatureEnabled("produits_mobile", user.businessId)),
   ]);
   const productsLabel = resolveTerm(activityConfig, "products");
 
@@ -167,8 +172,32 @@ export default async function ProductsPage({
     return qs ? `/produits?${qs}` : "/produits";
   };
 
+  const tools = (
+    <>
+    <ButtonLink href="/produits/export" variant="outline">
+      <FileDown className="h-4 w-4" /> Exporter (CSV)
+    </ButtonLink>
+    <ButtonLink href="/produits/importer-csv" variant="outline">
+      <FileUp className="h-4 w-4" /> Importer CSV
+    </ButtonLink>
+    <ButtonLink href="/produits/etiquettes" variant="outline">
+      <QrCode className="h-4 w-4" /> QR codes
+    </ButtonLink>
+    {trashEnabled && (
+      <ButtonLink href="/produits/corbeille" variant="outline">
+        <Trash2 className="h-4 w-4" /> Corbeille
+      </ButtonLink>
+    )}
+    {catalogImportEnabled && (
+      <ButtonLink href="/produits/importer" variant="outline">
+        <FileUp className="h-4 w-4" /> Importer un catalogue
+      </ButtonLink>
+    )}
+    </>
+  );
+
   return (
-    <div className="space-y-6">
+    <div className={mobileLayout ? "space-y-4 sm:space-y-6" : "space-y-6"}>
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-xl font-bold tracking-tight text-zinc-900">{productsLabel}</h1>
@@ -177,26 +206,8 @@ export default async function ProductsPage({
             pour {currentLocation?.name ?? "—"}
           </p>
         </div>
-        <div className="flex flex-wrap gap-2">
-          <ButtonLink href="/produits/export" variant="outline">
-            <FileDown className="h-4 w-4" /> Exporter (CSV)
-          </ButtonLink>
-          <ButtonLink href="/produits/importer-csv" variant="outline">
-            <FileUp className="h-4 w-4" /> Importer CSV
-          </ButtonLink>
-          <ButtonLink href="/produits/etiquettes" variant="outline">
-            <QrCode className="h-4 w-4" /> QR codes
-          </ButtonLink>
-          {trashEnabled && (
-            <ButtonLink href="/produits/corbeille" variant="outline">
-              <Trash2 className="h-4 w-4" /> Corbeille
-            </ButtonLink>
-          )}
-          {catalogImportEnabled && (
-            <ButtonLink href="/produits/importer" variant="outline">
-              <FileUp className="h-4 w-4" /> Importer un catalogue
-            </ButtonLink>
-          )}
+        <div className={`flex-wrap gap-2 ${mobileLayout ? "hidden sm:flex" : "flex"}`}>
+          {tools}
           <div className="hidden sm:block">
             <ButtonLink href="/produits/nouveau">
               <Plus className="h-4 w-4" /> Nouveau produit
@@ -205,9 +216,28 @@ export default async function ProductsPage({
         </div>
       </div>
 
+      {/* Téléphone (flag produits_mobile) : l'action principale en grand, les
+          outils rangés, pour voir les produits dès l'ouverture de la page. */}
+      {mobileLayout && (
+        <div className="space-y-2 sm:hidden">
+          <ButtonLink href="/produits/nouveau" className="w-full justify-center py-3 text-base">
+            <Plus className="h-5 w-5" /> Nouveau produit
+          </ButtonLink>
+          <details className="group rounded-xl border border-zinc-200 bg-white dark:border-slate-700 dark:bg-slate-900">
+            <summary className="flex cursor-pointer list-none items-center justify-between px-3 py-2.5 text-sm font-medium text-zinc-700 dark:text-slate-200">
+              <span className="flex items-center gap-2">
+                <Wrench className="h-4 w-4" /> Outils : exporter, importer, codes QR…
+              </span>
+              <ChevronDown className="h-4 w-4 transition group-open:rotate-180" />
+            </summary>
+            <div className="flex flex-wrap gap-2 border-t border-zinc-100 p-3 dark:border-slate-800">{tools}</div>
+          </details>
+        </div>
+      )}
+
       <CatalogTabs active="produits" />
 
-      <ProductSearchBar categories={categories ?? []} brands={brands ?? []} showPackagingFilter={packagingEnabled} />
+      <ProductSearchBar categories={categories ?? []} brands={brands ?? []} showPackagingFilter={packagingEnabled} compactOnMobile={mobileLayout} />
 
       {filtered.length === 0 ? (
         <EmptyState
