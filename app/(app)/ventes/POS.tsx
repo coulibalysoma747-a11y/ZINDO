@@ -176,6 +176,7 @@ export function POS({
   exitHref = "/dashboard",
   tableMode = false,
   pieceQuantities = false,
+  packHints = false,
 }: {
   mode?: "pos" | "facture";
   customers: { id: string; name: string; phone: string | null }[];
@@ -230,6 +231,13 @@ export function POS({
    * Affichage seulement : le panier compte toujours en paquets (stock, prix).
    */
   pieceQuantities?: boolean;
+  /**
+   * Flag alerte_conditionnement : une ligne vendue à l'unité qui atteint la
+   * taille d'un conditionnement (2 pour « Paquet de 2 ») affiche « 2 pièces =
+   * 1 Paquet à 200 FCFA » avec un bouton pour appliquer ce prix ; rien ne
+   * change tout seul.
+   */
+  packHints?: boolean;
 }) {
   const isFacture = mode === "facture";
   const [cart, setCart] = useState<CartLine[]>([]);
@@ -779,6 +787,66 @@ export function POS({
     setCart((prev) => prev.filter((l) => lineKey(l) !== key));
   }
 
+  /** Plus grand conditionnement qui tient dans la quantité d'une ligne vendue à l'unité. */
+  function packHintFor(line: CartLine) {
+    if (!packHints || line.packagingUnitId || line.vehicleUnitId || line.miscKey) return null;
+    const fitting = (line.product.packagingUnits ?? [])
+      .filter((pu) => pu.multiplier > 1 && pu.multiplier <= line.quantity)
+      .sort((a, b) => b.multiplier - a.multiplier);
+    return fitting[0] ?? null;
+  }
+
+  /** Remplace les pièces qui forment des paquets par des paquets ; le reste reste à l'unité. */
+  function applyPackPrice(line: CartLine, pack: PackagingUnitOption) {
+    const packs = Math.floor(line.quantity / pack.multiplier);
+    const rest = line.quantity - packs * pack.multiplier;
+    const key = lineKey(line);
+    setCart((prev) => {
+      const others = prev.filter((l) => lineKey(l) !== key);
+      const existing = others.find((l) => l.product.id === line.product.id && l.packagingUnitId === pack.id);
+      const withPacks = existing
+        ? others.map((l) => (l === existing ? { ...l, quantity: l.quantity + packs } : l))
+        : [
+            ...others,
+            {
+              product: line.product,
+              quantity: packs,
+              unitPrice: pack.salePrice,
+              discount: 0,
+              packagingUnitId: pack.id,
+              packagingLabel: packagingDisplayLabel(pack.name, pack.multiplier),
+              multiplier: pack.multiplier,
+            },
+          ];
+      return rest > 0
+        ? [...withPacks, { ...line, quantity: rest, unitPrice: resolveTieredPrice(line.product.salePrice, rest, line.product.priceTiers) }]
+        : withPacks;
+    });
+  }
+
+  function renderPackHint(line: CartLine) {
+    const pack = packHintFor(line);
+    if (!pack) return null;
+    const packs = Math.floor(line.quantity / pack.multiplier);
+    const pieces = packs * pack.multiplier;
+    const packLabel = packagingDisplayLabel(pack.name, pack.multiplier);
+    return (
+      <div className="mt-1.5 flex flex-wrap items-center justify-between gap-2 rounded-lg border border-amber-200 bg-amber-50 px-2.5 py-1.5 text-xs text-amber-900 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-300">
+        <span>
+          {pieces} pièces = {packs} {packLabel} à <span className="font-semibold">{formatMoney(packs * pack.salePrice, currency)}</span>{" "}
+          (au lieu de {formatMoney(pieces * line.unitPrice, currency)})
+        </span>
+        <button
+          type="button"
+          onClick={() => applyPackPrice(line, pack)}
+          className="rounded-md bg-amber-600 px-2 py-1 font-semibold text-white hover:bg-amber-700"
+        >
+          Appliquer le prix du paquet
+        </button>
+      </div>
+    );
+  }
+
   const [unitPickerProduct, setUnitPickerProduct] = useState<PosProduct | null>(null);
   const [availableUnits, setAvailableUnits] = useState<{ id: string; chassisNumber: string; color: string | null }[]>([]);
   const [loadingUnits, setLoadingUnits] = useState(false);
@@ -1308,6 +1376,7 @@ export function POS({
                             line.product.reference
                           )}
                         </p>
+                        {renderPackHint(line)}
                       </TableCell>
                       <TableCell>
                         {line.vehicleUnitId ? (
@@ -1498,6 +1567,7 @@ export function POS({
                       className="h-8 w-16 rounded-lg border border-zinc-300 px-2 text-right text-sm tabular-nums dark:border-slate-700 dark:bg-slate-900"
                     />
                   </div>
+                  {renderPackHint(line)}
                 </li>
               ) : (
                 <li key={lineKey(line)} className="space-y-3 p-3">
@@ -1528,6 +1598,7 @@ export function POS({
                       <Trash2 className="h-4 w-4" />
                     </button>
                   </div>
+                  {renderPackHint(line)}
 
                   <div className="flex items-center gap-1.5">
                     {line.vehicleUnitId ? (

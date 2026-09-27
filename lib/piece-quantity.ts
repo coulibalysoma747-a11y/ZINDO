@@ -23,3 +23,19 @@ export function pieceFactorOf(enabled: boolean, unitLabel: string | null, multip
   const m = multiplier ?? 1;
   return enabled && unitLabel && m > 1 ? m : 1;
 }
+
+const PACK_HINT_FLAG = "alerte_conditionnement";
+
+/**
+ * Flag alerte_conditionnement : à la caisse, une ligne vendue à l'unité qui
+ * atteint la taille d'un conditionnement affiche « 2 pièces = 1 Paquet à
+ * 200 FCFA » avec un bouton pour appliquer ce prix (rien ne change tout seul).
+ */
+export async function isPackHintEnabled(businessId: string): Promise<boolean> {
+  await registerFeatureFlag(
+    PACK_HINT_FLAG,
+    "Caisse : prévenir quand l'unité atteint un conditionnement",
+    "Quand une ligne vendue à l'unité atteint la taille d'un conditionnement (2 pour « Paquet de 2 »), la caisse affiche le prix du paquet avec un bouton « Appliquer le prix du paquet ». Rien ne change tout seul."
+  );
+  return isFeatureEnabled(PACK_HINT_FLAG, businessId);
+}

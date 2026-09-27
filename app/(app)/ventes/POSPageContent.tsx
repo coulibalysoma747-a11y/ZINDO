@@ -18,7 +18,7 @@ import { isPosSinglePanelEnabled } from "@/lib/pos-single-panel";
 import { getPosExtras } from "@/lib/pos-extras";
 import { isPosPhoneEnabled } from "@/lib/pos-phone";
 import { isSalesHubEnabled } from "@/lib/sales-hub";
-import { isPieceQuantityEnabled } from "@/lib/piece-quantity";
+import { isPieceQuantityEnabled, isPackHintEnabled } from "@/lib/piece-quantity";
 
 /**
  * Chargement de données partagé entre les deux modules de vente — "Vente /
@@ -66,7 +66,7 @@ export async function POSPageContent({ mode, table = false }: { mode: "pos" | "f
     user: { firstName: string; lastName: string };
   };
 
-  const [{ data: customers }, paymentMethods, canEditProducts, canSeeMargin, manualSaleNumberEnabled, singlePanel, quickCashNotes, blockOutOfStock, posExtras, zindoMention, phoneMode, salesHub, { data: categories }, pieceQuantities] = await Promise.all([
+  const [{ data: customers }, paymentMethods, canEditProducts, canSeeMargin, manualSaleNumberEnabled, singlePanel, quickCashNotes, blockOutOfStock, posExtras, zindoMention, phoneMode, salesHub, { data: categories }, pieceQuantities, packHints] = await Promise.all([
     supabase.from("customers").select("id, name, phone").eq("business_id", user.businessId).order("name", { ascending: true }),
     getEnabledPaymentMethods(),
     hasPermission(user.businessId, user.role, PERMISSIONS.PRODUCTS_MANAGE, user.id),
@@ -81,6 +81,7 @@ export async function POSPageContent({ mode, table = false }: { mode: "pos" | "f
     isSalesHubEnabled(user.businessId),
     supabase.from("categories").select("id, name").eq("business_id", user.businessId).order("name", { ascending: true }),
     isPieceQuantityEnabled(user.businessId),
+    isPackHintEnabled(user.businessId),
   ]);
   const suggestedManualNumber = manualSaleNumberEnabled ? await getSuggestedManualSaleNumber(user.businessId) : null;
 
@@ -112,6 +113,7 @@ export async function POSPageContent({ mode, table = false }: { mode: "pos" | "f
       exitHref={salesHub ? "/ventes/accueil" : "/dashboard"}
       tableMode={table}
       pieceQuantities={pieceQuantities}
+      packHints={packHints}
       autoPrintReceipt={user.autoPrintReceipt}
       printerTicketWidth={user.printerTicketWidth}
       session={{
