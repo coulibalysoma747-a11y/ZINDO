@@ -841,13 +841,53 @@ export function POS({
   function shownPrice(line: CartLine) {
     return Math.round((line.unitPrice / pieceFactor(line)) * 100) / 100;
   }
-  /** Nombre de pièces tapé → nombre de paquets (arrondi, au moins 1). */
-  function packsFromShown(line: CartLine, pieces: number) {
-    return Math.max(1, Math.round(pieces / pieceFactor(line)));
-  }
 
   function removeLine(key: string) {
     setCart((prev) => prev.filter((l) => lineKey(l) !== key));
+  }
+
+  /**
+   * Quantité tapée dans la case (en pièces pour un conditionnement compté en
+   * pièces). Choix du propriétaire : les pièces qui ne forment pas un paquet
+   * complet passent à l'unité, au prix normal d'une pièce — « Paquet de 2 »,
+   * taper 1 → 1 pièce à l'unité ; 3 → 1 paquet + 1 pièce ; 4 → 2 paquets.
+   */
+  function commitShownQty(line: CartLine, typed: number) {
+    const key = lineKey(line);
+    const m = pieceFactor(line);
+    if (m === 1) {
+      setLineQuantity(key, Math.min(lineMaxQty(line), Math.max(1, typed)));
+      return;
+    }
+    const pieces = Math.min(Math.max(1, typed), lineMaxQty(line) * m);
+    const packs = Math.floor(pieces / m);
+    const rest = pieces - packs * m;
+    if (rest === 0) {
+      setLineQuantity(key, packs);
+      return;
+    }
+    setCart((prev) => {
+      let next = packs > 0 ? prev.map((l) => (lineKey(l) === key ? { ...l, quantity: packs } : l)) : prev.filter((l) => lineKey(l) !== key);
+      const unit = next.find((l) => l.product.id === line.product.id && !l.packagingUnitId && !l.vehicleUnitId && !l.miscKey);
+      if (unit) {
+        const qty = unit.quantity + rest;
+        next = next.map((l) =>
+          l === unit ? { ...l, quantity: qty, unitPrice: resolveTieredPrice(l.product.salePrice, qty, l.product.priceTiers) } : l
+        );
+      } else {
+        next = [
+          ...next,
+          {
+            product: line.product,
+            quantity: rest,
+            unitPrice: resolveTieredPrice(line.product.salePrice, rest, line.product.priceTiers),
+            discount: 0,
+            multiplier: 1,
+          },
+        ];
+      }
+      return next;
+    });
   }
 
   /** Plus grand conditionnement qui tient dans la quantité d'une ligne vendue à l'unité. */
@@ -1461,7 +1501,7 @@ export function POS({
                                 max={lineMaxQty(line) * pieceFactor(line)}
                                 value={shownQty(line)}
                                 live={pieceFactor(line) === 1}
-                                onCommit={(n) => setLineQuantity(lineKey(line), Math.min(lineMaxQty(line), packsFromShown(line, n)))}
+                                onCommit={(n) => commitShownQty(line, n)}
                                 onFocusExtra={revealAboveKeyboard}
                                 className="h-8 w-14 rounded-lg border border-zinc-200 text-center text-sm tabular-nums focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zindo-green-500/40 dark:border-slate-700 dark:bg-slate-900"
                               />
@@ -1577,7 +1617,7 @@ export function POS({
                             aria-label="Quantité"
                             value={shownQty(line)}
                             live={pieceFactor(line) === 1}
-                            onCommit={(n) => setLineQuantity(lineKey(line), Math.min(lineMaxQty(line), packsFromShown(line, n)))}
+                            onCommit={(n) => commitShownQty(line, n)}
                             onFocusExtra={revealAboveKeyboard}
                             className="h-8 w-12 rounded-lg border border-zinc-300 text-center text-sm tabular-nums dark:border-slate-700 dark:bg-slate-900"
                           />
@@ -1673,7 +1713,7 @@ export function POS({
                             max={lineMaxQty(line) * pieceFactor(line)}
                             value={shownQty(line)}
                             live={pieceFactor(line) === 1}
-                            onCommit={(n) => setLineQuantity(lineKey(line), Math.min(lineMaxQty(line), packsFromShown(line, n)))}
+                            onCommit={(n) => commitShownQty(line, n)}
                             onFocusExtra={revealAboveKeyboard}
                             className="h-10 w-16 rounded-lg border border-zinc-200 text-center text-sm tabular-nums dark:border-slate-700 dark:bg-slate-900"
                           />
@@ -1918,7 +1958,7 @@ export function POS({
                     max={lineMaxQty(line) * pieceFactor(line)}
                     value={shownQty(line)}
                     live={pieceFactor(line) === 1}
-                    onCommit={(n) => setLineQuantity(key, Math.min(lineMaxQty(line), packsFromShown(line, n)))}
+                    onCommit={(n) => commitShownQty(line, n)}
                     className="mt-0.5 w-full rounded-lg border border-zinc-200 px-2 py-2 text-right text-base tabular-nums text-zinc-900 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
                   />
                 </label>
@@ -2002,7 +2042,7 @@ export function POS({
                     max={lineMaxQty(line) * pieceFactor(line)}
                     value={shownQty(line)}
                     live={pieceFactor(line) === 1}
-                    onCommit={(n) => setLineQuantity(key, Math.min(lineMaxQty(line), packsFromShown(line, n)))}
+                    onCommit={(n) => commitShownQty(line, n)}
                     onKeyDown={(e) => {
                       if (e.key === "Enter") {
                         e.preventDefault();
