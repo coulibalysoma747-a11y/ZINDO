@@ -69,7 +69,7 @@ export function BusinessSettingsForm({
           <Input id="name" name="name" defaultValue={business.name} required />
         </Field>
         <Field label="Téléphone" htmlFor="phone">
-          <Input id="phone" name="phone" defaultValue={business.phone ?? ""} />
+          <Input id="phone" name="phone" type="tel" inputMode="tel" autoComplete="off" defaultValue={business.phone ?? ""} />
         </Field>
         <Field label="E-mail" htmlFor="email">
           <Input id="email" name="email" type="email" defaultValue={business.email ?? ""} />

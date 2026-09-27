@@ -201,7 +201,7 @@ export function AppointmentsAgenda({
                 <Input id="customerName" name="customerName" />
               </Field>
               <Field label="Téléphone" htmlFor="customerPhone">
-                <Input id="customerPhone" name="customerPhone" />
+                <Input id="customerPhone" name="customerPhone" type="tel" inputMode="tel" autoComplete="off" />
               </Field>
             </div>
           )}

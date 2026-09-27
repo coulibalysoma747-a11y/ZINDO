@@ -56,7 +56,7 @@ export function ShipmentForm({
               <Input id="recipientName" name="recipientName" />
             </Field>
             <Field label="Téléphone destinataire" htmlFor="recipientPhone">
-              <Input id="recipientPhone" name="recipientPhone" placeholder="Pour le message de suivi" />
+              <Input id="recipientPhone" name="recipientPhone" type="tel" inputMode="tel" autoComplete="off" placeholder="Pour le message de suivi" />
             </Field>
           </div>
 

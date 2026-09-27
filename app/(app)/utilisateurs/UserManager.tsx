@@ -40,7 +40,7 @@ export function UserManager() {
             </Field>
           </div>
           <Field label="Téléphone" htmlFor="phone">
-            <Input id="phone" name="phone" required />
+            <Input id="phone" name="phone" type="tel" inputMode="tel" autoComplete="off" required />
           </Field>
           <Field label="E-mail (facultatif)" htmlFor="email">
             <Input id="email" name="email" type="email" />

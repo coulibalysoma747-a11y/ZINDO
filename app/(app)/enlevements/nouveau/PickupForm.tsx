@@ -51,7 +51,7 @@ export function PickupForm({
             <Input id="partnerName" name="partnerName" placeholder="Ex : Ali" required />
           </Field>
           <Field label="Téléphone (facultatif, pour le rappel WhatsApp)" htmlFor="partnerPhone">
-            <Input id="partnerPhone" name="partnerPhone" placeholder="Ex : 70 00 00 00" />
+            <Input id="partnerPhone" name="partnerPhone" type="tel" inputMode="tel" autoComplete="off" placeholder="Ex : 70 00 00 00" />
           </Field>
 
           <Field label="Produit pris" htmlFor="productSearch">

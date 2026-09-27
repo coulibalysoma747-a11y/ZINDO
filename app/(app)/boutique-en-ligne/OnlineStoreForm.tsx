@@ -96,7 +96,7 @@ export function OnlineStoreForm({
           <Input id="whatsappNumber" name="whatsappNumber" defaultValue={store?.whatsappNumber ?? ""} placeholder="+225 XX XX XX XX XX" />
         </Field>
         <Field label="Téléphone (facultatif)" htmlFor="contactPhone">
-          <Input id="contactPhone" name="contactPhone" defaultValue={store?.contactPhone ?? ""} />
+          <Input id="contactPhone" name="contactPhone" type="tel" inputMode="tel" autoComplete="off" defaultValue={store?.contactPhone ?? ""} />
         </Field>
         <Field label="Adresse (facultatif)" htmlFor="address">
           <Input id="address" name="address" defaultValue={store?.address ?? ""} />

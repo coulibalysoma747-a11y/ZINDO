@@ -114,7 +114,7 @@ export function ClientFormModal({
         </Field>
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <Field label="Téléphone" htmlFor="phone">
-            <Input id="phone" name="phone" value={phone} onChange={(e) => setPhone(e.target.value)} />
+            <Input id="phone" name="phone" type="tel" inputMode="tel" autoComplete="off" value={phone} onChange={(e) => setPhone(e.target.value)} />
           </Field>
           <Field label="E-mail" htmlFor="email">
             <Input id="email" name="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
