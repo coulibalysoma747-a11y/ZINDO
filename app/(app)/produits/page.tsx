@@ -370,10 +370,13 @@ export default async function ProductsPage({
         </>
       )}
 
+      {/* Au-dessus de la barre d'onglets du bas (≈ 4 rem) et de la barre de
+          navigation Android (safe-area) : à bottom-6, le bouton passait
+          dessous et n'était plus qu'à moitié visible (Tecno, Infinix…). */}
       <Link
         href="/produits/nouveau"
         aria-label="Nouveau produit"
-        className="fixed bottom-6 right-5 z-20 flex h-14 w-14 items-center justify-center rounded-full bg-orange-500 text-white shadow-lg shadow-orange-500/30 hover:bg-orange-600 sm:hidden"
+        className="fixed bottom-[calc(5.5rem+env(safe-area-inset-bottom))] right-5 z-30 flex h-14 w-14 items-center justify-center rounded-full bg-orange-500 text-white shadow-lg shadow-orange-500/30 hover:bg-orange-600 sm:hidden"
       >
         <Plus className="h-6 w-6" />
       </Link>
