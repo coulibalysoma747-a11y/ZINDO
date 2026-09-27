@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState, useTransition, type FocusEvent } from "react";
 import Link from "next/link";
-import { Trash2, Plus, Minus, UserPlus, Loader2, Wallet, Lock, WifiOff, RefreshCw, Sparkles, Calculator, Printer, MoreVertical, LogOut } from "lucide-react";
+import { Trash2, Plus, Minus, UserPlus, Loader2, Wallet, Lock, WifiOff, RefreshCw, Sparkles, Calculator, Printer, MoreVertical, LogOut, ArrowLeft, ShoppingCart } from "lucide-react";
 import { ProductGrid, type PosProduct, type PackagingUnitOption } from "@/components/products/ProductGrid";
 import { BarcodeScannerButton } from "@/components/products/BarcodeScannerButton";
 import { Card, CardBody, CardHeader } from "@/components/ui/Card";
@@ -159,6 +159,7 @@ export function POS({
   phoneMode = false,
   categories = [],
   exitHref = "/dashboard",
+  tableMode = false,
 }: {
   mode?: "pos" | "facture";
   customers: { id: string; name: string; phone: string | null }[];
@@ -195,12 +196,18 @@ export function POS({
   /**
    * Caisse façon FasoStock sur téléphone (flag caisse_telephone, lib/pos-phone.ts) :
    * plein écran, menu ⋮ (session, réglages, quitter), pastilles de catégories,
-   * barre « Panier — Voir / Payer » fixée en bas. Ordinateur inchangé.
+   * barre fixe en haut (← retour, panier, ⋮). Ordinateur inchangé.
    */
   phoneMode?: boolean;
   categories?: { id: string; name: string }[];
   /** Où mène « Quitter la caisse » (menu ⋮, mode téléphone). */
   exitHref?: string;
+  /**
+   * Facture A4 (tableau) — flag facture_tableau : la facture se remplit ligne
+   * par ligne au clavier (recherche, Entrée, quantité, prix) au lieu des
+   * cartes de produits. Même panier, même paiement, même document.
+   */
+  tableMode?: boolean;
 }) {
   const isFacture = mode === "facture";
   const [cart, setCart] = useState<CartLine[]>([]);
@@ -208,6 +215,8 @@ export function POS({
   const [loadingProducts, setLoadingProducts] = useState(true);
   const [search, setSearch] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("");
+  const [tableQuery, setTableQuery] = useState("");
+  const [tableHighlight, setTableHighlight] = useState(0);
   const [posMenuOpen, setPosMenuOpen] = useState(false);
   const [autoPrintReceipt, setAutoPrintReceipt] = useState(initialAutoPrint);
   const [printerTicketWidth, setPrinterTicketWidth] = useState(initialPrinterWidth);
@@ -1595,6 +1604,183 @@ export function POS({
     ...(allowMixedPayment ? [{ value: "MIXTE" as PaymentMethod, label: "Mixte" }] : []),
   ];
 
+  // Facture A4 (tableau) : suggestions de la ligne de saisie.
+  const tableSuggestions = tableMode && tableQuery.trim()
+    ? searchItems(products, tableQuery, (p) => [p.name, p.reference, p.barcode]).slice(0, 8)
+    : [];
+
+  function focusTableSearch() {
+    setTimeout(() => document.getElementById("facture-table-search")?.focus(), 0);
+  }
+
+  function addFromTable(product: PosProduct) {
+    setTableQuery("");
+    setTableHighlight(0);
+    if (extras.packagingPicker && !product.trackUnits && product.packagingUnits?.length) {
+      setPackagingPickerProduct(product);
+      return;
+    }
+    addProduct(product);
+    // Curseur sur la quantité de la ligne (nouvelle ou existante) de ce produit.
+    setTimeout(() => {
+      const el = document.getElementById(`facture-qty-${product.id}`) as HTMLInputElement | null;
+      if (el) {
+        el.focus();
+        el.select();
+      }
+    }, 50);
+  }
+
+  const renderFactureTable = () => (
+    <Card className="overflow-hidden">
+      <div className="overflow-x-auto">
+        <table className="w-full min-w-[460px] text-sm">
+          <thead className="bg-zinc-50 text-xs uppercase tracking-wide text-zinc-500 dark:bg-slate-800/60">
+            <tr>
+              <th className="w-10 px-3 py-2 text-left">N°</th>
+              <th className="px-3 py-2 text-left">Désignation</th>
+              <th className="w-24 px-3 py-2 text-right">Qté</th>
+              <th className="w-32 px-3 py-2 text-right">P.U.</th>
+              <th className="w-32 px-3 py-2 text-right">Total</th>
+              <th className="w-10 px-2 py-2" />
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-zinc-100 dark:divide-slate-800">
+            {cart.map((line, i) => {
+              const key = lineKey(line);
+              return (
+                <tr key={key}>
+                  <td className="px-3 py-2 text-zinc-500">{i + 1}</td>
+                  <td className="px-3 py-2">
+                    <p className="font-medium text-zinc-900 dark:text-slate-100">
+                      {line.product.name}
+                      {line.packagingLabel && <span className="ml-1 text-xs text-zinc-500">({line.packagingLabel})</span>}
+                    </p>
+                    <p className="text-xs text-zinc-500">{line.product.reference}</p>
+                  </td>
+                  <td className="px-3 py-2">
+                    <input
+                      id={line.packagingUnitId || line.vehicleUnitId || line.miscKey ? undefined : `facture-qty-${line.product.id}`}
+                      type="number"
+                      inputMode="numeric"
+                      min={1}
+                      max={lineMaxQty(line)}
+                      value={line.quantity}
+                      onChange={(e) => setLineQuantity(key, Math.min(lineMaxQty(line), Math.max(1, Math.floor(Number(e.target.value) || 1))))}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          focusTableSearch();
+                        }
+                      }}
+                      className="w-full rounded-lg border border-zinc-200 px-2 py-1.5 text-right tabular-nums dark:border-slate-700 dark:bg-slate-900"
+                    />
+                  </td>
+                  <td className="px-3 py-2">
+                    <input
+                      type="number"
+                      inputMode="numeric"
+                      min={0}
+                      value={line.unitPrice}
+                      onChange={(e) => updateLine(key, { unitPrice: Number(e.target.value) || 0 })}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          focusTableSearch();
+                        }
+                      }}
+                      className="w-full rounded-lg border border-zinc-200 px-2 py-1.5 text-right tabular-nums dark:border-slate-700 dark:bg-slate-900"
+                    />
+                  </td>
+                  <td className="px-3 py-2 text-right font-semibold tabular-nums text-zinc-900 dark:text-slate-100">
+                    {formatMoney(line.unitPrice * line.quantity - (line.discount || 0), currency)}
+                  </td>
+                  <td className="px-2 py-2 text-right">
+                    <button
+                      type="button"
+                      onClick={() => removeLine(key)}
+                      aria-label={`Retirer ${line.product.name}`}
+                      className="rounded-lg p-1.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  </td>
+                </tr>
+              );
+            })}
+            <tr className="bg-zindo-green-50/40 dark:bg-zindo-green-500/5">
+              <td className="px-3 py-2 text-zinc-400">{cart.length + 1}</td>
+              <td colSpan={5} className="relative px-3 py-2">
+                <input
+                  id="facture-table-search"
+                  value={tableQuery}
+                  autoFocus
+                  autoComplete="off"
+                  onChange={(e) => {
+                    setTableQuery(e.target.value);
+                    setTableHighlight(0);
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === "ArrowDown") {
+                      e.preventDefault();
+                      setTableHighlight((h) => Math.min(h + 1, Math.max(0, tableSuggestions.length - 1)));
+                    } else if (e.key === "ArrowUp") {
+                      e.preventDefault();
+                      setTableHighlight((h) => Math.max(0, h - 1));
+                    } else if (e.key === "Enter") {
+                      e.preventDefault();
+                      const pick = tableSuggestions[tableHighlight];
+                      if (pick) addFromTable(pick);
+                    } else if (e.key === "Escape") {
+                      setTableQuery("");
+                    }
+                  }}
+                  placeholder="Tapez un nom, une référence ou un code-barres, puis Entrée…"
+                  className="w-full rounded-lg border border-zindo-green-300 bg-white px-3 py-2 dark:border-zindo-green-500/40 dark:bg-slate-900"
+                />
+                {tableSuggestions.length > 0 && (
+                  <ul className="absolute left-3 right-3 top-full z-20 mt-1 overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-lg dark:border-slate-700 dark:bg-slate-900">
+                    {tableSuggestions.map((p, i) => (
+                      <li key={p.id}>
+                        <button
+                          type="button"
+                          onMouseDown={(e) => e.preventDefault()}
+                          onClick={() => addFromTable(p)}
+                          className={`flex w-full items-center justify-between gap-3 px-3 py-2 text-left text-sm ${
+                            i === tableHighlight ? "bg-zindo-green-50 dark:bg-zindo-green-500/10" : ""
+                          }`}
+                        >
+                          <span className="min-w-0">
+                            <span className="block truncate font-medium text-zinc-900 dark:text-slate-100">{p.name}</span>
+                            <span className="text-xs text-zinc-500">
+                              {p.reference} · {p.quantity} {p.unit} en stock
+                            </span>
+                          </span>
+                          <span className="shrink-0 font-semibold tabular-nums">{formatMoney(p.salePrice, currency)}</span>
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </td>
+            </tr>
+          </tbody>
+          <tfoot>
+            <tr className="border-t border-zinc-200 dark:border-slate-700">
+              <td colSpan={4} className="px-3 py-3 text-right text-sm font-semibold text-zinc-700 dark:text-slate-300">
+                Total ({cart.length} ligne{cart.length > 1 ? "s" : ""})
+              </td>
+              <td className="px-3 py-3 text-right text-base font-bold tabular-nums text-zinc-900 dark:text-slate-100">
+                {formatMoney(subtotal, currency)}
+              </td>
+              <td />
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    </Card>
+  );
+
   // Caisse en une colonne : panier qui défile, puis tout le paiement en
   // dessous, toujours visible sans faire défiler la page.
   const renderSinglePanel = () => (
@@ -1602,7 +1788,7 @@ export function POS({
       id="pos-panier"
       ref={singlePanelRef}
       style={singlePanelMaxH ? { maxHeight: singlePanelMaxH } : undefined}
-      className="flex flex-col md:sticky md:top-4 md:self-start"
+      className="flex scroll-mt-20 flex-col md:sticky md:top-4 md:self-start"
     >
     <Card className="flex min-h-0 flex-1 flex-col overflow-hidden">
       <div className="flex shrink-0 items-center justify-between border-b border-zinc-200 px-4 py-2.5 dark:border-slate-800">
@@ -1809,11 +1995,45 @@ export function POS({
     // (page blanche).
     <>
     <div className="grid grid-cols-1 gap-6 md:grid-cols-[minmax(0,1fr)_320px] lg:grid-cols-[minmax(0,1fr)_380px] xl:grid-cols-[minmax(0,1fr)_420px] print:hidden">
-      <div className={`min-w-0 space-y-4 ${phoneMode ? "pb-20 md:pb-0" : ""}`}>
+      <div className="min-w-0 space-y-4">
+        {phoneMode && (
+          <>
+            {/* Barre fixe du haut : toujours visible, même si le bas de l'écran
+                est recouvert par la barre du navigateur ou du téléphone. */}
+            <div className="fixed inset-x-0 top-0 z-30 flex items-center gap-2 border-b border-zinc-200 bg-white px-3 py-2 md:hidden print:hidden dark:border-slate-800 dark:bg-slate-900">
+              <Link
+                href={exitHref}
+                aria-label="Retour"
+                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-zinc-200 text-zinc-700 dark:border-slate-700 dark:text-slate-200"
+              >
+                <ArrowLeft className="h-5 w-5" />
+              </Link>
+              <p className="min-w-0 flex-1 truncate font-semibold text-zinc-900">
+                {tableMode ? "Facture A4 (tableau)" : isFacture ? "Facture A4" : "Caisse"}
+              </p>
+              <Button
+                type="button"
+                aria-label="Voir le panier et payer"
+                onClick={() => document.getElementById("pos-panier")?.scrollIntoView({ behavior: "smooth", block: "start" })}
+              >
+                <ShoppingCart className="h-4 w-4" /> {cart.length} · <span className="tabular-nums">{formatMoney(total, currency)}</span>
+              </Button>
+              <button
+                type="button"
+                onClick={() => setPosMenuOpen(true)}
+                aria-label="Menu de la caisse"
+                className="flex h-10 w-9 shrink-0 items-center justify-center rounded-xl text-zinc-600 dark:text-slate-300"
+              >
+                <MoreVertical className="h-5 w-5" />
+              </button>
+            </div>
+            <div className="h-10 md:hidden" aria-hidden />
+          </>
+        )}
         <div className={`${phoneMode ? "hidden md:flex" : "flex"} flex-wrap items-start justify-between gap-3`}>
           <div className="flex items-start gap-2">
             <div>
-              <h1 className="text-xl font-bold tracking-tight text-zinc-900">{isFacture ? "Facture A4" : "Vente / Caisse"}</h1>
+              <h1 className="text-xl font-bold tracking-tight text-zinc-900">{tableMode ? "Facture A4 (tableau)" : isFacture ? "Facture A4" : "Vente / Caisse"}</h1>
               <p className="text-sm text-zinc-500">
                 Boutique : <span className="font-medium text-zinc-700">{locationName}</span> —{" "}
                 {isFacture
@@ -1878,6 +2098,7 @@ export function POS({
         )}
 
         <div className="flex flex-wrap items-center gap-2">
+          {!tableMode && (
             <SearchInput
               className="min-w-[220px] flex-1"
               aria-label="Rechercher un produit"
@@ -1893,14 +2114,11 @@ export function POS({
               autoFocus
               id="pos-search"
             />
+          )}
           <span ref={scannerWrapperRef} className="contents">
             <BarcodeScannerButton onDetected={handleScan} />
           </span>
-          {phoneMode && (
-            <Button type="button" variant="outline" className="md:hidden" onClick={() => setPosMenuOpen(true)} aria-label="Menu de la caisse">
-              <MoreVertical className="h-4 w-4" />
-            </Button>
-          )}
+
           {aiCartEnabled && (
             <Button type="button" variant="outline" onClick={() => setAiCartOpen(true)}>
               <Sparkles className="h-4 w-4" /> Panier IA
@@ -2028,7 +2246,9 @@ export function POS({
           />
         )}
 
-        {categoryChips.length > 0 && (
+        {tableMode && renderFactureTable()}
+
+        {!tableMode && categoryChips.length > 0 && (
           <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
             {[{ id: "", name: "Tous" }, ...categoryChips].map((c) => (
               <button
@@ -2049,9 +2269,11 @@ export function POS({
 
         <div
           className={
-            phoneMode
-              ? "rounded-2xl md:max-h-[calc(100vh-15rem)] md:overflow-y-auto"
-              : "max-h-[420px] overflow-y-auto rounded-2xl md:max-h-[calc(100vh-15rem)]"
+            tableMode
+              ? "hidden"
+              : phoneMode
+                ? "rounded-2xl md:max-h-[calc(100vh-15rem)] md:overflow-y-auto"
+                : "max-h-[420px] overflow-y-auto rounded-2xl md:max-h-[calc(100vh-15rem)]"
           }
         >
           {loadingProducts ? (
@@ -2072,38 +2294,22 @@ export function POS({
           )}
         </div>
 
-        {!singlePanel && (
-          <div id="pos-panier" className="scroll-mt-4 md:hidden">
-            {renderCart(false)}
-          </div>
+        {tableMode ? (
+          <div id="pos-panier" className="scroll-mt-20 md:hidden" />
+        ) : (
+          !singlePanel && (
+            <div id="pos-panier" className="scroll-mt-20 md:hidden">
+              {renderCart(false)}
+            </div>
+          )
         )}
       </div>
 
-      {phoneMode && (
-        <div className="fixed inset-x-0 bottom-0 z-30 border-t border-zinc-200 bg-white px-3 pt-2 pb-[calc(0.5rem+env(safe-area-inset-bottom))] md:hidden print:hidden dark:border-slate-800 dark:bg-slate-900">
-          <div className="flex items-center justify-between gap-3">
-            <div className="min-w-0">
-              <p className="text-sm font-semibold text-zinc-900">Panier</p>
-              <p className="text-xs text-zinc-500">
-                {cart.length} article{cart.length > 1 ? "s" : ""} · <span className="font-semibold tabular-nums text-zinc-800 dark:text-slate-200">{formatMoney(total, currency)}</span>
-              </p>
-            </div>
-            <Button
-              type="button"
-              className="px-5 py-3 text-base"
-              onClick={() => document.getElementById("pos-panier")?.scrollIntoView({ behavior: "smooth", block: "start" })}
-            >
-              Voir / Payer
-            </Button>
-          </div>
-        </div>
-      )}
-
-      {singlePanel ? (
+      {singlePanel && !tableMode ? (
         renderSinglePanel()
       ) : (
       <div className="space-y-3 md:sticky md:top-4 md:self-start md:max-h-[calc(100vh-2rem)] md:overflow-y-auto">
-        <div className="hidden md:block">{renderCart(true)}</div>
+        {!tableMode && <div className="hidden md:block">{renderCart(true)}</div>}
         {(!hideCustomerInPos || isCreditOnly) && (
           <Card>
             <CardBody className="flex gap-2 p-3 sm:p-3">

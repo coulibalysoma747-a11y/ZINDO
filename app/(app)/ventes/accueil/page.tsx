@@ -1,10 +1,11 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { Store, FileText, ChevronRight } from "lucide-react";
+import { Store, FileText, Table2, ChevronRight } from "lucide-react";
 import { requireUser } from "@/lib/auth";
 import { getVisibleNavItems } from "@/lib/nav-server";
 import { getCurrentLocation } from "@/lib/location";
 import { isSalesHubEnabled } from "@/lib/sales-hub";
+import { isFactureTableEnabled } from "@/lib/facture-table";
 import { SalesHistoryPanel, SALES_HISTORY_PERIODS } from "@/components/sales/SalesHistoryPanel";
 
 /**
@@ -15,10 +16,11 @@ import { SalesHistoryPanel, SALES_HISTORY_PERIODS } from "@/components/sales/Sal
 export default async function SalesHubPage({ searchParams }: { searchParams: Promise<{ periode?: string }> }) {
   const user = await requireUser();
   const currentLocation = await getCurrentLocation(user.businessId);
-  const [enabled, navItems, { periode }] = await Promise.all([
+  const [enabled, navItems, { periode }, factureTable] = await Promise.all([
     isSalesHubEnabled(user.businessId),
     getVisibleNavItems(user.businessId, user.role, user.id, user.business.activityKey, currentLocation?.id),
     searchParams,
+    isFactureTableEnabled(user.businessId),
   ]);
   if (!enabled) redirect("/ventes");
 
@@ -28,7 +30,10 @@ export default async function SalesHubPage({ searchParams }: { searchParams: Pro
   const tiles = [
     { href: "/ventes", label: "Caisse rapide", hint: "Encaisser au comptoir, ticket", icon: Store },
     { href: "/factures", label: "Facture A4", hint: "Facture détaillée pour un client", icon: FileText },
-  ].filter((t) => visible.has(t.href));
+    ...(factureTable
+      ? [{ href: "/factures/tableau", label: "Facture A4 (tableau)", hint: "Saisie ligne par ligne au clavier", icon: Table2 }]
+      : []),
+  ].filter((t) => visible.has(t.href === "/factures/tableau" ? "/factures" : t.href));
 
   const period = SALES_HISTORY_PERIODS.some((p) => p.value === periode) ? (periode as string) : "aujourdhui";
 
@@ -39,7 +44,7 @@ export default async function SalesHubPage({ searchParams }: { searchParams: Pro
         <p className="text-sm text-zinc-500">{currentLocation?.name ?? user.business.name}</p>
       </div>
 
-      <div className="grid grid-cols-2 gap-3 lg:max-w-2xl">
+      <div className={`grid grid-cols-2 gap-3 ${tiles.length > 2 ? "lg:max-w-4xl lg:grid-cols-3" : "lg:max-w-2xl"}`}>
         {tiles.map((t) => (
           <Link
             key={t.href}

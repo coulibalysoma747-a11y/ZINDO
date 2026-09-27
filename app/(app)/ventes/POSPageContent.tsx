@@ -25,7 +25,7 @@ import { isSalesHubEnabled } from "@/lib/sales-hub";
  * s'appuient tous deux sur la même caisse ouverte, le même panier et le même
  * moteur de création de vente ; seul le document final imprimé diffère.
  */
-export async function POSPageContent({ mode }: { mode: "pos" | "facture" }) {
+export async function POSPageContent({ mode, table = false }: { mode: "pos" | "facture"; table?: boolean }) {
   const user = await requirePermission(PERMISSIONS.SALES_CREATE);
   const currentLocation = await getCurrentLocation(user.businessId);
 
@@ -108,6 +108,7 @@ export async function POSPageContent({ mode }: { mode: "pos" | "facture" }) {
       phoneMode={phoneMode}
       categories={(categories ?? []) as { id: string; name: string }[]}
       exitHref={salesHub ? "/ventes/accueil" : "/dashboard"}
+      tableMode={table}
       autoPrintReceipt={user.autoPrintReceipt}
       printerTicketWidth={user.printerTicketWidth}
       session={{

@@ -90,7 +90,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   // Caisse plein écran sur téléphone (flag caisse_telephone) : ni en-tête, ni
   // bandeau, ni barre du bas sur la caisse et la facture A4 — la caisse a son
   // propre menu ⋮ avec « Quitter la caisse ».
-  const posFullScreen = posPhone && (pathname === "/ventes" || pathname === "/factures");
+  const posFullScreen = posPhone && (pathname === "/ventes" || pathname === "/factures" || pathname === "/factures/tableau");
 
   // Écran « Vente » (flag accueil_vente) : « Vente » y mène aussi sur
   // ordinateur, et la Facture A4 et l'historique des ventes, rangés dans cet
