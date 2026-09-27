@@ -77,7 +77,8 @@ export function MobileNav({
                 )}
                 <div className="space-y-px">
                   {group.items.map((item) => {
-                    const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
+                    const bases = ([] as string[]).concat(item.activeMatch ?? item.href);
+                    const active = bases.some((base) => pathname === base || pathname.startsWith(`${base}/`));
                     const Icon = NAV_ICONS[item.icon];
                     return (
                       <Link

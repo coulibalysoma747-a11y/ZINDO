@@ -124,6 +124,8 @@ export type NavItem = {
     | "cashierQueue";
   /** N'apparaît que pour ce(s) type(s) d'activité précis (lib/activities.ts) — un tableau si plusieurs activités sont concernées. Voir lib/nav-server.ts. */
   requireActivity?: string | string[];
+  /** Préfixe d'adresse qui allume l'entrée, quand il diffère de href (ex. « Vente » → /ventes/accueil, allumée sur toutes les pages /ventes). */
+  activeMatch?: string | string[];
 };
 
 export const NAV_ITEMS: NavItem[] = [

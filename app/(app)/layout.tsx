@@ -83,6 +83,16 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     isSalesHubEnabled(user.businessId),
   ]);
 
+  // Écran « Vente » (flag accueil_vente) : « Vente » y mène aussi sur
+  // ordinateur, et la Facture A4 et l'historique des ventes, rangés dans cet
+  // écran comme chez FasoStock, sortent du menu. navItems reste complet pour
+  // les droits d'accès (barre du bas, écran Vente).
+  const menuItems = salesHub
+    ? navItems
+        .filter((i) => i.href !== "/factures" && i.href !== "/ventes/historique")
+        .map((i) => (i.href === "/ventes" ? { ...i, href: "/ventes/accueil", activeMatch: ["/ventes", "/factures"] } : i))
+    : navItems;
+
   // Menu latéral fermé par l'utilisateur (voir components/layout/SidebarToggle.tsx).
   const sidebarClosed = (await cookies()).get("zindo_sidebar")?.value === "closed";
 
@@ -95,7 +105,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       <div className="print:hidden group-data-[sidebar=closed]/app:hidden">
         <Sidebar
           businessName={user.business.name}
-          items={navItems}
+          items={menuItems}
           menuSearch={menuSearchEnabled}
           userName={`${user.firstName} ${user.lastName}`}
         />
@@ -112,7 +122,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           <Topbar
             userName={`${user.firstName} ${user.lastName}`}
             role={ROLE_LABELS[user.role]}
-            navItems={navItems}
+            navItems={menuItems}
             businessName={user.business.name}
             locations={locations}
             currentLocationId={currentLocation?.id ?? ""}

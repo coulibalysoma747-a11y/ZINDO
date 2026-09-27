@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { Plus, Store, FileText, FileSignature, History, Wallet, ChevronRight } from "lucide-react";
+import { Plus, Store, FileText, History, ChevronRight } from "lucide-react";
 import { requireUser } from "@/lib/auth";
 import { getVisibleNavItems } from "@/lib/nav-server";
 import { getCurrentLocation } from "@/lib/location";
@@ -38,14 +38,12 @@ export default async function SalesHubPage() {
   const tiles = [
     { href: "/ventes", label: "Caisse rapide", hint: "Encaisser au comptoir", icon: Store },
     { href: "/factures", label: "Facture A4", hint: "Facture détaillée pour un client", icon: FileText },
-    { href: "/devis", label: "Devis", hint: "Proposition de prix", icon: FileSignature },
     {
       href: "/ventes/historique",
       label: "Historique des ventes",
       hint: `${todayCount} vente${todayCount > 1 ? "s" : ""} aujourd'hui`,
       icon: History,
     },
-    { href: "/ventes/sessions", label: "Sessions de caisse", hint: "Ouverture, fermeture, écarts", icon: Wallet },
   ].filter((t) => visible.has(t.href));
 
   return (
@@ -72,7 +70,7 @@ export default async function SalesHubPage() {
         </div>
       )}
 
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
         {tiles.map((t) => (
           <Link
             key={t.href}
