@@ -4,6 +4,7 @@ import { useActionState } from "react";
 import { Field, Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { updateProfileAction, type ActionState } from "@/lib/actions/settings";
+import { useKeepValuesOnError } from "@/lib/keep-form-values";
 
 export function ProfileForm({
   user,
@@ -14,9 +15,10 @@ export function ProfileForm({
     updateProfileAction,
     undefined
   );
+  const keep = useKeepValuesOnError(state);
 
   return (
-    <form action={formAction} className="space-y-4">
+    <form onSubmit={keep} action={formAction} className="space-y-4">
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <Field label="Prénom" htmlFor="firstName">
           <Input id="firstName" name="firstName" defaultValue={user.firstName} required />

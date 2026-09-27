@@ -5,10 +5,12 @@ import { useRouter } from "next/navigation";
 import { Field, Input, Textarea } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { submitPaymentProofAction, type ActionState } from "@/lib/actions/subscription";
+import { useKeepValuesOnError } from "@/lib/keep-form-values";
 
 export function PaymentProofForm({ invoiceId }: { invoiceId: string }) {
   const router = useRouter();
   const [state, formAction, pending] = useActionState<ActionState, FormData>(submitPaymentProofAction, undefined);
+  const keep = useKeepValuesOnError(state);
 
   useEffect(() => {
     if (state?.success) router.refresh();
@@ -16,7 +18,7 @@ export function PaymentProofForm({ invoiceId }: { invoiceId: string }) {
   }, [state]);
 
   return (
-    <form action={formAction} className="space-y-3">
+    <form onSubmit={keep} action={formAction} className="space-y-3">
       <input type="hidden" name="invoiceId" value={invoiceId} />
       <Field label="Référence de la transaction Mobile Money" htmlFor="reference">
         <Input id="reference" name="reference" placeholder="Ex : MP240613.1234.A56789" required />

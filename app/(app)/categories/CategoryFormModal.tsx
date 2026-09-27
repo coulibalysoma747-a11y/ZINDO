@@ -6,6 +6,7 @@ import { Modal } from "@/components/ui/Modal";
 import { Field, Input, Textarea } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { createCategoryAction, updateCategoryAction } from "@/lib/actions/categories";
+import { useKeepValuesOnError } from "@/lib/keep-form-values";
 
 type Category = { id: string; name: string; description: string | null } | null;
 
@@ -23,6 +24,7 @@ export function CategoryFormModal({
     ? updateCategoryAction.bind(null, category.id)
     : createCategoryAction;
   const [state, formAction, pending] = useActionState(action, undefined);
+  const keep = useKeepValuesOnError(state);
 
   useEffect(() => {
     if (state?.success) {
@@ -34,7 +36,7 @@ export function CategoryFormModal({
 
   return (
     <Modal open={open} onClose={onClose} title={category ? "Modifier la catégorie" : "Nouvelle catégorie"}>
-      <form action={formAction} className="space-y-4">
+      <form onSubmit={keep} action={formAction} className="space-y-4">
         <Field label="Nom" htmlFor="name">
           <Input id="name" name="name" defaultValue={category?.name} required autoFocus />
         </Field>

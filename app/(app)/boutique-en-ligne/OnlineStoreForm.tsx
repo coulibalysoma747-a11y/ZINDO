@@ -5,6 +5,7 @@ import { Field, Input, Textarea, Select } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { ImageUploadField } from "@/components/ui/ImageUploadField";
 import { saveOnlineStoreAction, type ActionState } from "@/lib/actions/online-store";
+import { useKeepValuesOnError } from "@/lib/keep-form-values";
 
 type OnlineStore = {
   storeName: string;
@@ -39,11 +40,12 @@ export function OnlineStoreForm({
   locations: { id: string; name: string }[];
 }) {
   const [state, formAction, pending] = useActionState<ActionState, FormData>(saveOnlineStoreAction, undefined);
+  const keep = useKeepValuesOnError(state);
   const [deliveryEnabled, setDeliveryEnabled] = useState(store?.deliveryEnabled ?? false);
   const [mobileMoneyEnabled, setMobileMoneyEnabled] = useState(store?.mobileMoneyEnabled ?? false);
 
   return (
-    <form action={formAction} className="space-y-6">
+    <form onSubmit={keep} action={formAction} className="space-y-6">
       <div className="space-y-4 rounded-lg border border-zinc-200 p-3">
         <Field
           label="Adresse de votre boutique en ligne"

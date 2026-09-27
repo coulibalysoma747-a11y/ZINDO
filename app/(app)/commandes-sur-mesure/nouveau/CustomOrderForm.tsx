@@ -5,6 +5,7 @@ import { Field, Input, Select, Textarea } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { Card, CardBody } from "@/components/ui/Card";
 import { createCustomOrderAction, type ActionState } from "@/lib/actions/custom-orders";
+import { useKeepValuesOnError } from "@/lib/keep-form-values";
 
 export function CustomOrderForm({
   customers,
@@ -18,12 +19,13 @@ export function CustomOrderForm({
   defaultLocationId?: string;
 }) {
   const [state, formAction, pending] = useActionState<ActionState, FormData>(createCustomOrderAction, undefined);
+  const keep = useKeepValuesOnError(state);
   const [locationId, setLocationId] = useState(defaultLocationId ?? locations[0]?.id ?? "");
 
   return (
     <Card>
       <CardBody>
-        <form action={formAction} className="space-y-4">
+        <form onSubmit={keep} action={formAction} className="space-y-4">
           <input type="hidden" name="locationId" value={locationId} />
 
           <Field label="Boutique / atelier" htmlFor="locationSelect">

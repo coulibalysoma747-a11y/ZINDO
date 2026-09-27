@@ -7,11 +7,13 @@ import { Modal } from "@/components/ui/Modal";
 import { Field, Input, Textarea } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { createFeatureFlagAction, type ActionState } from "@/lib/actions/feature-flags";
+import { useKeepValuesOnError } from "@/lib/keep-form-values";
 
 export function CreateFeatureFlagForm() {
   const [open, setOpen] = useState(false);
   const router = useRouter();
   const [state, formAction, pending] = useActionState<ActionState, FormData>(createFeatureFlagAction, undefined);
+  const keep = useKeepValuesOnError(state);
 
   useEffect(() => {
     if (state?.success) {
@@ -27,7 +29,7 @@ export function CreateFeatureFlagForm() {
         <Plus className="h-4 w-4" /> Nouvelle fonctionnalité
       </Button>
       <Modal open={open} onClose={() => setOpen(false)} title="Enregistrer une nouvelle fonctionnalité">
-        <form action={formAction} className="space-y-4">
+        <form onSubmit={keep} action={formAction} className="space-y-4">
           <Field
             label="Clé technique"
             htmlFor="key"

@@ -7,10 +7,12 @@ import { Card, CardBody, CardHeader } from "@/components/ui/Card";
 import { Field, Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { openSessionAction, type ActionState } from "@/lib/actions/cash-sessions";
+import { useKeepValuesOnError } from "@/lib/keep-form-values";
 
 export function OpenSessionForm({ locationName }: { locationName: string }) {
   const router = useRouter();
   const [state, formAction, pending] = useActionState<ActionState, FormData>(openSessionAction, undefined);
+  const keep = useKeepValuesOnError(state);
 
   useEffect(() => {
     if (state?.success) router.refresh();
@@ -31,7 +33,7 @@ export function OpenSessionForm({ locationName }: { locationName: string }) {
           </div>
         </CardHeader>
         <CardBody>
-          <form action={formAction} className="space-y-4">
+          <form onSubmit={keep} action={formAction} className="space-y-4">
             <Field
               label="Montant d'ouverture (fond de caisse)"
               htmlFor="openingAmount"

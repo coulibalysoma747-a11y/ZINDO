@@ -9,6 +9,7 @@ import { ProductPicker } from "@/components/products/ProductPicker";
 import { ProductThumbnail } from "@/components/products/ProductThumbnail";
 import { createPickupAction, type ActionState } from "@/lib/actions/pickups";
 import { formatMoney } from "@/lib/format";
+import { useKeepValuesOnError } from "@/lib/keep-form-values";
 
 type SelectedProduct = { id: string; name: string; photoUrl?: string | null; purchasePrice: number };
 
@@ -22,6 +23,7 @@ export function PickupForm({
   currency: string;
 }) {
   const [state, formAction, pending] = useActionState<ActionState, FormData>(createPickupAction, undefined);
+  const keep = useKeepValuesOnError(state);
   const [locationId, setLocationId] = useState(defaultLocationId ?? locations[0]?.id ?? "");
   const [product, setProduct] = useState<SelectedProduct | null>(null);
   const [unitPrice, setUnitPrice] = useState("");
@@ -31,7 +33,7 @@ export function PickupForm({
   return (
     <Card>
       <CardBody>
-        <form action={formAction} className="space-y-4">
+        <form onSubmit={keep} action={formAction} className="space-y-4">
           <input type="hidden" name="locationId" value={locationId} />
           <input type="hidden" name="productId" value={product?.id ?? ""} />
 

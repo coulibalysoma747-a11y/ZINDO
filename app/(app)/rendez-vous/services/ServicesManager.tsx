@@ -8,6 +8,7 @@ import { Field, Input } from "@/components/ui/Input";
 import { Badge } from "@/components/ui/Badge";
 import { formatMoney } from "@/lib/format";
 import { createServiceAction, updateServiceAction, toggleServiceActiveAction, deleteServiceAction, type ActionState, type ServiceRow } from "@/lib/actions/appointments";
+import { useKeepValuesOnError } from "@/lib/keep-form-values";
 
 function ServiceEditForm({ service, onDone }: { service: ServiceRow; onDone: () => void }) {
   const [state, formAction, pending] = useActionState<ActionState, FormData>(async (prev, fd) => {
@@ -15,8 +16,9 @@ function ServiceEditForm({ service, onDone }: { service: ServiceRow; onDone: () 
     if (res?.success) onDone();
     return res;
   }, undefined);
+  const keepFormAction = useKeepValuesOnError(state);
   return (
-    <form action={formAction} className="grid w-full grid-cols-1 gap-2 sm:grid-cols-4">
+    <form onSubmit={keepFormAction} action={formAction} className="grid w-full grid-cols-1 gap-2 sm:grid-cols-4">
       <input type="hidden" name="id" value={service.id} />
       <Input name="name" defaultValue={service.name} required autoFocus aria-label="Nom de la prestation" />
       <Input name="durationMinutes" type="number" min={5} step={5} defaultValue={service.durationMinutes} required aria-label="Durée (minutes)" />

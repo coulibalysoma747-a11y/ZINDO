@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useEffect, useRef } from "react";
+import { useKeepValuesOnError } from "@/lib/keep-form-values";
 import { useSearchParams } from "next/navigation";
 import { Field, Input, Textarea } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
@@ -12,6 +13,7 @@ export function SupportForm() {
     undefined
   );
   const formRef = useRef<HTMLFormElement>(null);
+  const keep = useKeepValuesOnError(state);
   // La page d'origine du problème voyage dans ?from= (posée par le lien de
   // navigation Support) : /support lui-même n'a aucun moyen de la connaître
   // via son propre chemin, qui est toujours "/support".
@@ -23,7 +25,7 @@ export function SupportForm() {
   }, [state]);
 
   return (
-    <form ref={formRef} action={formAction} className="space-y-4">
+    <form ref={formRef} onSubmit={keep} action={formAction} className="space-y-4">
       <input type="hidden" name="pageUrl" value={originPage} />
       <Field label="Objet" htmlFor="subject">
         <Input id="subject" name="subject" placeholder="Ex : Impossible d'imprimer un ticket" required autoFocus />

@@ -6,6 +6,7 @@ import { Modal } from "@/components/ui/Modal";
 import { Field, Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { createPosologyPresetAction, updatePosologyPresetAction } from "@/lib/actions/posology-presets";
+import { useKeepValuesOnError } from "@/lib/keep-form-values";
 
 type PosologyPreset = { id: string; label: string } | null;
 
@@ -21,6 +22,7 @@ export function PosologyPresetFormModal({
   const router = useRouter();
   const action = preset ? updatePosologyPresetAction.bind(null, preset.id) : createPosologyPresetAction;
   const [state, formAction, pending] = useActionState(action, undefined);
+  const keep = useKeepValuesOnError(state);
 
   useEffect(() => {
     if (state?.success) {
@@ -32,7 +34,7 @@ export function PosologyPresetFormModal({
 
   return (
     <Modal open={open} onClose={onClose} title={preset ? "Modifier la posologie" : "Nouvelle posologie"}>
-      <form action={formAction} className="space-y-4">
+      <form onSubmit={keep} action={formAction} className="space-y-4">
         <Field label="Consigne de prise" htmlFor="label">
           <Input id="label" name="label" placeholder="Ex: 1 le matin et 1 le soir" defaultValue={preset?.label} required autoFocus />
         </Field>

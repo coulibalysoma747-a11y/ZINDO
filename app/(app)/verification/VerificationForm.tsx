@@ -3,6 +3,7 @@
 import { useActionState, useState } from "react";
 import { Camera, IdCard, UserRound } from "lucide-react";
 import { submitRenewalAction, submitVerificationAction } from "@/lib/actions/market-verification";
+import { useKeepValuesOnError } from "@/lib/keep-form-values";
 
 const refInput =
   "w-full rounded-xl border border-zinc-200 bg-white px-3 py-3 text-sm outline-none focus:border-zindo-green-500";
@@ -87,11 +88,12 @@ function PhotoField({ name, label, hint, capture, icon: Icon }: {
 
 export function VerificationForm() {
   const [state, action, pending] = useActionState(submitVerificationAction, undefined);
+  const keepAction = useKeepValuesOnError(state);
   if (state?.success) {
     return <p className="rounded-2xl bg-zindo-green-100 p-4 text-sm font-semibold text-zindo-green-700">{state.success}</p>;
   }
   return (
-    <form action={action} className="space-y-3">
+    <form onSubmit={keepAction} action={action} className="space-y-3">
       <PhotoField name="idFront" label="Pièce d'identité : recto" hint="Face avec votre photo, bien lisible" capture="environment" icon={IdCard} />
       <PhotoField name="idBack" label="Pièce d'identité : verso" hint="L'arrière de la même pièce" capture="environment" icon={IdCard} />
       <PhotoField name="selfie" label="Votre photo (selfie)" hint="Votre visage, bien éclairé, sans lunettes" capture="user" icon={UserRound} />
@@ -113,11 +115,12 @@ export function VerificationForm() {
 
 export function RenewalForm() {
   const [state, action, pending] = useActionState(submitRenewalAction, undefined);
+  const keep = useKeepValuesOnError(state);
   if (state?.success) {
     return <p className="rounded-2xl bg-zindo-green-100 p-4 text-sm font-semibold text-zindo-green-700">{state.success}</p>;
   }
   return (
-    <form action={action} className="space-y-3">
+    <form onSubmit={keep} action={action} className="space-y-3">
       <ReferenceField />
       {state?.error && <p className="text-sm text-red-600">{state.error}</p>}
       <button

@@ -6,6 +6,7 @@ import { Modal } from "@/components/ui/Modal";
 import { Field, Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { createBrandAction, updateBrandAction } from "@/lib/actions/brands";
+import { useKeepValuesOnError } from "@/lib/keep-form-values";
 
 type Brand = { id: string; name: string } | null;
 
@@ -13,6 +14,7 @@ export function BrandFormModal({ open, brand, onClose }: { open: boolean; brand:
   const router = useRouter();
   const action = brand ? updateBrandAction.bind(null, brand.id) : createBrandAction;
   const [state, formAction, pending] = useActionState(action, undefined);
+  const keep = useKeepValuesOnError(state);
 
   useEffect(() => {
     if (state?.success) {
@@ -24,7 +26,7 @@ export function BrandFormModal({ open, brand, onClose }: { open: boolean; brand:
 
   return (
     <Modal open={open} onClose={onClose} title={brand ? "Modifier la marque" : "Nouvelle marque"}>
-      <form action={formAction} className="space-y-4">
+      <form onSubmit={keep} action={formAction} className="space-y-4">
         <Field label="Nom" htmlFor="name">
           <Input id="name" name="name" defaultValue={brand?.name} required autoFocus />
         </Field>

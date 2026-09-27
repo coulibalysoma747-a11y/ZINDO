@@ -7,11 +7,13 @@ import { Modal } from "@/components/ui/Modal";
 import { Field, Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { createAdminAction, type ActionState } from "@/lib/actions/admin-management";
+import { useKeepValuesOnError } from "@/lib/keep-form-values";
 
 export function CreateAdminForm() {
   const [open, setOpen] = useState(false);
   const router = useRouter();
   const [state, formAction, pending] = useActionState<ActionState, FormData>(createAdminAction, undefined);
+  const keep = useKeepValuesOnError(state);
 
   useEffect(() => {
     if (state?.success) {
@@ -27,7 +29,7 @@ export function CreateAdminForm() {
         <Plus className="h-4 w-4" /> Nouvel administrateur
       </Button>
       <Modal open={open} onClose={() => setOpen(false)} title="Nouveau compte administrateur">
-        <form action={formAction} className="space-y-4">
+        <form onSubmit={keep} action={formAction} className="space-y-4">
           <Field label="Nom" htmlFor="name">
             <Input id="name" name="name" required autoFocus />
           </Field>

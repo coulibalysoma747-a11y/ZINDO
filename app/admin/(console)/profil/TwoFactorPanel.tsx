@@ -11,6 +11,8 @@ import {
   disableAdminTotpAction,
 } from "@/lib/actions/admin-two-factor";
 
+import { useKeepValuesOnError } from "@/lib/keep-form-values";
+
 export function TwoFactorPanel({ enabled }: { enabled: boolean }) {
   const [isEnabled, setIsEnabled] = useState(enabled);
   const [enrollment, setEnrollment] = useState<{ secret: string; qrDataUrl: string } | null>(null);
@@ -19,6 +21,7 @@ export function TwoFactorPanel({ enabled }: { enabled: boolean }) {
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
   const [disableState, disableAction, disablePending] = useActionState(disableAdminTotpAction, undefined);
+  const keep = useKeepValuesOnError(disableState);
 
   if (backupCodes) {
     return (
@@ -103,7 +106,7 @@ export function TwoFactorPanel({ enabled }: { enabled: boolean }) {
         <p className="flex items-center gap-2 text-sm text-zindo-green-700">
           <ShieldCheck className="h-4 w-4" /> La double authentification est activée sur ce compte.
         </p>
-        <form action={disableAction} className="space-y-3">
+        <form onSubmit={keep} action={disableAction} className="space-y-3">
           <Field label="Confirmez avec votre code d'accès pour désactiver" htmlFor="admin-disable-totp-password">
             <Input id="admin-disable-totp-password" name="password" type="password" required />
           </Field>

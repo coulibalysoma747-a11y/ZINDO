@@ -3,13 +3,15 @@
 import { useActionState } from "react";
 import Link from "next/link";
 import { registerMarketSellerAction } from "@/lib/actions/market-seller";
+import { useKeepValuesOnError } from "@/lib/keep-form-values";
 
 const input = "w-full rounded-xl border border-zinc-200 bg-white px-3 py-3 text-sm outline-none focus:border-zindo-green-500";
 
 export function SellerSignupForm() {
   const [state, action, pending] = useActionState(registerMarketSellerAction, undefined);
+  const keep = useKeepValuesOnError(state);
   return (
-    <form action={action} className="space-y-3">
+    <form onSubmit={keep} action={action} className="space-y-3">
       <div className="grid grid-cols-2 gap-3">
         <input name="firstName" placeholder="Prénom" required className={input} />
         <input name="lastName" placeholder="Nom" required className={input} />

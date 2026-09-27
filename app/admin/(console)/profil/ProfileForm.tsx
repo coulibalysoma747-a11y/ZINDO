@@ -4,15 +4,17 @@ import { useActionState } from "react";
 import { Field, Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { updateSuperAdminProfileAction, type ActionState } from "@/lib/actions/admin-auth";
+import { useKeepValuesOnError } from "@/lib/keep-form-values";
 
 export function ProfileForm({ name, email }: { name: string; email: string }) {
   const [state, formAction, pending] = useActionState<ActionState, FormData>(
     updateSuperAdminProfileAction,
     undefined
   );
+  const keep = useKeepValuesOnError(state);
 
   return (
-    <form action={formAction} className="space-y-4">
+    <form onSubmit={keep} action={formAction} className="space-y-4">
       <Field label="Nom" htmlFor="name">
         <Input id="name" name="name" defaultValue={name} required />
       </Field>

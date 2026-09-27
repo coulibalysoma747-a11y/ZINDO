@@ -6,6 +6,7 @@ import { Modal } from "@/components/ui/Modal";
 import { Field, Input, Select, Textarea } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { createExpenseAction, updateExpenseAction, type ActionState } from "@/lib/actions/expenses";
+import { useKeepValuesOnError } from "@/lib/keep-form-values";
 
 export type EditableExpense = {
   id: string;
@@ -39,6 +40,7 @@ export function ExpenseFormModal({
     expense ? updateExpenseAction : createExpenseAction,
     undefined
   );
+  const keep = useKeepValuesOnError(state);
 
   useEffect(() => {
     if (state?.success) {
@@ -50,7 +52,7 @@ export function ExpenseFormModal({
 
   return (
     <Modal open={open} onClose={onClose} title={expense ? "Modifier la dépense" : "Nouvelle dépense"}>
-      <form action={formAction} className="space-y-4">
+      <form onSubmit={keep} action={formAction} className="space-y-4">
         {expense && <input type="hidden" name="id" value={expense.id} />}
         <Field label="Libellé" htmlFor="label">
           <Input id="label" name="label" placeholder="Ex : Facture d'électricité" defaultValue={expense?.label} required autoFocus />

@@ -17,6 +17,8 @@ import {
   type ActionState,
 } from "@/lib/actions/promo-codes";
 
+import { useKeepValuesOnError } from "@/lib/keep-form-values";
+
 export function PromoCodesList({ promoCodes, canEdit = false }: { promoCodes: PromoCodeSummary[]; canEdit?: boolean }) {
   const [editing, setEditing] = useState<PromoCodeSummary | null>(null);
   const [state, formAction, pending] = useActionState<ActionState, FormData>(async (prev, fd) => {
@@ -25,6 +27,7 @@ export function PromoCodesList({ promoCodes, canEdit = false }: { promoCodes: Pr
     if (res?.success) setEditing(null);
     return res;
   }, undefined);
+  const keep = useKeepValuesOnError(state);
   const router = useRouter();
   const [transitionPending, startTransition] = useTransition();
 
@@ -50,7 +53,7 @@ export function PromoCodesList({ promoCodes, canEdit = false }: { promoCodes: Pr
           <h2 className="font-semibold text-zinc-900">{editing ? `Modifier le code ${editing.code}` : "Nouveau code promo"}</h2>
         </CardHeader>
         <CardBody>
-          <form key={editing?.id ?? "nouveau"} action={formAction} className="space-y-4">
+          <form onSubmit={keep} key={editing?.id ?? "nouveau"} action={formAction} className="space-y-4">
             {editing && <input type="hidden" name="id" value={editing.id} />}
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <Field label="Code" htmlFor="code" hint="Le client le saisit tel quel (ex. BIENVENUE10)">

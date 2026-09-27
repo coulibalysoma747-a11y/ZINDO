@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/Button";
 import { Card, CardBody, CardHeader } from "@/components/ui/Card";
 import { saveActivityConfigAction, type ActionState } from "@/lib/actions/activity-config";
 import { TERM_DEFAULTS, type TermKey, type CustomFieldDef, type CustomFieldType } from "@/lib/activity-terms";
+import { useKeepValuesOnError } from "@/lib/keep-form-values";
 
 const TERM_ORDER: TermKey[] = ["products", "clients", "suppliers", "sales", "purchases", "stock", "credits"];
 
@@ -43,6 +44,7 @@ export function ActivityConfigForm({
   const router = useRouter();
   const boundAction = saveActivityConfigAction.bind(null, activityKey);
   const [state, formAction, pending] = useActionState<ActionState, FormData>(boundAction, undefined);
+  const keep = useKeepValuesOnError(state);
 
   const [hiddenHrefs, setHiddenHrefs] = useState<string[]>(initial.hiddenNavHrefs);
   const [customFields, setCustomFields] = useState<CustomFieldDef[]>(initial.customFields);
@@ -68,7 +70,7 @@ export function ActivityConfigForm({
   }
 
   return (
-    <form action={formAction} className="space-y-6">
+    <form onSubmit={keep} action={formAction} className="space-y-6">
       <input type="hidden" name="customFieldsJson" value={JSON.stringify(customFields)} />
 
       <Card>

@@ -6,6 +6,7 @@ import { Card, CardBody } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { receiveFasoStockAction, sendToFasoStockAction } from "@/lib/actions/faso-stock-file";
 import type { FasoReceiveResult } from "@/lib/faso-stock-file-sync";
+import { useKeepValuesOnError } from "@/lib/keep-form-values";
 
 const LAST_SEND_MESSAGES = {
   aucun: null,
@@ -25,6 +26,7 @@ export function FasoStockSyncPanel({ receivedAt, sentAt }: { receivedAt: string 
     receiveFasoStockAction,
     undefined
   );
+  const keep = useKeepValuesOnError(receiveState);
   const [sendMessage, setSendMessage] = useState<{ ok: boolean; text: string } | null>(null);
   const [sending, startSending] = useTransition();
 
@@ -59,7 +61,7 @@ export function FasoStockSyncPanel({ receivedAt, sentAt }: { receivedAt: string 
             </p>
             <p className="text-xs text-zinc-400">Dernière réception : {formatDate(receivedAt)}</p>
           </div>
-          <form action={receiveAction} className="space-y-3">
+          <form onSubmit={keep} action={receiveAction} className="space-y-3">
             <label className="flex cursor-pointer flex-col items-center gap-2 rounded-xl border-2 border-dashed border-zinc-300 p-6 text-center hover:border-zindo-green-400">
               <UploadCloud className="h-7 w-7 text-zinc-400" />
               <span className="text-sm font-medium text-zinc-700">Choisir le fichier Excel de FasoStock</span>

@@ -5,6 +5,7 @@ import { Field, Input, Select, Textarea } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { Card, CardBody } from "@/components/ui/Card";
 import { createShipmentAction, type ActionState } from "@/lib/actions/shipments";
+import { useKeepValuesOnError } from "@/lib/keep-form-values";
 
 export function ShipmentForm({
   locations,
@@ -14,12 +15,13 @@ export function ShipmentForm({
   defaultLocationId?: string;
 }) {
   const [state, formAction, pending] = useActionState<ActionState, FormData>(createShipmentAction, undefined);
+  const keep = useKeepValuesOnError(state);
   const [locationId, setLocationId] = useState(defaultLocationId ?? locations[0]?.id ?? "");
 
   return (
     <Card>
       <CardBody>
-        <form action={formAction} className="space-y-4">
+        <form onSubmit={keep} action={formAction} className="space-y-4">
           <input type="hidden" name="locationId" value={locationId} />
 
           <Field label="Boutique" htmlFor="locationSelect">

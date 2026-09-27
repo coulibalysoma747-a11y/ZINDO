@@ -7,6 +7,7 @@ import { Modal } from "@/components/ui/Modal";
 import { Field, Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { updateUserInfoAction, type ActionState } from "@/lib/actions/users";
+import { useKeepValuesOnError } from "@/lib/keep-form-values";
 
 type EditableUser = { id: string; firstName: string; lastName: string; phone: string };
 
@@ -22,6 +23,7 @@ export function EditUserButton({ user }: { user: EditableUser }) {
     }
     return res;
   }, undefined);
+  const keep = useKeepValuesOnError(state);
 
   return (
     <>
@@ -34,7 +36,7 @@ export function EditUserButton({ user }: { user: EditableUser }) {
         <Pencil className="h-4 w-4" />
       </button>
       <Modal open={open} onClose={() => setOpen(false)} title="Modifier l'utilisateur">
-        <form action={formAction} className="space-y-4">
+        <form onSubmit={keep} action={formAction} className="space-y-4">
           <input type="hidden" name="id" value={user.id} />
           <div className="grid grid-cols-2 gap-3">
             <Field label="Prénom" htmlFor={`firstName-${user.id}`}>

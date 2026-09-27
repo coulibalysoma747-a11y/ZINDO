@@ -5,12 +5,14 @@ import { Field, Textarea } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { updatePlatformConfigAction, type ActionState } from "@/lib/actions/platform-admin";
 import type { PlatformConfig } from "@/lib/platform-config";
+import { useKeepValuesOnError } from "@/lib/keep-form-values";
 
 export function PlatformConfigForm({ config }: { config: PlatformConfig }) {
   const [state, formAction, pending] = useActionState<ActionState, FormData>(updatePlatformConfigAction, undefined);
+  const keep = useKeepValuesOnError(state);
 
   return (
-    <form action={formAction} className="space-y-6">
+    <form onSubmit={keep} action={formAction} className="space-y-6">
       <div className="space-y-3 rounded-xl border border-zinc-200 p-4">
         <label className="flex items-center gap-2 text-sm font-semibold text-zinc-900">
           <input

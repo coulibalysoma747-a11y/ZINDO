@@ -7,6 +7,7 @@ import { Modal } from "@/components/ui/Modal";
 import { Field, Input, Select } from "@/components/ui/Input";
 import { Button, ButtonLink } from "@/components/ui/Button";
 import { recordCustomerPaymentAction, type ActionState } from "@/lib/actions/customers";
+import { useKeepValuesOnError } from "@/lib/keep-form-values";
 
 export function RecordPaymentButton({
   customerId,
@@ -25,6 +26,7 @@ export function RecordPaymentButton({
     recordCustomerPaymentAction,
     undefined
   );
+  const keep = useKeepValuesOnError(state);
   // Réponse déjà vue à la dernière ouverture : son reçu ne doit pas réapparaître.
   const [stateAtOpen, setStateAtOpen] = useState<ActionState>(undefined);
   const receiptId = receiptEnabled && state !== stateAtOpen ? (state?.receiptId ?? null) : null;
@@ -62,7 +64,7 @@ export function RecordPaymentButton({
             </div>
           </div>
         ) : (
-        <form action={formAction} className="space-y-4">
+        <form onSubmit={keep} action={formAction} className="space-y-4">
           <input type="hidden" name="customerId" value={customerId} />
           <Field label="Montant" htmlFor="amount" hint={`Crédit restant : ${maxAmount}`}>
             <Input id="amount" name="amount" type="number" min={1} max={maxAmount} required autoFocus />

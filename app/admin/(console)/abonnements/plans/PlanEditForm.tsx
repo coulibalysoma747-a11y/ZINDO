@@ -6,6 +6,7 @@ import { Field, Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { Card, CardBody, CardHeader } from "@/components/ui/Card";
 import { updateSubscriptionPlanAction, type ActionState } from "@/lib/actions/subscription-admin";
+import { useKeepValuesOnError } from "@/lib/keep-form-values";
 
 type Plan = {
   id: string;
@@ -28,6 +29,7 @@ export function PlanEditForm({
 }) {
   const boundAction = updateSubscriptionPlanAction.bind(null, plan.id);
   const [state, formAction, pending] = useActionState<ActionState, FormData>(boundAction, undefined);
+  const keep = useKeepValuesOnError(state);
   const [open, setOpen] = useState(false);
   const [features, setFeatures] = useState<string[]>(plan.features);
 
@@ -48,7 +50,7 @@ export function PlanEditForm({
       </CardHeader>
       {open && (
         <CardBody>
-          <form action={formAction} className="space-y-4">
+          <form onSubmit={keep} action={formAction} className="space-y-4">
             {features.map((f) => (
               <input key={f} type="hidden" name="features" value={f} />
             ))}

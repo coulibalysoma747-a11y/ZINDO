@@ -6,6 +6,7 @@ import { Modal } from "@/components/ui/Modal";
 import { Field, Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { createMedicalActAction, updateMedicalActAction } from "@/lib/actions/medical-acts";
+import { useKeepValuesOnError } from "@/lib/keep-form-values";
 
 type MedicalAct = { id: string; name: string; defaultFee: number } | null;
 
@@ -21,6 +22,7 @@ export function MedicalActFormModal({
   const router = useRouter();
   const action = act ? updateMedicalActAction.bind(null, act.id) : createMedicalActAction;
   const [state, formAction, pending] = useActionState(action, undefined);
+  const keep = useKeepValuesOnError(state);
 
   useEffect(() => {
     if (state?.success) {
@@ -32,7 +34,7 @@ export function MedicalActFormModal({
 
   return (
     <Modal open={open} onClose={onClose} title={act ? "Modifier l'acte" : "Nouvel acte médical"}>
-      <form action={formAction} className="space-y-4">
+      <form onSubmit={keep} action={formAction} className="space-y-4">
         <Field label="Nom de l'acte" htmlFor="name">
           <Input id="name" name="name" placeholder="Ex: Consultation générale" defaultValue={act?.name} required autoFocus />
         </Field>

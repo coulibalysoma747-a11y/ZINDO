@@ -6,6 +6,7 @@ import { Modal } from "@/components/ui/Modal";
 import { Field, Input, Select } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { createLocationAction, updateLocationAction, type ActionState } from "@/lib/actions/locations";
+import { useKeepValuesOnError } from "@/lib/keep-form-values";
 
 type Location = {
   id: string;
@@ -27,6 +28,7 @@ export function LocationFormModal({
   const router = useRouter();
   const action = location ? updateLocationAction.bind(null, location.id) : createLocationAction;
   const [state, formAction, pending] = useActionState<ActionState, FormData>(action, undefined);
+  const keep = useKeepValuesOnError(state);
 
   useEffect(() => {
     if (state?.success) {
@@ -38,7 +40,7 @@ export function LocationFormModal({
 
   return (
     <Modal open={open} onClose={onClose} title={location ? "Modifier la boutique" : "Nouvelle boutique"}>
-      <form action={formAction} className="space-y-4">
+      <form onSubmit={keep} action={formAction} className="space-y-4">
         <Field label="Nom" htmlFor="name">
           <Input id="name" name="name" defaultValue={location?.name} placeholder="Ex: Boutique Centre-ville" required autoFocus />
         </Field>

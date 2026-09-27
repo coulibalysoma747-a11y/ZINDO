@@ -12,6 +12,7 @@ import { EntityQuickSelect } from "@/components/products/EntityQuickSelect";
 import { ProductPicker } from "@/components/products/ProductPicker";
 import { Field, Input, Select, Textarea } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
+import { useKeepValuesOnError } from "@/lib/keep-form-values";
 
 // Une ligne d'ordonnance vient soit du catalogue Produits (productId connu),
 // soit d'une description libre tapée par le médecin (ex. "Paracétamol 1000
@@ -34,6 +35,7 @@ export function ConsultationForm({
   currency: string;
 }) {
   const [state, action, pending] = useActionState(createConsultationAction, undefined);
+  const keep = useKeepValuesOnError(state);
   const [fee, setFee] = useState(0);
   const [items, setItems] = useState<PrescriptionItem[]>([]);
   const [customName, setCustomName] = useState("");
@@ -77,7 +79,7 @@ export function ConsultationForm({
   }
 
   return (
-    <form action={action} className="space-y-4">
+    <form onSubmit={keep} action={action} className="space-y-4">
       <p className="text-xs text-zinc-500">
         Le numéro du patient (ex. PAT-00001) est généré automatiquement à l&apos;enregistrement.
       </p>

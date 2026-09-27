@@ -6,12 +6,14 @@ import { UploadCloud, Download } from "lucide-react";
 import { Card, CardBody } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { importProductsCsvAction, type ImportCsvResult } from "@/lib/actions/products-import-csv";
+import { useKeepValuesOnError } from "@/lib/keep-form-values";
 
 export function ImportCsvForm({ quantitiesEnabled }: { quantitiesEnabled: boolean }) {
   const [state, formAction, pending] = useActionState<ImportCsvResult | undefined, FormData>(
     importProductsCsvAction,
     undefined
   );
+  const keep = useKeepValuesOnError(state);
 
   return (
     <div className="space-y-4">
@@ -43,7 +45,7 @@ export function ImportCsvForm({ quantitiesEnabled }: { quantitiesEnabled: boolea
         </CardBody>
       </Card>
 
-      <form action={formAction} className="space-y-4">
+      <form onSubmit={keep} action={formAction} className="space-y-4">
         <label className="flex cursor-pointer flex-col items-center gap-2 rounded-xl border-2 border-dashed border-zinc-300 p-8 text-center hover:border-zindo-green-400">
           <UploadCloud className="h-8 w-8 text-zinc-400" />
           <span className="text-sm font-medium text-zinc-700">Choisir un fichier CSV</span>

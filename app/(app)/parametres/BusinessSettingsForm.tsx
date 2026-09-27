@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/Button";
 import { ImageUploadField } from "@/components/ui/ImageUploadField";
 import { updateBusinessSettingsAction, type ActionState } from "@/lib/actions/settings";
 import { TicketPreviewButton } from "./TicketPreviewButton";
+import { useKeepValuesOnError } from "@/lib/keep-form-values";
 
 type Business = {
   name: string;
@@ -51,9 +52,10 @@ export function BusinessSettingsForm({
     updateBusinessSettingsAction,
     undefined
   );
+  const keep = useKeepValuesOnError(state);
 
   return (
-    <form id="business-settings-form" action={formAction} className="space-y-4">
+    <form onSubmit={keep} id="business-settings-form" action={formAction} className="space-y-4">
       <ImageUploadField
         name="logo"
         removeFieldName="removeLogo"

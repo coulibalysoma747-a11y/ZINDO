@@ -8,6 +8,7 @@ import { Field, Input, Select, Textarea } from "@/components/ui/Input";
 import { Badge } from "@/components/ui/Badge";
 import { formatDate } from "@/lib/format";
 import { registerWarrantyAction, updateWarrantyAction, searchWarrantyAction, deleteWarrantyAction, type ActionState, type WarrantyRecord } from "@/lib/actions/warranty";
+import { useKeepValuesOnError } from "@/lib/keep-form-values";
 
 const DURATION_OPTIONS = [3, 6, 12, 18, 24, 36];
 
@@ -29,8 +30,9 @@ function WarrantyEditForm({
     if (res?.success) onDone(true);
     return res;
   }, undefined);
+  const keepFormAction = useKeepValuesOnError(state);
   return (
-    <form action={formAction} className="grid w-full grid-cols-1 gap-3 sm:grid-cols-2">
+    <form onSubmit={keepFormAction} action={formAction} className="grid w-full grid-cols-1 gap-3 sm:grid-cols-2">
       <input type="hidden" name="id" value={record.id} />
       <Field label="Numéro de série / IMEI" htmlFor={`sn-${record.id}`}>
         <Input id={`sn-${record.id}`} name="serialNumber" defaultValue={record.serialNumber} required autoFocus />
@@ -84,6 +86,7 @@ export function WarrantyManager({
   const [editingId, setEditingId] = useState<string | null>(null);
   const [tab, setTab] = useState<"register" | "search">("register");
   const [state, formAction, pending] = useActionState<ActionState, FormData>(registerWarrantyAction, undefined);
+  const keep = useKeepValuesOnError(state);
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<WarrantyRecord[]>([]);
   const [, startTransition] = useTransition();
@@ -126,7 +129,7 @@ export function WarrantyManager({
       {tab === "register" ? (
         <Card>
           <CardBody>
-            <form action={formAction} className="space-y-4">
+            <form onSubmit={keep} action={formAction} className="space-y-4">
               <Field label="Produit" htmlFor="productId">
                 <Select id="productId" name="productId" defaultValue="" required>
                   <option value="" disabled>

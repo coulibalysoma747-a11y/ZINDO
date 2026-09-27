@@ -4,15 +4,17 @@ import { useActionState } from "react";
 import { Field, Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { changePasswordAction, type ActionState } from "@/lib/actions/settings";
+import { useKeepValuesOnError } from "@/lib/keep-form-values";
 
 export function PasswordForm() {
   const [state, formAction, pending] = useActionState<ActionState, FormData>(
     changePasswordAction,
     undefined
   );
+  const keep = useKeepValuesOnError(state);
 
   return (
-    <form action={formAction} className="space-y-4">
+    <form onSubmit={keep} action={formAction} className="space-y-4">
       <Field label="Mot de passe actuel" htmlFor="currentPassword">
         <Input id="currentPassword" name="currentPassword" type="password" required />
       </Field>

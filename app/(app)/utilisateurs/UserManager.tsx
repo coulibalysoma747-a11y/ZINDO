@@ -8,11 +8,13 @@ import { Field, Input, Select } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { createUserAction, type ActionState } from "@/lib/actions/users";
 import { ROLE_LABELS } from "@/lib/permissions";
+import { useKeepValuesOnError } from "@/lib/keep-form-values";
 
 export function UserManager() {
   const [open, setOpen] = useState(false);
   const router = useRouter();
   const [state, formAction, pending] = useActionState<ActionState, FormData>(createUserAction, undefined);
+  const keep = useKeepValuesOnError(state);
 
   useEffect(() => {
     if (state?.success) {
@@ -28,7 +30,7 @@ export function UserManager() {
         <Plus className="h-4 w-4" /> Nouvel utilisateur
       </Button>
       <Modal open={open} onClose={() => setOpen(false)} title="Nouvel utilisateur">
-        <form action={formAction} className="space-y-4">
+        <form onSubmit={keep} action={formAction} className="space-y-4">
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <Field label="Prénom" htmlFor="firstName">
               <Input id="firstName" name="firstName" required autoFocus />

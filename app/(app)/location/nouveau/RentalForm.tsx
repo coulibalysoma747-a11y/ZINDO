@@ -7,6 +7,7 @@ import { Card, CardBody } from "@/components/ui/Card";
 import { ProductPicker } from "@/components/products/ProductPicker";
 import { ProductThumbnail } from "@/components/products/ProductThumbnail";
 import { createRentalAction, type ActionState } from "@/lib/actions/rentals";
+import { useKeepValuesOnError } from "@/lib/keep-form-values";
 
 type SelectedProduct = { id: string; name: string; photoUrl?: string | null };
 
@@ -26,13 +27,14 @@ export function RentalForm({
   currency: string;
 }) {
   const [state, formAction, pending] = useActionState<ActionState, FormData>(createRentalAction, undefined);
+  const keep = useKeepValuesOnError(state);
   const [locationId, setLocationId] = useState(defaultLocationId ?? locations[0]?.id ?? "");
   const [product, setProduct] = useState<SelectedProduct | null>(null);
 
   return (
     <Card>
       <CardBody>
-        <form action={formAction} className="space-y-4">
+        <form onSubmit={keep} action={formAction} className="space-y-4">
           <input type="hidden" name="locationId" value={locationId} />
           <input type="hidden" name="productId" value={product?.id ?? ""} />
 

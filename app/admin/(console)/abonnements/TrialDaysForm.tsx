@@ -4,12 +4,14 @@ import { useActionState } from "react";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { updateTrialDaysAction, type ActionState } from "@/lib/actions/subscription-admin";
+import { useKeepValuesOnError } from "@/lib/keep-form-values";
 
 export function TrialDaysForm({ trialDays, maxDays }: { trialDays: number; maxDays: number }) {
   const [state, formAction, pending] = useActionState<ActionState, FormData>(updateTrialDaysAction, undefined);
+  const keep = useKeepValuesOnError(state);
 
   return (
-    <form action={formAction} className="flex flex-wrap items-end gap-3">
+    <form onSubmit={keep} action={formAction} className="flex flex-wrap items-end gap-3">
       <div>
         <label htmlFor="trialDays" className="mb-1 block text-sm font-medium text-zinc-700">
           Durée de l&apos;essai gratuit (jours)

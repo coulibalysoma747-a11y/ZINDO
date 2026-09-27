@@ -14,6 +14,7 @@ import type { ActionState, CreateProductInput } from "@/lib/actions/products";
 import { queueOfflineWrite } from "@/lib/offline/db";
 import type { CustomFieldDef } from "@/lib/activity-config";
 import { formatMoney } from "@/lib/format";
+import { useKeepValuesOnError } from "@/lib/keep-form-values";
 
 type Option = { id: string; name: string };
 
@@ -72,6 +73,7 @@ export function ProductForm({
     if (allowOffline && !navigator.onLine) return queueOfflineProduct(formData);
     return action(prev, formData);
   }, undefined);
+  const keep = useKeepValuesOnError(state);
   const [barcode, setBarcode] = useState(initial?.barcode ?? "");
   const [trackUnits, setTrackUnits] = useState(initial?.trackUnits ?? false);
   const [purchasePrice, setPurchasePrice] = useState(String(initial?.purchasePrice ?? ""));
@@ -100,7 +102,7 @@ export function ProductForm({
   }
 
   return (
-    <form action={formAction} className="space-y-6">
+    <form onSubmit={keep} action={formAction} className="space-y-6">
       <ImageUploadField
         name="photo"
         removeFieldName="removePhoto"

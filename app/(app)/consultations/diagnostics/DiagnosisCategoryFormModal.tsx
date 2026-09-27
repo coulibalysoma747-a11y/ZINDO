@@ -6,6 +6,7 @@ import { Modal } from "@/components/ui/Modal";
 import { Field, Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { createDiagnosisCategoryAction, updateDiagnosisCategoryAction } from "@/lib/actions/diagnosis-categories";
+import { useKeepValuesOnError } from "@/lib/keep-form-values";
 
 type DiagnosisCategory = { id: string; name: string } | null;
 
@@ -21,6 +22,7 @@ export function DiagnosisCategoryFormModal({
   const router = useRouter();
   const action = category ? updateDiagnosisCategoryAction.bind(null, category.id) : createDiagnosisCategoryAction;
   const [state, formAction, pending] = useActionState(action, undefined);
+  const keep = useKeepValuesOnError(state);
 
   useEffect(() => {
     if (state?.success) {
@@ -32,7 +34,7 @@ export function DiagnosisCategoryFormModal({
 
   return (
     <Modal open={open} onClose={onClose} title={category ? "Modifier le diagnostic" : "Nouveau diagnostic"}>
-      <form action={formAction} className="space-y-4">
+      <form onSubmit={keep} action={formAction} className="space-y-4">
         <Field label="Nom du diagnostic" htmlFor="name">
           <Input id="name" name="name" placeholder="Ex: Paludisme" defaultValue={category?.name} required autoFocus />
         </Field>
