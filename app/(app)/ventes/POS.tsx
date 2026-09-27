@@ -130,6 +130,69 @@ function packagingDisplayLabel(name: string, multiplier: number) {
   return `${name} de ${Number.isInteger(multiplier) ? multiplier : String(multiplier).replace(".", ",")}`;
 }
 
+/**
+ * Case de quantité du panier. Signalé par le propriétaire : en touchant la
+ * case « 2 », le curseur se plaçait après le 2 (taper 3 donnait 23), et
+ * effacer remettait aussitôt 1 (taper 3 donnait 13). Ici :
+ * - toucher la case sélectionne le nombre (ce qu'on tape le remplace) ;
+ * - on peut vider la case pendant la saisie ;
+ * - `live` : le panier suit chaque chiffre (ligne à l'unité) ; sinon
+ *   (conditionnement compté en pièces) on n'arrondit au paquet qu'à la fin
+ *   de la saisie (OK du clavier, Entrée ou en quittant la case), pour que
+ *   « 10 » ne devienne pas « 20 » dès le premier chiffre.
+ */
+function QtyInput({
+  value,
+  onCommit,
+  live,
+  onFocusExtra,
+  onKeyDown,
+  ...rest
+}: {
+  value: number;
+  onCommit: (n: number) => void;
+  live: boolean;
+  onFocusExtra?: (e: FocusEvent<HTMLInputElement>) => void;
+  onKeyDown?: (e: React.KeyboardEvent<HTMLInputElement>) => void;
+} & Omit<React.InputHTMLAttributes<HTMLInputElement>, "value" | "onChange" | "onFocus" | "onBlur" | "onKeyDown" | "type">) {
+  const [draft, setDraft] = useState<string | null>(null);
+  const commit = () => {
+    if (draft !== null) {
+      const n = Math.floor(Number(draft));
+      if (n >= 1) onCommit(n);
+    }
+    setDraft(null);
+  };
+  return (
+    <input
+      {...rest}
+      type="number"
+      inputMode="numeric"
+      value={draft ?? String(value)}
+      onFocus={(e) => {
+        const el = e.currentTarget;
+        setDraft(String(value));
+        // Après le placement du curseur par le téléphone, sinon la sélection saute.
+        setTimeout(() => el.select(), 0);
+        onFocusExtra?.(e);
+      }}
+      onChange={(e) => {
+        setDraft(e.target.value);
+        const n = Math.floor(Number(e.target.value));
+        if (live && n >= 1) onCommit(n);
+      }}
+      // Retoucher la case sans en être sorti : le nombre est de nouveau sélectionné.
+      onClick={(e) => e.currentTarget.select()}
+      onBlur={commit}
+      onKeyDown={(e) => {
+        // OK / Entrée : fin de la saisie (onBlur enregistre).
+        if (e.key === "Enter") e.currentTarget.blur();
+        onKeyDown?.(e);
+      }}
+    />
+  );
+}
+
 const NARROW_QUERY = "(max-width: 767px)";
 function subscribeNarrow(onChange: () => void) {
   const mq = window.matchMedia(NARROW_QUERY);
@@ -1393,18 +1456,13 @@ export function POS({
                               </button>
                             )}
                             {quantityInputMode !== "buttons" && (
-                              <input
-                                type="number"
+                              <QtyInput
                                 min={1}
                                 max={lineMaxQty(line) * pieceFactor(line)}
                                 value={shownQty(line)}
-                                onChange={(e) =>
-                                  setLineQuantity(
-                                    lineKey(line),
-                                    Math.min(lineMaxQty(line), Math.max(1, packsFromShown(line, Number(e.target.value) || 1)))
-                                  )
-                                }
-                                onFocus={revealAboveKeyboard}
+                                live={pieceFactor(line) === 1}
+                                onCommit={(n) => setLineQuantity(lineKey(line), Math.min(lineMaxQty(line), packsFromShown(line, n)))}
+                                onFocusExtra={revealAboveKeyboard}
                                 className="h-8 w-14 rounded-lg border border-zinc-200 text-center text-sm tabular-nums focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zindo-green-500/40 dark:border-slate-700 dark:bg-slate-900"
                               />
                             )}
@@ -1513,19 +1571,14 @@ export function POS({
                           </button>
                         )}
                         {quantityInputMode !== "buttons" ? (
-                          <input
-                            type="number"
+                          <QtyInput
                             min={1}
                             max={lineMaxQty(line) * pieceFactor(line)}
                             aria-label="Quantité"
                             value={shownQty(line)}
-                            onChange={(e) =>
-                              setLineQuantity(
-                                lineKey(line),
-                                Math.min(lineMaxQty(line), Math.max(1, packsFromShown(line, Number(e.target.value) || 1)))
-                              )
-                            }
-                            onFocus={revealAboveKeyboard}
+                            live={pieceFactor(line) === 1}
+                            onCommit={(n) => setLineQuantity(lineKey(line), Math.min(lineMaxQty(line), packsFromShown(line, n)))}
+                            onFocusExtra={revealAboveKeyboard}
                             className="h-8 w-12 rounded-lg border border-zinc-300 text-center text-sm tabular-nums dark:border-slate-700 dark:bg-slate-900"
                           />
                         ) : (
@@ -1615,18 +1668,13 @@ export function POS({
                           </button>
                         )}
                         {quantityInputMode !== "buttons" && (
-                          <input
-                            type="number"
+                          <QtyInput
                             min={1}
                             max={lineMaxQty(line) * pieceFactor(line)}
                             value={shownQty(line)}
-                            onChange={(e) =>
-                              setLineQuantity(
-                                lineKey(line),
-                                Math.min(lineMaxQty(line), Math.max(1, packsFromShown(line, Number(e.target.value) || 1)))
-                              )
-                            }
-                            onFocus={revealAboveKeyboard}
+                            live={pieceFactor(line) === 1}
+                            onCommit={(n) => setLineQuantity(lineKey(line), Math.min(lineMaxQty(line), packsFromShown(line, n)))}
+                            onFocusExtra={revealAboveKeyboard}
                             className="h-10 w-16 rounded-lg border border-zinc-200 text-center text-sm tabular-nums dark:border-slate-700 dark:bg-slate-900"
                           />
                         )}
@@ -1864,14 +1912,13 @@ export function POS({
               <div className="mt-2 grid grid-cols-[1fr_auto_1.4fr_auto] items-end gap-2">
                 <label className="text-xs text-zinc-500">
                   Qté
-                  <input
+                  <QtyInput
                     id={line.packagingUnitId || line.vehicleUnitId || line.miscKey ? undefined : `facture-qty-${line.product.id}`}
-                    type="number"
-                    inputMode="numeric"
                     min={1}
                     max={lineMaxQty(line) * pieceFactor(line)}
                     value={shownQty(line)}
-                    onChange={(e) => setLineQuantity(key, Math.min(lineMaxQty(line), Math.max(1, Math.floor(packsFromShown(line, Number(e.target.value) || 1)))))}
+                    live={pieceFactor(line) === 1}
+                    onCommit={(n) => setLineQuantity(key, Math.min(lineMaxQty(line), packsFromShown(line, n)))}
                     className="mt-0.5 w-full rounded-lg border border-zinc-200 px-2 py-2 text-right text-base tabular-nums text-zinc-900 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
                   />
                 </label>
@@ -1949,14 +1996,13 @@ export function POS({
                   <p className="text-xs text-zinc-500">{line.product.reference}</p>
                 </td>
                 <td className="px-4 py-3">
-                  <input
+                  <QtyInput
                     id={line.packagingUnitId || line.vehicleUnitId || line.miscKey ? undefined : `facture-qty-${line.product.id}`}
-                    type="number"
-                    inputMode="numeric"
                     min={1}
                     max={lineMaxQty(line) * pieceFactor(line)}
                     value={shownQty(line)}
-                    onChange={(e) => setLineQuantity(key, Math.min(lineMaxQty(line), Math.max(1, Math.floor(packsFromShown(line, Number(e.target.value) || 1)))))}
+                    live={pieceFactor(line) === 1}
+                    onCommit={(n) => setLineQuantity(key, Math.min(lineMaxQty(line), packsFromShown(line, n)))}
                     onKeyDown={(e) => {
                       if (e.key === "Enter") {
                         e.preventDefault();

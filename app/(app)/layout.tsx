@@ -15,6 +15,8 @@ import { MobileTabBar } from "@/components/layout/MobileTabBar";
 import { isSalesHubEnabled } from "@/lib/sales-hub";
 import { isFourTabBarEnabled } from "@/lib/bottom-bar";
 import { isPosPhoneEnabled } from "@/lib/pos-phone";
+import { isSelectOnFocusEnabled } from "@/lib/select-on-focus";
+import { SelectOnFocus } from "@/components/layout/SelectOnFocus";
 import { MobileTabBarFour } from "@/components/layout/MobileTabBarFour";
 import { ImpersonationBanner } from "@/components/layout/ImpersonationBanner";
 import { AnnouncementBanner } from "@/components/layout/AnnouncementBanner";
@@ -74,7 +76,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     return <MarketSellerShell sellerName={user.business.name}>{children}</MarketSellerShell>;
   }
 
-  const [navItems, canSell, canManageProducts, canManageStock, canManagePurchases, offlineEnabled, globalSearchEnabled, menuSearchEnabled, salesHub, fourTabs, posPhone] = await Promise.all([
+  const [navItems, canSell, canManageProducts, canManageStock, canManagePurchases, offlineEnabled, globalSearchEnabled, menuSearchEnabled, salesHub, fourTabs, posPhone, selectOnFocus] = await Promise.all([
     getVisibleNavItems(user.businessId, user.role, user.id, user.business.activityKey, currentLocation?.id),
     hasPermission(user.businessId, user.role, PERMISSIONS.SALES_CREATE, user.id),
     hasPermission(user.businessId, user.role, PERMISSIONS.PRODUCTS_MANAGE, user.id),
@@ -86,6 +88,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     isSalesHubEnabled(user.businessId),
     isFourTabBarEnabled(user.businessId),
     isPosPhoneEnabled(user.businessId),
+    isSelectOnFocusEnabled(user.businessId),
   ]);
   // Caisse plein écran sur téléphone (flag caisse_telephone) : ni en-tête, ni
   // bandeau, ni barre du bas sur la caisse et la facture A4 — la caisse a son
@@ -144,6 +147,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         <main className="flex-1 overflow-y-auto p-4 pb-28 sm:pb-6 md:p-6 lg:p-8 print:overflow-visible print:p-0">{children}</main>
       </div>
       <OfflineShell enabled={offlineEnabled} userId={user.id} />
+      {selectOnFocus && <SelectOnFocus />}
       <div className={posFullScreen ? "hidden" : "print:hidden"}>
         {fourTabs ? (
           <MobileTabBarFour
