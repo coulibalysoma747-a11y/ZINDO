@@ -19,12 +19,15 @@ export function MobileTabBar({
   canManageProducts,
   canManageStock,
   canManagePurchases,
+  salesHub = false,
 }: {
   navItems: NavItem[];
   canSell: boolean;
   canManageProducts: boolean;
   canManageStock: boolean;
   canManagePurchases: boolean;
+  /** Flag accueil_vente : « Ventes » ouvre l'écran de départ au lieu de la caisse. */
+  salesHub?: boolean;
 }) {
   const pathname = usePathname();
   const [sheetOpen, setSheetOpen] = useState(false);
@@ -32,7 +35,7 @@ export function MobileTabBar({
 
   const tabs = [
     { href: "/dashboard", label: "Accueil", icon: Home, show: true },
-    { href: "/ventes", label: "Ventes", icon: ShoppingCart, show: hrefs.has("/ventes") },
+    { href: salesHub ? "/ventes/accueil" : "/ventes", match: "/ventes", label: "Ventes", icon: ShoppingCart, show: hrefs.has("/ventes") },
     { href: "/stock", label: "Stock", icon: Boxes, show: hrefs.has("/stock") },
     { href: "/rapports", label: "Rapports", icon: BarChart3, show: hrefs.has("/rapports") },
   ].filter((t) => t.show);
@@ -88,7 +91,7 @@ export function MobileTabBar({
       <nav className="fixed inset-x-0 bottom-0 z-30 border-t border-zinc-200 bg-white pb-[env(safe-area-inset-bottom)] sm:hidden print:hidden dark:border-slate-800 dark:bg-slate-900/90">
         <div className="grid grid-cols-5 items-center">
           {leftTabs.map((t) => (
-            <TabLink key={t.href} {...t} active={pathname === t.href || pathname.startsWith(`${t.href}/`)} />
+            <TabLink key={t.href} href={t.href} label={t.label} icon={t.icon} active={isActiveTab(pathname, "match" in t && t.match ? t.match : t.href)} />
           ))}
 
           <div className="flex items-center justify-center">
@@ -103,7 +106,7 @@ export function MobileTabBar({
           </div>
 
           {rightTabs.map((t) => (
-            <TabLink key={t.href} {...t} active={pathname === t.href || pathname.startsWith(`${t.href}/`)} />
+            <TabLink key={t.href} href={t.href} label={t.label} icon={t.icon} active={isActiveTab(pathname, "match" in t && t.match ? t.match : t.href)} />
           ))}
           {Array.from({ length: fillerCount }).map((_, i) => (
             <div key={i} />
@@ -112,6 +115,10 @@ export function MobileTabBar({
       </nav>
     </>
   );
+}
+
+function isActiveTab(pathname: string, base: string) {
+  return pathname === base || pathname.startsWith(`${base}/`);
 }
 
 function TabLink({

@@ -12,6 +12,7 @@ import { isMenuSearchEnabled } from "@/lib/menu-search";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { Topbar } from "@/components/layout/Topbar";
 import { MobileTabBar } from "@/components/layout/MobileTabBar";
+import { isSalesHubEnabled } from "@/lib/sales-hub";
 import { ImpersonationBanner } from "@/components/layout/ImpersonationBanner";
 import { AnnouncementBanner } from "@/components/layout/AnnouncementBanner";
 import { HasPhysicalStoreBanner } from "@/components/layout/HasPhysicalStoreBanner";
@@ -70,7 +71,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     return <MarketSellerShell sellerName={user.business.name}>{children}</MarketSellerShell>;
   }
 
-  const [navItems, canSell, canManageProducts, canManageStock, canManagePurchases, offlineEnabled, globalSearchEnabled, menuSearchEnabled] = await Promise.all([
+  const [navItems, canSell, canManageProducts, canManageStock, canManagePurchases, offlineEnabled, globalSearchEnabled, menuSearchEnabled, salesHub] = await Promise.all([
     getVisibleNavItems(user.businessId, user.role, user.id, user.business.activityKey, currentLocation?.id),
     hasPermission(user.businessId, user.role, PERMISSIONS.SALES_CREATE, user.id),
     hasPermission(user.businessId, user.role, PERMISSIONS.PRODUCTS_MANAGE, user.id),
@@ -79,6 +80,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     isBrowserOfflineEnabled(user.businessId),
     isGlobalSearchEnabled(user.businessId),
     isMenuSearchEnabled(user.businessId),
+    isSalesHubEnabled(user.businessId),
   ]);
 
   // Menu latéral fermé par l'utilisateur (voir components/layout/SidebarToggle.tsx).
@@ -128,6 +130,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           canManageProducts={canManageProducts}
           canManageStock={canManageStock}
           canManagePurchases={canManagePurchases}
+          salesHub={salesHub}
         />
       </div>
     </div>
