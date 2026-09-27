@@ -13,10 +13,10 @@ import { SalesHistoryPanel, SALES_HISTORY_PERIODS } from "@/components/sales/Sal
  * Comme chez FasoStock : Caisse rapide et Facture A4 côte à côte, puis
  * l'historique des ventes directement en dessous (sans clic de plus).
  */
-export default async function SalesHubPage({ searchParams }: { searchParams: Promise<{ periode?: string }> }) {
+export default async function SalesHubPage({ searchParams }: { searchParams: Promise<{ periode?: string; q?: string }> }) {
   const user = await requireUser();
   const currentLocation = await getCurrentLocation(user.businessId);
-  const [enabled, navItems, { periode }, factureTable] = await Promise.all([
+  const [enabled, navItems, { periode, q }, factureTable] = await Promise.all([
     isSalesHubEnabled(user.businessId),
     getVisibleNavItems(user.businessId, user.role, user.id, user.business.activityKey, currentLocation?.id),
     searchParams,
@@ -64,7 +64,7 @@ export default async function SalesHubPage({ searchParams }: { searchParams: Pro
         ))}
       </div>
 
-      <SalesHistoryPanel user={user} periode={period} />
+      <SalesHistoryPanel user={user} periode={period} query={q ?? ""} />
     </div>
   );
 }

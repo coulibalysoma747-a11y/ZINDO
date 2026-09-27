@@ -11,6 +11,12 @@ import { EmptyState } from "@/components/ui/Empty";
 import { HistoryFilters } from "@/components/history/HistoryFilters";
 import { CancelSaleButton } from "@/app/(app)/ventes/[id]/CancelSaleButton";
 import { UnclaimedToggle } from "@/app/(app)/ventes/historique/UnclaimedToggle";
+import { fetchAllPagesConcurrently } from "@/lib/supabase-paging";
+import { isSalesSearchEnabled, saleMatchesQuery } from "@/lib/sales-search";
+import { SalesSearchBox } from "@/components/sales/SalesSearchBox";
+
+/** Au-delà, la liste n'affiche que les plus récentes (les totaux restent complets). */
+const MAX_CARDS = 150;
 
 /**
  * Historique des ventes affiché directement dans l'écran « Vente » (flag
@@ -48,6 +54,7 @@ type SaleRow = {
   createdAt: string;
   status: keyof typeof STATUS;
   total: number;
+  amountPaid: number | null;
   paymentMethod: string | null;
   unclaimedAt: string | null;
   claimedAt: string | null;
@@ -73,33 +80,60 @@ function periodStart(periode: string): { from: Date; to?: Date } {
 export async function SalesHistoryPanel({
   user,
   periode,
+  query = "",
 }: {
   user: { id: string; businessId: string; role: string; business: { currency: string } };
   periode: string;
+  /** Recherche (flag recherche_ventes) : n° de ticket, vendeur, client, total ou payé exact. */
+  query?: string;
 }) {
   const role = user.role as Parameters<typeof hasPermission>[1];
-  const [canSeeMargin, canEdit, canView, settings] = await Promise.all([
+  const [canSeeMargin, canEdit, canView, settings, searchEnabled] = await Promise.all([
     // La marge révèle les prix d'achat : réservée à qui peut consulter les rapports.
     hasPermission(user.businessId, role, PERMISSIONS.REPORTS_VIEW, user.id),
     hasPermission(user.businessId, role, PERMISSIONS.SALES_CREATE, user.id),
     hasPermission(user.businessId, role, PERMISSIONS.SALES_VIEW, user.id),
     getBusinessSettings(user.businessId),
+    isSalesSearchEnabled(user.businessId),
   ]);
   if (!canView) return null;
 
   const { from, to } = periodStart(periode);
-  let query = supabase
-    .from("sales")
-    .select(
-      "id, number, createdAt:created_at, status, total, paymentMethod:payment_method, unclaimedAt:unclaimed_at, claimedAt:claimed_at, location:locations(name), customer:customers(name), user:users(id, firstName:first_name, lastName:last_name), items:sale_items(quantity, unitPrice:unit_price, unitCost:unit_cost)"
-    )
-    .eq("business_id", user.businessId)
-    .gte("created_at", from.toISOString())
-    .order("created_at", { ascending: false })
-    .limit(300);
-  if (to) query = query.lt("created_at", to.toISOString());
-  const { data } = await query;
-  const sales = (data ?? []) as unknown as SaleRow[];
+  // Toute la période, page par page (autrefois 300 ventes au plus : totaux
+  // faux sur 30 jours dans un commerce actif, anciennes ventes introuvables).
+  const periodSales = await fetchAllPagesConcurrently<SaleRow>(
+    (rangeFrom, rangeTo) => {
+      let q = supabase
+        .from("sales")
+        .select(
+          "id, number, createdAt:created_at, status, total, amountPaid:amount_paid, paymentMethod:payment_method, unclaimedAt:unclaimed_at, claimedAt:claimed_at, location:locations(name), customer:customers(name), user:users(id, firstName:first_name, lastName:last_name), items:sale_items(quantity, unitPrice:unit_price, unitCost:unit_cost)"
+        )
+        .eq("business_id", user.businessId)
+        .gte("created_at", from.toISOString())
+        .order("created_at", { ascending: false })
+        .order("id", { ascending: true })
+        .range(rangeFrom, rangeTo);
+      if (to) q = q.lt("created_at", to.toISOString());
+      return q as unknown as PromiseLike<{ data: SaleRow[] | null; error: { message: string } | null }>;
+    },
+    { maxRows: 20000 }
+  );
+
+  const search = searchEnabled ? query.trim() : "";
+  const sales = search
+    ? periodSales.filter((s) =>
+        saleMatchesQuery(
+          {
+            number: s.number,
+            total: s.total,
+            amountPaid: s.amountPaid,
+            customerName: s.customer?.name ?? null,
+            sellerName: `${s.user.firstName} ${s.user.lastName}`,
+          },
+          search
+        )
+      )
+    : periodSales;
 
   const currency = user.business.currency;
   const valid = sales.filter((s) => s.status !== "ANNULEE");
@@ -134,6 +168,14 @@ export async function SalesHistoryPanel({
         <HistoryFilters paramName="periode" periods={SALES_HISTORY_PERIODS} defaultValue="aujourdhui" />
       </div>
 
+      {searchEnabled && <SalesSearchBox initialQuery={search} />}
+      {search && (
+        <p className="text-sm text-zinc-600 dark:text-slate-400">
+          {sales.length} vente{sales.length > 1 ? "s" : ""} trouvée{sales.length > 1 ? "s" : ""} pour « {search} » sur la période — les totaux
+          ci-dessous portent sur ces ventes.
+        </p>
+      )}
+
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         {stats.map((s) => (
           <Card key={s.label} className="p-3">
@@ -165,10 +207,17 @@ export async function SalesHistoryPanel({
       )}
 
       {sales.length === 0 ? (
-        <EmptyState title="Aucune vente sur cette période" />
+        <EmptyState title={search ? "Aucune vente ne correspond à cette recherche" : "Aucune vente sur cette période"} />
       ) : (
+        <>
+        {sales.length > MAX_CARDS && (
+          <p className="text-xs text-zinc-500">
+            Affichage des {MAX_CARDS} ventes les plus récentes sur {sales.length} — utilisez la recherche ou une période plus courte pour
+            retrouver les autres.
+          </p>
+        )}
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
-          {sales.map((s) => {
+          {sales.slice(0, MAX_CARDS).map((s) => {
             const cancelled = s.status === "ANNULEE";
             const status = STATUS[s.status] ?? STATUS.PAYEE;
             const m = saleMargin(s);
@@ -222,6 +271,7 @@ export async function SalesHistoryPanel({
             );
           })}
         </div>
+        </>
       )}
     </section>
   );
