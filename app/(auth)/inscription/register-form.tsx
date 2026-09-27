@@ -76,10 +76,10 @@ export function RegisterForm({
       <input type="hidden" name="locale" value={locale} />
       <div className="grid grid-cols-2 gap-3">
         <Field label={t.firstName} htmlFor="firstName">
-          <Input id="firstName" name="firstName" required />
+          <Input id="firstName" name="firstName" autoComplete="given-name" autoCapitalize="words" required />
         </Field>
         <Field label={t.lastName} htmlFor="lastName">
-          <Input id="lastName" name="lastName" required />
+          <Input id="lastName" name="lastName" autoComplete="family-name" autoCapitalize="words" required />
         </Field>
       </div>
       <Field label={t.country} htmlFor="country">
@@ -102,20 +102,20 @@ export function RegisterForm({
         </select>
       </Field>
       <Field label={t.phone} htmlFor="phone">
-        <Input id="phone" name="phone" placeholder={country?.phoneExample ?? t.phonePlaceholder} required />
+        <Input id="phone" name="phone" type="tel" inputMode="tel" autoComplete="tel-national" placeholder={country?.phoneExample ?? t.phonePlaceholder} required />
       </Field>
       <Field label={t.email} htmlFor="email">
-        <Input id="email" name="email" type="email" />
+        <Input id="email" name="email" type="email" inputMode="email" autoComplete="email" autoCapitalize="none" />
       </Field>
       <Field label={t.password} htmlFor="password">
-        <Input id="password" name="password" type="password" minLength={6} required />
+        <Input id="password" name="password" type="password" autoComplete="new-password" minLength={6} required />
       </Field>
       <hr className="border-zinc-100" />
       <Field label={t.businessName} htmlFor="businessName">
-        <Input id="businessName" name="businessName" placeholder={t.businessPlaceholder} required />
+        <Input id="businessName" name="businessName" autoComplete="organization" autoCapitalize="words" placeholder={t.businessPlaceholder} required />
       </Field>
       <Field label={t.city} htmlFor="city">
-        <Input id="city" name="city" placeholder={country?.capital ?? t.cityPlaceholder} />
+        <Input id="city" name="city" autoComplete="address-level2" autoCapitalize="words" placeholder={country?.capital ?? t.cityPlaceholder} />
       </Field>
       {showReferralField && (
         <Field label={locale === "en" ? "Referral code (optional)" : "Code de parrainage (facultatif)"} htmlFor="referralCode">
