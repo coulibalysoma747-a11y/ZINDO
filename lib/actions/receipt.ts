@@ -12,6 +12,7 @@ import { isZindoMentionEnabled } from "@/lib/zindo-mention";
 import type { ReceiptData, ReceiptWidth } from "@/components/sales/Receipt";
 import type { FactureData } from "@/components/sales/Facture";
 import type { FactureEnginData } from "@/components/sales/FactureEngin";
+import { isPieceQuantityEnabled, pieceFactorOf } from "@/lib/piece-quantity";
 
 const PAYMENT_LABELS: Record<string, string> = {
   ESPECES: "Espèces",
@@ -77,6 +78,7 @@ type SaleRow = {
     discount: number;
     total: number;
     unitLabel: string | null;
+    multiplier?: number | null;
     product: { reference: string; name: string; unit: string };
   }>;
   customer: { name: string; phone: string | null; address: string | null } | null;
@@ -120,12 +122,12 @@ export async function getSaleDocumentAction(saleId: string, formatOverride?: "TI
   let { data: saleRow, error: saleError } = await supabase
     .from("sales")
     .select(
-      `${SALE_SELECT_BASE}, items:sale_items(quantity, unitPrice:unit_price, discount, total, unitLabel:unit_label, product:products(reference, name, unit))`
+      `${SALE_SELECT_BASE}, items:sale_items(quantity, unitPrice:unit_price, discount, total, unitLabel:unit_label, multiplier, product:products(reference, name, unit))`
     )
     .eq("id", saleId)
     .eq("business_id", user.businessId)
     .maybeSingle();
-  if (saleError && /unit_label/.test(saleError.message)) {
+  if (saleError && /unit_label|multiplier/.test(saleError.message)) {
     const fallback = await supabase
       .from("sales")
       .select(`${SALE_SELECT_BASE}, items:sale_items(quantity, unitPrice:unit_price, discount, total, product:products(reference, name, unit))`)
@@ -147,6 +149,9 @@ export async function getSaleDocumentAction(saleId: string, formatOverride?: "TI
   const qrCodeDataUrl = await generateQrDataUrl(verificationUrl);
   const canEdit = await hasPermission(user.businessId, user.role, PERMISSIONS.SALES_CREATE, user.id);
   const paymentMethodLabel = PAYMENT_LABELS[sale.paymentMethod] ?? sale.paymentMethod;
+  // Conditionnements affichés en pièces (flag quantite_en_pieces).
+  const piecesEnabled = await isPieceQuantityEnabled(user.businessId);
+  const factorOf = (item: SaleRow["items"][number]) => pieceFactorOf(piecesEnabled, item.unitLabel, item.multiplier);
   const cashierName = `${sale.user.firstName} ${sale.user.lastName}`;
   const isCancelled = sale.status === "ANNULEE";
   const zindoMention = await isZindoMentionEnabled(user.businessId);
@@ -259,8 +264,8 @@ export async function getSaleDocumentAction(saleId: string, formatOverride?: "TI
         reference: item.product.reference,
         name: item.unitLabel ? `${item.product.name} (${item.unitLabel})` : item.product.name,
         unit: item.unitLabel ?? item.product.unit,
-        quantity: item.quantity,
-        unitPrice: item.unitPrice,
+        quantity: item.quantity * factorOf(item),
+        unitPrice: item.unitPrice / factorOf(item),
         discount: item.discount,
         total: item.total,
       })),
@@ -300,8 +305,8 @@ export async function getSaleDocumentAction(saleId: string, formatOverride?: "TI
     customerName: sale.customer?.name,
     items: sale.items.map((item) => ({
       name: item.unitLabel ? `${item.product.name} (${item.unitLabel})` : item.product.name,
-      quantity: item.quantity,
-      unitPrice: item.unitPrice,
+      quantity: item.quantity * factorOf(item),
+      unitPrice: item.unitPrice / factorOf(item),
       total: item.total,
     })),
     subtotal: sale.subtotal,

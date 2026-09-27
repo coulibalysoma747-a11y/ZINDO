@@ -175,6 +175,7 @@ export function POS({
   categories = [],
   exitHref = "/dashboard",
   tableMode = false,
+  pieceQuantities = false,
 }: {
   mode?: "pos" | "facture";
   customers: { id: string; name: string; phone: string | null }[];
@@ -223,6 +224,12 @@ export function POS({
    * cartes de produits. Même panier, même paiement, même document.
    */
   tableMode?: boolean;
+  /**
+   * Flag quantite_en_pieces : une ligne en conditionnement (« Paquet de 2 »)
+   * affiche sa quantité en pièces (2, 4, 6…) au lieu de paquets (1, 2, 3…).
+   * Affichage seulement : le panier compte toujours en paquets (stock, prix).
+   */
+  pieceQuantities?: boolean;
 }) {
   const isFacture = mode === "facture";
   const [cart, setCart] = useState<CartLine[]>([]);
@@ -751,6 +758,23 @@ export function POS({
     );
   }
 
+  // Quantité affichée en pièces pour un conditionnement (flag quantite_en_pieces).
+  function pieceFactor(line: CartLine) {
+    const m = line.multiplier ?? 1;
+    return pieceQuantities && line.packagingUnitId && m > 1 ? m : 1;
+  }
+  function shownQty(line: CartLine) {
+    return line.quantity * pieceFactor(line);
+  }
+  /** Prix affiché : prix d'une pièce pour un conditionnement en mode pièces. */
+  function shownPrice(line: CartLine) {
+    return Math.round((line.unitPrice / pieceFactor(line)) * 100) / 100;
+  }
+  /** Nombre de pièces tapé → nombre de paquets (arrondi, au moins 1). */
+  function packsFromShown(line: CartLine, pieces: number) {
+    return Math.max(1, Math.round(pieces / pieceFactor(line)));
+  }
+
   function removeLine(key: string) {
     setCart((prev) => prev.filter((l) => lineKey(l) !== key));
   }
@@ -1042,10 +1066,10 @@ export function POS({
         clientRef,
         items: cart.map((l) => ({
           productId: l.product.id,
-          quantity: l.quantity,
-          unitPrice: l.unitPrice,
+          quantity: shownQty(l),
+          unitPrice: l.unitPrice / pieceFactor(l),
           discount: l.discount,
-          name: l.miscKey && l.packagingLabel ? `${l.product.name} (${l.packagingLabel})` : l.product.name,
+          name: l.packagingLabel ? `${l.product.name} (${l.packagingLabel})` : l.product.name,
           unit: l.product.unit,
         })),
         cashierName: session.cashierName,
@@ -1303,12 +1327,12 @@ export function POS({
                               <input
                                 type="number"
                                 min={1}
-                                max={lineMaxQty(line)}
-                                value={line.quantity}
+                                max={lineMaxQty(line) * pieceFactor(line)}
+                                value={shownQty(line)}
                                 onChange={(e) =>
                                   setLineQuantity(
                                     lineKey(line),
-                                    Math.min(lineMaxQty(line), Math.max(1, Number(e.target.value) || 1))
+                                    Math.min(lineMaxQty(line), Math.max(1, packsFromShown(line, Number(e.target.value) || 1)))
                                   )
                                 }
                                 onFocus={revealAboveKeyboard}
@@ -1316,7 +1340,7 @@ export function POS({
                               />
                             )}
                             {quantityInputMode === "buttons" && (
-                              <span className="w-6 text-center text-sm tabular-nums text-zinc-700">{line.quantity}</span>
+                              <span className="w-6 text-center text-sm tabular-nums text-zinc-700">{shownQty(line)}</span>
                             )}
                             {quantityInputMode !== "input" && (
                               <button
@@ -1334,8 +1358,8 @@ export function POS({
                         <input
                           type="number"
                           min={0}
-                          value={line.unitPrice || ""}
-                          onChange={(e) => updateLine(lineKey(line), { unitPrice: Number(e.target.value) || 0 })}
+                          value={shownPrice(line) || ""}
+                          onChange={(e) => updateLine(lineKey(line), { unitPrice: (Number(e.target.value) || 0) * pieceFactor(line) })}
                           onFocus={revealAboveKeyboard}
                           className="h-8 w-24 rounded-lg border border-zinc-200 text-right text-sm tabular-nums focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zindo-green-500/40 dark:border-slate-700 dark:bg-slate-900"
                         />
@@ -1423,20 +1447,20 @@ export function POS({
                           <input
                             type="number"
                             min={1}
-                            max={lineMaxQty(line)}
+                            max={lineMaxQty(line) * pieceFactor(line)}
                             aria-label="Quantité"
-                            value={line.quantity}
+                            value={shownQty(line)}
                             onChange={(e) =>
                               setLineQuantity(
                                 lineKey(line),
-                                Math.min(lineMaxQty(line), Math.max(1, Number(e.target.value) || 1))
+                                Math.min(lineMaxQty(line), Math.max(1, packsFromShown(line, Number(e.target.value) || 1)))
                               )
                             }
                             onFocus={revealAboveKeyboard}
                             className="h-8 w-12 rounded-lg border border-zinc-300 text-center text-sm tabular-nums dark:border-slate-700 dark:bg-slate-900"
                           />
                         ) : (
-                          <span className="w-6 text-center text-sm tabular-nums text-zinc-700">{line.quantity}</span>
+                          <span className="w-6 text-center text-sm tabular-nums text-zinc-700">{shownQty(line)}</span>
                         )}
                         {quantityInputMode !== "input" && (
                           <button
@@ -1456,8 +1480,8 @@ export function POS({
                         type="number"
                         min={0}
                         inputMode="decimal"
-                        value={line.unitPrice || ""}
-                        onChange={(e) => updateLine(lineKey(line), { unitPrice: Number(e.target.value) || 0 })}
+                        value={shownPrice(line) || ""}
+                        onChange={(e) => updateLine(lineKey(line), { unitPrice: (Number(e.target.value) || 0) * pieceFactor(line) })}
                         onFocus={revealAboveKeyboard}
                         className="h-8 w-20 rounded-lg border border-zinc-300 px-2 text-right text-sm tabular-nums text-zinc-900 dark:border-slate-700 dark:bg-slate-900"
                       />
@@ -1523,12 +1547,12 @@ export function POS({
                           <input
                             type="number"
                             min={1}
-                            max={lineMaxQty(line)}
-                            value={line.quantity}
+                            max={lineMaxQty(line) * pieceFactor(line)}
+                            value={shownQty(line)}
                             onChange={(e) =>
                               setLineQuantity(
                                 lineKey(line),
-                                Math.min(lineMaxQty(line), Math.max(1, Number(e.target.value) || 1))
+                                Math.min(lineMaxQty(line), Math.max(1, packsFromShown(line, Number(e.target.value) || 1)))
                               )
                             }
                             onFocus={revealAboveKeyboard}
@@ -1561,8 +1585,8 @@ export function POS({
                         type="number"
                         min={0}
                         inputMode="decimal"
-                        value={line.unitPrice || ""}
-                        onChange={(e) => updateLine(lineKey(line), { unitPrice: Number(e.target.value) || 0 })}
+                        value={shownPrice(line) || ""}
+                        onChange={(e) => updateLine(lineKey(line), { unitPrice: (Number(e.target.value) || 0) * pieceFactor(line) })}
                         onFocus={revealAboveKeyboard}
                         className="h-10 w-full rounded-lg border border-zinc-200 px-2 text-right text-sm tabular-nums dark:border-slate-700 dark:bg-slate-900"
                       />
@@ -1774,9 +1798,9 @@ export function POS({
                     type="number"
                     inputMode="numeric"
                     min={1}
-                    max={lineMaxQty(line)}
-                    value={line.quantity}
-                    onChange={(e) => setLineQuantity(key, Math.min(lineMaxQty(line), Math.max(1, Math.floor(Number(e.target.value) || 1))))}
+                    max={lineMaxQty(line) * pieceFactor(line)}
+                    value={shownQty(line)}
+                    onChange={(e) => setLineQuantity(key, Math.min(lineMaxQty(line), Math.max(1, Math.floor(packsFromShown(line, Number(e.target.value) || 1)))))}
                     className="mt-0.5 w-full rounded-lg border border-zinc-200 px-2 py-2 text-right text-base tabular-nums text-zinc-900 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
                   />
                 </label>
@@ -1787,8 +1811,8 @@ export function POS({
                     type="number"
                     inputMode="numeric"
                     min={0}
-                    value={line.unitPrice}
-                    onChange={(e) => updateLine(key, { unitPrice: Number(e.target.value) || 0 })}
+                    value={shownPrice(line)}
+                    onChange={(e) => updateLine(key, { unitPrice: (Number(e.target.value) || 0) * pieceFactor(line) })}
                     className="mt-0.5 w-full rounded-lg border border-zinc-200 px-2 py-2 text-right text-base tabular-nums text-zinc-900 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
                   />
                 </label>
@@ -1859,9 +1883,9 @@ export function POS({
                     type="number"
                     inputMode="numeric"
                     min={1}
-                    max={lineMaxQty(line)}
-                    value={line.quantity}
-                    onChange={(e) => setLineQuantity(key, Math.min(lineMaxQty(line), Math.max(1, Math.floor(Number(e.target.value) || 1))))}
+                    max={lineMaxQty(line) * pieceFactor(line)}
+                    value={shownQty(line)}
+                    onChange={(e) => setLineQuantity(key, Math.min(lineMaxQty(line), Math.max(1, Math.floor(packsFromShown(line, Number(e.target.value) || 1)))))}
                     onKeyDown={(e) => {
                       if (e.key === "Enter") {
                         e.preventDefault();
@@ -1876,8 +1900,8 @@ export function POS({
                     type="number"
                     inputMode="numeric"
                     min={0}
-                    value={line.unitPrice}
-                    onChange={(e) => updateLine(key, { unitPrice: Number(e.target.value) || 0 })}
+                    value={shownPrice(line)}
+                    onChange={(e) => updateLine(key, { unitPrice: (Number(e.target.value) || 0) * pieceFactor(line) })}
                     onKeyDown={(e) => {
                       if (e.key === "Enter") {
                         e.preventDefault();
