@@ -119,6 +119,17 @@ type SessionInfo = {
   cashierName: string;
 };
 
+/**
+ * Libellé d'un conditionnement dans le panier, le ticket et la facture :
+ * « Carton » seul laissait croire qu'une seule pièce était vendue (quantité
+ * 1). On précise le contenu (« Carton de 2 »), sauf si le nom contient déjà
+ * un nombre (« Carton de 12 », « Pack 6 »).
+ */
+function packagingDisplayLabel(name: string, multiplier: number) {
+  if (multiplier <= 1 || /\d/.test(name)) return name;
+  return `${name} de ${Number.isInteger(multiplier) ? multiplier : String(multiplier).replace(".", ",")}`;
+}
+
 export function POS({
   mode = "pos",
   customers,
@@ -658,7 +669,7 @@ export function POS({
           unitPrice: packaging ? packaging.salePrice : resolveTieredPrice(product.salePrice, 1, product.priceTiers),
           discount: 0,
           packagingUnitId: packaging?.id,
-          packagingLabel: packaging?.name,
+          packagingLabel: packaging ? packagingDisplayLabel(packaging.name, packaging.multiplier) : undefined,
           multiplier,
         },
       ];
