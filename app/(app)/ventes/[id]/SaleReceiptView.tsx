@@ -64,7 +64,7 @@ export function SaleReceiptView({
           <ArrowLeft className="h-4 w-4" /> Retour à l&apos;historique
         </Link>
         <div className="flex flex-wrap items-center gap-2">
-          <div className="flex gap-1 rounded-lg border border-zinc-200 bg-white p-1">
+          <div className="flex gap-1 rounded-lg border border-zinc-200 bg-white p-1 dark:border-slate-700 dark:bg-slate-900">
             {WIDTH_OPTIONS.map((opt) => (
               <button
                 key={opt.value}
@@ -78,7 +78,7 @@ export function SaleReceiptView({
               </button>
             ))}
           </div>
-          <div className="flex gap-1 rounded-lg border border-zinc-200 bg-white p-1">
+          <div className="flex gap-1 rounded-lg border border-zinc-200 bg-white p-1 dark:border-slate-700 dark:bg-slate-900">
             {STYLE_OPTIONS.map((opt) => (
               <button
                 key={opt.value}
