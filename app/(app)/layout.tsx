@@ -103,7 +103,9 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     : navItems;
 
   // Menu latéral fermé par l'utilisateur (voir components/layout/SidebarToggle.tsx).
-  const sidebarClosed = (await cookies()).get("zindo_sidebar")?.value === "closed";
+  const cookieStore = await cookies();
+  const sidebarClosed = cookieStore.get("zindo_sidebar")?.value === "closed";
+  const storeBannerHidden = cookieStore.get("zindo_hide_store_banner")?.value === "1";
 
   return (
     <div
@@ -127,7 +129,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           {platformConfig.announcementActive && platformConfig.announcementMessage && (
             <AnnouncementBanner message={platformConfig.announcementMessage} tone={platformConfig.announcementTone} />
           )}
-          {businessSettings.hasPhysicalStore === null && user.role === "ADMIN" && <HasPhysicalStoreBanner />}
+          {businessSettings.hasPhysicalStore === null && user.role === "ADMIN" && !storeBannerHidden && <HasPhysicalStoreBanner />}
           <Topbar
             userName={`${user.firstName} ${user.lastName}`}
             role={ROLE_LABELS[user.role]}

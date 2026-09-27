@@ -1,13 +1,23 @@
 "use client";
 
-import { useTransition } from "react";
+import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Store } from "lucide-react";
+import { Store, X } from "lucide-react";
 import { updateBusinessSettingsAction } from "@/lib/actions/business-settings";
 
 export function HasPhysicalStoreBanner() {
   const [pending, startTransition] = useTransition();
   const router = useRouter();
+  const [closed, setClosed] = useState(false);
+
+  // Croix : on cache le bandeau (cookie d'un an) sans répondre ; il prenait
+  // beaucoup de place sur téléphone. La réponse n'est utilisée nulle part pour
+  // l'instant (seulement enregistrée dans les réglages du commerce).
+  function close() {
+    document.cookie = "zindo_hide_store_banner=1; path=/; max-age=31536000; samesite=lax";
+    setClosed(true);
+  }
+  if (closed) return null;
 
   function answer(hasPhysicalStore: boolean) {
     startTransition(async () => {
@@ -38,6 +48,15 @@ export function HasPhysicalStoreBanner() {
           className="rounded-md border border-blue-300 px-3 py-1 text-xs font-medium text-blue-700 hover:bg-blue-100 disabled:opacity-50"
         >
           Non, uniquement en ligne
+        </button>
+        <button
+          type="button"
+          onClick={close}
+          aria-label="Fermer ce message"
+          title="Fermer"
+          className="rounded-md p-1 text-blue-700 hover:bg-blue-100"
+        >
+          <X className="h-4 w-4" />
         </button>
       </span>
     </div>

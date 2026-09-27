@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
+import { isSalesHubEnabled } from "@/lib/sales-hub";
 import { Printer } from "lucide-react";
 import { requirePermission, hasPermission } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
@@ -45,6 +47,13 @@ export default async function SalesHistoryPage({
 }) {
   const user = await requirePermission(PERMISSIONS.SALES_VIEW);
   const { periode } = await searchParams;
+  // Écran Vente actif (flag accueil_vente) : l'historique y est intégré
+  // (toute la période, recherche, statuts en clair). Les anciens liens y mènent,
+  // sur la période la plus proche.
+  if (await isSalesHubEnabled(user.businessId)) {
+    const mapped = periode === "aujourdhui" || periode === "hier" ? periode : periode === "semaine" ? "7j" : "30j";
+    redirect(`/ventes/accueil?periode=${mapped}`);
+  }
   const businessSettings = await getBusinessSettings(user.businessId);
   // La marge révèle les prix d'achat : réservée à qui peut consulter les rapports (pas les vendeurs par défaut).
   const canSeeMargin = await hasPermission(user.businessId, user.role, PERMISSIONS.REPORTS_VIEW, user.id);
