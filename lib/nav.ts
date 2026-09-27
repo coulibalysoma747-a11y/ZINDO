@@ -3,6 +3,9 @@ import { MOTO_ACTIVITY_KEY } from "@/lib/activities";
 
 export const MEDICAL_ACTIVITY_KEY = "cabinet_medical";
 export const CONSULTATIONS_FLAG = "consultations_cabinet_medical";
+/** École : élèves, classes et frais de scolarité — voir lib/actions/school.ts. */
+export const SCHOOL_ACTIVITY_KEY = "ecole";
+export const SCHOOL_FLAG = "gestion_scolaire";
 export const SUPERMARKET_ACTIVITY_KEY = "supermarche_alimentation";
 export const PHARMACY_ACTIVITY_KEY = "pharmacie";
 export const EXPIRY_FLAG = "peremption_dlc";
@@ -99,6 +102,9 @@ export type NavItem = {
     | "diagnostics"
     | "posologies"
     | "medical-stats"
+    | "students"
+    | "school-classes"
+    | "school-fees"
     | "expiry"
     | "repairs"
     | "tables"
@@ -193,6 +199,30 @@ export const NAV_ITEMS: NavItem[] = [
     permission: PERMISSIONS.CONSULTATIONS_MANAGE,
     requireActivity: MEDICAL_ACTIVITY_KEY,
     featureFlag: CONSULTATIONS_FLAG,
+  },
+  {
+    label: "Élèves",
+    href: "/ecole/eleves",
+    icon: "students",
+    permission: PERMISSIONS.SCHOOL_MANAGE,
+    requireActivity: SCHOOL_ACTIVITY_KEY,
+    featureFlag: SCHOOL_FLAG,
+  },
+  {
+    label: "Classes",
+    href: "/ecole/classes",
+    icon: "school-classes",
+    permission: PERMISSIONS.SCHOOL_MANAGE,
+    requireActivity: SCHOOL_ACTIVITY_KEY,
+    featureFlag: SCHOOL_FLAG,
+  },
+  {
+    label: "Scolarité impayée",
+    href: "/ecole/impayes",
+    icon: "school-fees",
+    permission: PERMISSIONS.SCHOOL_MANAGE,
+    requireActivity: SCHOOL_ACTIVITY_KEY,
+    featureFlag: SCHOOL_FLAG,
   },
   { label: "Facture A4", href: "/factures", icon: "invoices", permission: PERMISSIONS.SALES_CREATE },
   { label: "Devis", href: "/devis", icon: "quotes", permission: PERMISSIONS.SALES_CREATE, featureFlag: "devis", moduleToggle: "devis" },

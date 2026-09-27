@@ -34,6 +34,7 @@ export const PERMISSIONS = {
   CUSTOM_ORDERS_MANAGE: "commandes_sur_mesure.gerer",
   WARRANTY_MANAGE: "garantie.gerer",
   APPOINTMENTS_MANAGE: "rendez_vous.gerer",
+  SCHOOL_MANAGE: "ecole.gerer",
 } as const;
 
 export type Permission = (typeof PERMISSIONS)[keyof typeof PERMISSIONS];
@@ -114,4 +115,5 @@ export const PERMISSION_LABELS: Record<string, string> = {
   [PERMISSIONS.CUSTOM_ORDERS_MANAGE]: "Gérer les commandes sur mesure (atelier artisanal)",
   [PERMISSIONS.WARRANTY_MANAGE]: "Gérer les garanties produits (électronique / téléphonie)",
   [PERMISSIONS.APPOINTMENTS_MANAGE]: "Gérer les rendez-vous (cosmétique / beauté)",
+  [PERMISSIONS.SCHOOL_MANAGE]: "Gérer les élèves, les classes et la scolarité (école)",
 };

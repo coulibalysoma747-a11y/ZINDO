@@ -51,6 +51,9 @@ import {
   ShieldCheck,
   CalendarCheck2,
   Sparkles,
+  GraduationCap,
+  School,
+  HandCoins,
 } from "lucide-react";
 
 // Module simple (sans "use client") pour que cette table icône-par-module
@@ -123,6 +126,9 @@ const ICON_KEYS_ORDER: NavItem["icon"][] = [
   "diagnostics",
   "posologies",
   "medical-stats",
+  "students",
+  "school-classes",
+  "school-fees",
   "expiry",
   "repairs",
   "tables",
@@ -182,6 +188,9 @@ export const NAV_ICONS: Record<NavItem["icon"], React.ComponentType<{ className?
   diagnostics: Microscope,
   posologies: AlarmClock,
   "medical-stats": Activity,
+  students: GraduationCap,
+  "school-classes": School,
+  "school-fees": HandCoins,
   expiry: CalendarX2,
   repairs: Wrench,
   tables: UtensilsCrossed,
@@ -209,6 +218,7 @@ const NAV_SECTIONS: { title: string | null; icons: NavItem["icon"][] }[] = [
     title: "Consultations",
     icons: ["consultations", "medical-stats", "medical-acts", "diagnostics", "posologies"],
   },
+  { title: "École", icons: ["students", "school-classes", "school-fees"] },
   {
     title: "Catalogue et stock",
     icons: [

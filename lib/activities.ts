@@ -27,6 +27,7 @@ export const ACTIVITY_CATEGORIES: ActivityCategory[] = [
   { key: "sante_beaute", label: "Santé & Beauté" },
   { key: "mode", label: "Mode & Habillement" },
   { key: "technologie", label: "Technologie" },
+  { key: "education", label: "Éducation" },
   { key: "autres", label: "Autres" },
 ];
 
@@ -135,6 +136,13 @@ export const ACTIVITIES: Activity[] = [
     label: "Électronique & Téléphonie",
     description: "Téléphones, ordinateurs et accessoires.",
     category: "technologie",
+  },
+  {
+    key: "ecole",
+    emoji: "🏫",
+    label: "École / Établissement scolaire",
+    description: "Primaire, collège, lycée, centre de formation : élèves, classes et scolarité.",
+    category: "education",
   },
   {
     key: "atelier_artisanat",
