@@ -29,7 +29,7 @@ export function FactureEpicerie({ data }: { data: FactureData }) {
 
       <div
         id="zindo-facture-epicerie"
-        className="mx-auto w-full max-w-[210mm] rounded-2xl border border-zinc-200 bg-white p-10 font-sans text-[#173226] shadow-sm"
+        className="theme-locked mx-auto w-full max-w-[210mm] rounded-2xl border border-zinc-200 bg-white p-10 font-sans text-[#173226] shadow-sm"
       >
         {/* En-tête */}
         <div className="flex items-center justify-between gap-4 rounded-xl bg-[#2f8f4e] px-5 py-4 text-white">

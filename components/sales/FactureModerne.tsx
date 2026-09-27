@@ -27,7 +27,7 @@ export function FactureModerne({ data }: { data: FactureData }) {
 
       <div
         id="zindo-facture-moderne"
-        className="mx-auto w-full max-w-[210mm] rounded-2xl border border-zinc-200 bg-white p-12 font-sans text-[#1a1a1a] shadow-sm"
+        className="theme-locked mx-auto w-full max-w-[210mm] rounded-2xl border border-zinc-200 bg-white p-12 font-sans text-[#1a1a1a] shadow-sm"
       >
         {/* En-tête : identité à gauche, document à droite */}
         <div className="flex items-start justify-between gap-6">

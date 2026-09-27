@@ -28,7 +28,7 @@ export function FacturePharmacie({ data }: { data: FactureData }) {
 
       <div
         id="zindo-facture-pharmacie"
-        className="mx-auto w-full max-w-[210mm] rounded-2xl border border-zinc-200 bg-white p-11 font-sans text-[#16302c] shadow-sm"
+        className="theme-locked mx-auto w-full max-w-[210mm] rounded-2xl border border-zinc-200 bg-white p-11 font-sans text-[#16302c] shadow-sm"
       >
         {/* En-tête */}
         <div className="flex items-start justify-between gap-6 border-b border-[#dcece8] pb-5">

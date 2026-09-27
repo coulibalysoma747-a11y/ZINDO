@@ -34,7 +34,7 @@ export function FactureBoutique({ data }: { data: FactureData }) {
 
       <div
         id="zindo-facture-boutique"
-        className="mx-auto w-full max-w-[210mm] overflow-hidden rounded-2xl border border-zinc-200 bg-white font-sans text-[#221019] shadow-sm"
+        className="theme-locked mx-auto w-full max-w-[210mm] overflow-hidden rounded-2xl border border-zinc-200 bg-white font-sans text-[#221019] shadow-sm"
       >
         {/* Bandeau */}
         <div className="fb-block relative flex items-center gap-4 bg-[#7a2454] px-10 py-7 text-white">

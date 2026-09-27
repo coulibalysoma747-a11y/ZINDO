@@ -25,7 +25,7 @@ export function FactureCabinet({ data }: { data: FactureData }) {
 
       <div
         id="zindo-facture-cabinet"
-        className="mx-auto w-full max-w-[210mm] rounded-2xl border border-zinc-200 bg-white p-12 font-sans text-[#1c2333] shadow-sm"
+        className="theme-locked mx-auto w-full max-w-[210mm] rounded-2xl border border-zinc-200 bg-white p-12 font-sans text-[#1c2333] shadow-sm"
       >
         {/* En-tête */}
         <div className="border-b-2 border-[#3949ab] pb-4 text-center">

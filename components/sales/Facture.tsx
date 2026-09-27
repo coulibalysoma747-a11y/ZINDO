@@ -99,7 +99,7 @@ export function Facture({ data }: { data: FactureData }) {
 
       <div
         id="zindo-facture"
-        className="mx-auto w-full max-w-[210mm] rounded-2xl border border-zinc-200 bg-white p-12 font-serif text-zinc-800 shadow-sm"
+        className="theme-locked mx-auto w-full max-w-[210mm] rounded-2xl border border-zinc-200 bg-white p-12 font-serif text-zinc-800 shadow-sm"
       >
         {/* En-tête : identité du commerce, centrée, filet double façon papier à en-tête */}
         <div className="border-b-4 border-double border-zindo-ink-900 pb-5 text-center">

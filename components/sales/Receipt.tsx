@@ -442,7 +442,7 @@ export function Receipt({
 
       <div
         id="zindo-receipt"
-        className={`receipt-style-${style} mx-auto w-full ${containerWidthClass} rounded-xl border border-zinc-200 bg-white p-4 text-[13px] leading-snug text-zinc-800 shadow-sm`}
+        className={`theme-locked receipt-style-${style} mx-auto w-full ${containerWidthClass} rounded-xl border border-zinc-200 bg-white p-4 text-[13px] leading-snug text-zinc-800 shadow-sm`}
       >
         {style === "moderne" ? (
           <ModerneBody data={data} width={width} money={money} qrSize={qrSize} />

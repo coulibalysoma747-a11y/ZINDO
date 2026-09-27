@@ -32,7 +32,7 @@ export function FactureAtelier({ data }: { data: FactureData }) {
 
       <div
         id="zindo-facture-atelier"
-        className="mx-auto w-full max-w-[210mm] rounded-2xl bg-[#1c1a17] p-4 font-mono text-[#ece7de] shadow-sm"
+        className="theme-locked mx-auto w-full max-w-[210mm] rounded-2xl bg-[#1c1a17] p-4 font-mono text-[#ece7de] shadow-sm"
       >
         <div className="relative border border-[#38342e] p-8">
           <span className="absolute left-3 top-3 h-1.5 w-1.5 rounded-full bg-[#4a453d]" />

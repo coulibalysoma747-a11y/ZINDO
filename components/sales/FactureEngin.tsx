@@ -113,7 +113,7 @@ export function FactureEngin({ data }: { data: FactureEnginData }) {
         }
       `}</style>
 
-      <div id="zindo-facture-engin" className="mx-auto w-full max-w-[210mm] overflow-hidden rounded-2xl border border-zinc-200 bg-white text-zinc-800 shadow-sm">
+      <div id="zindo-facture-engin" className="theme-locked mx-auto w-full max-w-[210mm] overflow-hidden rounded-2xl border border-zinc-200 bg-white text-zinc-800 shadow-sm">
         {/* En-tête */}
         <div className="flex flex-wrap items-center justify-between gap-4 border-b border-zinc-200 p-6">
           <div className="flex items-center gap-4">

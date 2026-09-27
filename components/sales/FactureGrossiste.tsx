@@ -25,7 +25,7 @@ export function FactureGrossiste({ data }: { data: FactureData }) {
 
       <div
         id="zindo-facture-grossiste"
-        className="mx-auto w-full max-w-[210mm] rounded-2xl border border-zinc-200 bg-white p-11 font-sans text-[#14171c] shadow-sm"
+        className="theme-locked mx-auto w-full max-w-[210mm] rounded-2xl border border-zinc-200 bg-white p-11 font-sans text-[#14171c] shadow-sm"
       >
         {/* En-tête */}
         <div className="flex items-start justify-between gap-6 border-b-[3px] border-black pb-4">

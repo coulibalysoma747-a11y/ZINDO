@@ -28,7 +28,7 @@ export function FactureRestaurant({ data }: { data: FactureData }) {
 
       <div
         id="zindo-facture-restaurant"
-        className="mx-auto w-full max-w-[210mm] rounded-2xl border border-zinc-200 bg-white p-11 font-sans text-[#3a241a] shadow-sm"
+        className="theme-locked mx-auto w-full max-w-[210mm] rounded-2xl border border-zinc-200 bg-white p-11 font-sans text-[#3a241a] shadow-sm"
       >
         {/* En-tête */}
         <div className="flex items-start justify-between gap-6">

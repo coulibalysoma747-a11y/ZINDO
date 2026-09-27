@@ -31,7 +31,7 @@ export function CustomerStatementDocument({ data, zindoMention }: { data: Statem
 
   return (
     <FitToWidth>
-      <div className="w-[210mm] bg-white p-8 text-zinc-900 shadow-sm print:w-full print:p-0 print:shadow-none">
+      <div className="theme-locked w-[210mm] bg-white p-8 text-zinc-900 shadow-sm print:w-full print:p-0 print:shadow-none">
         <style>{`@page { size: A4; margin: 12mm; }`}</style>
 
         {/* En-tête */}

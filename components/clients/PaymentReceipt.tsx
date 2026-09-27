@@ -56,7 +56,7 @@ export function PaymentReceipt({
       `}</style>
       <div
         id="zindo-receipt"
-        className={`mx-auto w-full ${containerWidthClass} rounded-xl border border-zinc-200 bg-white p-4 text-[13px] leading-snug text-zinc-800 shadow-sm`}
+        className={`theme-locked mx-auto w-full ${containerWidthClass} rounded-xl border border-zinc-200 bg-white p-4 text-[13px] leading-snug text-zinc-800 shadow-sm`}
       >
         <div className="text-center">
           {business.logoUrl && <img src={business.logoUrl} alt={business.name} className="mx-auto mb-1 h-10 object-contain" />}

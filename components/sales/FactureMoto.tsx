@@ -31,7 +31,7 @@ export function FactureMoto({ data }: { data: FactureData }) {
 
       <div
         id="zindo-facture-moto"
-        className="mx-auto w-full max-w-[210mm] overflow-hidden rounded-2xl bg-[#101418] font-sans text-[#e9edf1] shadow-sm"
+        className="theme-locked mx-auto w-full max-w-[210mm] overflow-hidden rounded-2xl bg-[#101418] font-sans text-[#e9edf1] shadow-sm"
       >
         <div
           className="fm-stripes h-2 w-full"

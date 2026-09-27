@@ -48,7 +48,7 @@ export function A4Document({
 }) {
   return (
     <FitToWidth>
-      <div className="w-[210mm] bg-white p-8 text-zinc-900 shadow-sm print:w-full print:p-0 print:shadow-none">
+      <div className="theme-locked w-[210mm] bg-white p-8 text-zinc-900 shadow-sm print:w-full print:p-0 print:shadow-none">
         <style>{`@page { size: A4; margin: 12mm; } @media print { thead { display: table-header-group; } }`}</style>
 
         <div className="flex items-start justify-between gap-6 border-b-2 border-zinc-900 pb-4">

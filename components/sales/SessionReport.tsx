@@ -85,7 +85,7 @@ export function SessionReport({ data }: { data: SessionReportData }) {
 
       <div
         id="zindo-session-report"
-        className="mx-auto w-full max-w-[80mm] rounded-xl border border-zinc-200 bg-white p-4 text-[13px] leading-snug text-zinc-800 shadow-sm"
+        className="theme-locked mx-auto w-full max-w-[80mm] rounded-xl border border-zinc-200 bg-white p-4 text-[13px] leading-snug text-zinc-800 shadow-sm"
       >
         <div className="text-center">
           <p className="text-sm font-bold uppercase">{data.businessName}</p>

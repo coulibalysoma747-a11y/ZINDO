@@ -44,7 +44,7 @@ export function OrdonnanceDocument({ data, width = "A4" }: { data: OrdonnanceDoc
 
       <div
         id="zindo-ordonnance"
-        className="mx-auto w-full max-w-[210mm] rounded-2xl border border-zinc-200 bg-white p-12 font-serif text-zinc-800 shadow-sm"
+        className="theme-locked mx-auto w-full max-w-[210mm] rounded-2xl border border-zinc-200 bg-white p-12 font-serif text-zinc-800 shadow-sm"
       >
         <div className="border-b-4 border-double border-zindo-ink-900 pb-5 text-center">
           {data.logoUrl && (
@@ -149,7 +149,7 @@ function OrdonnanceTicket({ data, width }: { data: OrdonnanceDocumentData; width
 
       <div
         id="zindo-ordonnance"
-        className={`mx-auto w-full ${containerWidthClass} rounded-xl border border-zinc-200 bg-white p-4 text-[13px] leading-snug text-zinc-800 shadow-sm`}
+        className={`theme-locked mx-auto w-full ${containerWidthClass} rounded-xl border border-zinc-200 bg-white p-4 text-[13px] leading-snug text-zinc-800 shadow-sm`}
       >
         <div className="text-center">
           {data.logoUrl && (

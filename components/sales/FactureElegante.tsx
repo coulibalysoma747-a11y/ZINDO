@@ -55,7 +55,7 @@ export function FactureElegante({ data, variant }: { data: FactureData; variant:
 
       <div
         id={id}
-        className="mx-auto w-full max-w-[210mm] overflow-hidden rounded-2xl border border-zinc-200 font-serif shadow-sm"
+        className="theme-locked mx-auto w-full max-w-[210mm] overflow-hidden rounded-2xl border border-zinc-200 font-serif shadow-sm"
         style={{ background: t.paper, color: t.ink }}
       >
         {/* En-tête */}
