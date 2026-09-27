@@ -232,6 +232,11 @@ export function POS({
   const [categoryFilter, setCategoryFilter] = useState("");
   const [tableQuery, setTableQuery] = useState("");
   const narrowScreen = useNarrowScreen();
+  // Téléphone (caisse plein écran) : panier et paiement dans une fenêtre
+  // par-dessus les produits, au lieu d'être en bas de la page (il fallait
+  // remonter à la main pour continuer, et après chaque vente).
+  const sheetMode = phoneMode && narrowScreen;
+  const [cartSheetOpen, setCartSheetOpen] = useState(false);
   const [tableHighlight, setTableHighlight] = useState(0);
   const [posMenuOpen, setPosMenuOpen] = useState(false);
   const [autoPrintReceipt, setAutoPrintReceipt] = useState(initialAutoPrint);
@@ -649,6 +654,7 @@ export function POS({
   }
 
   function addProduct(product: PosProduct, packaging?: PackagingUnitOption) {
+    setCartSheetOpen(false);
     if (product.trackUnits) {
       openUnitPicker(product);
       return;
@@ -1620,6 +1626,26 @@ export function POS({
     ...(allowMixedPayment ? [{ value: "MIXTE" as PaymentMethod, label: "Mixte" }] : []),
   ];
 
+  const CART_SHEET_CLASS =
+    "fixed inset-0 z-40 space-y-3 overflow-y-auto bg-(--app-canvas) px-4 pb-[calc(2rem+env(safe-area-inset-bottom))] md:hidden print:hidden [@media(display-mode:standalone)]:pb-28";
+  const cartSheetHeader = (
+    <div className="sticky top-0 z-10 -mx-4 flex items-center gap-2 border-b border-zinc-200 bg-white px-3 py-2 dark:border-slate-800 dark:bg-slate-900">
+      <button
+        type="button"
+        onClick={() => setCartSheetOpen(false)}
+        className="flex items-center gap-1.5 rounded-xl border border-zinc-200 px-3 py-2 text-sm font-semibold text-zinc-800 dark:border-slate-700 dark:text-slate-200"
+      >
+        <ArrowLeft className="h-4 w-4" /> Continuer mes achats
+      </button>
+      <span className="ml-auto text-right">
+        <span className="block text-xs text-zinc-500">
+          {cart.length} article{cart.length > 1 ? "s" : ""}
+        </span>
+        <span className="font-bold tabular-nums text-zinc-900 dark:text-slate-100">{formatMoney(total, currency)}</span>
+      </span>
+    </div>
+  );
+
   // Facture A4 (tableau) : suggestions de la ligne de saisie.
   const tableSuggestions = tableMode && tableQuery.trim()
     ? searchItems(products, tableQuery, (p) => [p.name, p.reference, p.barcode]).slice(0, 8)
@@ -2410,7 +2436,7 @@ export function POS({
         {tableMode ? (
           <div id="pos-panier" className="scroll-mt-20 md:hidden" />
         ) : (
-          !singlePanel && (
+          !singlePanel && !sheetMode && (
             <div id="pos-panier" className="scroll-mt-20 md:hidden">
               {renderCart(false)}
             </div>
@@ -2437,7 +2463,12 @@ export function POS({
                 type="button"
                 className="px-5 py-3 text-base"
                 aria-label="Voir le panier et payer"
-                onClick={() => document.getElementById("pos-panier")?.scrollIntoView({ behavior: "smooth", block: "start" })}
+                disabled={sheetMode && cart.length === 0}
+                onClick={() =>
+                  sheetMode
+                    ? setCartSheetOpen(true)
+                    : document.getElementById("pos-panier")?.scrollIntoView({ behavior: "smooth", block: "start" })
+                }
               >
                 Voir / Payer
               </Button>
@@ -2447,15 +2478,30 @@ export function POS({
       )}
 
       {singlePanel && !tableMode ? (
-        renderSinglePanel()
+        sheetMode ? (
+          cartSheetOpen && cart.length > 0 ? (
+            <div className={CART_SHEET_CLASS}>
+              {cartSheetHeader}
+              {renderSinglePanel()}
+            </div>
+          ) : null
+        ) : (
+          renderSinglePanel()
+        )
       ) : (
       <div
         className={
-          tableMode
-            ? "w-full max-w-xl space-y-3"
-            : "space-y-3 md:sticky md:top-4 md:self-start md:max-h-[calc(100vh-2rem)] md:overflow-y-auto"
+          sheetMode
+            ? cartSheetOpen && cart.length > 0
+              ? CART_SHEET_CLASS
+              : "hidden"
+            : tableMode
+              ? "w-full max-w-xl space-y-3"
+              : "space-y-3 md:sticky md:top-4 md:self-start md:max-h-[calc(100vh-2rem)] md:overflow-y-auto"
         }
       >
+        {sheetMode && cartSheetHeader}
+        {sheetMode && !tableMode && renderCart(false)}
         {!tableMode && <div className="hidden md:block">{renderCart(true)}</div>}
         {(!hideCustomerInPos || isCreditOnly) && (
           <Card>
