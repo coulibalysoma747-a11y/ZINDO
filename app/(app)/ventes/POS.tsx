@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState, useTransition, type FocusEvent } from "react";
 import Link from "next/link";
-import { Trash2, Plus, Minus, UserPlus, Loader2, Wallet, Lock, WifiOff, RefreshCw, Sparkles, Calculator, Printer } from "lucide-react";
+import { Trash2, Plus, Minus, UserPlus, Loader2, Wallet, Lock, WifiOff, RefreshCw, Sparkles, Calculator, Printer, MoreVertical, LogOut } from "lucide-react";
 import { ProductGrid, type PosProduct, type PackagingUnitOption } from "@/components/products/ProductGrid";
 import { BarcodeScannerButton } from "@/components/products/BarcodeScannerButton";
 import { Card, CardBody, CardHeader } from "@/components/ui/Card";
@@ -156,6 +156,9 @@ export function POS({
   singlePanel = false,
   extras = {},
   initialProducts,
+  phoneMode = false,
+  categories = [],
+  exitHref = "/dashboard",
 }: {
   mode?: "pos" | "facture";
   customers: { id: string; name: string; phone: string | null }[];
@@ -189,12 +192,23 @@ export function POS({
   extras?: Partial<PosExtras>;
   /** Produits dont la lecture a démarré côté serveur, dès le rendu de la page (voir POSPageContent). */
   initialProducts?: Promise<PosProduct[]>;
+  /**
+   * Caisse façon FasoStock sur téléphone (flag caisse_telephone, lib/pos-phone.ts) :
+   * plein écran, menu ⋮ (session, réglages, quitter), pastilles de catégories,
+   * barre « Panier — Voir / Payer » fixée en bas. Ordinateur inchangé.
+   */
+  phoneMode?: boolean;
+  categories?: { id: string; name: string }[];
+  /** Où mène « Quitter la caisse » (menu ⋮, mode téléphone). */
+  exitHref?: string;
 }) {
   const isFacture = mode === "facture";
   const [cart, setCart] = useState<CartLine[]>([]);
   const [products, setProducts] = useState<PosProduct[]>([]);
   const [loadingProducts, setLoadingProducts] = useState(true);
   const [search, setSearch] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState("");
+  const [posMenuOpen, setPosMenuOpen] = useState(false);
   const [autoPrintReceipt, setAutoPrintReceipt] = useState(initialAutoPrint);
   const [printerTicketWidth, setPrinterTicketWidth] = useState(initialPrinterWidth);
 
@@ -481,6 +495,11 @@ export function POS({
 
   const filteredProducts =
     localMatches.length === 0 && serverMatches?.query === search.trim() ? serverMatches.products : localMatches;
+  // categoryId vient de la lecture des produits (PRODUCT_FIELDS), sans figurer dans PosProduct.
+  const categoryOf = (p: PosProduct) => (p as PosProduct & { categoryId?: string | null }).categoryId ?? null;
+  const categoryChips = phoneMode ? categories.filter((c) => products.some((p) => categoryOf(p) === c.id)) : [];
+  const shownProducts =
+    phoneMode && categoryFilter ? filteredProducts.filter((p) => categoryOf(p) === categoryFilter) : filteredProducts;
 
   // "Caisse à deux" : sur le module Vente, on ne finalise plus jamais le
   // paiement directement — on envoie à la caisse (module Caisse dédié).
@@ -1580,6 +1599,7 @@ export function POS({
   // dessous, toujours visible sans faire défiler la page.
   const renderSinglePanel = () => (
     <div
+      id="pos-panier"
       ref={singlePanelRef}
       style={singlePanelMaxH ? { maxHeight: singlePanelMaxH } : undefined}
       className="flex flex-col md:sticky md:top-4 md:self-start"
@@ -1789,8 +1809,8 @@ export function POS({
     // (page blanche).
     <>
     <div className="grid grid-cols-1 gap-6 md:grid-cols-[minmax(0,1fr)_320px] lg:grid-cols-[minmax(0,1fr)_380px] xl:grid-cols-[minmax(0,1fr)_420px] print:hidden">
-      <div className="min-w-0 space-y-4">
-        <div className="flex flex-wrap items-start justify-between gap-3">
+      <div className={`min-w-0 space-y-4 ${phoneMode ? "pb-20 md:pb-0" : ""}`}>
+        <div className={`${phoneMode ? "hidden md:flex" : "flex"} flex-wrap items-start justify-between gap-3`}>
           <div className="flex items-start gap-2">
             <div>
               <h1 className="text-xl font-bold tracking-tight text-zinc-900">{isFacture ? "Facture A4" : "Vente / Caisse"}</h1>
@@ -1876,6 +1896,11 @@ export function POS({
           <span ref={scannerWrapperRef} className="contents">
             <BarcodeScannerButton onDetected={handleScan} />
           </span>
+          {phoneMode && (
+            <Button type="button" variant="outline" className="md:hidden" onClick={() => setPosMenuOpen(true)} aria-label="Menu de la caisse">
+              <MoreVertical className="h-4 w-4" />
+            </Button>
+          )}
           {aiCartEnabled && (
             <Button type="button" variant="outline" onClick={() => setAiCartOpen(true)}>
               <Sparkles className="h-4 w-4" /> Panier IA
@@ -1923,6 +1948,43 @@ export function POS({
           </p>
         )}
 
+        {phoneMode && (
+          <Modal open={posMenuOpen} onClose={() => setPosMenuOpen(false)} title={isFacture ? "Facture A4" : "Caisse"}>
+            <div className="space-y-4">
+              <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800 dark:border-emerald-400/20 dark:bg-emerald-500/10 dark:text-emerald-400">
+                <p className="font-semibold">Session {session.number} ouverte</p>
+                <p>
+                  {locationName} · {session.cashierName} — depuis {formatDateTime(session.openedAt)}
+                </p>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <PosSettingsButton
+                  autoPrintReceipt={autoPrintReceipt}
+                  printerTicketWidth={printerTicketWidth}
+                  onAutoPrintChange={setAutoPrintReceipt}
+                />
+                <PrinterSettingsButton
+                  autoPrintReceipt={autoPrintReceipt}
+                  printerTicketWidth={printerTicketWidth}
+                  onPrinterWidthChange={setPrinterTicketWidth}
+                />
+              </div>
+              <Link
+                href={`/ventes/session/${session.id}/fermer`}
+                className="flex items-center gap-2 rounded-xl border border-zinc-200 px-3 py-3 text-sm font-medium text-zinc-800 dark:border-slate-700 dark:text-slate-200"
+              >
+                <Lock className="h-4 w-4" /> Fermer la caisse
+              </Link>
+              <Link
+                href={exitHref}
+                className="flex items-center gap-2 rounded-xl border border-red-200 px-3 py-3 text-sm font-semibold text-red-600 dark:border-red-500/30"
+              >
+                <LogOut className="h-4 w-4" /> Quitter la caisse
+              </Link>
+            </div>
+          </Modal>
+        )}
+
         <Modal open={heldSalesOpen} onClose={() => setHeldSalesOpen(false)} title="Ventes en attente">
           {heldSales.length === 0 ? (
             <p className="text-sm text-zinc-500">Aucune vente en attente.</p>
@@ -1966,14 +2028,39 @@ export function POS({
           />
         )}
 
-        <div className="max-h-[420px] overflow-y-auto rounded-2xl md:max-h-[calc(100vh-15rem)]">
+        {categoryChips.length > 0 && (
+          <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
+            {[{ id: "", name: "Tous" }, ...categoryChips].map((c) => (
+              <button
+                key={c.id || "tous"}
+                type="button"
+                onClick={() => setCategoryFilter(c.id)}
+                className={`shrink-0 rounded-full border px-3.5 py-1.5 text-sm font-medium ${
+                  categoryFilter === c.id
+                    ? "border-zindo-green-600 bg-zindo-green-600 text-white"
+                    : "border-zinc-200 bg-white text-zinc-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
+                }`}
+              >
+                {c.name}
+              </button>
+            ))}
+          </div>
+        )}
+
+        <div
+          className={
+            phoneMode
+              ? "rounded-2xl md:max-h-[calc(100vh-15rem)] md:overflow-y-auto"
+              : "max-h-[420px] overflow-y-auto rounded-2xl md:max-h-[calc(100vh-15rem)]"
+          }
+        >
           {loadingProducts ? (
             <div className="flex items-center justify-center gap-2 py-16 text-sm text-zinc-400">
               <Loader2 className="h-4 w-4 animate-spin" /> Chargement des produits...
             </div>
           ) : (
             <ProductGrid
-              products={filteredProducts}
+              products={shownProducts}
               onSelect={(product, packaging) =>
                 extras.packagingPicker && !packaging && !product.trackUnits && product.packagingUnits?.length
                   ? setPackagingPickerProduct(product)
@@ -1985,8 +2072,32 @@ export function POS({
           )}
         </div>
 
-        {!singlePanel && <div className="md:hidden">{renderCart(false)}</div>}
+        {!singlePanel && (
+          <div id="pos-panier" className="scroll-mt-4 md:hidden">
+            {renderCart(false)}
+          </div>
+        )}
       </div>
+
+      {phoneMode && (
+        <div className="fixed inset-x-0 bottom-0 z-30 border-t border-zinc-200 bg-white px-3 pt-2 pb-[calc(0.5rem+env(safe-area-inset-bottom))] md:hidden print:hidden dark:border-slate-800 dark:bg-slate-900">
+          <div className="flex items-center justify-between gap-3">
+            <div className="min-w-0">
+              <p className="text-sm font-semibold text-zinc-900">Panier</p>
+              <p className="text-xs text-zinc-500">
+                {cart.length} article{cart.length > 1 ? "s" : ""} · <span className="font-semibold tabular-nums text-zinc-800 dark:text-slate-200">{formatMoney(total, currency)}</span>
+              </p>
+            </div>
+            <Button
+              type="button"
+              className="px-5 py-3 text-base"
+              onClick={() => document.getElementById("pos-panier")?.scrollIntoView({ behavior: "smooth", block: "start" })}
+            >
+              Voir / Payer
+            </Button>
+          </div>
+        </div>
+      )}
 
       {singlePanel ? (
         renderSinglePanel()
