@@ -7,6 +7,9 @@ import { supabase } from "@/lib/supabase";
 import { formatDateTime } from "@/lib/format";
 import { Card, CardBody, CardHeader } from "@/components/ui/Card";
 import { Table, TableHead, TableBody, TableRow, TableHeaderCell, TableCell } from "@/components/ui/Table";
+import { DeleteRedirectButton } from "@/components/ui/DeleteRedirectButton";
+import { isExtendedEditEnabled } from "@/lib/extended-edit";
+import { cancelTransferAction } from "@/lib/actions/transfers";
 
 type TransferRow = {
   id: string;
@@ -44,6 +47,7 @@ export default async function TransferDetailPage({
     .select("id, name")
     .in("id", [transfer.fromLocationId, transfer.toLocationId]);
   const locationNames = new Map((locations ?? []).map((l) => [l.id as string, l.name as string]));
+  const extendedEdit = await isExtendedEditEnabled(user.businessId);
 
   return (
     <div className="space-y-6">
@@ -59,6 +63,17 @@ export default async function TransferDetailPage({
           {formatDateTime(new Date(transfer.createdAt))} · par {transfer.user.firstName} {transfer.user.lastName}
         </p>
         {transfer.note && <p className="mt-1 text-sm text-zinc-500">Note : {transfer.note}</p>}
+        {extendedEdit && (
+          <div className="mt-3">
+            <DeleteRedirectButton
+              action={cancelTransferAction.bind(null, transfer.id)}
+              redirectTo="/transferts"
+              label="Annuler le transfert"
+              confirmTitle="Annuler le transfert"
+              confirmMessage={`Annuler le transfert ${transfer.number} ? La marchandise repart de ${locationNames.get(transfer.toLocationId) ?? "la boutique d'arrivée"} vers ${locationNames.get(transfer.fromLocationId) ?? "la boutique de départ"}.`}
+            />
+          </div>
+        )}
       </div>
 
       <Card>

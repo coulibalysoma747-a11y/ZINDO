@@ -169,3 +169,98 @@ async function createTransferImpl(input: CreateTransferInput): Promise<CreateTra
 
   return { success: true, transferId: transfer.id as string };
 }
+
+/**
+ * Annule un transfert (flag modifier_supprimer_partout) : la marchandise
+ * repart de la boutique d'arrivée vers la boutique de départ. Refusé si une
+ * partie a déjà été vendue ou sortie à l'arrivée. Les mouvements « Transfert »
+ * d'origine restent dans l'historique, suivis de ceux de l'annulation.
+ */
+export async function cancelTransferAction(transferId: string): Promise<{ error?: string; success?: string }> {
+  const user = await requirePermission(PERMISSIONS.TRANSFERS_MANAGE);
+  const { data } = await supabase
+    .from("stock_transfers")
+    .select("id, number, fromLocationId:from_location_id, toLocationId:to_location_id, items:stock_transfer_items(productId:product_id, quantity)")
+    .eq("id", transferId)
+    .eq("business_id", user.businessId)
+    .maybeSingle();
+  if (!data) return { error: "Transfert introuvable" };
+  const number = data.number as string;
+  const fromLocationId = data.fromLocationId as string;
+  const toLocationId = data.toLocationId as string;
+  const items = (data.items ?? []) as unknown as Array<{ productId: string; quantity: number }>;
+
+  // Quantité à renvoyer par produit (un produit peut figurer sur plusieurs lignes).
+  const toReturn = new Map<string, number>();
+  for (const i of items) toReturn.set(i.productId, (toReturn.get(i.productId) ?? 0) + i.quantity);
+  const productIds = [...toReturn.keys()];
+
+  const [{ data: stocks }, { data: products }, { data: locations }] = await Promise.all([
+    supabase.from("product_stocks").select("productId:product_id, quantity").eq("location_id", toLocationId).in("product_id", productIds),
+    supabase.from("products").select("id, name").in("id", productIds),
+    supabase.from("locations").select("id, name").in("id", [fromLocationId, toLocationId]),
+  ]);
+  const stockOf = new Map(((stocks ?? []) as Array<{ productId: string; quantity: number }>).map((s) => [s.productId, s.quantity]));
+  const nameOf = new Map(((products ?? []) as Array<{ id: string; name: string }>).map((p) => [p.id, p.name]));
+  const locationName = new Map(((locations ?? []) as Array<{ id: string; name: string }>).map((l) => [l.id, l.name]));
+  const short = productIds.filter((id) => (stockOf.get(id) ?? 0) < (toReturn.get(id) ?? 0));
+  if (short.length > 0) {
+    return {
+      error: `Impossible : une partie de la marchandise n'est plus à ${locationName.get(toLocationId) ?? "l'arrivée"} (${short
+        .map((id) => nameOf.get(id) ?? "produit")
+        .join(", ")}). Faites plutôt un nouveau transfert dans l'autre sens.`,
+    };
+  }
+
+  for (const [productId, quantity] of toReturn) {
+    const out = await adjustStock({ productId, locationId: toLocationId, delta: -quantity });
+    const back = await adjustStock({ productId, locationId: fromLocationId, delta: quantity });
+    const { error: movementError } = await supabase.from("stock_movements").insert([
+      {
+        business_id: user.businessId,
+        location_id: toLocationId,
+        product_id: productId,
+        direction: "OUT",
+        reason: "TRANSFERT",
+        quantity,
+        old_stock: out.oldStock,
+        new_stock: out.newStock,
+        user_id: user.id,
+        note: `Annulation du transfert ${number}`,
+      },
+      {
+        business_id: user.businessId,
+        location_id: fromLocationId,
+        product_id: productId,
+        direction: "IN",
+        reason: "TRANSFERT",
+        quantity,
+        old_stock: back.oldStock,
+        new_stock: back.newStock,
+        user_id: user.id,
+        note: `Annulation du transfert ${number}`,
+      },
+    ]);
+    if (movementError) console.error("[cancelTransferAction] Échec de l'écriture des mouvements :", movementError.message);
+  }
+
+  const { error } = await supabase.from("stock_transfers").delete().eq("id", transferId);
+  if (error) {
+    console.error("[cancelTransferAction] Échec de la suppression :", error.message);
+    return { error: "Le stock a été remis, mais le transfert n'a pas pu être supprimé" };
+  }
+
+  await logAction({
+    businessId: user.businessId,
+    userId: user.id,
+    action: "DELETE",
+    entity: "StockTransfer",
+    entityId: transferId,
+    details: `Transfert ${number} annulé, marchandise renvoyée à ${locationName.get(fromLocationId) ?? "la boutique de départ"}`,
+  });
+
+  revalidatePath("/transferts");
+  revalidatePath("/stock");
+  revalidatePath("/produits");
+  return { success: "Transfert annulé" };
+}
