@@ -8,7 +8,17 @@ type BeforeInstallPromptEvent = Event & {
   userChoice: Promise<{ outcome: "accepted" | "dismissed" }>;
 };
 
-export function InstallAppButton({ className, iconOnly }: { className?: string; iconOnly?: boolean }) {
+export function InstallAppButton({
+  className,
+  iconOnly,
+  label = "Installer l'application",
+  appName = "ZINDO",
+}: {
+  className?: string;
+  iconOnly?: boolean;
+  label?: string;
+  appName?: string;
+}) {
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [isStandalone, setIsStandalone] = useState(false);
   const [isIos, setIsIos] = useState(false);
@@ -58,14 +68,14 @@ export function InstallAppButton({ className, iconOnly }: { className?: string; 
       <button
         type="button"
         onClick={handleClick}
-        title="Installer l'application"
+        title={label}
         className={
           className ??
           "flex items-center gap-2 rounded-lg bg-zindo-green-500 px-4 py-2 text-sm font-semibold text-white hover:bg-zindo-green-600"
         }
       >
         <Download className="h-4 w-4 shrink-0" />
-        <span className={iconOnly ? "hidden sm:inline" : undefined}>Installer l&apos;application</span>
+        <span className={iconOnly ? "hidden sm:inline" : undefined}>{label}</span>
       </button>
 
       {showHelp && (
@@ -75,7 +85,7 @@ export function InstallAppButton({ className, iconOnly }: { className?: string; 
         >
           <div className="w-full max-w-sm rounded-t-2xl bg-white p-5 sm:rounded-2xl" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between">
-              <p className="font-semibold text-zinc-900">Installer ZINDO</p>
+              <p className="font-semibold text-zinc-900">Installer {appName}</p>
               <button onClick={() => setShowHelp(false)} aria-label="Fermer">
                 <X className="h-5 w-5 text-zinc-400" />
               </button>

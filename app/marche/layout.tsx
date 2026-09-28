@@ -5,6 +5,7 @@ import { canViewMarket } from "@/lib/market-data";
 import { getCurrentBuyer } from "@/lib/market-buyer";
 import { countUnread } from "@/lib/market-messages";
 import { CartCount } from "@/components/market/cart-store";
+import { InstallAppButton } from "@/components/InstallAppButton";
 
 export const metadata = {
   title: "Marché ZINDO",
@@ -60,6 +61,12 @@ export default async function MarketLayout({ children }: { children: React.React
               )}
             </Link>
           )}
+          <InstallAppButton
+            iconOnly
+            label="Installer le Marché"
+            appName="le Marché ZINDO"
+            className="flex shrink-0 items-center gap-1.5 rounded-full bg-zindo-green-600 px-3 py-2 text-xs font-semibold text-white hover:bg-zindo-green-700"
+          />
           <Link href="/marche/panier" aria-label="Panier" className="relative shrink-0 text-zinc-700 hover:text-zindo-green-700">
             <ShoppingCart className="h-6 w-6" />
             <CartCount />
