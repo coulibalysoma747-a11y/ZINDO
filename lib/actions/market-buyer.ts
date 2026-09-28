@@ -1,0 +1,104 @@
+"use server";
+
+import bcrypt from "bcryptjs";
+import { z } from "zod";
+import { redirect } from "next/navigation";
+import { supabase } from "@/lib/supabase";
+import { createBuyerSession, destroyBuyerSession } from "@/lib/market-buyer";
+import { normalizeBuyerPhone, safeMarketRedirect } from "@/lib/market";
+
+/** Comptes acheteurs du Marché (compte léger, sans gestion commerciale). */
+
+export type BuyerAuthState = { error?: string } | undefined;
+
+const MAX_FAILED_LOGINS = 5;
+const LOCK_MINUTES = 15;
+
+const signupSchema = z.object({
+  name: z.string().trim().min(2, "Nom requis").max(80),
+  phone: z.string().trim().min(8, "Numéro de téléphone invalide"),
+  password: z.string().min(6, "Mot de passe : 6 caractères minimum").max(100),
+  kind: z.enum(["PARTICULIER", "PRO"]),
+  companyName: z.string().trim().max(120).optional(),
+  city: z.string().trim().max(80).optional(),
+});
+
+export async function signupBuyerAction(_prev: BuyerAuthState, formData: FormData): Promise<BuyerAuthState> {
+  const parsed = signupSchema.safeParse({
+    name: formData.get("name"),
+    phone: formData.get("phone"),
+    password: formData.get("password"),
+    kind: formData.get("kind") === "PRO" ? "PRO" : "PARTICULIER",
+    companyName: (formData.get("companyName") as string) || undefined,
+    city: (formData.get("city") as string) || undefined,
+  });
+  if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Formulaire invalide" };
+  const d = parsed.data;
+  if (d.kind === "PRO" && !d.companyName) return { error: "Indiquez le nom de l'entreprise." };
+
+  const phone = normalizeBuyerPhone(d.phone);
+  if (!phone) return { error: "Numéro de téléphone invalide" };
+  const { data: existing } = await supabase.from("market_buyers").select("id").eq("phone", phone).maybeSingle();
+  if (existing) return { error: "Un compte existe déjà avec ce numéro : connectez-vous." };
+
+  const { data: buyer, error } = await supabase
+    .from("market_buyers")
+    .insert({
+      name: d.name,
+      phone,
+      password_hash: await bcrypt.hash(d.password, 10),
+      kind: d.kind,
+      company_name: d.kind === "PRO" ? d.companyName : null,
+      city: d.city ?? null,
+      last_login_at: new Date().toISOString(),
+    })
+    .select("id")
+    .single();
+  if (error || !buyer) {
+    console.error("[signupBuyerAction]", error?.message);
+    return { error: "Création du compte impossible, réessayez." };
+  }
+  await createBuyerSession(buyer.id);
+  redirect(safeMarketRedirect(formData.get("suite")));
+}
+
+export async function loginBuyerAction(_prev: BuyerAuthState, formData: FormData): Promise<BuyerAuthState> {
+  const phone = normalizeBuyerPhone(String(formData.get("phone") ?? ""));
+  const password = String(formData.get("password") ?? "");
+  if (!phone || !password) return { error: "Numéro ou mot de passe incorrect." };
+
+  const { data: buyer } = await supabase
+    .from("market_buyers")
+    .select("id, passwordHash:password_hash, blocked, failedLogins:failed_logins, lockedUntil:locked_until")
+    .eq("phone", phone)
+    .maybeSingle();
+  if (!buyer) return { error: "Numéro ou mot de passe incorrect." };
+  if (buyer.blocked) return { error: "Ce compte a été bloqué. Contactez ZINDO au 04 05 99 29." };
+  if (buyer.lockedUntil && new Date(buyer.lockedUntil).getTime() > Date.now()) {
+    return { error: `Trop d'essais : réessayez dans ${LOCK_MINUTES} minutes.` };
+  }
+
+  if (!(await bcrypt.compare(password, buyer.passwordHash))) {
+    const failed = (buyer.failedLogins ?? 0) + 1;
+    await supabase
+      .from("market_buyers")
+      .update({
+        failed_logins: failed >= MAX_FAILED_LOGINS ? 0 : failed,
+        locked_until: failed >= MAX_FAILED_LOGINS ? new Date(Date.now() + LOCK_MINUTES * 60_000).toISOString() : null,
+      })
+      .eq("id", buyer.id);
+    return { error: "Numéro ou mot de passe incorrect." };
+  }
+
+  await supabase
+    .from("market_buyers")
+    .update({ failed_logins: 0, locked_until: null, last_login_at: new Date().toISOString() })
+    .eq("id", buyer.id);
+  await createBuyerSession(buyer.id);
+  redirect(safeMarketRedirect(formData.get("suite")));
+}
+
+export async function logoutBuyerAction() {
+  await destroyBuyerSession();
+  redirect("/marche");
+}

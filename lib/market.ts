@@ -66,6 +66,43 @@ export function discountPercent(price: number, promoPrice: number | null): numbe
   return Math.min(99, Math.round(((price - promoPrice) / price) * 100));
 }
 
+/** Numéro acheteur ramené à ses chiffres locaux (sans l'indicatif 226) ; null s'il est invalide. */
+export function normalizeBuyerPhone(value: string): string | null {
+  let digits = value.replace(/\D/g, "");
+  if (digits.startsWith("00226")) digits = digits.slice(5);
+  else if (digits.startsWith("226") && digits.length === 11) digits = digits.slice(3);
+  return digits.length >= 8 && digits.length <= 15 ? digits : null;
+}
+
+/** Page de retour après connexion : uniquement une page du Marché (jamais un site extérieur). */
+export function safeMarketRedirect(value: FormDataEntryValue | string | null | undefined): string {
+  const target = typeof value === "string" ? value : "";
+  return target.startsWith("/marche") && !target.startsWith("//") ? target : "/marche/commandes";
+}
+
+/** Statuts d'une commande du Marché, dans l'ordre de la frise de suivi. */
+export const MARKET_ORDER_STEPS = [
+  { key: "RECUE", label: "Commande reçue" },
+  { key: "CONFIRMEE", label: "Confirmée" },
+  { key: "PREPARATION", label: "En préparation" },
+  { key: "PRETE", label: "Prête" },
+  { key: "EN_LIVRAISON", label: "En livraison" },
+  { key: "LIVREE", label: "Livrée" },
+] as const;
+
+export type MarketOrderStatus = (typeof MARKET_ORDER_STEPS)[number]["key"] | "ANNULEE";
+
+export function marketOrderStatusLabel(status: string): string {
+  if (status === "ANNULEE") return "Annulée";
+  return MARKET_ORDER_STEPS.find((s) => s.key === status)?.label ?? status;
+}
+
+export const MARKET_PAYMENT_LABELS: Record<string, string> = {
+  A_LA_LIVRAISON: "Paiement à la livraison",
+  AU_RETRAIT: "Paiement au retrait",
+  MOBILE_MONEY: "Mobile Money",
+};
+
 export function slugifyShopName(value: string): string {
   return value
     .toLowerCase()

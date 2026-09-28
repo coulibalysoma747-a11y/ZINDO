@@ -35,6 +35,7 @@ const REASON_LABELS: Record<string, string> = {
   RETOUR_FOURNISSEUR: "Retour fournisseur",
   TRANSFERT: "Transfert",
   AUTRE: "Autre",
+  COMMANDE_MARCHE: "Commande Marché",
 };
 
 type ProductRow = {
@@ -188,7 +189,7 @@ export default async function ProductDetailPage({
         </div>
       </div>
 
-      {showMarket && <PublishToMarket productId={product.id} salePrice={product.salePrice} initial={marketListing} />}
+      {showMarket && <PublishToMarket productId={product.id} salePrice={product.salePrice} initial={marketListing} hasPhoto={!!product.photoUrl?.trim()} />}
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <Card className="lg:col-span-2">

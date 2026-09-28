@@ -35,6 +35,15 @@ const shopSchema = z.object({
   hours: z.string().trim().max(200).optional(),
   locationId: z.string().trim().optional(),
   published: z.boolean(),
+  deliveryEnabled: z.boolean(),
+  deliveryFee: z.coerce.number().min(0, "Frais de livraison invalides").max(1_000_000),
+  deliveryNote: z.string().trim().max(200).optional(),
+  pickupEnabled: z.boolean(),
+  payOnDelivery: z.boolean(),
+  payOnPickup: z.boolean(),
+  mobileMoneyEnabled: z.boolean(),
+  orangeMoneyNumber: z.string().trim().max(30).optional(),
+  moovMoneyNumber: z.string().trim().max(30).optional(),
 });
 
 function optional(formData: FormData, key: string) {
@@ -56,9 +65,23 @@ export async function saveMarketShopAction(_prev: MarketActionState, formData: F
     hours: optional(formData, "hours"),
     locationId: optional(formData, "locationId"),
     published: formData.get("published") === "on",
+    deliveryEnabled: formData.get("deliveryEnabled") === "on",
+    deliveryFee: String(formData.get("deliveryFee") ?? "").replace(/\s/g, "") || 0,
+    deliveryNote: optional(formData, "deliveryNote"),
+    pickupEnabled: formData.get("pickupEnabled") === "on",
+    payOnDelivery: formData.get("payOnDelivery") === "on",
+    payOnPickup: formData.get("payOnPickup") === "on",
+    mobileMoneyEnabled: formData.get("mobileMoneyEnabled") === "on",
+    orangeMoneyNumber: optional(formData, "orangeMoneyNumber"),
+    moovMoneyNumber: optional(formData, "moovMoneyNumber"),
   });
   if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Formulaire invalide" };
   const d = parsed.data;
+  if (!d.deliveryEnabled && !d.pickupEnabled) return { error: "Proposez au moins la livraison ou le retrait en boutique." };
+  if (d.mobileMoneyEnabled && !d.orangeMoneyNumber && !d.moovMoneyNumber) {
+    return { error: "Indiquez votre numéro Orange Money ou Moov Money." };
+  }
+  if (!d.payOnDelivery && !d.payOnPickup && !d.mobileMoneyEnabled) return { error: "Choisissez au moins un moyen de paiement." };
 
   const slug = slugifyShopName(d.slug || d.name);
   if (slug.length < 3) return { error: "L'adresse de la boutique doit contenir au moins 3 lettres ou chiffres." };
@@ -101,6 +124,15 @@ export async function saveMarketShopAction(_prev: MarketActionState, formData: F
     hours: d.hours ?? null,
     location_id: d.locationId ?? null,
     published: d.published,
+    delivery_enabled: d.deliveryEnabled,
+    delivery_fee: d.deliveryFee,
+    delivery_note: d.deliveryNote ?? null,
+    pickup_enabled: d.pickupEnabled,
+    pay_on_delivery: d.payOnDelivery,
+    pay_on_pickup: d.payOnPickup,
+    mobile_money_enabled: d.mobileMoneyEnabled,
+    orange_money_number: d.orangeMoneyNumber ?? null,
+    moov_money_number: d.moovMoneyNumber ?? null,
     updated_at: new Date().toISOString(),
     ...images,
   };
@@ -145,11 +177,15 @@ export async function saveMarketListingAction(input: {
 
   const { data: product } = await supabase
     .from("products")
-    .select("id, name, salePrice:sale_price")
+    .select("id, name, salePrice:sale_price, photoUrl:photo_url")
     .eq("id", d.productId)
     .eq("business_id", user.businessId)
     .maybeSingle();
   if (!product) return { error: "Produit introuvable." };
+  // Règle du propriétaire (28/09) : jamais de produit sans photo sur le Marché, pour aucun vendeur.
+  if (d.published && !product.photoUrl?.trim()) {
+    return { error: "Ajoutez d'abord une photo à ce produit : aucun produit sans photo n'est publié sur le Marché." };
+  }
   if (d.promoPrice != null && d.promoPrice >= product.salePrice) {
     return { error: "Le prix promotionnel doit être inférieur au prix de vente." };
   }

@@ -44,6 +44,7 @@ const REASON_LABELS: Record<string, string> = {
   TRANSFERT: "transfert",
   AUTRE: "autre",
   ENLEVEMENT: "enlèvement partenaire",
+  COMMANDE_MARCHE: "commande Marché",
 };
 
 export async function loadGlobalHistory(

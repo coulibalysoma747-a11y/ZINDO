@@ -20,7 +20,25 @@ export type MarketShopFormValues = {
   hours: string | null;
   locationId: string | null;
   published: boolean;
+  deliveryEnabled: boolean;
+  deliveryFee: number;
+  deliveryNote: string | null;
+  pickupEnabled: boolean;
+  payOnDelivery: boolean;
+  payOnPickup: boolean;
+  mobileMoneyEnabled: boolean;
+  orangeMoneyNumber: string | null;
+  moovMoneyNumber: string | null;
 };
+
+function Check({ name, label, defaultChecked }: { name: string; label: string; defaultChecked: boolean }) {
+  return (
+    <label className="flex items-center gap-2 text-sm text-zinc-700">
+      <input type="checkbox" name={name} defaultChecked={defaultChecked} className="h-4 w-4" />
+      {label}
+    </label>
+  );
+}
 
 export function MarketShopForm({
   shop,
@@ -75,6 +93,33 @@ export function MarketShopForm({
           </Select>
         </Field>
       </div>
+      <fieldset className="space-y-3 rounded-xl border border-zinc-200 p-3">
+        <legend className="px-1 text-sm font-semibold text-zinc-800">Livraison et retrait</legend>
+        <Check name="pickupEnabled" label="🏪 Retrait en boutique" defaultChecked={shop.pickupEnabled} />
+        <Check name="deliveryEnabled" label="🚚 Je livre" defaultChecked={shop.deliveryEnabled} />
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Field label="Frais de livraison (FCFA)" htmlFor="deliveryFee">
+            <Input id="deliveryFee" name="deliveryFee" inputMode="numeric" defaultValue={shop.deliveryFee || ""} />
+          </Field>
+          <Field label="Zone et délai de livraison" htmlFor="deliveryNote" hint="Exemple : Ouagadougou, sous 24 h">
+            <Input id="deliveryNote" name="deliveryNote" defaultValue={shop.deliveryNote ?? ""} />
+          </Field>
+        </div>
+      </fieldset>
+      <fieldset className="space-y-3 rounded-xl border border-zinc-200 p-3">
+        <legend className="px-1 text-sm font-semibold text-zinc-800">Paiement</legend>
+        <Check name="payOnDelivery" label="💵 Paiement à la livraison" defaultChecked={shop.payOnDelivery} />
+        <Check name="payOnPickup" label="🏪 Paiement au retrait" defaultChecked={shop.payOnPickup} />
+        <Check name="mobileMoneyEnabled" label="📱 Mobile Money (le client envoie, puis vous confirmez)" defaultChecked={shop.mobileMoneyEnabled} />
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Field label="Numéro Orange Money" htmlFor="orangeMoneyNumber">
+            <Input id="orangeMoneyNumber" name="orangeMoneyNumber" inputMode="tel" defaultValue={shop.orangeMoneyNumber ?? ""} />
+          </Field>
+          <Field label="Numéro Moov Money" htmlFor="moovMoneyNumber">
+            <Input id="moovMoneyNumber" name="moovMoneyNumber" inputMode="tel" defaultValue={shop.moovMoneyNumber ?? ""} />
+          </Field>
+        </div>
+      </fieldset>
       <label className="flex items-center gap-2 text-sm font-medium text-zinc-700">
         <input type="checkbox" name="published" defaultChecked={shop.published} className="h-4 w-4" />
         Boutique visible sur le Marché

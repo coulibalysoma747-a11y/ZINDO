@@ -6,6 +6,7 @@ import { discountPercent, marketCategoryLabel } from "@/lib/market";
 import { formatMoney } from "@/lib/format";
 import { MarketProductGrid } from "@/components/market/MarketProductCard";
 import { ShopChip } from "@/components/market/ShopChip";
+import { AddToCart } from "@/components/market/AddToCart";
 
 export const dynamic = "force-dynamic";
 
@@ -58,7 +59,9 @@ export default async function MarketProductPage({ params }: { params: Promise<{ 
           </p>
           {product.description && <p className="whitespace-pre-line text-sm leading-relaxed text-zinc-700">{product.description}</p>}
 
-          {/* Panier et commande : étape 2. En attendant, contact direct du vendeur. */}
+          <AddToCart productId={product.productId} available={product.available} />
+
+          {/* Contact direct du vendeur, ouvert sans compte pour l'instant (décision du 28/09). */}
           <div className="flex flex-col gap-2 sm:flex-row">
             {shop.whatsapp && (
               <a

@@ -9,7 +9,7 @@ import { isMarketEnabledFor } from "@/lib/market-data";
 import { slugifyShopName } from "@/lib/market";
 import { formatMoney } from "@/lib/format";
 import { Card, CardBody, CardHeader } from "@/components/ui/Card";
-import { MarketShopForm } from "./MarketShopForm";
+import { MarketShopForm, type MarketShopFormValues } from "./MarketShopForm";
 import { PublishToMarket } from "./PublishToMarket";
 
 const PAGE_SIZE = 50;
@@ -25,11 +25,13 @@ export default async function MyMarketPage({ searchParams }: { searchParams: Pro
     getLocations(user.businessId),
     supabase
       .from("market_shops")
-      .select("slug, name, description, logoUrl:logo_url, coverUrl:cover_url, phone, whatsapp, city, address, hours, locationId:location_id, published")
+      .select("slug, name, description, logoUrl:logo_url, coverUrl:cover_url, phone, whatsapp, city, address, hours, locationId:location_id, published, " +
+          "deliveryEnabled:delivery_enabled, deliveryFee:delivery_fee, deliveryNote:delivery_note, pickupEnabled:pickup_enabled, payOnDelivery:pay_on_delivery, payOnPickup:pay_on_pickup, mobileMoneyEnabled:mobile_money_enabled, orangeMoneyNumber:orange_money_number, moovMoneyNumber:moov_money_number"
+      )
       .eq("business_id", user.businessId)
       .maybeSingle(),
   ]);
-  const shop = shopResult.data;
+  const shop = shopResult.data as unknown as MarketShopFormValues | null;
   const activeLocations = locations.filter((l) => l.active);
   const stockLocationId = shop?.locationId ?? null;
 
@@ -44,7 +46,7 @@ export default async function MyMarketPage({ searchParams }: { searchParams: Pro
   const products = (productData ?? []) as { id: string; name: string; reference: string; salePrice: number; photoUrl: string | null }[];
   const ids = products.map((p) => p.id);
 
-  const [{ data: listingData }, { data: stockData }, { count: publishedCount }] = await Promise.all([
+  const [{ data: listingData }, { data: stockData }, { count: publishedCount }, { count: newOrders }] = await Promise.all([
     ids.length
       ? supabase.from("market_listings").select("productId:product_id, category:market_category, promoPrice:promo_price, published").in("product_id", ids)
       : Promise.resolve({ data: [] }),
@@ -52,6 +54,7 @@ export default async function MyMarketPage({ searchParams }: { searchParams: Pro
       ? supabase.from("product_stocks").select("productId:product_id, locationId:location_id, quantity").in("product_id", ids)
       : Promise.resolve({ data: [] }),
     supabase.from("market_listings").select("id", { count: "exact", head: true }).eq("business_id", user.businessId).eq("published", true),
+    supabase.from("market_orders").select("id", { count: "exact", head: true }).eq("business_id", user.businessId).eq("status", "RECUE"),
   ]);
   const listings = new Map(
     ((listingData ?? []) as { productId: string; category: string; promoPrice: number | null; published: boolean }[]).map((l) => [l.productId, l])
@@ -74,11 +77,18 @@ export default async function MyMarketPage({ searchParams }: { searchParams: Pro
             Publiez vos produits du stock sur le Marché ZINDO : prix et quantités restent synchronisés, rien à recréer.
           </p>
         </div>
-        {shop?.published && (
-          <Link href={`/marche/boutique/${shop.slug}`} target="_blank" className="inline-flex items-center gap-1.5 text-sm font-semibold text-zindo-green-700 hover:underline">
-            Voir ma boutique <ExternalLink className="h-4 w-4" />
-          </Link>
-        )}
+        <div className="flex flex-wrap items-center gap-4">
+          {shop && (
+            <Link href="/mon-marche/commandes" className="rounded-xl bg-zindo-green-600 px-4 py-2 text-sm font-semibold text-white hover:bg-zindo-green-700">
+              📋 Commandes{newOrders ? ` (${newOrders} nouvelle${newOrders > 1 ? "s" : ""})` : ""}
+            </Link>
+          )}
+          {shop?.published && (
+            <Link href={`/marche/boutique/${shop.slug}`} target="_blank" className="inline-flex items-center gap-1.5 text-sm font-semibold text-zindo-green-700 hover:underline">
+              Voir ma boutique <ExternalLink className="h-4 w-4" />
+            </Link>
+          )}
+        </div>
       </div>
 
       {canEditShop && (
@@ -103,6 +113,15 @@ export default async function MyMarketPage({ searchParams }: { searchParams: Pro
                   hours: null,
                   locationId: null,
                   published: true,
+                  deliveryEnabled: false,
+                  deliveryFee: 0,
+                  deliveryNote: null,
+                  pickupEnabled: true,
+                  payOnDelivery: true,
+                  payOnPickup: true,
+                  mobileMoneyEnabled: false,
+                  orangeMoneyNumber: null,
+                  moovMoneyNumber: null,
                 }
               }
             />
@@ -142,7 +161,7 @@ export default async function MyMarketPage({ searchParams }: { searchParams: Pro
                     </p>
                   </div>
                 </div>
-                <PublishToMarket productId={p.id} salePrice={p.salePrice} initial={listing ?? null} compact />
+                <PublishToMarket productId={p.id} salePrice={p.salePrice} initial={listing ?? null} hasPhoto={!!p.photoUrl?.trim()} compact />
               </div>
             );
           })}

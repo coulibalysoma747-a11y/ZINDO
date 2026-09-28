@@ -124,12 +124,13 @@ export type MarketProductQuery = {
   q?: string;
   category?: string;
   productId?: string;
+  productIds?: string[];
   promoOnly?: boolean;
   limit?: number;
 };
 
 /** Produits publiés des boutiques données, avec prix et quantité lus en direct. */
-export async function loadMarketProducts({ shops, q, category, productId, promoOnly, limit = 60 }: MarketProductQuery): Promise<MarketProduct[]> {
+export async function loadMarketProducts({ shops, q, category, productId, productIds, promoOnly, limit = 60 }: MarketProductQuery): Promise<MarketProduct[]> {
   if (shops.length === 0) return [];
   const shopByBusiness = new Map(shops.map((s) => [s.businessId, s]));
 
@@ -141,9 +142,13 @@ export async function loadMarketProducts({ shops, q, category, productId, promoO
     )
     .eq("published", true)
     .eq("product.active", true)
+    // Jamais de produit sans photo sur le Marché (règle du propriétaire, 28/09) :
+    // « > '' » écarte à la fois NULL et la chaîne vide.
+    .gt("product.photo_url", "")
     .in("business_id", [...shopByBusiness.keys()]);
   if (category) query = query.eq("market_category", category);
   if (productId) query = query.eq("product_id", productId);
+  if (productIds) query = query.in("product_id", productIds);
   if (promoOnly) query = query.not("promo_price", "is", null);
   // Caractères qui casseraient la syntaxe du filtre or() de PostgREST.
   const term = (q ?? "").replace(/[,()%*\\]/g, " ").trim();
