@@ -6,31 +6,36 @@ import { supabase } from "@/lib/supabase";
 import { marketOrderStatusLabel } from "@/lib/market";
 import { formatMoney, formatDateTime } from "@/lib/format";
 import { OrderStatusBadge } from "@/components/market/OrderStatusBadge";
+import { Pagination, readPage } from "@/components/market/Pagination";
 
 const FILTERS = [
   { key: "", label: "Toutes" },
-  { key: "RECUE", label: "🟠 Nouvelles" },
+  { key: "RECUE", label: "Nouvelles" },
   { key: "CONFIRMEE", label: "Confirmées" },
-  { key: "PREPARATION", label: "🔵 En préparation" },
-  { key: "PRETE", label: "🟣 Prêtes" },
-  { key: "EN_LIVRAISON", label: "🚚 En livraison" },
-  { key: "LIVREE", label: "🟢 Livrées" },
-  { key: "ANNULEE", label: "🔴 Annulées" },
+  { key: "PREPARATION", label: "En préparation" },
+  { key: "PRETE", label: "Prêtes" },
+  { key: "EN_LIVRAISON", label: "En livraison" },
+  { key: "LIVREE", label: "Livrées" },
+  { key: "ANNULEE", label: "Annulées" },
 ];
 
 /** Commandes reçues sur le Marché (flag nouveau_marche). */
-export default async function MarketOrdersPage({ searchParams }: { searchParams: Promise<{ statut?: string }> }) {
+const PAGE_SIZE = 25;
+
+export default async function MarketOrdersPage({ searchParams }: { searchParams: Promise<{ statut?: string; page?: string }> }) {
   const { user, shop, newOrders, unreadMessages } = await requireMarketSeller(PERMISSIONS.SALES_CREATE);
-  const { statut = "" } = await searchParams;
+  const { statut = "", page: pageParam } = await searchParams;
+  const page = readPage(pageParam);
+  const from = (page - 1) * PAGE_SIZE;
 
   let query = supabase
     .from("market_orders")
-    .select("id, number, status, customerName:customer_name, customerPhone:customer_phone, total, deliveryMode:delivery_mode, createdAt:created_at, items:market_order_items(name, quantity)")
+    .select("id, number, status, customerName:customer_name, customerPhone:customer_phone, total, deliveryMode:delivery_mode, createdAt:created_at, items:market_order_items(name, quantity)", { count: "exact" })
     .eq("business_id", user.businessId)
     .order("created_at", { ascending: false })
-    .limit(200);
+    .range(from, from + PAGE_SIZE - 1);
   if (FILTERS.some((f) => f.key && f.key === statut)) query = query.eq("status", statut);
-  const { data } = await query;
+  const { data, count } = await query;
   const orders = (data ?? []) as unknown as {
     id: string;
     number: string;
@@ -111,6 +116,7 @@ export default async function MarketOrdersPage({ searchParams }: { searchParams:
           </div>
         </div>
       )}
+      <Pagination page={page} pageSize={PAGE_SIZE} total={count ?? 0} href={(p) => `/mon-marche/commandes?${new URLSearchParams({ ...(statut ? { statut } : {}), ...(p > 1 ? { page: String(p) } : {}) })}`} noun="commandes" />
     </div>
   );
 }

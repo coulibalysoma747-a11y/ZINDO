@@ -10,19 +10,19 @@ export const MARKET_EXCLUDED_ACTIVITIES = ["ecole"];
 
 /** Catégories communes à tout le Marché, distinctes des catégories propres à chaque commerçant. */
 export const MARKET_CATEGORIES = [
-  { key: "electronique", label: "Électronique", emoji: "💻" },
-  { key: "telephones", label: "Téléphones", emoji: "📱" },
-  { key: "mode", label: "Mode", emoji: "👕" },
-  { key: "alimentation", label: "Alimentation", emoji: "🍚" },
-  { key: "maison", label: "Maison", emoji: "🏠" },
-  { key: "beaute", label: "Beauté", emoji: "💄" },
-  { key: "automobile", label: "Automobile", emoji: "🚗" },
-  { key: "moto", label: "Moto", emoji: "🏍️" },
-  { key: "pieces", label: "Pièces détachées", emoji: "⚙️" },
-  { key: "agriculture", label: "Agriculture", emoji: "🌾" },
-  { key: "pro", label: "Matériel professionnel", emoji: "🧰" },
-  { key: "services", label: "Services", emoji: "🛠️" },
-  { key: "autres", label: "Autres", emoji: "📦" },
+  { key: "electronique", label: "Électronique" },
+  { key: "telephones", label: "Téléphones" },
+  { key: "mode", label: "Mode" },
+  { key: "alimentation", label: "Alimentation" },
+  { key: "maison", label: "Maison" },
+  { key: "beaute", label: "Beauté" },
+  { key: "automobile", label: "Automobile" },
+  { key: "moto", label: "Moto" },
+  { key: "pieces", label: "Pièces détachées" },
+  { key: "agriculture", label: "Agriculture" },
+  { key: "pro", label: "Matériel professionnel" },
+  { key: "services", label: "Services" },
+  { key: "autres", label: "Autres" },
 ] as const;
 
 export type MarketCategoryKey = (typeof MARKET_CATEGORIES)[number]["key"];

@@ -44,10 +44,10 @@ export function BuyerAuthForms({ initialMode, suite }: { initialMode: "login" | 
           <p className="text-sm text-zinc-600">Gratuit : suivez vos commandes et commandez en quelques secondes.</p>
           <div className="grid grid-cols-2 gap-2 text-sm">
             <button type="button" onClick={() => setKind("PARTICULIER")} className={kind === "PARTICULIER" ? "rounded-xl border-2 border-zindo-green-600 bg-zindo-green-50 py-2 font-semibold" : "rounded-xl border border-zinc-300 py-2"}>
-              📱 Particulier
+              Particulier
             </button>
             <button type="button" onClick={() => setKind("PRO")} className={kind === "PRO" ? "rounded-xl border-2 border-zindo-green-600 bg-zindo-green-50 py-2 font-semibold" : "rounded-xl border border-zinc-300 py-2"}>
-              🏢 Professionnel
+              Professionnel
             </button>
           </div>
           <label className="block text-sm font-medium text-zinc-700">

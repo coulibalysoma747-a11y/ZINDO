@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ImagePlus, Package, Send, X } from "lucide-react";
+import { ImagePlus, Package, Paperclip, Send, X } from "lucide-react";
 import { uploadImageDirect } from "@/components/ui/direct-upload";
 import { createBuyerImageUploadAction, sendBuyerMessageAction, sendSellerMessageAction } from "@/lib/actions/market-messages";
 
@@ -144,7 +144,7 @@ export function ChatThread({
           <div className="flex flex-wrap gap-2">
             {joined && (
               <span className="inline-flex items-center gap-1.5 rounded-lg bg-zinc-100 px-2 py-1 text-xs text-zinc-700">
-                📎 {joined.label}
+                <Paperclip className="h-3.5 w-3.5" /> {joined.label}
                 <button type="button" aria-label="Retirer la pièce jointe" onClick={() => setJoined(null)}>
                   <X className="h-3.5 w-3.5" />
                 </button>

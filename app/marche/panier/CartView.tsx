@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Minus, Plus, Trash2 } from "lucide-react";
+import { Minus, Package, Plus, ShoppingCart, Store, Trash2, Truck } from "lucide-react";
 import { formatMoney } from "@/lib/format";
 import { getCartDetailsAction, placeMarketOrdersAction, type CartShop } from "@/lib/actions/market-orders";
 import { setCartQuantity, useCart, writeCart } from "@/components/market/cart-store";
@@ -18,9 +18,9 @@ function defaultChoice(shop: CartShop): Choice {
 
 function paymentOptions(shop: CartShop, mode: Choice["deliveryMode"]) {
   const options: { key: Choice["paymentMethod"]; label: string }[] = [];
-  if (mode === "LIVRAISON" && shop.payOnDelivery) options.push({ key: "A_LA_LIVRAISON", label: "💵 Paiement à la livraison" });
-  if (mode === "RETRAIT" && shop.payOnPickup) options.push({ key: "AU_RETRAIT", label: "🏪 Paiement au retrait" });
-  if (shop.mobileMoneyEnabled) options.push({ key: "MOBILE_MONEY", label: "📱 Mobile Money" });
+  if (mode === "LIVRAISON" && shop.payOnDelivery) options.push({ key: "A_LA_LIVRAISON", label: "Paiement à la livraison" });
+  if (mode === "RETRAIT" && shop.payOnPickup) options.push({ key: "AU_RETRAIT", label: "Paiement au retrait" });
+  if (shop.mobileMoneyEnabled) options.push({ key: "MOBILE_MONEY", label: "Mobile Money" });
   return options;
 }
 
@@ -89,7 +89,7 @@ export function CartView({ buyer }: { buyer: Buyer }) {
   if (shops.length === 0) {
     return (
       <div className="space-y-3 py-10 text-center">
-        <p className="text-4xl">🛒</p>
+        <ShoppingCart className="mx-auto h-10 w-10 text-zinc-300" />
         <p className="font-semibold text-zinc-800">Votre panier est vide</p>
         <Link href="/marche" className="inline-block rounded-xl bg-zindo-green-600 px-5 py-2.5 text-sm font-semibold text-white">
           Découvrir le Marché
@@ -108,7 +108,8 @@ export function CartView({ buyer }: { buyer: Buyer }) {
           return (
             <section key={shop.shopId} className="space-y-3 rounded-2xl bg-white p-4 ring-1 ring-zinc-200">
               <Link href={`/marche/boutique/${shop.slug}`} className="text-sm font-bold text-zinc-900 hover:underline">
-                🏪 {shop.name}
+                <Store className="mr-1.5 inline h-4 w-4 text-zinc-500" />
+                {shop.name}
               </Link>
               {shop.items.map((item) => (
                 <div key={item.productId} className="flex items-center gap-3">
@@ -116,7 +117,7 @@ export function CartView({ buyer }: { buyer: Buyer }) {
                     // eslint-disable-next-line @next/next/no-img-element
                     <img src={item.photoUrl} alt="" className="h-14 w-14 shrink-0 rounded-xl object-cover" />
                   ) : (
-                    <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-zinc-100">📦</div>
+                    <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-zinc-100"><Package className="h-6 w-6 text-zinc-400" /></div>
                   )}
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-medium text-zinc-900">{item.name}</p>
@@ -151,12 +152,14 @@ export function CartView({ buyer }: { buyer: Buyer }) {
                   <div className="flex flex-wrap gap-2">
                     {shop.deliveryEnabled && (
                       <ChoiceButton active={choice.deliveryMode === "LIVRAISON"} onClick={() => setChoice(shop.shopId, { deliveryMode: "LIVRAISON", paymentMethod: paymentOptions(shop, "LIVRAISON")[0]?.key })}>
-                        🚚 Livraison {shop.deliveryFee > 0 ? `(${formatMoney(shop.deliveryFee)})` : "(gratuite)"}
+                        <Truck className="mr-1.5 inline h-4 w-4" />
+                        Livraison {shop.deliveryFee > 0 ? `(${formatMoney(shop.deliveryFee)})` : "(gratuite)"}
                       </ChoiceButton>
                     )}
                     {shop.pickupEnabled && (
                       <ChoiceButton active={choice.deliveryMode === "RETRAIT"} onClick={() => setChoice(shop.shopId, { deliveryMode: "RETRAIT", paymentMethod: paymentOptions(shop, "RETRAIT")[0]?.key })}>
-                        🏪 Retrait en boutique
+                        <Store className="mr-1.5 inline h-4 w-4" />
+                        Retrait en boutique
                       </ChoiceButton>
                     )}
                   </div>
@@ -177,8 +180,8 @@ export function CartView({ buyer }: { buyer: Buyer }) {
                         Envoyez <strong>{formatMoney(totals.perShop.find((t) => t.shopId === shop.shopId)!.subtotal + (choice.deliveryMode === "LIVRAISON" ? shop.deliveryFee : 0))}</strong> au vendeur, puis indiquez la
                         référence du transfert. Le vendeur confirmera la commande après vérification.
                       </p>
-                      {shop.orangeMoneyNumber && <p>🟠 Orange Money : <strong>{shop.orangeMoneyNumber}</strong></p>}
-                      {shop.moovMoneyNumber && <p>🔵 Moov Money : <strong>{shop.moovMoneyNumber}</strong></p>}
+                      {shop.orangeMoneyNumber && <p className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full bg-orange-500" /> Orange Money : <strong>{shop.orangeMoneyNumber}</strong></p>}
+                      {shop.moovMoneyNumber && <p className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full bg-sky-600" /> Moov Money : <strong>{shop.moovMoneyNumber}</strong></p>}
                       <div className="flex flex-wrap gap-2">
                         <select
                           value={choice.mobileMoneyOperator ?? ""}

@@ -102,7 +102,7 @@ export default async function MyMarketVisibilityPage() {
           <ul className="divide-y divide-zinc-100 text-sm">
             {boosts.map((b) => (
               <li key={b.id} className="flex flex-wrap justify-between gap-2 py-2">
-                <span className="font-medium text-zinc-800">{b.kind === "BOUTIQUE" ? `🏪 ${shop?.name ?? "Ma boutique"}` : `🔥 ${b.listing?.product?.name ?? "Produit"}`}</span>
+                <span className="font-medium text-zinc-800">{b.kind === "BOUTIQUE" ? `Boutique · ${shop?.name ?? "Ma boutique"}` : `Produit · ${b.listing?.product?.name ?? "Produit"}`}</span>
                 <span className="text-zinc-500">
                   {new Date(b.startsAt) > new Date() ? `à partir du ${formatDateTime(b.startsAt)} · ` : ""}jusqu&apos;au {formatDateTime(b.endsAt)}
                 </span>

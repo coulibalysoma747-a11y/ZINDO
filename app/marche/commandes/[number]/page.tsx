@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import { Check } from "lucide-react";
+import { Check, Package, Store } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { getCurrentBuyer } from "@/lib/market-buyer";
 import { MARKET_ORDER_STEPS, MARKET_PAYMENT_LABELS, marketOrderStatusLabel } from "@/lib/market";
@@ -95,7 +95,7 @@ export default async function MarketOrderTrackingPage({ params }: { params: Prom
       )}
 
       <div className="space-y-3 rounded-2xl bg-white p-5 ring-1 ring-zinc-200">
-        <p className="text-sm font-bold text-zinc-900">🏪 {order.shop.name}</p>
+        <p className="flex items-center gap-2 text-sm font-bold text-zinc-900"><Store className="h-4 w-4 text-zinc-500" /> {order.shop.name}</p>
         {order.items.map((item, idx) => (
           <div key={idx} className="space-y-2">
             <div className="flex items-center gap-3 text-sm">
@@ -103,7 +103,7 @@ export default async function MarketOrderTrackingPage({ params }: { params: Prom
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={item.photoUrl} alt="" className="h-12 w-12 rounded-lg object-cover" />
               ) : (
-                <span className="flex h-12 w-12 items-center justify-center rounded-lg bg-zinc-100">📦</span>
+                <span className="flex h-12 w-12 items-center justify-center rounded-lg bg-zinc-100"><Package className="h-5 w-5 text-zinc-400" /></span>
               )}
               <span className="flex-1">{item.name}</span>
               <span className="text-zinc-500">×{item.quantity}</span>
@@ -128,10 +128,10 @@ export default async function MarketOrderTrackingPage({ params }: { params: Prom
         </div>
         <p className="text-sm text-zinc-600">
           {order.deliveryMode === "LIVRAISON"
-            ? `🚚 Livraison : ${[order.deliveryAddress, order.deliveryCity].filter(Boolean).join(", ")}`
-            : `🏪 Retrait : ${[order.shop.address, order.shop.city].filter(Boolean).join(", ") || "à la boutique"}`}
+            ? `Livraison : ${[order.deliveryAddress, order.deliveryCity].filter(Boolean).join(", ")}`
+            : `Retrait : ${[order.shop.address, order.shop.city].filter(Boolean).join(", ") || "à la boutique"}`}
         </p>
-        <p className="text-sm text-zinc-600">💳 {MARKET_PAYMENT_LABELS[order.paymentMethod] ?? order.paymentMethod}</p>
+        <p className="text-sm text-zinc-600">Paiement : {MARKET_PAYMENT_LABELS[order.paymentMethod] ?? order.paymentMethod}</p>
       </div>
 
       <div className="flex flex-col gap-2 sm:flex-row">

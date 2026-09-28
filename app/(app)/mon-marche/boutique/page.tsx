@@ -28,7 +28,7 @@ export default async function MyMarketShopPage() {
       <MarketSellerNav active="/mon-marche/boutique" shop={shopInfo} newOrders={newOrders} unreadMessages={unreadMessages} />
       {!shop && (
         <p className="rounded-xl bg-zindo-green-50 p-4 text-sm text-zindo-green-900 ring-1 ring-zindo-green-200">
-          👋 Bienvenue ! Créez votre boutique en 1 minute : elle apparaîtra sur le Marché ZINDO et vous pourrez publier vos produits du stock.
+          Bienvenue ! Créez votre boutique en 1 minute : elle apparaîtra sur le Marché ZINDO et vous pourrez publier vos produits du stock.
         </p>
       )}
       <Card>

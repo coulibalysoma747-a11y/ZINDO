@@ -21,19 +21,23 @@ const TABS = [
 ] as const;
 
 /** Page publique d'une boutique du Marché. */
-export default async function MarketShopPage({ params, searchParams }: { params: Promise<{ slug: string }>; searchParams: Promise<{ q?: string; onglet?: string }> }) {
+export default async function MarketShopPage({ params, searchParams }: { params: Promise<{ slug: string }>; searchParams: Promise<{ q?: string; onglet?: string; page?: string }> }) {
   const { slug } = await params;
-  const { q = "", onglet = "produits" } = await searchParams;
+  const { q = "", onglet = "produits", page } = await searchParams;
+  const shown = 48 * Math.max(1, Math.min(20, Math.floor(Number(page) || 1)));
   const shop = await loadShopBySlug(slug);
   if (!shop) notFound();
 
-  const [products, reviews, favorites, buyer] = await Promise.all([
-    loadMarketProducts({ shops: [shop], q, limit: 200 }),
+  const [found, reviews, favorites, buyer] = await Promise.all([
+    loadMarketProducts({ shops: [shop], q, limit: shown + 1 }),
     loadReviews({ shopId: shop.id }, 30),
     getBuyerFavorites(),
     getCurrentBuyer(),
     recordMarketView({ shopId: shop.id }),
   ]);
+  // Un produit de plus que demandé : indique s’il en reste à afficher.
+  const hasMore = found.length > shown;
+  const products = found.slice(0, shown);
   const whatsappDigits = shop.whatsapp?.replace(/\D/g, "") ?? "";
   const tab = TABS.some((t) => t.key === onglet) ? onglet : "produits";
 
@@ -63,7 +67,10 @@ export default async function MarketShopPage({ params, searchParams }: { params:
                     <MapPin className="h-4 w-4" /> {shop.city}
                   </span>
                 )}
-                <span>{products.length} produits</span>
+                <span>
+                  {products.length}
+                  {hasMore ? "+" : ""} produit{products.length > 1 ? "s" : ""}
+                </span>
               </div>
             </div>
           </div>
@@ -121,7 +128,20 @@ export default async function MarketShopPage({ params, searchParams }: { params:
             <button className="h-10 rounded-xl bg-zinc-900 px-4 text-sm font-semibold text-white">Chercher</button>
           </form>
           {products.length > 0 ? (
-            <MarketProductGrid products={products} favorites={favorites.listingIds} />
+            <>
+              <MarketProductGrid products={products} favorites={favorites.listingIds} />
+              {hasMore && (
+                <div className="flex justify-center pt-2">
+                  <Link
+                    href={`/marche/boutique/${shop.slug}?${new URLSearchParams({ onglet: "produits", ...(q ? { q } : {}), page: String(shown / 48 + 1) })}`}
+                    scroll={false}
+                    className="rounded-xl bg-white px-6 py-3 text-sm font-semibold text-zinc-800 ring-1 ring-zinc-300 hover:bg-zinc-50"
+                  >
+                    Afficher plus de produits
+                  </Link>
+                </div>
+              )}
+            </>
           ) : (
             <p className="rounded-2xl bg-white p-8 text-center text-sm text-zinc-500 ring-1 ring-zinc-200">Aucun produit trouvé.</p>
           )}

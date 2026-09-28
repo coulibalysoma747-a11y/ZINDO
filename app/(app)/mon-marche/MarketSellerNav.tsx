@@ -44,7 +44,7 @@ export function MarketSellerNav({
       </div>
       {shop?.suspended && (
         <p className="rounded-xl bg-red-50 p-3 text-sm text-red-800 ring-1 ring-red-200">
-          ⛔ Votre boutique a été suspendue par ZINDO{shop.suspendedReason ? ` : ${shop.suspendedReason}` : ""}. Contactez-nous au 04 05 99 29.
+          Votre boutique a été suspendue par ZINDO{shop.suspendedReason ? ` : ${shop.suspendedReason}` : ""}. Contactez-nous au 04 05 99 29.
         </p>
       )}
       {shop && !shop.published && !shop.suspended && (

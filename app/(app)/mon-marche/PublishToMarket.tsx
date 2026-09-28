@@ -53,7 +53,7 @@ export function PublishToMarket({
   if (!hasPhoto && !published) {
     return (
       <p className={compact ? "text-xs text-amber-700" : "rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800"}>
-        📷 Ajoutez une photo au produit pour pouvoir le publier sur le Marché.{" "}
+        Ajoutez une photo au produit pour pouvoir le publier sur le Marché.{" "}
         <a href={`/produits/${productId}/modifier`} className="font-semibold underline">
           Ajouter une photo
         </a>

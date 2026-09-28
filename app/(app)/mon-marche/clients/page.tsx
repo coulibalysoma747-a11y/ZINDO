@@ -60,7 +60,7 @@ export default async function MyMarketCustomersPage() {
                     <a href={`tel:${c.phone}`} className="text-xs text-zindo-green-700">
                       {c.phone}
                     </a>
-                    {c.pro && <p className="text-xs text-zinc-500">🏢 {c.pro}</p>}
+                    {c.pro && <p className="text-xs text-zinc-500">Pro · {c.pro}</p>}
                   </td>
                   <td className="px-4 py-3 text-right">{c.orders}</td>
                   <td className="px-4 py-3 text-right font-semibold">{formatMoney(c.spent, currency)}</td>

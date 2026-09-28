@@ -95,8 +95,8 @@ export function MarketShopForm({
       </div>
       <fieldset className="space-y-3 rounded-xl border border-zinc-200 p-3">
         <legend className="px-1 text-sm font-semibold text-zinc-800">Livraison et retrait</legend>
-        <Check name="pickupEnabled" label="🏪 Retrait en boutique" defaultChecked={shop.pickupEnabled} />
-        <Check name="deliveryEnabled" label="🚚 Je livre" defaultChecked={shop.deliveryEnabled} />
+        <Check name="pickupEnabled" label="Retrait en boutique" defaultChecked={shop.pickupEnabled} />
+        <Check name="deliveryEnabled" label="Je livre" defaultChecked={shop.deliveryEnabled} />
         <div className="grid gap-4 sm:grid-cols-2">
           <Field label="Frais de livraison (FCFA)" htmlFor="deliveryFee">
             <Input id="deliveryFee" name="deliveryFee" inputMode="numeric" defaultValue={shop.deliveryFee || ""} />
@@ -108,9 +108,9 @@ export function MarketShopForm({
       </fieldset>
       <fieldset className="space-y-3 rounded-xl border border-zinc-200 p-3">
         <legend className="px-1 text-sm font-semibold text-zinc-800">Paiement</legend>
-        <Check name="payOnDelivery" label="💵 Paiement à la livraison" defaultChecked={shop.payOnDelivery} />
-        <Check name="payOnPickup" label="🏪 Paiement au retrait" defaultChecked={shop.payOnPickup} />
-        <Check name="mobileMoneyEnabled" label="📱 Mobile Money (le client envoie, puis vous confirmez)" defaultChecked={shop.mobileMoneyEnabled} />
+        <Check name="payOnDelivery" label="Paiement à la livraison" defaultChecked={shop.payOnDelivery} />
+        <Check name="payOnPickup" label="Paiement au retrait" defaultChecked={shop.payOnPickup} />
+        <Check name="mobileMoneyEnabled" label="Mobile Money (le client envoie, puis vous confirmez)" defaultChecked={shop.mobileMoneyEnabled} />
         <div className="grid gap-4 sm:grid-cols-2">
           <Field label="Numéro Orange Money" htmlFor="orangeMoneyNumber">
             <Input id="orangeMoneyNumber" name="orangeMoneyNumber" inputMode="tel" defaultValue={shop.orangeMoneyNumber ?? ""} />

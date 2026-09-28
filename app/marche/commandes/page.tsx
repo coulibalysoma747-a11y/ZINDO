@@ -1,3 +1,4 @@
+import { CheckCircle2, Package } from "lucide-react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { supabase } from "@/lib/supabase";
@@ -5,6 +6,9 @@ import { getCurrentBuyer } from "@/lib/market-buyer";
 import { marketOrderStatusLabel } from "@/lib/market";
 import { formatMoney, formatDateTime } from "@/lib/format";
 import { OrderStatusBadge } from "@/components/market/OrderStatusBadge";
+import { Pagination, readPage } from "@/components/market/Pagination";
+
+const PAGE_SIZE = 20;
 
 export const dynamic = "force-dynamic";
 
@@ -15,21 +19,23 @@ const TABS = [
   { key: "annulees", label: "Annulées" },
 ];
 
-export default async function MyMarketOrdersPage({ searchParams }: { searchParams: Promise<{ nouvelles?: string; filtre?: string }> }) {
+export default async function MyMarketOrdersPage({ searchParams }: { searchParams: Promise<{ nouvelles?: string; filtre?: string; page?: string }> }) {
   const buyer = await getCurrentBuyer();
   if (!buyer) redirect("/marche/compte?suite=/marche/commandes");
-  const { nouvelles, filtre = "" } = await searchParams;
+  const { nouvelles, filtre = "", page: pageParam } = await searchParams;
+  const page = readPage(pageParam);
+  const from = (page - 1) * PAGE_SIZE;
 
   let query = supabase
     .from("market_orders")
-    .select("id, number, status, total, createdAt:created_at, shop:market_shops(name), items:market_order_items(name, photoUrl:photo_url)")
+    .select("id, number, status, total, createdAt:created_at, shop:market_shops(name), items:market_order_items(name, photoUrl:photo_url)", { count: "exact" })
     .eq("buyer_id", buyer.id)
     .order("created_at", { ascending: false })
-    .limit(100);
+    .range(from, from + PAGE_SIZE - 1);
   if (filtre === "en-cours") query = query.not("status", "in", "(LIVREE,ANNULEE)");
   if (filtre === "terminees") query = query.eq("status", "LIVREE");
   if (filtre === "annulees") query = query.eq("status", "ANNULEE");
-  const { data } = await query;
+  const { data, count } = await query;
   const orders = (data ?? []) as unknown as {
     id: string;
     number: string;
@@ -44,7 +50,7 @@ export default async function MyMarketOrdersPage({ searchParams }: { searchParam
     <div className="mx-auto max-w-2xl space-y-4">
       {nouvelles && (
         <div className="rounded-2xl bg-emerald-50 p-4 text-center ring-1 ring-emerald-200">
-          <p className="text-3xl">✅</p>
+          <CheckCircle2 className="mx-auto h-9 w-9 text-emerald-600" />
           <p className="font-bold text-emerald-900">Commande confirmée !</p>
           <p className="text-sm text-emerald-800">
             N° {nouvelles.split(",").join(", ")}. Le vendeur va la confirmer : suivez-la ci-dessous.
@@ -80,12 +86,13 @@ export default async function MyMarketOrdersPage({ searchParams }: { searchParam
                 // eslint-disable-next-line @next/next/no-img-element
                 <img key={idx} src={i.photoUrl} alt="" className="h-11 w-11 rounded-lg object-cover ring-2 ring-white" />
               ) : (
-                <span key={idx} className="flex h-11 w-11 items-center justify-center rounded-lg bg-zinc-100 ring-2 ring-white">📦</span>
+                <span key={idx} className="flex h-11 w-11 items-center justify-center rounded-lg bg-zinc-100 ring-2 ring-white"><Package className="h-5 w-5 text-zinc-400" /></span>
               )
             )}
           </div>
         </Link>
       ))}
+      <Pagination page={page} pageSize={PAGE_SIZE} total={count ?? 0} href={(p) => `/marche/commandes?${new URLSearchParams({ ...(filtre ? { filtre } : {}), ...(p > 1 ? { page: String(p) } : {}) })}`} noun="commandes" />
     </div>
   );
 }

@@ -102,7 +102,7 @@ export default async function MarketHomePage({ searchParams }: { searchParams: P
 
       {featured.length > 0 && (
         <section>
-          <SectionTitle title="🔥 Produits mis en avant" />
+          <SectionTitle title="Produits mis en avant" />
           <MarketProductRow products={featured} favorites={favorites.listingIds} />
         </section>
       )}

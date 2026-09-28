@@ -8,7 +8,10 @@ import { ShopChip } from "@/components/market/ShopChip";
 
 export const dynamic = "force-dynamic";
 
-type Params = { q?: string; categorie?: string; promo?: string; stock?: string; min?: string; max?: string; ville?: string; tri?: string };
+type Params = { q?: string; categorie?: string; promo?: string; stock?: string; min?: string; max?: string; ville?: string; tri?: string; page?: string };
+
+/** Produits ajoutés à chaque « Afficher plus ». */
+const STEP = 48;
 
 function toNumber(value: string | undefined): number | undefined {
   const n = Number(String(value ?? "").replace(/\s/g, ""));
@@ -25,20 +28,25 @@ export default async function MarketSearchPage({ searchParams }: { searchParams:
   const minPrice = toNumber(params.min);
   const maxPrice = toNumber(params.max);
 
+  const shown = STEP * Math.max(1, Math.min(20, Math.floor(Number(params.page) || 1)));
   const allShops = await loadPublishedShops();
   const cities = [...new Set(allShops.map((s) => s.city?.trim()).filter((c): c is string => !!c))].sort((a, b) => a.localeCompare(b));
   const shops = city ? allShops.filter((s) => s.city?.trim().toLowerCase() === city.toLowerCase()) : allShops;
 
-  const [products, favorites] = await Promise.all([
-    loadMarketProducts({ shops, q, category, promoOnly: params.promo === "1", inStockOnly: params.stock === "1", minPrice, maxPrice, sort, boostFirst: true, limit: 120 }),
+  const [found, favorites] = await Promise.all([
+    loadMarketProducts({ shops, q, category, promoOnly: params.promo === "1", inStockOnly: params.stock === "1", minPrice, maxPrice, sort, boostFirst: true, limit: shown + 1 }),
     getBuyerFavorites(),
   ]);
+  // Un produit de plus que la page demandée : indique s’il en reste à afficher.
+  const hasMore = found.length > shown;
+  const products = found.slice(0, shown);
   const term = q.toLowerCase();
   const matchingShops = term ? shops.filter((s) => s.name.toLowerCase().includes(term)) : [];
 
   const title = q ? `Résultats pour « ${q} »` : category ? marketCategoryLabel(category) : params.promo === "1" ? "Promotions" : "Tous les produits";
+  // Changer un filtre ou le tri repart du début de la liste ; seul « Afficher plus » garde la page.
   const hrefWith = (patch: Partial<Params>) => {
-    const next = new URLSearchParams(Object.entries({ ...params, ...patch }).filter(([, v]) => v) as [string, string][]);
+    const next = new URLSearchParams(Object.entries({ ...params, page: undefined, ...patch }).filter(([, v]) => v) as [string, string][]);
     return `/marche/recherche?${next.toString()}`;
   };
   const activeFilters = [
@@ -112,7 +120,7 @@ export default async function MarketSearchPage({ searchParams }: { searchParams:
           <div>
             <h1 className="text-xl font-bold text-zinc-900">{title}</h1>
             <p className="text-sm text-zinc-500">
-              {products.length} produit{products.length > 1 ? "s" : ""}
+              {products.length}{hasMore ? "+" : ""} produit{products.length > 1 ? "s" : ""}
             </p>
           </div>
           <div className="flex gap-1.5 overflow-x-auto text-sm">
@@ -154,7 +162,16 @@ export default async function MarketSearchPage({ searchParams }: { searchParams:
         )}
 
         {products.length > 0 ? (
-          <MarketProductGrid products={products} favorites={favorites.listingIds} />
+          <>
+            <MarketProductGrid products={products} favorites={favorites.listingIds} />
+            {hasMore && (
+              <div className="flex justify-center pt-2">
+                <Link href={hrefWith({ page: String(shown / STEP + 1) })} scroll={false} className="rounded-xl bg-white px-6 py-3 text-sm font-semibold text-zinc-800 ring-1 ring-zinc-300 hover:bg-zinc-50">
+                  Afficher plus de produits
+                </Link>
+              </div>
+            )}
+          </>
         ) : (
           <div className="rounded-2xl bg-white p-10 text-center ring-1 ring-zinc-200">
             <p className="font-semibold text-zinc-800">Aucun produit ne correspond</p>

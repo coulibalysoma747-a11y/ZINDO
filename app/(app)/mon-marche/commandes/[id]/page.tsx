@@ -1,3 +1,4 @@
+import { Package } from "lucide-react";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { requirePermission } from "@/lib/auth";
@@ -71,9 +72,9 @@ export default async function MarketOrderDetailPage({ params }: { params: Promis
             {order.customerPhone}
           </a>
           <p className="pt-2 text-zinc-600">
-            {order.deliveryMode === "LIVRAISON" ? `🚚 Livraison : ${[order.deliveryAddress, order.deliveryCity].filter(Boolean).join(", ")}` : "🏪 Retrait en boutique"}
+            {order.deliveryMode === "LIVRAISON" ? `Livraison : ${[order.deliveryAddress, order.deliveryCity].filter(Boolean).join(", ")}` : "Retrait en boutique"}
           </p>
-          {order.buyerNote && <p className="rounded-lg bg-zinc-50 p-2 text-zinc-700">💬 {order.buyerNote}</p>}
+          {order.buyerNote && <p className="rounded-lg bg-zinc-50 p-2 text-zinc-700">Message du client : {order.buyerNote}</p>}
         </div>
         <div className="space-y-1 rounded-2xl bg-white p-5 text-sm ring-1 ring-zinc-200">
           <p className="font-semibold text-zinc-900">Paiement</p>
@@ -100,7 +101,7 @@ export default async function MarketOrderDetailPage({ params }: { params: Promis
               // eslint-disable-next-line @next/next/no-img-element
               <img src={item.photoUrl} alt="" className="h-12 w-12 rounded-lg object-cover" />
             ) : (
-              <span className="flex h-12 w-12 items-center justify-center rounded-lg bg-zinc-100">📦</span>
+              <span className="flex h-12 w-12 items-center justify-center rounded-lg bg-zinc-100"><Package className="h-5 w-5 text-zinc-400" /></span>
             )}
             <span className="flex-1">{item.name}</span>
             <span className="text-zinc-500">

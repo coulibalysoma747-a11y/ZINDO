@@ -28,7 +28,7 @@ export default async function MarketFavoritesPage() {
           <MarketProductGrid products={products} favorites={favorites.listingIds} />
         ) : (
           <p className="rounded-2xl bg-white p-6 text-center text-sm text-zinc-500 ring-1 ring-zinc-200">
-            Touchez le ❤️ d&apos;un produit pour le retrouver ici.{" "}
+            Touchez le cœur d&apos;un produit pour le retrouver ici.{" "}
             <Link href="/marche" className="font-semibold text-zindo-green-700 underline">
               Découvrir le Marché
             </Link>
