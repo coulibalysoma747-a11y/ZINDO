@@ -29,7 +29,7 @@ const FILTERS = [
   { value: "tous", label: "Tous" },
 ] as const;
 
-type BusinessRow = { id: string; name: string; phone: string | null; city: string | null; suspended: boolean; marketSeller: boolean | null; createdAt: string };
+type BusinessRow = { id: string; name: string; phone: string | null; city: string | null; suspended: boolean; createdAt: string };
 type OwnerRow = { businessId: string; phone: string | null; firstName: string; lastName: string; role: string };
 type SubscriptionRow = { businessId: string; status: string; trialEndsAt: string | null; currentPeriodEnd: string | null };
 
@@ -91,7 +91,7 @@ async function loadFollowUpRows() {
   const [{ data: businessData }, { data: ownerData }, { data: subscriptionData }] = await Promise.all([
     supabase
       .from("businesses")
-      .select("id, name, phone, city, suspended, marketSeller:market_seller, createdAt:created_at")
+      .select("id, name, phone, city, suspended, createdAt:created_at")
       .order("created_at", { ascending: false }),
     supabase
       .from("users")
@@ -104,7 +104,7 @@ async function loadFollowUpRows() {
   ]);
 
   // Les vendeurs du Marché sont gratuits à vie : rien à relancer.
-  const businesses = ((businessData ?? []) as unknown as BusinessRow[]).filter((b) => !b.marketSeller);
+  const businesses = (businessData ?? []) as unknown as BusinessRow[];
   const owners = new Map<string, OwnerRow>();
   for (const o of (ownerData ?? []) as unknown as OwnerRow[]) if (!owners.has(o.businessId)) owners.set(o.businessId, o);
   const subscriptions = new Map(((subscriptionData ?? []) as unknown as SubscriptionRow[]).map((s) => [s.businessId, s]));

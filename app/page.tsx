@@ -225,7 +225,6 @@ export default async function RootPage({ searchParams }: { searchParams: Promise
     "Place de marché ZINDO",
     "Page publique /marche qui rassemble les produits de toutes les boutiques en ligne publiées. À activer globalement."
   );
-  const marketOpen = await isFeatureEnabledGlobally("marche_zindo");
   await registerFeatureFlag(
     "accueil_complet",
     "Page d'accueil complète",
@@ -273,14 +272,6 @@ export default async function RootPage({ searchParams }: { searchParams: Promise
             iconOnly
             className="hidden items-center gap-1.5 rounded-xl border border-zinc-200 px-2.5 py-2 text-sm font-semibold text-zindo-ink-700 hover:border-zinc-300 sm:flex sm:px-3"
           />
-          {marketOpen && (
-            <Link
-              href="/marche"
-              className="whitespace-nowrap rounded-xl border border-zindo-green-500 px-2.5 py-2 text-sm font-bold text-zindo-green-700 hover:bg-zindo-green-100 sm:px-4"
-            >
-              Marché
-            </Link>
-          )}
           <Link
             href="/login"
             className="whitespace-nowrap rounded-xl px-2 py-2 text-sm font-semibold text-zindo-ink-700 hover:text-zindo-green-600 sm:px-4"
