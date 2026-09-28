@@ -232,6 +232,188 @@ export const SEO_PAGES: SeoPage[] = [
   },
 ];
 
+// Pages « Nos solutions » du pied de page complet : servies sous
+// /fonctionnalites/<slug> seulement quand le flag pied_page_complet est actif
+// (voir app/fonctionnalites/[slug]/page.tsx), hors du hub et du sitemap sinon.
+export const SOLUTION_PAGES: SeoPage[] = [
+  {
+    slug: "logiciel-gestion-commerciale-burkina-faso",
+    label: "Gestion commerciale au Burkina Faso",
+    metaTitle: "Logiciel de gestion commerciale au Burkina Faso — ZINDO",
+    metaDescription:
+      "ZINDO, logiciel de gestion commerciale conçu au Burkina Faso : ventes, stock, achats, clients, fournisseurs, crédits et bénéfices en FCFA. Sur ordinateur et téléphone.",
+    h1: "Le logiciel de gestion commerciale conçu au Burkina Faso",
+    intro:
+      "Ventes, stock, achats, clients, fournisseurs, crédits : ZINDO réunit toute la gestion de votre commerce dans une seule application en FCFA, pensée pour les boutiques et les PME du Burkina Faso.",
+    sections: [
+      {
+        title: "Toute l'activité au même endroit",
+        text: "Chaque vente fait baisser le stock, chaque achat fournisseur le fait monter, et vos bénéfices se calculent tout seuls.",
+        points: [
+          "Caisse avec tickets 58 mm ou 80 mm et factures A4",
+          "Achats fournisseurs et suivi de ce que vous leur devez",
+          "Clients, ventes à crédit et remboursements",
+        ],
+      },
+      {
+        title: "Adapté à votre métier",
+        text: "Quincaillerie, pièces détachées, motos, alimentation, grossiste : ZINDO adapte ses écrans à l'activité choisie à l'inscription.",
+      },
+      {
+        title: "Des rapports pour décider",
+        text: "Chiffre d'affaires, bénéfice estimé, valeur du stock, produits les plus vendus : les rapports se calculent à partir de vos opérations.",
+      },
+    ],
+    faqs: [
+      {
+        question: "ZINDO fonctionne-t-il en FCFA ?",
+        answer: "Oui, le FCFA (XOF) est la devise principale de ZINDO.",
+      },
+      {
+        question: "Faut-il être informaticien pour utiliser ZINDO ?",
+        answer:
+          "Non. ZINDO est pensé pour des commerçants qui ne sont pas informaticiens, et l'équipe vous accompagne sur WhatsApp.",
+      },
+    ],
+  },
+  {
+    slug: "logiciel-caisse-ouagadougou",
+    label: "Logiciel de caisse à Ouagadougou",
+    metaTitle: "Logiciel de caisse à Ouagadougou — ZINDO",
+    metaDescription:
+      "Logiciel de caisse pour les commerces de Ouagadougou : encaissement rapide, tickets 58/80 mm, mobile money, ventes à crédit, caisse utilisable sans Internet.",
+    h1: "Un logiciel de caisse pour les commerces de Ouagadougou",
+    intro:
+      "Encaissez vite, imprimez le ticket et gardez un stock juste. La caisse ZINDO fonctionne sur ordinateur comme sur téléphone, et continue d'encaisser quand Internet coupe.",
+    sections: [
+      {
+        title: "Une caisse rapide",
+        text: "Recherchez un produit ou scannez son code-barres, ajustez la quantité, appliquez une remise et validez.",
+        points: [
+          "Espèces, mobile money, carte, crédit",
+          "Tickets 58 mm et 80 mm, factures A4, PDF à partager",
+          "Ouverture et clôture de caisse avec contrôle des écarts",
+        ],
+      },
+      {
+        title: "Même sans Internet",
+        text: "Les ventes faites sans connexion sont gardées sur l'appareil et partent automatiquement quand Internet revient.",
+      },
+    ],
+    faqs: [
+      {
+        question: "Puis-je utiliser une imprimante thermique ?",
+        answer: "Oui, ZINDO imprime des tickets 58 mm et 80 mm ainsi que des documents A4.",
+      },
+      {
+        question: "ZINDO est-il utilisable ailleurs qu'à Ouagadougou ?",
+        answer: "Oui, partout au Burkina Faso et au-delà : il suffit d'un téléphone ou d'un ordinateur.",
+      },
+    ],
+  },
+  {
+    slug: "application-gestion-boutique",
+    label: "Application de gestion de boutique",
+    metaTitle: "Application de gestion de boutique sur téléphone — ZINDO",
+    metaDescription:
+      "Gérez votre boutique depuis votre téléphone : produits, stock, ventes, crédits clients et bénéfices. Application ZINDO, essai gratuit.",
+    h1: "L'application pour gérer votre boutique depuis votre téléphone",
+    intro:
+      "Plus besoin de cahier : ajoutez vos produits, vendez, et suivez votre stock et vos bénéfices depuis votre téléphone ou votre ordinateur.",
+    sections: [
+      {
+        title: "Démarrez en quelques minutes",
+        text: "Créez votre compte, choisissez votre activité, ajoutez vos produits et commencez à vendre.",
+      },
+      {
+        title: "Tout ce qu'une boutique doit suivre",
+        text: "ZINDO suit à votre place ce que vous notiez à la main.",
+        points: [
+          "Stock en temps réel et alertes de stock faible",
+          "Clients qui vous doivent de l'argent, et depuis quand",
+          "Bénéfice de la journée et du mois",
+        ],
+      },
+      {
+        title: "Vos employés, vos règles",
+        text: "Ajoutez un vendeur : il encaisse sans voir vos prix d'achat ni vos bénéfices.",
+      },
+    ],
+    faqs: [
+      {
+        question: "Comment installer l'application ?",
+        answer:
+          "Depuis le navigateur, avec le bouton « Installer l'application » : sur Android, iOS et Windows, sans passer par un store.",
+      },
+    ],
+  },
+  {
+    slug: "logiciel-inventaire",
+    label: "Logiciel d'inventaire pour PME",
+    metaTitle: "Logiciel d'inventaire pour PME et commerces — ZINDO",
+    metaDescription:
+      "Faites l'inventaire de votre stock avec ZINDO : comparez le stock théorique au stock réel, voyez les écarts et validez les corrections.",
+    h1: "Un inventaire simple pour les PME et les commerces",
+    intro:
+      "Comptez ce qui est vraiment en rayon : ZINDO le compare au stock enregistré et vous montre les écarts produit par produit.",
+    sections: [
+      {
+        title: "Stock théorique contre stock réel",
+        text: "Saisissez les quantités comptées : ZINDO calcule l'écart (par exemple 100 attendus, 97 comptés, écart de −3).",
+      },
+      {
+        title: "Corrections tracées",
+        text: "Chaque correction validée est enregistrée dans l'historique des mouvements, avec la date, l'utilisateur, l'ancien et le nouveau stock.",
+      },
+      {
+        title: "Plusieurs dépôts",
+        text: "Chaque boutique ou dépôt a son propre stock, inventorié séparément.",
+      },
+    ],
+    faqs: [
+      {
+        question: "Qui peut faire l'inventaire ?",
+        answer: "Le propriétaire, ou un employé à qui vous en donnez le droit.",
+      },
+    ],
+  },
+  {
+    slug: "gestion-stock-afrique-de-l-ouest",
+    label: "Gestion de stock en Afrique de l'Ouest",
+    metaTitle: "Logiciel de gestion de stock en Afrique de l'Ouest — ZINDO",
+    metaDescription:
+      "ZINDO, logiciel de gestion de stock et de caisse en FCFA pour les commerces d'Afrique de l'Ouest : stock en temps réel, alertes, ventes, crédits, hors ligne.",
+    h1: "La gestion de stock pensée pour l'Afrique de l'Ouest",
+    intro:
+      "Conçu au Burkina Faso, ZINDO répond aux réalités des commerces de la région : FCFA, ventes à crédit, mobile money et connexion Internet parfois instable.",
+    sections: [
+      {
+        title: "Les réalités du terrain",
+        text: "ZINDO a été conçu pour la façon dont les commerces de la région travaillent au quotidien.",
+        points: [
+          "Prix et rapports en FCFA",
+          "Paiements en espèces, mobile money ou à crédit",
+          "Caisse utilisable même quand Internet coupe",
+        ],
+      },
+      {
+        title: "Un stock toujours juste",
+        text: "Chaque vente et chaque achat mettent le stock à jour, et une alerte vous prévient avant la rupture.",
+      },
+    ],
+    faqs: [
+      {
+        question: "ZINDO est-il disponible hors du Burkina Faso ?",
+        answer: "Oui, le pays se choisit à l'inscription et ZINDO s'utilise depuis n'importe quel navigateur.",
+      },
+    ],
+  },
+];
+
 export function getSeoPage(slug: string): SeoPage | undefined {
   return SEO_PAGES.find((p) => p.slug === slug);
+}
+
+export function getSolutionPage(slug: string): SeoPage | undefined {
+  return SOLUTION_PAGES.find((p) => p.slug === slug);
 }

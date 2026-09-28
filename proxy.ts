@@ -19,6 +19,9 @@ const PUBLIC_PATHS = [
   "/confidentialite",
   "/tarifs",
   "/fonctionnalites",
+  // Pied de page complet (flag pied_page_complet).
+  "/a-propos",
+  "/contact",
   // Lien de parrainage (app/r/[code]/route.ts), ouvert par un futur inscrit.
   "/r",
   // Demande de prix / bon de commande ouvert par le fournisseur (app/d/[token]).
@@ -42,6 +45,9 @@ const PUBLIC_PATHS_ALLOWED_WHEN_LOGGED_IN = [
   "/cgu",
   "/confidentialite",
   "/fonctionnalites",
+  // Pied de page complet (flag pied_page_complet).
+  "/a-propos",
+  "/contact",
   "/en/cgu",
   "/en/confidentialite",
 ];

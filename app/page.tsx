@@ -33,6 +33,7 @@ import { PublicHelpChat } from "@/components/PublicHelpChat";
 import { HeroCarousel } from "@/components/landing/HeroCarousel";
 import { DemoVideo } from "@/components/landing/DemoVideo";
 import { WhatsAppFloat } from "@/components/landing/WhatsAppFloat";
+import { PiedDePageComplet } from "@/components/landing/PiedDePageComplet";
 import {
   PertesSection,
   MetiersSection,
@@ -232,6 +233,13 @@ export default async function RootPage({ searchParams }: { searchParams: Promise
   );
   const fullLanding =
     (await searchParams).apercu === "accueil" || (await isFeatureEnabledGlobally("accueil_complet"));
+  await registerFeatureFlag(
+    "pied_page_complet",
+    "Pied de page complet",
+    "Accueil : newsletter, colonnes de liens, bloc Nos solutions ; ouvre aussi /a-propos, /contact et 5 pages pour Google. Aperçu sans activation : /?apercu=pied. À activer globalement."
+  );
+  const fullFooter =
+    (await searchParams).apercu === "pied" || (await isFeatureEnabledGlobally("pied_page_complet"));
   const faqs = fullLanding ? [...FAQS, ...EXTRA_FAQS] : FAQS;
 
   return (
@@ -511,7 +519,7 @@ export default async function RootPage({ searchParams }: { searchParams: Promise
         {fullLanding && <TarifsSection trialDays={trialDays} />}
 
         {/* Questions fréquentes */}
-        <section className="mt-24">
+        <section id="faq" className="mt-24">
           <div className="mx-auto max-w-2xl text-center">
             <h2 className="text-2xl font-extrabold tracking-tight text-zindo-ink-900 sm:text-3xl">
               Questions fréquentes
@@ -530,7 +538,9 @@ export default async function RootPage({ searchParams }: { searchParams: Promise
           </div>
         </section>
 
-        <DemoVideo />
+        <div id="demo">
+          <DemoVideo />
+        </div>
 
         {/* CTA final */}
         <section className="mt-24 rounded-3xl border border-zindo-green-100 bg-white px-6 py-14 text-center shadow-sm sm:px-12">
@@ -549,6 +559,7 @@ export default async function RootPage({ searchParams }: { searchParams: Promise
         </section>
       </main>
 
+      {fullFooter ? <PiedDePageComplet /> : (
       <footer className="relative z-10 border-t border-zinc-200 py-8 text-center text-xs text-zinc-400">
         <p>ZINDO — Logiciel de gestion de stock, de caisse et de facturation conçu au Burkina Faso.</p>
         <p className="mt-1">
@@ -605,6 +616,7 @@ export default async function RootPage({ searchParams }: { searchParams: Promise
           </Link>
         </p>
       </footer>
+      )}
       <WhatsAppFloat href="https://wa.me/22604059929" />
     </div>
   );

@@ -1,11 +1,22 @@
 import type { MetadataRoute } from "next";
 import { supabase } from "@/lib/supabase";
-import { SEO_PAGES } from "@/lib/seo-pages";
+import { SEO_PAGES, SOLUTION_PAGES } from "@/lib/seo-pages";
+import { isFeatureEnabledGlobally } from "@/lib/feature-flags";
 
 const BASE_URL = "https://www.zindo.site";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+  // Pages du pied de page complet, listées seulement une fois le flag actif.
+  const footerPaths = (await isFeatureEnabledGlobally("pied_page_complet"))
+    ? ["/a-propos", "/contact", ...SOLUTION_PAGES.map((p) => `/fonctionnalites/${p.slug}`)]
+    : [];
   const staticEntries: MetadataRoute.Sitemap = [
+    ...footerPaths.map((path) => ({
+      url: `${BASE_URL}${path}`,
+      lastModified: new Date(),
+      changeFrequency: "monthly" as const,
+      priority: 0.7,
+    })),
     { url: BASE_URL, lastModified: new Date(), changeFrequency: "weekly", priority: 1 },
     { url: `${BASE_URL}/login`, lastModified: new Date(), changeFrequency: "monthly", priority: 0.6 },
     { url: `${BASE_URL}/inscription`, lastModified: new Date(), changeFrequency: "monthly", priority: 0.6 },

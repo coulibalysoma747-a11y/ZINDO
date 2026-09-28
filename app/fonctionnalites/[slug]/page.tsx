@@ -3,7 +3,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowRight, CheckCircle2 } from "lucide-react";
-import { SEO_PAGES, getSeoPage } from "@/lib/seo-pages";
+import { SEO_PAGES, SOLUTION_PAGES, getSeoPage, getSolutionPage } from "@/lib/seo-pages";
+import { isFeatureEnabledGlobally } from "@/lib/feature-flags";
 import { PublicPageShell } from "@/components/landing/PublicPageShell";
 
 const BASE_URL = "https://www.zindo.site";
@@ -17,12 +18,12 @@ export const revalidate = 3600;
 export const dynamicParams = false;
 
 export function generateStaticParams() {
-  return SEO_PAGES.map((p) => ({ slug: p.slug }));
+  return [...SEO_PAGES, ...SOLUTION_PAGES].map((p) => ({ slug: p.slug }));
 }
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
-  const page = getSeoPage(slug);
+  const page = getSeoPage(slug) ?? getSolutionPage(slug);
   if (!page) return {};
   const url = `${BASE_URL}/fonctionnalites/${page.slug}`;
   return {
@@ -36,7 +37,10 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 export default async function SeoFeaturePage({ params }: { params: Promise<{ slug: string }> }) {
   const trialDays = await getTrialDays();
   const { slug } = await params;
-  const page = getSeoPage(slug);
+  const solution = getSolutionPage(slug);
+  // Pages « Nos solutions » : visibles seulement avec le flag pied_page_complet.
+  if (solution && !(await isFeatureEnabledGlobally("pied_page_complet"))) notFound();
+  const page = getSeoPage(slug) ?? solution;
   if (!page) notFound();
 
   const others = SEO_PAGES.filter((p) => p.slug !== page.slug);
