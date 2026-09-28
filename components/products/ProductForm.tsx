@@ -105,6 +105,7 @@ export function ProductForm({
     <form onSubmit={keep} action={formAction} className="space-y-6">
       <ImageUploadField
         name="photo"
+        directUploadFolder="products"
         removeFieldName="removePhoto"
         initialUrl={initial?.photoUrl}
         label="Photo du produit"

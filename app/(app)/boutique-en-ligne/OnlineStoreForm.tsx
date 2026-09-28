@@ -84,6 +84,7 @@ export function OnlineStoreForm({
         </Field>
         <ImageUploadField
           name="coverPhoto"
+          directUploadFolder="boutique-covers"
           removeFieldName="removeCoverPhoto"
           initialUrl={store?.coverPhotoUrl}
           label="Photo de couverture"

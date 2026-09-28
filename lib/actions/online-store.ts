@@ -6,7 +6,7 @@ import { supabase } from "@/lib/supabase";
 import { requirePermission } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
 import { logAction } from "@/lib/audit";
-import { saveOnlineStoreCoverPhoto, deleteUploadedImage } from "@/lib/photo-upload";
+import { saveOnlineStoreCoverPhoto, deleteUploadedImage, uploadedImageUrl } from "@/lib/photo-upload";
 import { isFeatureEnabled, registerFeatureFlag } from "@/lib/feature-flags";
 import { createSaleAction, type CartItemInput } from "@/lib/actions/sales";
 import { rethrowIfNavigationSignal } from "@/lib/action-errors";
@@ -109,7 +109,11 @@ export async function saveOnlineStoreAction(
   let coverPhotoUrl: string | null | undefined;
   const coverPhotoFile = formData.get("coverPhoto");
   const removeCoverPhoto = formData.get("removeCoverPhoto") === "true";
-  if (coverPhotoFile instanceof File && coverPhotoFile.size > 0) {
+  const directCoverUrl = uploadedImageUrl(formData, "coverPhoto");
+  if (directCoverUrl) {
+    coverPhotoUrl = directCoverUrl;
+    await deleteUploadedImage(existing?.coverPhotoUrl as string | null | undefined);
+  } else if (coverPhotoFile instanceof File && coverPhotoFile.size > 0) {
     const result = await saveOnlineStoreCoverPhoto(coverPhotoFile);
     if ("error" in result) return { error: result.error };
     coverPhotoUrl = result.url;

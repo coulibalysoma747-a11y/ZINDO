@@ -64,8 +64,8 @@ export function MarketShopForm({
         <Textarea id="description" name="description" rows={3} defaultValue={shop.description ?? ""} />
       </Field>
       <div className="grid gap-4 sm:grid-cols-2">
-        <ImageUploadField name="logo" removeFieldName="removeLogo" initialUrl={shop.logoUrl} label="Logo" hint="JPEG, PNG ou WebP, 5 Mo maximum." shape="circle" />
-        <ImageUploadField name="cover" removeFieldName="removeCover" initialUrl={shop.coverUrl} label="Photo de couverture" hint="Une photo large de votre boutique." />
+        <ImageUploadField name="logo" removeFieldName="removeLogo" initialUrl={shop.logoUrl} label="Logo" hint="JPEG, PNG ou WebP." shape="circle" directUploadFolder="marche" />
+        <ImageUploadField name="cover" removeFieldName="removeCover" initialUrl={shop.coverUrl} label="Photo de couverture" hint="Une photo large de votre boutique." directUploadFolder="marche" />
       </div>
       <div className="grid gap-4 sm:grid-cols-2">
         <Field label="Téléphone" htmlFor="phone">

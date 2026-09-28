@@ -2,7 +2,9 @@ import "server-only";
 import { randomUUID } from "node:crypto";
 import { createClient } from "@supabase/supabase-js";
 
-const MAX_SIZE_BYTES = 5 * 1024 * 1024; // 5 Mo
+// Pas de limite propre à ZINDO (images nettes, demande du propriétaire du 28/09) :
+// seule la limite de Vercel (~4,5 Mo par requête) s'applique à ce chemin, d'où
+// l'envoi direct du navigateur vers le stockage (createSignedImageUpload).
 const ALLOWED_TYPES: Record<string, string> = {
   "image/jpeg": "jpg",
   "image/png": "png",
@@ -23,7 +25,6 @@ export type SaveImageResult = { url: string } | { error: string };
 /** Enregistre une image envoyée depuis un formulaire (caméra ou galerie) dans le bucket Supabase Storage "uploads/<folder>". */
 async function saveImage(file: File, folder: string): Promise<SaveImageResult> {
   if (file.size === 0) return { error: "Fichier vide" };
-  if (file.size > MAX_SIZE_BYTES) return { error: "L'image dépasse 5 Mo" };
 
   const extension = ALLOWED_TYPES[file.type];
   if (!extension) return { error: "Format d'image non supporté (JPEG, PNG ou WebP uniquement)" };
@@ -56,7 +57,6 @@ export async function saveProductPhotoFromBuffer(
   contentType: "image/jpeg" | "image/png" | "image/webp"
 ): Promise<SaveImageResult> {
   if (buffer.length === 0) return { error: "Image vide" };
-  if (buffer.length > MAX_SIZE_BYTES) return { error: "L'image dépasse 5 Mo" };
 
   const extension = ALLOWED_TYPES[contentType];
   const path = `products/${randomUUID()}.${extension}`;
@@ -98,4 +98,35 @@ export async function deleteUploadedImage(url: string | null | undefined) {
 /** Logo et photo de couverture d'une boutique du Marché (flag nouveau_marche). */
 export async function saveMarketShopImage(file: File) {
   return saveImage(file, "marche");
+}
+
+/** Dossiers où le navigateur peut envoyer une image directement (voir createImageUploadAction). */
+export const DIRECT_UPLOAD_FOLDERS = ["products", "logos", "boutique-covers", "marche"] as const;
+export type DirectUploadFolder = (typeof DIRECT_UPLOAD_FOLDERS)[number];
+
+/**
+ * Prépare un envoi direct navigateur → stockage, sans passer par Vercel (qui
+ * refuse les requêtes de plus de ~4,5 Mo) : renvoie une adresse d'envoi signée,
+ * à usage unique, et l'adresse publique que l'image aura ensuite.
+ */
+export async function createSignedImageUpload(folder: DirectUploadFolder, contentType: string) {
+  const extension = ALLOWED_TYPES[contentType];
+  if (!extension) return { error: "Format d'image non supporté (JPEG, PNG ou WebP uniquement)" } as const;
+  const path = `${folder}/${randomUUID()}.${extension}`;
+  const supabase = getSupabase();
+  const { data, error } = await supabase.storage.from(BUCKET).createSignedUploadUrl(path);
+  if (error || !data) return { error: "Échec de la préparation de l'envoi" } as const;
+  return { signedUrl: data.signedUrl, publicUrl: supabase.storage.from(BUCKET).getPublicUrl(path).data.publicUrl } as const;
+}
+
+/**
+ * Image déjà envoyée directement par le navigateur (champ caché « <name>UploadedUrl »
+ * rempli par ImageUploadField). N'accepte qu'une adresse de notre propre stockage.
+ */
+export function uploadedImageUrl(formData: FormData, name: string): string | null {
+  const value = formData.get(`${name}UploadedUrl`);
+  if (typeof value !== "string" || !value) return null;
+  const prefix = `${process.env.SUPABASE_URL}/storage/v1/object/public/${BUCKET}/`;
+  const rest = value.slice(prefix.length);
+  return value.startsWith(prefix) && /^[a-z-]+\/[0-9a-f-]+\.(jpg|png|webp)$/.test(rest) ? value : null;
 }

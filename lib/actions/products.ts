@@ -8,7 +8,7 @@ import { requirePermission } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
 import { logAction } from "@/lib/audit";
 import { generateProductReference, generateProductBarcode } from "@/lib/reference";
-import { saveProductPhoto, deleteUploadedImage } from "@/lib/photo-upload";
+import { saveProductPhoto, deleteUploadedImage, uploadedImageUrl } from "@/lib/photo-upload";
 import { getActivityConfig } from "@/lib/activity-config";
 import { checkLimit } from "@/lib/subscription";
 import { MOTO_ACTIVITY_KEY } from "@/lib/activities";
@@ -159,7 +159,10 @@ export async function createProductAction(
 
   let photoUrl: string | undefined;
   const photoFile = formData.get("photo");
-  if (photoFile instanceof File && photoFile.size > 0) {
+  const directPhotoUrl = uploadedImageUrl(formData, "photo");
+  if (directPhotoUrl) {
+    photoUrl = directPhotoUrl;
+  } else if (photoFile instanceof File && photoFile.size > 0) {
     const result = await saveProductPhoto(photoFile);
     if ("error" in result) return { error: result.error };
     photoUrl = result.url;
@@ -411,7 +414,11 @@ export async function updateProductAction(
   let photoUrl: string | null | undefined;
   const photoFile = formData.get("photo");
   const removePhoto = formData.get("removePhoto") === "true";
-  if (photoFile instanceof File && photoFile.size > 0) {
+  const directPhotoUrl = uploadedImageUrl(formData, "photo");
+  if (directPhotoUrl) {
+    photoUrl = directPhotoUrl;
+    await deleteUploadedImage(product.photoUrl as string | null);
+  } else if (photoFile instanceof File && photoFile.size > 0) {
     const result = await saveProductPhoto(photoFile);
     if ("error" in result) return { error: result.error };
     photoUrl = result.url;

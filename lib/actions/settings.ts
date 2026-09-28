@@ -7,7 +7,7 @@ import { supabase } from "@/lib/supabase";
 import { requirePermission, requireUser } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
 import { logAction } from "@/lib/audit";
-import { saveBusinessLogo, deleteUploadedImage } from "@/lib/photo-upload";
+import { saveBusinessLogo, deleteUploadedImage, uploadedImageUrl } from "@/lib/photo-upload";
 import type { PaymentMethod, Role } from "@/lib/db-types";
 
 export type ActionState = { error?: string; success?: string } | undefined;
@@ -59,7 +59,11 @@ export async function updateBusinessSettingsAction(
   let logoUrl: string | null | undefined;
   const logoFile = formData.get("logo");
   const removeLogo = formData.get("removeLogo") === "true";
-  if (logoFile instanceof File && logoFile.size > 0) {
+  const directLogoUrl = uploadedImageUrl(formData, "logo");
+  if (directLogoUrl) {
+    logoUrl = directLogoUrl;
+    await deleteUploadedImage(user.business.logoUrl);
+  } else if (logoFile instanceof File && logoFile.size > 0) {
     const result = await saveBusinessLogo(logoFile);
     if ("error" in result) return { error: result.error };
     logoUrl = result.url;

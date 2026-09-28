@@ -58,6 +58,7 @@ export function BusinessSettingsForm({
     <form onSubmit={keep} id="business-settings-form" action={formAction} className="space-y-4">
       <ImageUploadField
         name="logo"
+        directUploadFolder="logos"
         removeFieldName="removeLogo"
         initialUrl={business.logoUrl}
         label="Logo du commerce"

@@ -9,7 +9,7 @@ import { requirePermission } from "@/lib/auth";
 import { PERMISSIONS, type Permission } from "@/lib/permissions";
 import { isMarketEnabledFor } from "@/lib/market-data";
 import { isMarketCategory, slugifyShopName } from "@/lib/market";
-import { saveMarketShopImage, deleteUploadedImage } from "@/lib/photo-upload";
+import { saveMarketShopImage, deleteUploadedImage, uploadedImageUrl } from "@/lib/photo-upload";
 
 /**
  * Nouveau Marché ZINDO (flag nouveau_marche) : boutique du commerçant et
@@ -104,6 +104,12 @@ export async function saveMarketShopAction(_prev: MarketActionState, formData: F
     ["logo", "logo_url", existing?.logoUrl],
     ["cover", "cover_url", existing?.coverUrl],
   ] as const) {
+    const direct = uploadedImageUrl(formData, field);
+    if (direct) {
+      images[column] = direct;
+      await deleteUploadedImage(previous);
+      continue;
+    }
     const file = formData.get(field);
     if (!(file instanceof File) || file.size === 0) continue;
     const saved = await saveMarketShopImage(file);
