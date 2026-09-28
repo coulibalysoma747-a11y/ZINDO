@@ -17,6 +17,7 @@ const NAV_ITEMS = [
   { label: "Administrateurs", href: "/admin/administrateurs", founderOnly: true },
   { label: "Support", href: "/admin/support", founderOnly: false },
   { label: "Fonctionnalités", href: "/admin/fonctionnalites", founderOnly: false },
+  { label: "Marché", href: "/admin/marche", founderOnly: false },
   { label: "Vérifications", href: "/admin/verifications", founderOnly: false },
   { label: "Parrainages", href: "/admin/parrainages", founderOnly: false },
   { label: "Plateforme", href: "/admin/plateforme", founderOnly: true },
