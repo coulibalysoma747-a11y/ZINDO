@@ -36,6 +36,10 @@ export function InstallAppButton({
 
     setIsIos(/iphone|ipad|ipod/i.test(navigator.userAgent));
 
+    // Proposition déjà captée par le script du layout racine avant le montage.
+    const early = (window as unknown as { __zindoInstallPrompt?: BeforeInstallPromptEvent }).__zindoInstallPrompt;
+    if (early) setDeferredPrompt(early);
+
     function onBeforeInstallPrompt(e: Event) {
       e.preventDefault();
       setDeferredPrompt(e as BeforeInstallPromptEvent);
@@ -58,6 +62,7 @@ export function InstallAppButton({
       const choice = await deferredPrompt.userChoice;
       if (choice.outcome === "accepted") setIsStandalone(true);
       setDeferredPrompt(null);
+      (window as unknown as { __zindoInstallPrompt?: unknown }).__zindoInstallPrompt = undefined;
       return;
     }
     setShowHelp(true);
