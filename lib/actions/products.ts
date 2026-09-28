@@ -595,10 +595,12 @@ export async function updateProductPhotoAction(productId: string, formData: Form
     .maybeSingle();
   if (!product) return { error: "Produit introuvable" };
 
+  // Photo déjà envoyée directement au stockage par le navigateur (voir components/ui/direct-upload.ts).
+  const directPhotoUrl = uploadedImageUrl(formData, "photo");
   const photoFile = formData.get("photo");
-  if (!(photoFile instanceof File) || photoFile.size === 0) return { error: "Aucune image reçue" };
+  if (!directPhotoUrl && (!(photoFile instanceof File) || photoFile.size === 0)) return { error: "Aucune image reçue" };
 
-  const result = await saveProductPhoto(photoFile);
+  const result = directPhotoUrl ? { url: directPhotoUrl } : await saveProductPhoto(photoFile as File);
   if ("error" in result) return { error: result.error };
 
   const { error } = await supabase.from("products").update({ photo_url: result.url }).eq("id", productId);

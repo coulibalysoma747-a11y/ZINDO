@@ -90,16 +90,17 @@ export function AiCartModal({
   function analyzeImage(file: File) {
     setAnalyzing(true);
     setError(null);
-    const reader = new FileReader();
-    reader.onload = () => {
-      parseOrderImageAction(String(reader.result), locationId)
-        .then((result) => {
-          if ("error" in result) setError(result.error);
-          else setLines(result.lines);
-        })
-        .finally(() => setAnalyzing(false));
-    };
-    reader.readAsDataURL(file);
+    // Cette photo n'est pas gardée : elle sert seulement à l'IA pour lire la liste.
+    // Ramenée à 2 000 px de côté au plus (texte toujours lisible) pour passer sous
+    // la limite de ~4,5 Mo par requête de Vercel, même avec une photo de téléphone.
+    shrinkForReading(file)
+      .then((dataUrl) => parseOrderImageAction(dataUrl, locationId))
+      .then((result) => {
+        if ("error" in result) setError(result.error);
+        else setLines(result.lines);
+      })
+      .catch(() => setError("Impossible de lire cette photo, réessayez."))
+      .finally(() => setAnalyzing(false));
   }
 
   function confirmAdd() {
@@ -225,4 +226,18 @@ export function AiCartModal({
       </div>
     </Modal>
   );
+}
+
+const READING_MAX_SIDE = 2000;
+
+/** Photo réduite à READING_MAX_SIDE px de côté au plus, en JPEG, sous forme de data URL. */
+async function shrinkForReading(file: File): Promise<string> {
+  const bitmap = await createImageBitmap(file);
+  const scale = Math.min(1, READING_MAX_SIDE / Math.max(bitmap.width, bitmap.height));
+  const canvas = document.createElement("canvas");
+  canvas.width = Math.round(bitmap.width * scale);
+  canvas.height = Math.round(bitmap.height * scale);
+  canvas.getContext("2d")!.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+  bitmap.close();
+  return canvas.toDataURL("image/jpeg", 0.9);
 }

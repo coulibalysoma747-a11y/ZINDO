@@ -3,7 +3,7 @@
 import { useRef, useState } from "react";
 import { Camera, ImagePlus, X } from "lucide-react";
 import { cn } from "@/lib/cn";
-import { createImageUploadAction } from "@/lib/actions/image-upload";
+import { uploadImageDirect } from "./direct-upload";
 
 export function ImageUploadField({
   name,
@@ -48,14 +48,7 @@ export function ImageUploadField({
 
     setUploading(true);
     try {
-      const target = await createImageUploadAction(directUploadFolder, file.type);
-      if ("error" in target) throw new Error(target.error);
-      const body = new FormData();
-      body.append("cacheControl", "31536000");
-      body.append("", file);
-      const response = await fetch(target.signedUrl, { method: "PUT", body, headers: { "x-upsert": "false" } });
-      if (!response.ok) throw new Error("Échec de l'envoi de l'image");
-      setUploadedUrl(target.publicUrl);
+      setUploadedUrl(await uploadImageDirect(file, directUploadFolder));
       // L'image est déjà dans le stockage : elle ne repart pas avec le formulaire.
       if (inputRef.current) inputRef.current.value = "";
     } catch (err) {

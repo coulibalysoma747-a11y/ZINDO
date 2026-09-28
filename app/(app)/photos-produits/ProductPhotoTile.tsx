@@ -4,6 +4,7 @@ import { useRef, useState, useTransition } from "react";
 import { Camera, Loader2 } from "lucide-react";
 import { ProductThumbnail } from "@/components/products/ProductThumbnail";
 import { updateProductPhotoAction } from "@/lib/actions/products";
+import { uploadImageDirect } from "@/components/ui/direct-upload";
 
 export function ProductPhotoTile({ productId, name, photoUrl: initialPhotoUrl }: { productId: string; name: string; photoUrl: string | null }) {
   const [photoUrl, setPhotoUrl] = useState(initialPhotoUrl);
@@ -16,8 +17,14 @@ export function ProductPhotoTile({ productId, name, photoUrl: initialPhotoUrl }:
     if (!file) return;
     setError(null);
     const formData = new FormData();
-    formData.set("photo", file);
     startTransition(async () => {
+      // Envoi direct au stockage (photo nette, sans la limite ~4,5 Mo de Vercel) ;
+      // repli sur l'envoi par le serveur si le stockage est injoignable.
+      try {
+        formData.set("photoUploadedUrl", await uploadImageDirect(file, "products"));
+      } catch {
+        formData.set("photo", file);
+      }
       const result = await updateProductPhotoAction(productId, formData);
       if (result.error) {
         setError(result.error);
