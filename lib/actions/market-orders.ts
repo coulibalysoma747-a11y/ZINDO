@@ -10,6 +10,8 @@ import { getCurrentBuyer } from "@/lib/market-buyer";
 import { isMarketEnabledFor, loadMarketProducts, loadPublishedShops } from "@/lib/market-data";
 import { MARKET_ORDER_STEPS, marketOrderStatusLabel, normalizeBuyerPhone, type MarketOrderStatus } from "@/lib/market";
 import { createSaleAction, recordStockMovements } from "@/lib/actions/sales";
+import { sendPushToBusiness } from "@/lib/push";
+import { formatMoney } from "@/lib/format";
 
 /**
  * Commandes du Marché (flag nouveau_marche). Le stock sort à la confirmation
@@ -176,6 +178,13 @@ export async function placeMarketOrdersAction(input: PlaceOrderInput): Promise<{
     );
     await supabase.from("market_order_events").insert({ order_id: order.id, status: "RECUE" });
     numbers.push(order.number);
+
+    // Le vendeur est prévenu tout de suite : cloche ZINDO + notification push sur ses appareils.
+    const businessId = businessOf.get(shop.shopId)!;
+    const link = `/mon-marche/commandes/${order.id}`;
+    const message = `${d.customerName} · ${shop.items.length} produit${shop.items.length > 1 ? "s" : ""} · ${formatMoney(subtotal + deliveryFee)}`;
+    await supabase.from("notifications").insert({ business_id: businessId, type: "INFO", title: `Nouvelle commande Marché ${order.number}`, message, link });
+    await sendPushToBusiness(businessId, { title: `🛒 Nouvelle commande ${order.number}`, body: message, link });
   }
   revalidatePath("/marche/commandes");
   return { numbers };

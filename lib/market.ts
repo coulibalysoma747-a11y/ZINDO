@@ -66,6 +66,9 @@ export type MarketShopSummary = {
   reviewCount: number;
 };
 
+/** Photos supplémentaires au plus par produit publié (en plus de la photo principale). */
+export const MAX_LISTING_PHOTOS = 8;
+
 export const MARKET_SORTS = [
   { key: "recents", label: "Plus récents" },
   { key: "populaires", label: "Plus populaires" },

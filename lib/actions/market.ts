@@ -8,7 +8,7 @@ import { logAction } from "@/lib/audit";
 import { requirePermission } from "@/lib/auth";
 import { PERMISSIONS, type Permission } from "@/lib/permissions";
 import { isMarketEnabledFor } from "@/lib/market-data";
-import { isMarketCategory, slugifyShopName } from "@/lib/market";
+import { isMarketCategory, MAX_LISTING_PHOTOS, slugifyShopName } from "@/lib/market";
 import { saveMarketShopImage, deleteUploadedImage, uploadedImageUrl } from "@/lib/photo-upload";
 
 /**
@@ -228,4 +228,36 @@ export async function saveMarketListingAction(input: {
   revalidatePath(`/produits/${d.productId}`);
   revalidatePath("/marche", "layout");
   return { success: d.published ? "Produit publié sur le Marché." : "Produit retiré du Marché." };
+}
+
+/** Ajoute une photo (déjà envoyée au stockage) à la galerie d'un produit publié. */
+export async function addListingPhotoAction(listingId: string, url: string): Promise<{ error?: string; id?: string }> {
+  const user = await requireMarketUser(PERMISSIONS.PRODUCTS_MANAGE);
+  const form = new FormData();
+  form.set("photoUploadedUrl", url);
+  // Même contrôle que pour tout envoi direct : uniquement une image de notre propre stockage.
+  if (!uploadedImageUrl(form, "photo")) return { error: "Image invalide." };
+  const { data: listing } = await supabase.from("market_listings").select("id").eq("id", listingId).eq("business_id", user.businessId).maybeSingle();
+  if (!listing) return { error: "Produit introuvable." };
+  const { count } = await supabase.from("market_listing_photos").select("id", { count: "exact", head: true }).eq("listing_id", listingId);
+  if ((count ?? 0) >= MAX_LISTING_PHOTOS) return { error: `${MAX_LISTING_PHOTOS} photos au maximum par produit.` };
+  const { data, error } = await supabase.from("market_listing_photos").insert({ listing_id: listingId, url, position: count ?? 0 }).select("id").single();
+  if (error || !data) return { error: "Enregistrement impossible, réessayez." };
+  revalidatePath("/mon-marche/produits");
+  return { id: data.id };
+}
+
+export async function removeListingPhotoAction(photoId: string): Promise<{ error?: string }> {
+  const user = await requireMarketUser(PERMISSIONS.PRODUCTS_MANAGE);
+  const { data: photo } = await supabase
+    .from("market_listing_photos")
+    .select("id, url, listing:market_listings!inner(business_id)")
+    .eq("id", photoId)
+    .eq("listing.business_id", user.businessId)
+    .maybeSingle();
+  if (!photo) return { error: "Photo introuvable." };
+  await supabase.from("market_listing_photos").delete().eq("id", photoId);
+  await deleteUploadedImage(photo.url as string);
+  revalidatePath("/mon-marche/produits");
+  return {};
 }

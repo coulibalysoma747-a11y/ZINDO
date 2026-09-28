@@ -1,9 +1,8 @@
 import Link from "next/link";
-import { redirect } from "next/navigation";
-import { requirePermission } from "@/lib/auth";
+import { requireMarketSeller } from "@/lib/market-seller";
+import { MarketSellerNav } from "../MarketSellerNav";
 import { PERMISSIONS } from "@/lib/permissions";
 import { supabase } from "@/lib/supabase";
-import { isMarketEnabledFor } from "@/lib/market-data";
 import { marketOrderStatusLabel } from "@/lib/market";
 import { formatMoney, formatDateTime } from "@/lib/format";
 import { OrderStatusBadge } from "@/components/market/OrderStatusBadge";
@@ -21,8 +20,7 @@ const FILTERS = [
 
 /** Commandes reçues sur le Marché (flag nouveau_marche). */
 export default async function MarketOrdersPage({ searchParams }: { searchParams: Promise<{ statut?: string }> }) {
-  const user = await requirePermission(PERMISSIONS.SALES_CREATE);
-  if (!(await isMarketEnabledFor(user.businessId, user.business.activityKey))) redirect("/dashboard");
+  const { user, shop, newOrders } = await requireMarketSeller(PERMISSIONS.SALES_CREATE);
   const { statut = "" } = await searchParams;
 
   let query = supabase
@@ -32,10 +30,7 @@ export default async function MarketOrdersPage({ searchParams }: { searchParams:
     .order("created_at", { ascending: false })
     .limit(200);
   if (FILTERS.some((f) => f.key && f.key === statut)) query = query.eq("status", statut);
-  const [{ data }, { count: newCount }] = await Promise.all([
-    query,
-    supabase.from("market_orders").select("id", { count: "exact", head: true }).eq("business_id", user.businessId).eq("status", "RECUE"),
-  ]);
+  const { data } = await query;
   const orders = (data ?? []) as unknown as {
     id: string;
     number: string;
@@ -51,12 +46,7 @@ export default async function MarketOrdersPage({ searchParams }: { searchParams:
 
   return (
     <div className="max-w-5xl space-y-4">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <h1 className="text-xl font-bold text-zinc-900">Commandes du Marché {newCount ? `(${newCount} nouvelle${newCount > 1 ? "s" : ""})` : ""}</h1>
-        <Link href="/mon-marche" className="text-sm font-semibold text-zindo-green-700 hover:underline">
-          ← Mon Marché
-        </Link>
-      </div>
+      <MarketSellerNav active="/mon-marche/commandes" shop={shop} newOrders={newOrders} />
       <div className="flex gap-2 overflow-x-auto pb-1 text-sm">
         {FILTERS.map((f) => (
           <Link
