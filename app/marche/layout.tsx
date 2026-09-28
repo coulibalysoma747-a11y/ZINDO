@@ -9,6 +9,7 @@ import { CartCount } from "@/components/market/cart-store";
 export const metadata = {
   title: "Marché ZINDO",
   description: "Découvrez les produits et boutiques proposés par les commerçants sur ZINDO.",
+  manifest: "/manifest-marche.json",
 };
 
 const BOTTOM_NAV = [
