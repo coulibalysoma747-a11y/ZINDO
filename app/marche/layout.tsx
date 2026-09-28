@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ClipboardList, Home, LayoutGrid, Search, ShoppingCart, User } from "lucide-react";
+import { ClipboardList, Heart, Home, LayoutGrid, Search, ShoppingCart, User } from "lucide-react";
 import { canViewMarket } from "@/lib/market-data";
 import { CartCount } from "@/components/market/cart-store";
 
@@ -28,7 +28,7 @@ export default async function MarketLayout({ children }: { children: React.React
           <Link href="/marche" className="shrink-0 text-lg font-extrabold text-zindo-green-700">
             ZINDO <span className="hidden font-semibold text-zinc-500 sm:inline">Marché</span>
           </Link>
-          <form action="/marche" className="relative min-w-0 flex-1 md:mx-auto md:max-w-xl">
+          <form action="/marche/recherche" className="relative min-w-0 flex-1 md:mx-auto md:max-w-xl">
             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" />
             <input
               name="q"
@@ -40,6 +40,9 @@ export default async function MarketLayout({ children }: { children: React.React
             <Link href="/marche/categories" className="hover:text-zindo-green-700">Catégories</Link>
             <Link href="/marche/boutiques" className="hover:text-zindo-green-700">Boutiques</Link>
             <Link href="/marche/commandes" className="hover:text-zindo-green-700">Commandes</Link>
+            <Link href="/marche/favoris" aria-label="Mes favoris" className="hover:text-zindo-green-700">
+              <Heart className="h-5 w-5" />
+            </Link>
             <Link href="/marche/compte" aria-label="Mon compte" className="hover:text-zindo-green-700">
               <User className="h-5 w-5" />
             </Link>

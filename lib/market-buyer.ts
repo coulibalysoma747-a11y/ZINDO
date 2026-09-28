@@ -75,3 +75,15 @@ async function getCurrentBuyerUncached(): Promise<MarketBuyer | null> {
 
 /** Acheteur connecté, mémorisé le temps d'une requête. */
 export const getCurrentBuyer = cache(getCurrentBuyerUncached);
+
+/** Favoris de l'acheteur connecté (produits et boutiques suivies) ; vides sans compte. */
+export async function getBuyerFavorites(): Promise<{ listingIds: Set<string>; shopIds: Set<string> }> {
+  const buyer = await getCurrentBuyer();
+  if (!buyer) return { listingIds: new Set(), shopIds: new Set() };
+  const { data } = await supabase.from("market_favorites").select("listingId:listing_id, shopId:shop_id").eq("buyer_id", buyer.id);
+  const rows = (data ?? []) as { listingId: string | null; shopId: string | null }[];
+  return {
+    listingIds: new Set(rows.flatMap((r) => (r.listingId ? [r.listingId] : []))),
+    shopIds: new Set(rows.flatMap((r) => (r.shopId ? [r.shopId] : []))),
+  };
+}

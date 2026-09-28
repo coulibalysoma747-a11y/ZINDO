@@ -28,6 +28,9 @@ export default async function MarketAccountPage({ searchParams }: { searchParams
         <Link href="/marche/commandes" className="block px-5 py-3 text-sm font-medium text-zinc-800 hover:bg-zinc-50">
           📦 Mes commandes
         </Link>
+        <Link href="/marche/favoris" className="block px-5 py-3 text-sm font-medium text-zinc-800 hover:bg-zinc-50">
+          ❤️ Mes favoris et boutiques suivies
+        </Link>
         <Link href="/marche/panier" className="block px-5 py-3 text-sm font-medium text-zinc-800 hover:bg-zinc-50">
           🛒 Mon panier
         </Link>

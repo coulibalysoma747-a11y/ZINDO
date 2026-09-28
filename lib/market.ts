@@ -49,6 +49,10 @@ export type MarketProduct = {
   promoPrice: number | null;
   available: number;
   publishedAt: string;
+  viewCount: number;
+  /** Note moyenne des avis (1 à 5), null sans avis. */
+  rating: number | null;
+  reviewCount: number;
   shop: MarketShopSummary;
 };
 
@@ -58,7 +62,28 @@ export type MarketShopSummary = {
   city: string | null;
   logoUrl: string | null;
   verified: boolean;
+  rating: number | null;
+  reviewCount: number;
 };
+
+export const MARKET_SORTS = [
+  { key: "recents", label: "Plus récents" },
+  { key: "populaires", label: "Plus populaires" },
+  { key: "prix-croissant", label: "Prix croissant" },
+  { key: "prix-decroissant", label: "Prix décroissant" },
+] as const;
+
+export type MarketSort = (typeof MARKET_SORTS)[number]["key"];
+
+export const MARKET_REPORT_REASONS = [
+  { key: "INTERDIT", label: "Produit interdit" },
+  { key: "FRAUDE", label: "Fraude" },
+  { key: "FAUSSE_INFO", label: "Fausse information" },
+  { key: "PRIX_TROMPEUR", label: "Prix trompeur" },
+  { key: "CONTREFACON", label: "Contrefaçon" },
+  { key: "INAPPROPRIE", label: "Contenu inapproprié" },
+  { key: "AUTRE", label: "Autre" },
+] as const;
 
 export function discountPercent(price: number, promoPrice: number | null): number | null {
   if (promoPrice == null || promoPrice <= 0 || promoPrice >= price) return null;

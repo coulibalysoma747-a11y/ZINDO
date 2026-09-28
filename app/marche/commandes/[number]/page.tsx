@@ -7,6 +7,7 @@ import { MARKET_ORDER_STEPS, MARKET_PAYMENT_LABELS, marketOrderStatusLabel } fro
 import { formatMoney, formatDateTime } from "@/lib/format";
 import { OrderStatusBadge } from "@/components/market/OrderStatusBadge";
 import { CancelMyOrderButton } from "./CancelMyOrderButton";
+import { ReviewForm } from "./ReviewForm";
 
 export const dynamic = "force-dynamic";
 
@@ -24,7 +25,7 @@ type OrderRow = {
   cancelReason: string | null;
   createdAt: string;
   shop: { name: string; slug: string; phone: string | null; whatsapp: string | null; address: string | null; city: string | null };
-  items: { name: string; photoUrl: string | null; unitPrice: number; quantity: number }[];
+  items: { productId: string; name: string; photoUrl: string | null; unitPrice: number; quantity: number }[];
   events: { status: string; createdAt: string }[];
 };
 
@@ -37,7 +38,7 @@ export default async function MarketOrderTrackingPage({ params }: { params: Prom
     .from("market_orders")
     .select(
       "id, number, status, deliveryMode:delivery_mode, deliveryAddress:delivery_address, deliveryCity:delivery_city, paymentMethod:payment_method, subtotal, deliveryFee:delivery_fee, total, cancelReason:cancel_reason, createdAt:created_at, " +
-        "shop:market_shops(name, slug, phone, whatsapp, address, city), items:market_order_items(name, photoUrl:photo_url, unitPrice:unit_price, quantity), events:market_order_events(status, createdAt:created_at)"
+        "shop:market_shops(name, slug, phone, whatsapp, address, city), items:market_order_items(productId:product_id, name, photoUrl:photo_url, unitPrice:unit_price, quantity), events:market_order_events(status, createdAt:created_at)"
     )
     .eq("number", number)
     .eq("buyer_id", buyer.id)
@@ -50,6 +51,11 @@ export default async function MarketOrderTrackingPage({ params }: { params: Prom
   const reachedAt = new Map(order.events.map((e) => [e.status, e.createdAt]));
   const currentIndex = steps.findIndex((s) => s.key === order.status);
   const contact = order.shop.whatsapp || order.shop.phone;
+  const { data: reviewData } =
+    order.status === "LIVREE" ? await supabase.from("market_reviews").select("productId:product_id, rating, comment").eq("order_id", order.id) : { data: [] };
+  const reviewByProduct = new Map(
+    ((reviewData ?? []) as { productId: string; rating: number; comment: string | null }[]).map((r) => [r.productId, { rating: r.rating, comment: r.comment }])
+  );
 
   return (
     <div className="mx-auto max-w-2xl space-y-4">
@@ -89,16 +95,19 @@ export default async function MarketOrderTrackingPage({ params }: { params: Prom
       <div className="space-y-3 rounded-2xl bg-white p-5 ring-1 ring-zinc-200">
         <p className="text-sm font-bold text-zinc-900">🏪 {order.shop.name}</p>
         {order.items.map((item, idx) => (
-          <div key={idx} className="flex items-center gap-3 text-sm">
-            {item.photoUrl ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={item.photoUrl} alt="" className="h-12 w-12 rounded-lg object-cover" />
-            ) : (
-              <span className="flex h-12 w-12 items-center justify-center rounded-lg bg-zinc-100">📦</span>
-            )}
-            <span className="flex-1">{item.name}</span>
-            <span className="text-zinc-500">×{item.quantity}</span>
-            <span className="font-semibold">{formatMoney(item.unitPrice * item.quantity)}</span>
+          <div key={idx} className="space-y-2">
+            <div className="flex items-center gap-3 text-sm">
+              {item.photoUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={item.photoUrl} alt="" className="h-12 w-12 rounded-lg object-cover" />
+              ) : (
+                <span className="flex h-12 w-12 items-center justify-center rounded-lg bg-zinc-100">📦</span>
+              )}
+              <span className="flex-1">{item.name}</span>
+              <span className="text-zinc-500">×{item.quantity}</span>
+              <span className="font-semibold">{formatMoney(item.unitPrice * item.quantity)}</span>
+            </div>
+            {order.status === "LIVREE" && <ReviewForm orderId={order.id} productId={item.productId} initial={reviewByProduct.get(item.productId) ?? null} />}
           </div>
         ))}
         <div className="space-y-1 border-t border-zinc-100 pt-2 text-sm">
