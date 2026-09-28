@@ -34,6 +34,7 @@ import { HeroCarousel } from "@/components/landing/HeroCarousel";
 import { DemoVideo } from "@/components/landing/DemoVideo";
 import { WhatsAppFloat } from "@/components/landing/WhatsAppFloat";
 import { PiedDePageComplet } from "@/components/landing/PiedDePageComplet";
+import { PublicNavLinks, PublicNavMenu } from "@/components/landing/PublicNav";
 import {
   PertesSection,
   MetiersSection,
@@ -261,20 +262,21 @@ export default async function RootPage({ searchParams }: { searchParams: Promise
           menu du sélecteur de langue — positionné en absolute sous ce bouton
           — se fait passer devant par le contenu qui suit dans le DOM, et les
           clics sur ses options n'atteignent jamais le bouton. */}
-      <header className="relative z-30 mx-auto flex w-full max-w-6xl flex-wrap items-center justify-between gap-y-2 px-5 py-6 sm:px-8">
+      <header className="relative z-30 mx-auto flex w-full max-w-6xl flex-wrap items-center justify-between gap-y-2 px-5 py-6 sm:px-8 lg:flex-nowrap lg:gap-4">
         <div className="flex items-center gap-3">
           <ZindoLogo size={40} />
           <span className="text-lg font-extrabold tracking-tight text-zindo-ink-900">ZINDO</span>
         </div>
+        <PublicNavLinks />
         <div className="flex flex-wrap items-center justify-end gap-1.5 sm:gap-3">
           <LanguageSwitcher />
           <InstallAppButton
             iconOnly
-            className="hidden items-center gap-1.5 rounded-xl border border-zinc-200 px-2.5 py-2 text-sm font-semibold text-zindo-ink-700 hover:border-zinc-300 sm:flex sm:px-3"
+            className="hidden items-center gap-1.5 rounded-xl border border-zinc-200 px-2.5 py-2 text-sm font-semibold text-zindo-ink-700 hover:border-zinc-300 sm:flex sm:px-3 lg:hidden"
           />
           <Link
             href="/login"
-            className="whitespace-nowrap rounded-xl px-2 py-2 text-sm font-semibold text-zindo-ink-700 hover:text-zindo-green-600 sm:px-4"
+            className="hidden whitespace-nowrap rounded-xl px-2 py-2 text-sm font-semibold text-zindo-ink-700 hover:text-zindo-green-600 sm:block sm:px-4"
           >
             Se connecter
           </Link>
@@ -282,8 +284,9 @@ export default async function RootPage({ searchParams }: { searchParams: Promise
             href="/inscription"
             className="whitespace-nowrap rounded-xl bg-zindo-green-500 px-2.5 py-2 text-sm font-bold text-white shadow-md shadow-zindo-green-500/25 transition hover:bg-zindo-green-600 sm:px-5"
           >
-            Créer un compte
+            Essai gratuit
           </Link>
+          <PublicNavMenu />
         </div>
       </header>
 
