@@ -20,7 +20,7 @@ const FILTERS = [
 
 /** Commandes reçues sur le Marché (flag nouveau_marche). */
 export default async function MarketOrdersPage({ searchParams }: { searchParams: Promise<{ statut?: string }> }) {
-  const { user, shop, newOrders } = await requireMarketSeller(PERMISSIONS.SALES_CREATE);
+  const { user, shop, newOrders, unreadMessages } = await requireMarketSeller(PERMISSIONS.SALES_CREATE);
   const { statut = "" } = await searchParams;
 
   let query = supabase
@@ -46,7 +46,7 @@ export default async function MarketOrdersPage({ searchParams }: { searchParams:
 
   return (
     <div className="max-w-5xl space-y-4">
-      <MarketSellerNav active="/mon-marche/commandes" shop={shop} newOrders={newOrders} />
+      <MarketSellerNav active="/mon-marche/commandes" shop={shop} newOrders={newOrders} unreadMessages={unreadMessages} />
       <div className="flex gap-2 overflow-x-auto pb-1 text-sm">
         {FILTERS.map((f) => (
           <Link

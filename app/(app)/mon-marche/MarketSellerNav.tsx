@@ -5,6 +5,7 @@ const TABS = [
   { href: "/mon-marche", label: "Tableau de bord" },
   { href: "/mon-marche/produits", label: "Produits" },
   { href: "/mon-marche/commandes", label: "Commandes" },
+  { href: "/mon-marche/messages", label: "Messages" },
   { href: "/mon-marche/clients", label: "Clients" },
   { href: "/mon-marche/avis", label: "Avis" },
   { href: "/mon-marche/visibilite", label: "Visibilité" },
@@ -16,10 +17,12 @@ export function MarketSellerNav({
   active,
   shop,
   newOrders,
+  unreadMessages = 0,
 }: {
   active: string;
   shop: { slug: string; published: boolean; suspended: boolean; suspendedReason: string | null } | null;
   newOrders: number;
+  unreadMessages?: number;
 }) {
   return (
     <div className="space-y-3">
@@ -64,6 +67,9 @@ export function MarketSellerNav({
             }
           >
             {t.label}
+            {t.href === "/mon-marche/messages" && unreadMessages > 0 && (
+              <span className="ml-1.5 rounded-full bg-red-600 px-1.5 py-0.5 text-[11px] font-bold text-white">{unreadMessages}</span>
+            )}
             {t.href === "/mon-marche/commandes" && newOrders > 0 && (
               <span className="ml-1.5 rounded-full bg-red-600 px-1.5 py-0.5 text-[11px] font-bold text-white">{newOrders}</span>
             )}

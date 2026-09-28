@@ -1,7 +1,9 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ClipboardList, Heart, Home, LayoutGrid, Search, ShoppingCart, User } from "lucide-react";
+import { ClipboardList, Heart, Home, LayoutGrid, MessageSquare, Search, ShoppingCart, User } from "lucide-react";
 import { canViewMarket } from "@/lib/market-data";
+import { getCurrentBuyer } from "@/lib/market-buyer";
+import { countUnread } from "@/lib/market-messages";
 import { CartCount } from "@/components/market/cart-store";
 
 export const metadata = {
@@ -20,6 +22,8 @@ const BOTTOM_NAV = [
 /** Habillage public du nouveau Marché (flag nouveau_marche). */
 export default async function MarketLayout({ children }: { children: React.ReactNode }) {
   if (!(await canViewMarket())) notFound();
+  const buyer = await getCurrentBuyer();
+  const unread = buyer ? await countUnread({ buyerId: buyer.id }) : 0;
 
   return (
     <div className="theme-locked min-h-screen bg-zinc-50 pb-20 md:pb-0">
@@ -47,6 +51,14 @@ export default async function MarketLayout({ children }: { children: React.React
               <User className="h-5 w-5" />
             </Link>
           </nav>
+          {buyer && (
+            <Link href="/marche/messages" aria-label="Messages" className="relative shrink-0 text-zinc-700 hover:text-zindo-green-700">
+              <MessageSquare className="h-6 w-6" />
+              {unread > 0 && (
+                <span className="absolute -right-1.5 -top-1.5 min-w-4 rounded-full bg-red-600 px-1 text-center text-[10px] font-bold leading-4 text-white">{unread > 99 ? "99+" : unread}</span>
+              )}
+            </Link>
+          )}
           <Link href="/marche/panier" aria-label="Panier" className="relative shrink-0 text-zinc-700 hover:text-zindo-green-700">
             <ShoppingCart className="h-6 w-6" />
             <CartCount />

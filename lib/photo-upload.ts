@@ -101,7 +101,7 @@ export async function saveMarketShopImage(file: File) {
 }
 
 /** Dossiers où le navigateur peut envoyer une image directement (voir createImageUploadAction). */
-export const DIRECT_UPLOAD_FOLDERS = ["products", "logos", "boutique-covers", "marche"] as const;
+export const DIRECT_UPLOAD_FOLDERS = ["products", "logos", "boutique-covers", "marche", "messages"] as const;
 export type DirectUploadFolder = (typeof DIRECT_UPLOAD_FOLDERS)[number];
 
 /**
@@ -125,8 +125,11 @@ export async function createSignedImageUpload(folder: DirectUploadFolder, conten
  */
 export function uploadedImageUrl(formData: FormData, name: string): string | null {
   const value = formData.get(`${name}UploadedUrl`);
-  if (typeof value !== "string" || !value) return null;
+  return typeof value === "string" && isOwnUploadUrl(value) ? value : null;
+}
+
+/** Adresse d'une image de notre propre stockage (jamais une image extérieure). */
+export function isOwnUploadUrl(value: string): boolean {
   const prefix = `${process.env.SUPABASE_URL}/storage/v1/object/public/${BUCKET}/`;
-  const rest = value.slice(prefix.length);
-  return value.startsWith(prefix) && /^[a-z-]+\/[0-9a-f-]+\.(jpg|png|webp)$/.test(rest) ? value : null;
+  return value.startsWith(prefix) && /^[a-z-]+\/[0-9a-f-]+\.(jpg|png|webp)$/.test(value.slice(prefix.length));
 }

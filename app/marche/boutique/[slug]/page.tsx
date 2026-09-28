@@ -9,6 +9,7 @@ import { ShopLogo } from "@/components/market/ShopChip";
 import { FavoriteButton } from "@/components/market/FavoriteButton";
 import { ReportButton } from "@/components/market/ReportButton";
 import { ShareButton } from "@/components/market/ShareButton";
+import { ContactSellerButton } from "@/components/market/ContactSellerButton";
 import { StarRow, Stars } from "@/components/market/Stars";
 
 export const dynamic = "force-dynamic";
@@ -68,7 +69,11 @@ export default async function MarketShopPage({ params, searchParams }: { params:
           </div>
           <div className="flex flex-wrap gap-2">
             <FavoriteButton shopId={shop.id} initial={favorites.shopIds.has(shop.id)} variant="follow" />
-            {buyer ? (
+            <ContactSellerButton
+              shopId={shop.id}
+              className="inline-flex h-10 items-center gap-2 rounded-xl bg-zindo-green-600 px-4 text-sm font-semibold text-white hover:bg-zindo-green-700 disabled:opacity-50"
+            />
+            {buyer && (
               <>
                 {whatsappDigits && (
                   <a
@@ -86,13 +91,6 @@ export default async function MarketShopPage({ params, searchParams }: { params:
                   </a>
                 )}
               </>
-            ) : (
-              <Link
-                href={`/marche/compte?suite=${encodeURIComponent(`/marche/boutique/${shop.slug}`)}`}
-                className="inline-flex h-10 items-center gap-2 rounded-xl border border-zinc-300 px-4 text-sm font-semibold text-zinc-800 hover:bg-zinc-50"
-              >
-                <MessageCircle className="h-4 w-4" /> Contacter
-              </Link>
             )}
             <ShareButton title={shop.name} />
           </div>

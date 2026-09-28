@@ -18,7 +18,7 @@ const FILTERS = [
 
 /** Produits du stock et leur publication sur le Marché (Mon Marché). */
 export default async function MyMarketProductsPage({ searchParams }: { searchParams: Promise<{ q?: string; filtre?: string }> }) {
-  const { user, shop, newOrders } = await requireMarketSeller(PERMISSIONS.PRODUCTS_MANAGE);
+  const { user, shop, newOrders, unreadMessages } = await requireMarketSeller(PERMISSIONS.PRODUCTS_MANAGE);
   const { q = "", filtre = "" } = await searchParams;
 
   const { data: allListings } = await supabase
@@ -67,7 +67,7 @@ export default async function MyMarketProductsPage({ searchParams }: { searchPar
 
   return (
     <div className="max-w-5xl space-y-5">
-      <MarketSellerNav active="/mon-marche/produits" shop={shop} newOrders={newOrders} />
+      <MarketSellerNav active="/mon-marche/produits" shop={shop} newOrders={newOrders} unreadMessages={unreadMessages} />
       {!shop && (
         <p className="rounded-xl bg-amber-50 p-3 text-sm text-amber-900 ring-1 ring-amber-200">
           Créez d&apos;abord <Link href="/mon-marche/boutique" className="font-semibold underline">votre boutique</Link> : vos produits publiés y apparaîtront.

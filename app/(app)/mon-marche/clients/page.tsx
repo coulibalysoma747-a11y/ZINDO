@@ -6,7 +6,7 @@ import { MarketSellerNav } from "../MarketSellerNav";
 
 /** Clients du Marché : ceux qui ont commandé à cette boutique. */
 export default async function MyMarketCustomersPage() {
-  const { user, shop, newOrders } = await requireMarketSeller(PERMISSIONS.CUSTOMERS_MANAGE);
+  const { user, shop, newOrders, unreadMessages } = await requireMarketSeller(PERMISSIONS.CUSTOMERS_MANAGE);
   const { data } = await supabase
     .from("market_orders")
     .select("buyerId:buyer_id, customerName:customer_name, customerPhone:customer_phone, status, total, createdAt:created_at, buyer:market_buyers(kind, companyName:company_name)")
@@ -35,7 +35,7 @@ export default async function MyMarketCustomersPage() {
 
   return (
     <div className="max-w-5xl space-y-5">
-      <MarketSellerNav active="/mon-marche/clients" shop={shop} newOrders={newOrders} />
+      <MarketSellerNav active="/mon-marche/clients" shop={shop} newOrders={newOrders} unreadMessages={unreadMessages} />
       <p className="text-sm text-zinc-500">
         {list.length} client{list.length > 1 ? "s" : ""} ont commandé sur votre boutique. Ils sont aussi ajoutés à vos Clients ZINDO à la livraison.
       </p>

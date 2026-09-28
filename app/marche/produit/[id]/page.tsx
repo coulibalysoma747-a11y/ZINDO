@@ -12,6 +12,7 @@ import { FavoriteButton } from "@/components/market/FavoriteButton";
 import { ProductGallery } from "@/components/market/ProductGallery";
 import { ReportButton } from "@/components/market/ReportButton";
 import { ShareButton } from "@/components/market/ShareButton";
+import { ContactSellerButton } from "@/components/market/ContactSellerButton";
 import { StarRow, Stars } from "@/components/market/Stars";
 
 export const dynamic = "force-dynamic";
@@ -41,7 +42,6 @@ export default async function MarketProductPage({ params }: { params: Promise<{ 
   const photos = [product.photoUrl!, ...extraPhotos];
   const discount = discountPercent(product.price, product.promoPrice);
   const inStock = product.available > 0;
-  const loginToContact = `/marche/compte?suite=${encodeURIComponent(`/marche/produit/${product.productId}`)}`;
 
   return (
     <div className="space-y-10">
@@ -109,7 +109,10 @@ export default async function MarketProductPage({ params }: { params: Promise<{ 
               </div>
               <ChevronRight className="h-5 w-5 text-zinc-400" />
             </Link>
-            {buyer ? (
+            <div className="flex">
+              <ContactSellerButton shopId={shop.id} listingId={product.listingId} />
+            </div>
+            {buyer && (
               <div className="flex gap-2">
                 {shop.whatsapp && (
                   <a
@@ -127,10 +130,6 @@ export default async function MarketProductPage({ params }: { params: Promise<{ 
                   </a>
                 )}
               </div>
-            ) : (
-              <Link href={loginToContact} className="flex h-10 items-center justify-center gap-2 rounded-xl border border-zinc-300 text-sm font-semibold text-zinc-800 hover:bg-zinc-50">
-                <MessageCircle className="h-4 w-4" /> Contacter le vendeur
-              </Link>
             )}
           </div>
 

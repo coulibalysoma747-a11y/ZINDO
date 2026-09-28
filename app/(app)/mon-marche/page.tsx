@@ -36,7 +36,7 @@ function startOfDay(d: Date) {
 
 /** Tableau de bord du vendeur sur le Marché (flag nouveau_marche). */
 export default async function MyMarketDashboardPage({ searchParams }: { searchParams: Promise<{ periode?: string }> }) {
-  const { user, shop, newOrders } = await requireMarketSeller(PERMISSIONS.PRODUCTS_MANAGE);
+  const { user, shop, newOrders, unreadMessages } = await requireMarketSeller(PERMISSIONS.PRODUCTS_MANAGE);
   if (!shop) redirect("/mon-marche/boutique");
   const { periode = "7j" } = await searchParams;
   const period = PERIODS.some((p) => p.key === periode) ? periode : "7j";
@@ -132,7 +132,7 @@ export default async function MyMarketDashboardPage({ searchParams }: { searchPa
 
   return (
     <div className="max-w-6xl space-y-6">
-      <MarketSellerNav active="/mon-marche" shop={shop} newOrders={newOrders} />
+      <MarketSellerNav active="/mon-marche" shop={shop} newOrders={newOrders} unreadMessages={unreadMessages} />
 
       {newOrders > 0 && (
         <Link href="/mon-marche/commandes?statut=RECUE" className="flex items-center gap-3 rounded-2xl bg-orange-50 p-4 ring-1 ring-orange-200 hover:bg-orange-100">

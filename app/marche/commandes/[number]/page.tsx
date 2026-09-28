@@ -8,6 +8,7 @@ import { formatMoney, formatDateTime } from "@/lib/format";
 import { OrderStatusBadge } from "@/components/market/OrderStatusBadge";
 import { CancelMyOrderButton } from "./CancelMyOrderButton";
 import { ReviewForm } from "./ReviewForm";
+import { ContactSellerButton } from "@/components/market/ContactSellerButton";
 
 export const dynamic = "force-dynamic";
 
@@ -24,6 +25,7 @@ type OrderRow = {
   total: number;
   cancelReason: string | null;
   createdAt: string;
+  shopId: string;
   shop: { name: string; slug: string; phone: string | null; whatsapp: string | null; address: string | null; city: string | null };
   items: { productId: string; name: string; photoUrl: string | null; unitPrice: number; quantity: number }[];
   events: { status: string; createdAt: string }[];
@@ -37,7 +39,7 @@ export default async function MarketOrderTrackingPage({ params }: { params: Prom
   const { data } = await supabase
     .from("market_orders")
     .select(
-      "id, number, status, deliveryMode:delivery_mode, deliveryAddress:delivery_address, deliveryCity:delivery_city, paymentMethod:payment_method, subtotal, deliveryFee:delivery_fee, total, cancelReason:cancel_reason, createdAt:created_at, " +
+      "id, number, status, shopId:shop_id, deliveryMode:delivery_mode, deliveryAddress:delivery_address, deliveryCity:delivery_city, paymentMethod:payment_method, subtotal, deliveryFee:delivery_fee, total, cancelReason:cancel_reason, createdAt:created_at, " +
         "shop:market_shops(name, slug, phone, whatsapp, address, city), items:market_order_items(productId:product_id, name, photoUrl:photo_url, unitPrice:unit_price, quantity), events:market_order_events(status, createdAt:created_at)"
     )
     .eq("number", number)
@@ -133,9 +135,10 @@ export default async function MarketOrderTrackingPage({ params }: { params: Prom
       </div>
 
       <div className="flex flex-col gap-2 sm:flex-row">
+        <ContactSellerButton shopId={order.shopId} orderId={order.id} />
         {contact && (
           <a href={order.shop.whatsapp ? `https://wa.me/${order.shop.whatsapp.replace(/\D/g, "").replace(/^(\d{8})$/, "226$1")}?text=${encodeURIComponent(`Bonjour, au sujet de ma commande ${order.number}.`)}` : `tel:${order.shop.phone}`} target="_blank" rel="noopener noreferrer" className="flex-1 rounded-xl border border-zinc-300 bg-white py-2.5 text-center text-sm font-semibold text-zinc-800">
-            Contacter le vendeur
+            {order.shop.whatsapp ? "WhatsApp" : "Appeler"}
           </a>
         )}
         {order.status === "RECUE" && <CancelMyOrderButton orderId={order.id} />}

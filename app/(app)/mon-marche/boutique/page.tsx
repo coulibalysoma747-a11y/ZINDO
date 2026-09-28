@@ -9,7 +9,7 @@ import { MarketShopForm, type MarketShopFormValues } from "../MarketShopForm";
 
 /** Ma boutique : page publique, livraison, retrait et paiements (Mon Marché). */
 export default async function MyMarketShopPage() {
-  const { user, shop: shopInfo, newOrders } = await requireMarketSeller(PERMISSIONS.SETTINGS_MANAGE);
+  const { user, shop: shopInfo, newOrders, unreadMessages } = await requireMarketSeller(PERMISSIONS.SETTINGS_MANAGE);
   const [locations, { data }] = await Promise.all([
     getLocations(user.businessId),
     supabase
@@ -25,7 +25,7 @@ export default async function MyMarketShopPage() {
 
   return (
     <div className="max-w-5xl space-y-6">
-      <MarketSellerNav active="/mon-marche/boutique" shop={shopInfo} newOrders={newOrders} />
+      <MarketSellerNav active="/mon-marche/boutique" shop={shopInfo} newOrders={newOrders} unreadMessages={unreadMessages} />
       {!shop && (
         <p className="rounded-xl bg-zindo-green-50 p-4 text-sm text-zindo-green-900 ring-1 ring-zindo-green-200">
           👋 Bienvenue ! Créez votre boutique en 1 minute : elle apparaîtra sur le Marché ZINDO et vous pourrez publier vos produits du stock.

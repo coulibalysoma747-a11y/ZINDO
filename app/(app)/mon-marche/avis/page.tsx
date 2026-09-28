@@ -7,14 +7,14 @@ import { MarketSellerNav } from "../MarketSellerNav";
 
 /** Avis laissés par les clients sur la boutique et ses produits. */
 export default async function MyMarketReviewsPage() {
-  const { shop, newOrders } = await requireMarketSeller(PERMISSIONS.PRODUCTS_MANAGE);
+  const { shop, newOrders, unreadMessages } = await requireMarketSeller(PERMISSIONS.PRODUCTS_MANAGE);
   const reviews = shop ? await loadReviews({ shopId: shop.id }, 200) : [];
   const average = reviews.length ? Math.round((reviews.reduce((s, r) => s + r.rating, 0) / reviews.length) * 10) / 10 : null;
   const distribution = [5, 4, 3, 2, 1].map((n) => ({ n, count: reviews.filter((r) => r.rating === n).length }));
 
   return (
     <div className="max-w-5xl space-y-5">
-      <MarketSellerNav active="/mon-marche/avis" shop={shop} newOrders={newOrders} />
+      <MarketSellerNav active="/mon-marche/avis" shop={shop} newOrders={newOrders} unreadMessages={unreadMessages} />
       <div className="grid gap-4 md:grid-cols-[260px_1fr]">
         <div className="h-fit space-y-3 rounded-2xl bg-white p-5 ring-1 ring-zinc-200">
           <p className="text-4xl font-extrabold text-zinc-900">{average != null ? average.toLocaleString("fr-FR") : "—"}</p>

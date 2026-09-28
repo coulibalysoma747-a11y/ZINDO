@@ -16,7 +16,7 @@ const TX_LABELS: Record<string, string> = {
 
 /** Visibilité : portefeuille ZINDO et mises en avant payantes (Mon Marché). */
 export default async function MyMarketVisibilityPage() {
-  const { user, shop, newOrders } = await requireMarketSeller(PERMISSIONS.SETTINGS_MANAGE);
+  const { user, shop, newOrders, unreadMessages } = await requireMarketSeller(PERMISSIONS.SETTINGS_MANAGE);
   const now = new Date().toISOString();
 
   const [{ data: wallet }, { data: topupData }, { data: txData }, { data: priceData }, { data: listingData }, { data: boostData }] = await Promise.all([
@@ -48,7 +48,7 @@ export default async function MyMarketVisibilityPage() {
 
   return (
     <div className="max-w-5xl space-y-6">
-      <MarketSellerNav active="/mon-marche/visibilite" shop={shop} newOrders={newOrders} />
+      <MarketSellerNav active="/mon-marche/visibilite" shop={shop} newOrders={newOrders} unreadMessages={unreadMessages} />
 
       <div className="grid gap-4 lg:grid-cols-[320px_1fr]">
         <section className="space-y-2 rounded-2xl bg-zinc-900 p-5 text-white">
