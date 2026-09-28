@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { BadgeCheck, MapPin } from "lucide-react";
+import { BadgeCheck, Flame, MapPin } from "lucide-react";
 import type { MarketShopSummary } from "@/lib/market";
 import { Stars } from "./Stars";
 
@@ -49,6 +49,11 @@ export function ShopCard({ shop }: { shop: MarketShopSummary & { coverUrl: strin
         {shop.coverUrl && (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={shop.coverUrl} alt="" loading="lazy" className="h-full w-full object-cover transition duration-300 group-hover:scale-105" />
+        )}
+        {shop.boosted && (
+          <span className="absolute right-2 top-2 inline-flex items-center gap-1 rounded-lg bg-orange-500 px-2 py-0.5 text-[11px] font-bold text-white shadow">
+            <Flame className="h-3 w-3" /> Mise en avant
+          </span>
         )}
         <span className="absolute -bottom-6 left-4 rounded-full bg-white p-1 shadow">
           <ShopLogo shop={shop} size={48} />

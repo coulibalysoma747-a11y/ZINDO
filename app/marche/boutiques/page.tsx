@@ -5,8 +5,8 @@ export const dynamic = "force-dynamic";
 
 export default async function MarketShopsPage() {
   const shops = await loadPublishedShops();
-  // Boutiques vérifiées d'abord, puis les mieux notées.
-  const sorted = [...shops].sort((a, b) => Number(b.verified) - Number(a.verified) || (b.rating ?? 0) - (a.rating ?? 0));
+  // Boutiques mises en avant, puis vérifiées, puis les mieux notées.
+  const sorted = [...shops].sort((a, b) => Number(!!b.boosted) - Number(!!a.boosted) || Number(b.verified) - Number(a.verified) || (b.rating ?? 0) - (a.rating ?? 0));
   return (
     <div className="space-y-4">
       <div>

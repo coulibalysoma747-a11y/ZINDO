@@ -53,6 +53,8 @@ export type MarketProduct = {
   /** Note moyenne des avis (1 à 5), null sans avis. */
   rating: number | null;
   reviewCount: number;
+  /** Mise en avant payante en cours (badge « Mis en avant »). */
+  boosted: boolean;
   shop: MarketShopSummary;
 };
 
@@ -64,6 +66,7 @@ export type MarketShopSummary = {
   verified: boolean;
   rating: number | null;
   reviewCount: number;
+  boosted?: boolean;
 };
 
 /** Photos supplémentaires au plus par produit publié (en plus de la photo principale). */

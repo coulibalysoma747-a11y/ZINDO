@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { BadgeCheck, MapPin } from "lucide-react";
+import { BadgeCheck, Flame, MapPin } from "lucide-react";
 import { formatMoney } from "@/lib/format";
 import { discountPercent, type MarketProduct } from "@/lib/market";
 import { FavoriteButton } from "./FavoriteButton";
@@ -21,6 +21,11 @@ export function MarketProductCard({ product, favorite = false }: { product: Mark
         <span className="absolute right-2 top-2 z-10">
           <FavoriteButton listingId={product.listingId} initial={favorite} />
         </span>
+        {product.boosted && (
+          <span className="absolute bottom-2 left-2 inline-flex items-center gap-1 rounded-lg bg-orange-500 px-2 py-0.5 text-[11px] font-bold text-white shadow">
+            <Flame className="h-3 w-3" /> Mis en avant
+          </span>
+        )}
         {outOfStock && <span className="absolute inset-x-0 bottom-0 bg-zinc-900/70 py-1.5 text-center text-xs font-semibold text-white">Rupture de stock</span>}
       </div>
       <div className="flex flex-1 flex-col gap-1 p-3">

@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { BadgeCheck, ChevronRight, ShieldCheck, Smartphone, Store, Truck } from "lucide-react";
-import { loadMarketProducts, loadPublishedShops } from "@/lib/market-data";
+import { loadActiveBoosts, loadMarketProducts, loadPublishedShops } from "@/lib/market-data";
 import { getBuyerFavorites } from "@/lib/market-buyer";
 import { MARKET_CATEGORIES } from "@/lib/market";
 import { MarketProductGrid, MarketProductRow } from "@/components/market/MarketProductCard";
@@ -18,14 +18,19 @@ export default async function MarketHomePage({ searchParams }: { searchParams: P
     redirect(`/marche/recherche?${new URLSearchParams(Object.entries(params).filter(([, v]) => v) as [string, string][]).toString()}`);
   }
 
-  const shops = await loadPublishedShops();
-  const [popular, promos, latest, favorites] = await Promise.all([
+  const [shops, boosts] = await Promise.all([loadPublishedShops(), loadActiveBoosts()]);
+  const [featured, popular, promos, latest, favorites] = await Promise.all([
+    boosts.listingIds.size ? loadMarketProducts({ shops, listingIds: [...boosts.listingIds], sort: "populaires", limit: 10 }) : Promise.resolve([]),
     loadMarketProducts({ shops, sort: "populaires", limit: 10 }),
     loadMarketProducts({ shops, promoOnly: true, limit: 10 }),
     loadMarketProducts({ shops, limit: 20 }),
     getBuyerFavorites(),
   ]);
-  const featuredShops = [...shops].sort((a, b) => Number(b.verified) - Number(a.verified) || (b.rating ?? 0) - (a.rating ?? 0)).slice(0, 8);
+  const boostedShops = shops.filter((s) => s.boosted);
+  const featuredShops = [...shops]
+    .filter((s) => !s.boosted)
+    .sort((a, b) => Number(b.verified) - Number(a.verified) || (b.rating ?? 0) - (a.rating ?? 0))
+    .slice(0, 8);
   const heroPhotos = latest.slice(0, 4);
 
   return (
@@ -94,6 +99,24 @@ export default async function MarketHomePage({ searchParams }: { searchParams: P
           ))}
         </div>
       </section>
+
+      {featured.length > 0 && (
+        <section>
+          <SectionTitle title="🔥 Produits mis en avant" />
+          <MarketProductRow products={featured} favorites={favorites.listingIds} />
+        </section>
+      )}
+
+      {boostedShops.length > 0 && (
+        <section>
+          <SectionTitle title="Boutiques mises en avant" />
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {boostedShops.map((s) => (
+              <ShopCard key={s.slug} shop={s} />
+            ))}
+          </div>
+        </section>
+      )}
 
       {popular.length > 0 && (
         <section>

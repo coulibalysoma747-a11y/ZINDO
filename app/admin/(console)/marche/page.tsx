@@ -7,10 +7,13 @@ import { MARKET_REPORT_REASONS, marketOrderStatusLabel } from "@/lib/market";
 import { OrderStatusBadge } from "@/components/market/OrderStatusBadge";
 import { StarRow } from "@/components/market/Stars";
 import { AdminMarketButton } from "./AdminMarketButton";
+import { PriceRow, TopupButtons } from "./WalletAdmin";
 
 const TABS = [
   { key: "vue", label: "Vue d'ensemble" },
   { key: "signalements", label: "Signalements" },
+  { key: "recharges", label: "Recharges" },
+  { key: "tarifs", label: "Tarifs" },
   { key: "boutiques", label: "Boutiques" },
   { key: "commandes", label: "Commandes" },
   { key: "avis", label: "Avis" },
@@ -30,12 +33,13 @@ export default async function AdminMarketPage({ searchParams }: { searchParams: 
   const tab = TABS.some((t) => t.key === onglet) ? onglet : "vue";
 
   const count = (table: string) => supabase.from(table).select("*", { count: "exact", head: true });
-  const [shops, listings, buyers, openReports, orders] = await Promise.all([
+  const [shops, listings, buyers, openReports, orders, pendingTopups] = await Promise.all([
     count("market_shops").eq("published", true).eq("suspended", false),
     count("market_listings").eq("published", true).eq("removed_by_admin", false),
     count("market_buyers"),
     count("market_reports").eq("status", "OUVERT"),
     supabase.from("market_orders").select("status, total, createdAt:created_at").gte("created_at", daysAgoIso(30)),
+    count("market_topups").eq("status", "EN_ATTENTE"),
   ]);
   const orderRows = (orders.data ?? []) as { status: string; total: number }[];
   const delivered = orderRows.filter((o) => o.status === "LIVREE");
@@ -61,6 +65,9 @@ export default async function AdminMarketPage({ searchParams }: { searchParams: 
             {t.key === "signalements" && (openReports.count ?? 0) > 0 && (
               <span className="ml-1.5 rounded-full bg-red-600 px-1.5 py-0.5 text-[11px] font-bold text-white">{openReports.count}</span>
             )}
+            {t.key === "recharges" && (pendingTopups.count ?? 0) > 0 && (
+              <span className="ml-1.5 rounded-full bg-amber-500 px-1.5 py-0.5 text-[11px] font-bold text-white">{pendingTopups.count}</span>
+            )}
           </Link>
         ))}
       </nav>
@@ -84,6 +91,8 @@ export default async function AdminMarketPage({ searchParams }: { searchParams: 
       )}
 
       {tab === "signalements" && <ReportsTab />}
+      {tab === "recharges" && <TopupsTab />}
+      {tab === "tarifs" && <PricesTab />}
       {tab === "boutiques" && <ShopsTab />}
       {tab === "commandes" && <OrdersTab />}
       {tab === "avis" && <ReviewsTab />}
@@ -347,4 +356,72 @@ function Table({ head, children }: { head: string[]; children: React.ReactNode }
 
 function Empty({ text }: { text: string }) {
   return <p className="rounded-2xl bg-white p-8 text-center text-sm text-zinc-500 ring-1 ring-zinc-200">{text}</p>;
+}
+
+async function TopupsTab() {
+  const { data } = await supabase
+    .from("market_topups")
+    .select("id, amount, operator, reference, status, rejectReason:reject_reason, submittedAt:submitted_at, business:businesses(name, phone)")
+    .order("status")
+    .order("submitted_at", { ascending: false })
+    .limit(200);
+  const topups = (data ?? []) as unknown as {
+    id: string;
+    amount: number;
+    operator: string;
+    reference: string;
+    status: string;
+    rejectReason: string | null;
+    submittedAt: string;
+    business: { name: string; phone: string | null } | null;
+  }[];
+  if (topups.length === 0) return <Empty text="Aucune recharge." />;
+  return (
+    <Table head={["Commerce", "Montant", "Transfert", "Déclarée le", "Décision"]}>
+      {topups.map((t) => (
+        <tr key={t.id} className={t.status === "EN_ATTENTE" ? "" : "opacity-60"}>
+          <td className="px-4 py-3">
+            <p className="font-semibold text-zinc-900">{t.business?.name}</p>
+            <p className="text-xs text-zinc-500">{t.business?.phone}</p>
+          </td>
+          <td className="px-4 py-3 font-bold">{formatMoney(t.amount)}</td>
+          <td className="px-4 py-3">
+            {t.operator === "ORANGE" ? "Orange Money" : "Moov Money"}
+            <p className="font-mono text-xs text-zinc-600">{t.reference}</p>
+          </td>
+          <td className="px-4 py-3 text-zinc-600">{formatDateTime(t.submittedAt)}</td>
+          <td className="px-4 py-3">
+            {t.status === "EN_ATTENTE" ? (
+              <TopupButtons topupId={t.id} amount={t.amount} />
+            ) : t.status === "VALIDEE" ? (
+              <span className="text-xs font-semibold text-emerald-700">Créditée</span>
+            ) : (
+              <span className="text-xs text-red-600">Refusée : {t.rejectReason}</span>
+            )}
+          </td>
+        </tr>
+      ))}
+    </Table>
+  );
+}
+
+async function PricesTab() {
+  const { data } = await supabase.from("market_boost_prices").select("kind, days, price, active").order("kind").order("days");
+  const prices = (data ?? []) as { kind: "PRODUIT" | "BOUTIQUE"; days: number; price: number; active: boolean }[];
+  return (
+    <div className="space-y-6">
+      {(["PRODUIT", "BOUTIQUE"] as const).map((kind) => (
+        <section key={kind} className="space-y-2">
+          <h2 className="font-semibold text-zinc-900">{kind === "PRODUIT" ? "🔥 Produit mis en avant" : "🏪 Boutique mise en avant"}</h2>
+          <Table head={["Durée", "Prix", "", ""]}>
+            {prices
+              .filter((p) => p.kind === kind)
+              .map((p) => (
+                <PriceRow key={`${p.kind}-${p.days}`} kind={p.kind} days={p.days} price={p.price} active={p.active} />
+              ))}
+          </Table>
+        </section>
+      ))}
+    </div>
+  );
 }

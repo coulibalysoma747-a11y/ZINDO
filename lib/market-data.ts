@@ -1,4 +1,5 @@
 import "server-only";
+import { cache } from "react";
 import { supabase } from "@/lib/supabase";
 import { getCurrentUser } from "@/lib/auth";
 import { isFeatureEnabled, isFeatureEnabledGlobally, registerFeatureFlag } from "@/lib/feature-flags";
@@ -92,15 +93,16 @@ async function loadRatings(column: "shop_id" | "product_id", ids: string[]): Pro
 
 async function toShops(rows: ShopRow[]): Promise<MarketShop[]> {
   const visible = rows.filter((r) => !r.business.suspended);
-  const [verified, ratings] = await Promise.all([
+  const [verified, ratings, boosts] = await Promise.all([
     verifiedBusinessIds(visible.map((r) => r.businessId)),
     loadRatings("shop_id", visible.map((r) => r.id)),
+    loadActiveBoosts(),
   ]);
   return visible.map((r) => {
     const { business, ...shop } = r;
     void business;
     const rating = ratings.get(shop.id);
-    return { ...shop, verified: verified.has(shop.businessId), rating: rating?.rating ?? null, reviewCount: rating?.count ?? 0 };
+    return { ...shop, verified: verified.has(shop.businessId), rating: rating?.rating ?? null, reviewCount: rating?.count ?? 0, boosted: boosts.shopIds.has(shop.id) };
   });
 }
 
@@ -149,11 +151,14 @@ export type MarketProductQuery = {
   category?: string;
   productId?: string;
   productIds?: string[];
+  listingIds?: string[];
   promoOnly?: boolean;
   inStockOnly?: boolean;
   minPrice?: number;
   maxPrice?: number;
   sort?: MarketSort;
+  /** Place les produits mis en avant en tête (pages de recherche). */
+  boostFirst?: boolean;
   limit?: number;
 };
 
@@ -164,11 +169,13 @@ export async function loadMarketProducts({
   category,
   productId,
   productIds,
+  listingIds,
   promoOnly,
   inStockOnly,
   minPrice,
   maxPrice,
   sort = "recents",
+  boostFirst = false,
   limit = 60,
 }: MarketProductQuery): Promise<MarketProduct[]> {
   if (shops.length === 0) return [];
@@ -194,6 +201,7 @@ export async function loadMarketProducts({
   if (category) query = query.eq("market_category", category);
   if (productId) query = query.eq("product_id", productId);
   if (productIds) query = query.in("product_id", productIds);
+  if (listingIds) query = query.in("id", listingIds);
   if (promoOnly) query = query.not("promo_price", "is", null);
   // Caractères qui casseraient la syntaxe du filtre or() de PostgREST.
   const term = (q ?? "").replace(/[,()%*\\]/g, " ").trim();
@@ -209,9 +217,10 @@ export async function loadMarketProducts({
   if (rows.length === 0) return [];
 
   const productIdsFound = rows.map((r) => r.product.id);
-  const [{ data: stockData }, ratings] = await Promise.all([
+  const [{ data: stockData }, ratings, boosts] = await Promise.all([
     supabase.from("product_stocks").select("productId:product_id, locationId:location_id, quantity").in("product_id", productIdsFound),
     loadRatings("product_id", productIdsFound),
+    loadActiveBoosts(),
   ]);
   const stocks = (stockData ?? []) as { productId: string; locationId: string; quantity: number }[];
 
@@ -239,6 +248,7 @@ export async function loadMarketProducts({
       viewCount: r.viewCount,
       rating: rating?.rating ?? null,
       reviewCount: rating?.count ?? 0,
+      boosted: boosts.listingIds.has(r.id),
       shop: { slug: shop.slug, name: shop.name, city: shop.city, logoUrl: shop.logoUrl, verified: shop.verified, rating: shop.rating, reviewCount: shop.reviewCount },
     };
   });
@@ -249,6 +259,8 @@ export async function loadMarketProducts({
   if (maxPrice != null) products = products.filter((p) => effective(p) <= maxPrice);
   if (sort === "prix-croissant") products.sort((a, b) => effective(a) - effective(b));
   if (sort === "prix-decroissant") products.sort((a, b) => effective(b) - effective(a));
+  // Produits mis en avant en premier (tri stable : l’ordre choisi est gardé entre eux).
+  if (boostFirst) products.sort((a, b) => Number(b.boosted) - Number(a.boosted));
   return products.slice(0, limit);
 }
 
@@ -287,3 +299,17 @@ export async function recordMarketView(target: { listingId?: string; shopId?: st
   const { error } = await supabase.rpc("market_record_view", { p_listing_id: target.listingId ?? null, p_shop_id: target.shopId ?? null });
   if (error) console.error("[recordMarketView]", error.message);
 }
+
+/** Mises en avant payantes en cours (produits et boutiques), lues une fois par requête. */
+export const loadActiveBoosts = cache(async (): Promise<{ listingIds: Set<string>; shopIds: Set<string> }> => {
+  const { data } = await supabase
+    .from("market_boosts")
+    .select("listingId:listing_id, shopId:shop_id")
+    .lte("starts_at", new Date().toISOString())
+    .gt("ends_at", new Date().toISOString());
+  const rows = (data ?? []) as { listingId: string | null; shopId: string | null }[];
+  return {
+    listingIds: new Set(rows.flatMap((r) => (r.listingId ? [r.listingId] : []))),
+    shopIds: new Set(rows.flatMap((r) => (r.shopId ? [r.shopId] : []))),
+  };
+});

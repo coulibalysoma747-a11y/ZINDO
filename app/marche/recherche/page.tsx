@@ -30,7 +30,7 @@ export default async function MarketSearchPage({ searchParams }: { searchParams:
   const shops = city ? allShops.filter((s) => s.city?.trim().toLowerCase() === city.toLowerCase()) : allShops;
 
   const [products, favorites] = await Promise.all([
-    loadMarketProducts({ shops, q, category, promoOnly: params.promo === "1", inStockOnly: params.stock === "1", minPrice, maxPrice, sort, limit: 120 }),
+    loadMarketProducts({ shops, q, category, promoOnly: params.promo === "1", inStockOnly: params.stock === "1", minPrice, maxPrice, sort, boostFirst: true, limit: 120 }),
     getBuyerFavorites(),
   ]);
   const term = q.toLowerCase();

@@ -96,3 +96,40 @@ export async function setBuyerBlockedAction(buyerId: string, blocked: boolean): 
   refresh();
   return { success: blocked ? "Acheteur bloqué." : "Acheteur débloqué." };
 }
+
+/** Valide une recharge de portefeuille : le solde du vendeur est crédité (une seule fois). */
+export async function validateTopupAction(topupId: string): Promise<Result> {
+  const admin = await requireSuperAdmin();
+  const { data: balance, error } = await supabase.rpc("market_validate_topup", { p_topup_id: topupId, p_admin: admin.id });
+  if (error) return { error: error.message.includes("DEJA") ? "Recharge déjà traitée." : "Recharge introuvable." };
+  await logAdminAction({ superAdminId: admin.id, actorName: admin.name, action: "VALIDATE", entity: "market_topup", entityId: topupId, details: `Nouveau solde : ${balance} FCFA` });
+  refresh();
+  return { success: "Recharge validée : portefeuille crédité." };
+}
+
+/** Refuse une recharge (transfert introuvable, montant différent…) ; le vendeur voit le motif. */
+export async function rejectTopupAction(topupId: string, reason?: string): Promise<Result> {
+  const admin = await requireSuperAdmin();
+  if (!reason?.trim()) return { error: "Indiquez le motif du refus." };
+  const { data, error } = await supabase
+    .from("market_topups")
+    .update({ status: "REFUSEE", reject_reason: reason.trim(), reviewed_at: new Date().toISOString(), reviewed_by: admin.id })
+    .eq("id", topupId)
+    .eq("status", "EN_ATTENTE")
+    .select("id");
+  if (error || !data?.length) return { error: "Recharge introuvable ou déjà traitée." };
+  await logAdminAction({ superAdminId: admin.id, actorName: admin.name, action: "REJECT", entity: "market_topup", entityId: topupId, details: reason.trim() });
+  refresh();
+  return { success: "Recharge refusée." };
+}
+
+/** Modifie le prix (ou désactive) une durée de mise en avant. */
+export async function updateBoostPriceAction(kind: "PRODUIT" | "BOUTIQUE", days: number, price: number, active: boolean): Promise<Result> {
+  const admin = await requireSuperAdmin();
+  if (!Number.isInteger(price) || price < 0) return { error: "Prix invalide." };
+  const { error } = await supabase.from("market_boost_prices").update({ price, active }).eq("kind", kind).eq("days", days);
+  if (error) return { error: "Mise à jour impossible." };
+  await logAdminAction({ superAdminId: admin.id, actorName: admin.name, action: "UPDATE", entity: "market_boost_price", details: `${kind} ${days} j : ${price} FCFA${active ? "" : " (désactivé)"}` });
+  refresh();
+  return { success: "Tarif enregistré." };
+}
