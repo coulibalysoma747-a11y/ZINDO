@@ -21,6 +21,8 @@ import { VehicleUnitsPanel } from "@/components/products/VehicleUnitsPanel";
 import { PackagingUnitsPanel } from "@/components/products/PackagingUnitsPanel";
 import { PriceTiersPanel } from "@/components/products/PriceTiersPanel";
 import { ToggleActiveButton } from "./ToggleActiveButton";
+import { isMarketEnabledFor } from "@/lib/market-data";
+import { PublishToMarket } from "../../mon-marche/PublishToMarket";
 
 const REASON_LABELS: Record<string, string> = {
   ACHAT: "Achat",
@@ -73,6 +75,20 @@ export default async function ProductDetailPage({
     .maybeSingle();
   if (!productRow) notFound();
   const product = productRow as unknown as ProductRow;
+
+  // « Publier dans mon Marché » (flag nouveau_marche).
+  const [marketEnabled, canManageProducts] = await Promise.all([
+    isMarketEnabledFor(user.businessId, user.business.activityKey),
+    hasPermission(user.businessId, user.role, PERMISSIONS.PRODUCTS_MANAGE, user.id),
+  ]);
+  const showMarket = marketEnabled && canManageProducts;
+  const { data: marketListing } = showMarket
+    ? await supabase
+        .from("market_listings")
+        .select("category:market_category, promoPrice:promo_price, published")
+        .eq("product_id", product.id)
+        .maybeSingle()
+    : { data: null };
 
   const { data: stocksData } = await supabase
     .from("product_stocks")
@@ -171,6 +187,8 @@ export default async function ProductDetailPage({
           </ButtonLink>
         </div>
       </div>
+
+      {showMarket && <PublishToMarket productId={product.id} salePrice={product.salePrice} initial={marketListing} />}
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <Card className="lg:col-span-2">

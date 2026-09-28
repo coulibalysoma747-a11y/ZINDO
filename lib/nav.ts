@@ -83,6 +83,7 @@ export type NavItem = {
     | "invoices"
     | "support"
     | "online-store"
+    | "market"
     | "vehicle-sales"
     | "quotes"
     | "vehicle-registration"
@@ -405,6 +406,7 @@ export const NAV_ITEMS: NavItem[] = [
     featureFlag: "boutique_en_ligne",
     planFeature: "boutique_en_ligne",
   },
+  { label: "Mon Marché", href: "/mon-marche", icon: "market", permission: PERMISSIONS.PRODUCTS_MANAGE, featureFlag: "nouveau_marche" },
   { label: "Utilisateurs", href: "/utilisateurs", icon: "users", permission: PERMISSIONS.USERS_MANAGE },
   { label: "Parrainage", href: "/parrainage", icon: "referral", permission: PERMISSIONS.SETTINGS_MANAGE, featureFlag: "parrainage" },
   { label: "Aide & support", href: "/support", icon: "support" },

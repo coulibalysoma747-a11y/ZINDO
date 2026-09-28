@@ -94,3 +94,8 @@ export async function deleteUploadedImage(url: string | null | undefined) {
     // fichier déjà absent ou Supabase non configuré — sans conséquence
   }
 }
+
+/** Logo et photo de couverture d'une boutique du Marché (flag nouveau_marche). */
+export async function saveMarketShopImage(file: File) {
+  return saveImage(file, "marche");
+}

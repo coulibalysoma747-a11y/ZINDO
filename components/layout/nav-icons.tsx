@@ -117,6 +117,7 @@ const ICON_KEYS_ORDER: NavItem["icon"][] = [
   "settings",
   "support",
   "online-store",
+  "market",
   "vehicle-sales",
   "quotes",
   "vehicle-registration",
@@ -187,6 +188,7 @@ export const NAV_ICONS: Record<NavItem["icon"], React.ComponentType<{ className?
   settings: Settings,
   support: LifeBuoy,
   "online-store": ShoppingBasket,
+  market: Store,
   "vehicle-sales": Bike,
   quotes: FileSignature,
   "vehicle-registration": IdCard,
@@ -265,7 +267,7 @@ const NAV_SECTIONS: { title: string | null; icons: NavItem["icon"][] }[] = [
   { title: "Achats", icons: ["purchases", "purchase-orders", "suppliers", "expenses"] },
   { title: "Clients", icons: ["customers", "credits", "credit-reminders"] },
   { title: "Suivi", icons: ["reports", "history-global"] },
-  { title: "Administration", icons: ["locations", "online-store", "users", "referral", "subscription"] },
+  { title: "Administration", icons: ["locations", "online-store", "market", "users", "referral", "subscription"] },
 ];
 
 export function groupNavItems(items: NavItem[]): { title: string | null; items: NavItem[] }[] {
