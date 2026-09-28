@@ -2,7 +2,7 @@
 
 import { useActionState, useState } from "react";
 import { Camera, IdCard, UserRound } from "lucide-react";
-import { submitRenewalAction, submitVerificationAction } from "@/lib/actions/market-verification";
+import { createVerificationUploadAction, submitRenewalAction, submitVerificationAction } from "@/lib/actions/market-verification";
 import { useKeepValuesOnError } from "@/lib/keep-form-values";
 
 const refInput =
@@ -50,6 +50,8 @@ function PhotoField({ name, label, hint, capture, icon: Icon }: {
   icon: typeof Camera;
 }) {
   const [preview, setPreview] = useState<string | null>(null);
+  const [directPath, setDirectPath] = useState("");
+  const [uploading, setUploading] = useState(false);
   return (
     <label className="flex cursor-pointer items-center gap-3 rounded-2xl border-2 border-dashed border-zinc-200 bg-white p-3 hover:border-zindo-green-500">
       <div className="flex h-20 w-28 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-zinc-100">
@@ -62,24 +64,46 @@ function PhotoField({ name, label, hint, capture, icon: Icon }: {
       </div>
       <div className="min-w-0">
         <p className="text-sm font-bold text-zindo-ink-900">{label}</p>
-        <p className="text-xs text-zinc-500">{preview ? "Photo prise ✓ (touchez pour la refaire)" : hint}</p>
+        <p className="text-xs text-zinc-500">
+          {uploading ? "Envoi de la photo… attendez avant d'envoyer la demande." : preview ? "Photo prise ✓ (touchez pour la refaire)" : hint}
+        </p>
       </div>
+      {directPath && <input type="hidden" name={`${name}Path`} value={directPath} />}
       <input
         type="file"
         name={name}
         accept="image/*"
         capture={capture}
-        required
+        required={!directPath}
         className="sr-only"
         onChange={async (e) => {
           const input = e.currentTarget;
           const f = input.files?.[0];
+          setDirectPath("");
           if (!f) return setPreview(null);
-          const small = await compressImage(f);
-          const dt = new DataTransfer();
-          dt.items.add(small);
-          input.files = dt.files;
-          setPreview(URL.createObjectURL(small));
+          setPreview(URL.createObjectURL(f));
+          // Envoi direct en pleine qualité vers le dossier privé (sans la limite de Vercel).
+          setUploading(true);
+          try {
+            const target = await createVerificationUploadAction(name, f.type);
+            if ("error" in target) throw new Error(target.error);
+            const body = new FormData();
+            body.append("", f);
+            const response = await fetch(target.signedUrl, { method: "PUT", body, headers: { "x-upsert": "false" } });
+            if (!response.ok) throw new Error("Échec de l'envoi");
+            setDirectPath(target.path);
+            // La photo est déjà dans le stockage : elle ne repart pas avec le formulaire.
+            input.files = new DataTransfer().files;
+          } catch {
+            // Repli : photo réduite (format non pris en charge, réseau…) envoyée avec le formulaire.
+            const small = await compressImage(f);
+            const dt = new DataTransfer();
+            dt.items.add(small);
+            input.files = dt.files;
+            setPreview(URL.createObjectURL(small));
+          } finally {
+            setUploading(false);
+          }
         }}
       />
     </label>

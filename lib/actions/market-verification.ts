@@ -15,8 +15,35 @@ import { logAdminAction } from "@/lib/admin-audit";
  * d'identité vont dans le bucket PRIVÉ "verifications" : jamais d'URL publique.
  */
 const BUCKET = "verifications";
-const MAX_BYTES = 8 * 1024 * 1024;
 const PACK_DAYS = 30;
+const DIRECT_TYPES: Record<string, string> = { "image/jpeg": "jpg", "image/png": "png", "image/webp": "webp" };
+const PHOTO_LABELS = { idFront: "recto", idBack: "verso", selfie: "selfie" } as const;
+
+/**
+ * Adresse d'envoi signée pour qu'une photo de vérification parte directement
+ * du téléphone vers le bucket PRIVÉ, en pleine qualité, sans la limite de
+ * ~4,5 Mo par requête de Vercel. Le chemin reste dans le dossier du commerce.
+ */
+export async function createVerificationUploadAction(field: string, contentType: string): Promise<{ signedUrl: string; path: string } | { error: string }> {
+  const user = await requireUser();
+  if (user.role !== "ADMIN") return { error: "Seul le propriétaire du compte peut demander la vérification." };
+  const label = PHOTO_LABELS[field as keyof typeof PHOTO_LABELS];
+  const ext = DIRECT_TYPES[contentType];
+  if (!label || !ext) return { error: "Format non pris en charge" };
+  const path = `${user.businessId}/${randomUUID()}-${label}.${ext}`;
+  const { data, error } = await supabase.storage.from(BUCKET).createSignedUploadUrl(path);
+  if (error || !data) return { error: "Échec de la préparation de l'envoi" };
+  return { signedUrl: data.signedUrl, path };
+}
+
+/** Chemin d'une photo déjà envoyée directement, seulement s'il est bien dans le dossier de ce commerce. */
+function directPhotoPath(formData: FormData, field: keyof typeof PHOTO_LABELS, businessId: string): string | null {
+  const value = formData.get(`${field}Path`);
+  if (typeof value !== "string") return null;
+  const escaped = businessId.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const pattern = new RegExp(`^${escaped}/[0-9a-f-]{36}-${PHOTO_LABELS[field]}\\.(jpg|png|webp)$`);
+  return pattern.test(value) ? value : null;
+}
 
 function extendPack(currentEnd: string | null): string {
   const base = Math.max(Date.now(), currentEnd ? new Date(currentEnd).getTime() : 0);
@@ -46,17 +73,16 @@ export async function submitVerificationAction(_prev: VerificationState, formDat
   const paymentReference = readReference(formData);
   if (!paymentReference) return { error: "Indiquez la référence de votre paiement de 1 000 FCFA." };
 
-  const files = {
-    front: formData.get("idFront"),
-    back: formData.get("idBack"),
-    selfie: formData.get("selfie"),
-  };
-  for (const [label, f] of Object.entries(files)) {
+  // Chaque photo arrive soit déjà envoyée directement (chemin), soit en fichier (repli).
+  const fields = ["idFront", "idBack", "selfie"] as const;
+  const direct = Object.fromEntries(fields.map((f) => [f, directPhotoPath(formData, f, user.businessId)])) as Record<(typeof fields)[number], string | null>;
+  for (const field of fields) {
+    if (direct[field]) continue;
+    const f = formData.get(field);
     if (!(f instanceof File) || f.size === 0) {
-      return { error: label === "selfie" ? "Ajoutez votre photo (selfie)." : "Ajoutez le recto et le verso de votre pièce." };
+      return { error: field === "selfie" ? "Ajoutez votre photo (selfie)." : "Ajoutez le recto et le verso de votre pièce." };
     }
     if (!f.type.startsWith("image/")) return { error: "Seules les photos sont acceptées." };
-    if (f.size > MAX_BYTES) return { error: "Une photo dépasse 8 Mo : reprenez-la en qualité normale." };
   }
 
   const { data: existing } = await supabase
@@ -69,11 +95,9 @@ export async function submitVerificationAction(_prev: VerificationState, formDat
 
   let paths: string[];
   try {
-    paths = await Promise.all([
-      uploadPrivate(user.businessId, files.front as File, "recto"),
-      uploadPrivate(user.businessId, files.back as File, "verso"),
-      uploadPrivate(user.businessId, files.selfie as File, "selfie"),
-    ]);
+    paths = await Promise.all(
+      fields.map((field) => direct[field] ?? uploadPrivate(user.businessId, formData.get(field) as File, PHOTO_LABELS[field]))
+    );
   } catch (e) {
     console.error("[submitVerificationAction] Échec de l'envoi :", e instanceof Error ? e.message : e);
     return { error: "Impossible d'envoyer les photos. Réessayez." };
