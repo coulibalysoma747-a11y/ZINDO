@@ -9,7 +9,8 @@ import { PERMISSIONS } from "@/lib/permissions";
 import { getCurrentBuyer } from "@/lib/market-buyer";
 import { isMarketEnabledFor, loadMarketProducts, loadPublishedShops } from "@/lib/market-data";
 import { MARKET_ORDER_STEPS, marketOrderStatusLabel, normalizeBuyerPhone, type MarketOrderStatus } from "@/lib/market";
-import { createSaleAction, recordStockMovements } from "@/lib/actions/sales";
+import { createSaleAction, recordStockMovements, type CartItemInput } from "@/lib/actions/sales";
+import { ensureMiscItemProduct } from "@/lib/misc-item";
 import { sendPushToBusiness } from "@/lib/push";
 import { formatMoney } from "@/lib/format";
 
@@ -211,6 +212,7 @@ type MerchantOrderRow = {
   customerPhone: string;
   paymentMethod: string;
   mobileMoneyOperator: "ORANGE" | "MOOV" | null;
+  deliveryFee: number;
   stockLocationId: string | null;
   saleId: string | null;
   shop: { locationId: string | null };
@@ -230,7 +232,7 @@ export async function updateMarketOrderStatusAction(orderId: string, status: Mar
   const { data } = await supabase
     .from("market_orders")
     .select(
-      "id, number, status, customerName:customer_name, customerPhone:customer_phone, paymentMethod:payment_method, mobileMoneyOperator:mobile_money_operator, " +
+      "id, number, status, customerName:customer_name, customerPhone:customer_phone, paymentMethod:payment_method, mobileMoneyOperator:mobile_money_operator, deliveryFee:delivery_fee, " +
         "stockLocationId:stock_location_id, saleId:sale_id, shop:market_shops!inner(locationId:location_id), items:market_order_items(productId:product_id, name, unitPrice:unit_price, quantity)"
     )
     .eq("id", orderId)
@@ -276,7 +278,19 @@ export async function updateMarketOrderStatusAction(orderId: string, status: Mar
       // Le stock déjà sorti est remis puis revendu par la vraie vente (caisse, ticket, rapports).
       await recordStockMovements(items, { ...movementBase, locationId: stockLocationId, direction: "IN", note: `Commande Marché ${order.number} → vente` });
       const customerId = await findOrCreateCustomer(user.businessId, order.customerName, order.customerPhone);
-      const saleItems = order.items.map((i) => ({ productId: i.productId, quantity: Number(i.quantity), unitPrice: Number(i.unitPrice), discount: 0 }));
+      const saleItems: CartItemInput[] = order.items.map((i) => ({ productId: i.productId, quantity: Number(i.quantity), unitPrice: Number(i.unitPrice), discount: 0 }));
+      // Frais de livraison : ligne « Article divers (Frais de livraison) » de la vente, sans
+      // mouvement de stock, pour que la caisse encaisse le montant complet payé par le client.
+      const deliveryFee = Number(order.deliveryFee) || 0;
+      if (deliveryFee > 0) {
+        const misc = await ensureMiscItemProduct(user.businessId);
+        if (!misc) {
+          await recordStockMovements(items, { ...movementBase, locationId: stockLocationId, direction: "OUT", note: `Commande Marché ${order.number}` });
+          await supabase.from("market_orders").update({ stock_location_id: stockLocationId }).eq("id", order.id);
+          return { error: "Impossible d'ajouter les frais de livraison à la vente. Réessayez." };
+        }
+        saleItems.push({ productId: misc.id, quantity: 1, unitPrice: deliveryFee, discount: 0, packagingLabel: "Frais de livraison", multiplier: 1 });
+      }
       const total = saleItems.reduce((sum, i) => sum + i.quantity * i.unitPrice, 0);
       const sale = await createSaleAction({
         locationId: stockLocationId,

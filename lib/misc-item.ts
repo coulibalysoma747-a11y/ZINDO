@@ -31,3 +31,24 @@ export async function findMiscItemProductIds(businessId: string, productIds: str
     .in("id", productIds);
   return new Set(((data ?? []) as Array<{ id: string }>).map((p) => p.id));
 }
+
+/**
+ * Fiche cachée « Article divers » du commerce, créée au premier usage (inactive,
+ * donc absente des listes de produits). Sert aux lignes sans stock : prix rapide
+ * de la caisse, frais de livraison d'une commande du Marché…
+ */
+export async function ensureMiscItemProduct(businessId: string): Promise<{ id: string; name: string; reference: string; unit: string } | null> {
+  const select = "id, name, reference, unit";
+  const { data: existing } = await supabase.from("products").select(select).eq("business_id", businessId).eq("reference", MISC_ITEM_REFERENCE).maybeSingle();
+  if (existing) return existing as { id: string; name: string; reference: string; unit: string };
+  const { data: created, error } = await supabase
+    .from("products")
+    .insert({ business_id: businessId, reference: MISC_ITEM_REFERENCE, name: "Article divers", purchase_price: 0, sale_price: 0, active: false })
+    .select(select)
+    .single();
+  if (!error && created) return created as { id: string; name: string; reference: string; unit: string };
+  // Deux créations simultanées : l'autre a gagné (référence unique par commerce).
+  const { data: again } = await supabase.from("products").select(select).eq("business_id", businessId).eq("reference", MISC_ITEM_REFERENCE).maybeSingle();
+  if (!again) console.error("[ensureMiscItemProduct] Échec de la création :", error?.message);
+  return (again as { id: string; name: string; reference: string; unit: string } | null) ?? null;
+}
