@@ -34,7 +34,7 @@ import { SOLUTION_PAGES } from "@/lib/seo-pages";
 import { AccueilProHeader } from "@/components/landing/AccueilProHeader";
 import { PublicHelpChat } from "@/components/PublicHelpChat";
 import { CaisseAnimee, CreditsAnimes, StockAnime } from "@/components/landing/AccueilProEcrans";
-import { ApercuCookie, LiveDashboard, Reveal } from "@/components/landing/AccueilProAnime";
+import { ApercuCookie, Reveal } from "@/components/landing/AccueilProAnime";
 
 type Faq = { question: string; answer: string };
 
@@ -91,9 +91,27 @@ export function AccueilPro({ trialDays, faqs }: { trialDays: number; faqs: Faq[]
             </Reveal>
           </div>
 
-          <Reveal delay={200}>
-            <div className="rounded-[2rem] bg-gradient-to-br from-zindo-green-50 via-white to-zinc-100 p-5 pb-20 ring-1 ring-zinc-200/70 sm:p-10 sm:pb-24">
-              <LiveDashboard />
+          <Reveal delay={200} className="relative">
+            <div className="relative aspect-[4/3] overflow-hidden rounded-[2rem] bg-zinc-100 lg:aspect-[4/4.4]">
+              <Image
+                src="/photos/commercant-comptoir.webp"
+                alt="Un commerçant souriant derrière son comptoir, dans sa boutique de vêtements"
+                fill
+                priority
+                sizes="(min-width: 1024px) 560px, 100vw"
+                className="object-cover object-[60%_center]"
+              />
+            </div>
+            {/* Une seule touche « logiciel » : la vente qui vient d'être enregistrée. */}
+            <div className="absolute -bottom-6 left-4 right-4 flex items-center gap-3 rounded-2xl bg-white p-4 shadow-[0_20px_50px_-12px_rgb(0_0_0/0.25)] ring-1 ring-black/5 sm:left-auto sm:right-6 sm:w-80">
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-zindo-green-50 text-zindo-green-700">
+                <Check className="h-5 w-5" />
+              </span>
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-semibold">Vente enregistrée</p>
+                <p className="truncate text-xs text-zinc-500">3 articles · Orange Money</p>
+              </div>
+              <p className="shrink-0 text-sm font-semibold tabular-nums">21 500 F</p>
             </div>
           </Reveal>
         </section>
@@ -223,8 +241,8 @@ export function AccueilPro({ trialDays, faqs }: { trialDays: number; faqs: Faq[]
         {/* Conçu au Burkina Faso : vraie photo de Ouagadougou. */}
         <section className="relative isolate overflow-hidden">
           <Image
-            src="/photos/grand-marche-bobo-dioulasso.webp"
-            alt="Le Grand Marché de Bobo-Dioulasso et son architecture en terre"
+            src="/photos/rue-commercante-ouagadougou.webp"
+            alt="Boutiques d'une rue commerçante de Ouagadougou"
             fill
             sizes="100vw"
             className="-z-10 object-cover"
@@ -246,7 +264,6 @@ export function AccueilPro({ trialDays, faqs }: { trialDays: number; faqs: Faq[]
                   </li>
                 ))}
               </ul>
-              <p className="mt-10 text-xs text-white/60">Photo : le Grand Marché de Bobo-Dioulasso.</p>
             </Reveal>
           </div>
         </section>
@@ -370,22 +387,22 @@ export function AccueilPro({ trialDays, faqs }: { trialDays: number; faqs: Faq[]
 
 const COMMERCES = [
   {
-    title: "Boutiques et pièces détachées",
-    text: "Références, marques, stock par rayon, crédits clients et plusieurs vendeurs.",
-    photo: "/photos/magasin-pieces-detachees.webp",
-    alt: "Devanture d'un magasin de pièces détachées au Burkina Faso",
+    title: "Boutiques et magasins",
+    text: "Caisse rapide, stock par rayon, crédits clients et plusieurs vendeurs.",
+    photo: "/photos/commercante-boutique.webp",
+    alt: "Une commerçante debout parmi les produits de sa boutique",
+  },
+  {
+    title: "Alimentation et grossistes",
+    text: "Vente au détail et en gros, sacs et cartons, plusieurs dépôts.",
+    photo: "/photos/vente-riz-ouagadougou.webp",
+    alt: "Étal de vente de riz et de vêtements à Ouagadougou",
   },
   {
     title: "Pharmacies et dépôts",
     text: "Lots, dates de péremption et alertes avant la rupture.",
     photo: "/photos/pharmacie-rayons.webp",
     alt: "Rayons de médicaments dans une pharmacie",
-  },
-  {
-    title: "Pagnes et vêtements",
-    text: "Tailles, couleurs, variantes et commandes sur mesure.",
-    photo: "/photos/pagnes-faso-dan-fani.webp",
-    alt: "Pagnes tissés Faso Dan Fani empilés",
   },
 ];
 
@@ -580,9 +597,8 @@ function FooterPro() {
           ))}
         </div>
         <p className="mt-14 text-[11px] leading-relaxed text-zinc-400">
-          Photos (Wikimedia Commons) : « Magasin de pièces détachées », WILLAV-FR, et « Pagnes tissés Faso Dan Fani », Souleymane Yalgweogo
-          (CC BY-SA 4.0) ; « BoboDioulasso-Market », Semiliki (CC BY-SA 3.0) ; « A Drug Store in Nigeria », Beendy234 (CC0). Écrans du logiciel :
-          données d&apos;exemple.
+          Photos : Tobin Jones et AMISOM (domaine public, CC0) ; « Ouagadougou shop », Wegmann, et « Vente riz de Bagré Ouaga », Sputniktilt
+          (CC BY-SA 3.0, Wikimedia Commons) ; « A Drug Store in Nigeria », Beendy234 (CC0). Écrans du logiciel : données d&apos;exemple.
         </p>
         <div className="mt-6 flex flex-col items-center justify-between gap-4 border-t border-zinc-200 pt-6 text-xs text-zinc-500 sm:flex-row">
           <p>© {new Date().getFullYear()} ZINDO. Tous droits réservés.</p>
