@@ -61,7 +61,7 @@ export function CustomOrderForm({
 
           <div className="grid grid-cols-2 gap-3">
             <Field label="Prix convenu" htmlFor="agreedPrice">
-              <Input id="agreedPrice" name="agreedPrice" type="number" min={0} step="1" defaultValue={0} />
+              <Input id="agreedPrice" name="agreedPrice" type="number" inputMode="decimal" min={0} step="any" defaultValue={0} />
             </Field>
             <Field label="Livraison prévue le" htmlFor="deliveryDate">
               <Input id="deliveryDate" name="deliveryDate" type="date" />

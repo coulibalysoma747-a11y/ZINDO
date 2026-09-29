@@ -1,6 +1,6 @@
 "use client";
 
-import { currencyLabel } from "@/lib/format";
+import { currencyLabel, moneyStep } from "@/lib/format";
 import { useActionState, useState } from "react";
 import { Field, Input, Select } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
@@ -44,7 +44,7 @@ export function PaymentForm({
           </Field>
           <div className="grid gap-3 sm:grid-cols-2">
             <Field label={`Montant (${unit})`} htmlFor="amount" hint={`Reste à payer : ${remaining.toLocaleString("fr-FR")} ${unit}`}>
-              <Input id="amount" name="amount" type="number" min={1} max={remaining} step="1" required />
+              <Input id="amount" name="amount" type="number" inputMode="decimal" min={1} max={remaining} step={moneyStep(currency)} required />
             </Field>
             <Field label="Moyen de paiement" htmlFor="method">
               <Select id="method" name="method" defaultValue="ESPECES">

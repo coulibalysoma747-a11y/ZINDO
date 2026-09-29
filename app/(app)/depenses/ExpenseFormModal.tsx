@@ -59,7 +59,7 @@ export function ExpenseFormModal({
         </Field>
         <div className="grid grid-cols-2 gap-3">
           <Field label="Montant" htmlFor="amount">
-            <Input id="amount" name="amount" type="number" min={1} step="1" placeholder="0" defaultValue={expense?.amount} required />
+            <Input id="amount" name="amount" type="number" inputMode="decimal" min={1} step="any" placeholder="0" defaultValue={expense?.amount} required />
           </Field>
           <Field label="Date" htmlFor="date">
             <Input id="date" name="date" type="date" defaultValue={expense ? expense.date.slice(0, 10) : todayIso()} />

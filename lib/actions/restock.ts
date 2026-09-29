@@ -160,6 +160,7 @@ export async function getSmartRestockAction(options: {
   }));
 
   return computeSmartRestock({
+    currency: user.business.currency,
     products,
     movements,
     suppliers: (suppliersRes.data ?? []) as unknown as EngineSupplier[],

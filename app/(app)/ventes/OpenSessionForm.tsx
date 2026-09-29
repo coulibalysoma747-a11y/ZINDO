@@ -42,9 +42,9 @@ export function OpenSessionForm({ locationName }: { locationName: string }) {
               <Input
                 id="openingAmount"
                 name="openingAmount"
-                type="number"
+                type="number" inputMode="decimal"
                 min={0}
-                step="1"
+                step="any"
                 placeholder="0"
                 required
                 autoFocus

@@ -1,4 +1,4 @@
-import { formatMoney, formatLongDate, numberToFrenchWords } from "@/lib/format";
+import { formatMoney, formatLongDate, amountInWords } from "@/lib/format";
 import type { FactureData } from "./Facture";
 
 export type EleganteVariant = "prestige" | "royal" | "ivoire" | "emeraude" | "bordeaux";
@@ -35,7 +35,6 @@ export function FactureElegante({ data, variant }: { data: FactureData; variant:
   const t = THEMES[variant];
   const currency = data.currency ?? "XOF";
   const money = (v: number) => formatMoney(v, currency);
-  const currencyWord = currency === "XOF" ? "Francs CFA" : currency;
   const documentTitle = data.documentTitle ?? "Facture";
   const address = data.locationAddress ?? data.businessAddress;
   const legal = [data.ifu ? `IFU ${data.ifu}` : null, data.rccm ? `RCCM ${data.rccm}` : null].filter(Boolean).join("  ·  ");
@@ -212,7 +211,7 @@ export function FactureElegante({ data, variant }: { data: FactureData; variant:
           <p className="mt-5 text-xs italic opacity-80">
             Arrêté{documentTitle.toLowerCase() === "devis" ? " le présent devis" : "e la présente facture"} à la somme de{" "}
             <span className="font-semibold not-italic">
-              {numberToFrenchWords(data.total)} {currencyWord}
+              {amountInWords(data.total, currency)}
             </span>
             .
           </p>

@@ -1,5 +1,6 @@
 "use server";
 
+import { roundMoney } from "@/lib/format";
 import { revalidatePath } from "next/cache";
 import { supabase } from "@/lib/supabase";
 import { requirePermission } from "@/lib/auth";
@@ -85,7 +86,7 @@ async function createSaleReturnImpl(input: CreateSaleReturnInput): Promise<Creat
   }
   if (chosen.length === 0) return { success: false, error: "Choisissez au moins un article à reprendre." };
 
-  const refund = Math.round(chosen.reduce((s, c) => s + c.line.unitRefund * c.quantity, 0));
+  const refund = roundMoney(chosen.reduce((s, c) => s + c.line.unitRefund * c.quantity, 0), user.business.currency);
   const debtReduced = Math.min(refund, info.remainingDebt);
   const cashRefund = refund - debtReduced;
 
@@ -141,7 +142,7 @@ async function createSaleReturnImpl(input: CreateSaleReturnInput): Promise<Creat
       unit_price: line.unitPrice,
       unit_cost: line.unitCost,
       discount: 0,
-      total: -Math.round(line.unitRefund * quantity),
+      total: -roundMoney(line.unitRefund * quantity, user.business.currency),
       packaging_unit_id: line.packagingUnitId,
       multiplier: line.multiplier,
       unit_label: line.unitLabel,

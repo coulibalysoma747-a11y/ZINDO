@@ -38,7 +38,9 @@ export async function checkBelowCost(
     if (baseUnits <= 0) continue;
     const netPerUnit = (item.unitPrice * item.quantity - item.discount) / baseUnits;
     if (netPerUnit < product.purchasePrice) {
-      return `Vente à perte interdite pour "${product.name}" : prix ${formatMoney(Math.round(netPerUnit))} < prix d'achat ${formatMoney(product.purchasePrice)}. Demandez à un administrateur.`;
+      const { data: biz } = await supabase.from("businesses").select("currency").eq("id", businessId).maybeSingle();
+      const currency = (biz?.currency as string | undefined) ?? "XOF";
+      return `Vente à perte interdite pour "${product.name}" : prix ${formatMoney(netPerUnit, currency)} < prix d'achat ${formatMoney(product.purchasePrice, currency)}. Demandez à un administrateur.`;
     }
   }
   return null;

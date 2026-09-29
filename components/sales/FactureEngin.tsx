@@ -1,4 +1,4 @@
-import { formatMoney, formatLongDate, formatTime, numberToFrenchWords } from "@/lib/format";
+import { formatMoney, formatLongDate, formatTime, amountInWords } from "@/lib/format";
 
 export type FactureEnginData = {
   businessName: string;
@@ -93,8 +93,7 @@ function AccessoryLine({ label, checked }: { label: string; checked: boolean }) 
 export function FactureEngin({ data }: { data: FactureEnginData }) {
   const currency = data.currency ?? "XOF";
   const money = (v: number) => formatMoney(v, currency);
-  const amountInWords = numberToFrenchWords(data.total);
-  const currencyWord = currency === "XOF" ? "Francs CFA" : currency;
+  const totalInWords = amountInWords(data.total, currency);
   const accessories = [
     { label: "Casque de protection", checked: data.accessoryHelmet },
     { label: "Kit d'outils", checked: data.accessoryToolKit },
@@ -173,7 +172,7 @@ export function FactureEngin({ data }: { data: FactureEnginData }) {
           </SectionCard>
 
           <SectionCard title="Montant">
-            <Row label="Montant en lettres" value={`${amountInWords} ${currencyWord}`} />
+            <Row label="Montant en lettres" value={totalInWords} />
             <Row label="Montant en chiffres" value={money(data.total)} />
             <div className="mt-2 rounded-md bg-red-700 px-3 py-2 text-center text-sm font-extrabold uppercase tracking-wide text-white">
               Total à payer {money(data.total)}

@@ -7,7 +7,7 @@ import { Undo2, Minus, Plus, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
 import { Select, Textarea } from "@/components/ui/Input";
-import { formatMoney } from "@/lib/format";
+import { formatMoney, roundMoney } from "@/lib/format";
 import { createSaleReturnAction, type RefundMethod } from "@/lib/actions/sale-returns";
 
 type Line = {
@@ -81,7 +81,7 @@ export function SaleReturnPanel({
   const activeReturns = returns.filter((r) => r.status !== "ANNULEE");
   if (!canReturn && activeReturns.length === 0) return null;
 
-  const refund = Math.round(lines.reduce((s, l) => s + (qty[l.key] ?? 0) * l.unitRefund, 0));
+  const refund = roundMoney(lines.reduce((s, l) => s + (qty[l.key] ?? 0) * l.unitRefund, 0), currency);
   const debtPart = Math.min(refund, remainingDebt);
   const cashPart = refund - debtPart;
 
@@ -179,7 +179,7 @@ export function SaleReturnPanel({
                       </p>
                       <p className="text-xs text-zinc-500">
                         Vendu {l.soldQty}
-                        {l.returnedQty > 0 && ` · déjà rendu ${l.returnedQty}`} · {formatMoney(Math.round(l.unitRefund), currency)} l&apos;unité
+                        {l.returnedQty > 0 && ` · déjà rendu ${l.returnedQty}`} · {formatMoney(roundMoney(l.unitRefund, currency), currency)} l&apos;unité
                       </p>
                     </div>
                     {max > 0 ? (

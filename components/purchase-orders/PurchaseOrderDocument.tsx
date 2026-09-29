@@ -1,5 +1,5 @@
 /* eslint-disable @next/next/no-img-element -- document imprimé : <img> garantit le rendu à l'impression/PDF. */
-import { formatMoney, formatLongDate, numberToFrenchWords } from "@/lib/format";
+import { formatMoney, formatLongDate, amountInWords } from "@/lib/format";
 import { isConfirmedOrder, purchaseOrderDisplayNumber } from "@/lib/purchase-orders";
 import { ZINDO_SITE, ZINDO_WHATSAPP } from "@/lib/referral";
 import type { PurchaseOrderDocumentData } from "@/lib/purchase-order-document";
@@ -18,7 +18,6 @@ export function PurchaseOrderDocument({ data }: { data: PurchaseOrderDocumentDat
   const displayNumber = purchaseOrderDisplayNumber(order.number, order.status);
   const subtotal = order.items.reduce((s, i) => s + i.quantity * (i.unitPrice ?? 0), 0);
   const total = subtotal - (order.discount ?? 0) + (order.transportCost ?? 0);
-  const currency = business.currency === "XOF" ? "francs CFA" : business.currency;
   const dotted = <span className="text-zinc-300">....................</span>;
 
   return (
@@ -138,7 +137,7 @@ export function PurchaseOrderDocument({ data }: { data: PurchaseOrderDocumentDat
         </div>
         {confirmed && (
           <p className="mt-2 text-xs italic">
-            Arrêté à la somme de : {numberToFrenchWords(Math.round(total))} {currency}.
+            Arrêté à la somme de : {amountInWords(total, business.currency)}.
           </p>
         )}
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { currencyLabel } from "@/lib/format";
+import { currencyLabel, moneyStep } from "@/lib/format";
 import { useActionState, useState } from "react";
 import { Field, Input, Select, Textarea } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
@@ -85,12 +85,12 @@ export function RentalForm({
               <Input id="quantity" name="quantity" type="number" min={1} defaultValue={1} required />
             </Field>
             <Field label={`Tarif / jour (${currencyLabel(currency)})`} htmlFor="dailyRate">
-              <Input id="dailyRate" name="dailyRate" type="number" min={0} step="1" defaultValue={0} required />
+              <Input id="dailyRate" name="dailyRate" type="number" inputMode="decimal" min={0} step={moneyStep(currency)} defaultValue={0} required />
             </Field>
           </div>
 
           <Field label={`Caution (${currencyLabel(currency)})`} htmlFor="deposit">
-            <Input id="deposit" name="deposit" type="number" min={0} step="1" defaultValue={0} />
+            <Input id="deposit" name="deposit" type="number" inputMode="decimal" min={0} step={moneyStep(currency)} defaultValue={0} />
           </Field>
 
           <div className="grid grid-cols-2 gap-3">

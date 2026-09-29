@@ -1,5 +1,6 @@
 "use server";
 
+import { formatMoney } from "@/lib/format";
 import { revalidatePath } from "next/cache";
 import { requirePermission } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
@@ -31,6 +32,18 @@ const INVENTORY_STALE_DAYS = 60;
  * Idempotent : n'insère jamais deux fois la même alerte tant qu'elle n'a
  * pas été marquée lue (une ligne "link" identique et non lue fait déjà foi).
  */
+/** Monnaie du commerce, lue une fois par synchronisation (montants des messages). */
+const currencyCache = new Map<string, Promise<string>>();
+function businessCurrency(businessId: string): Promise<string> {
+  if (!currencyCache.has(businessId)) {
+    currencyCache.set(
+      businessId,
+      Promise.resolve(supabase.from("businesses").select("currency").eq("id", businessId).maybeSingle()).then(({ data }) => (data?.currency as string | undefined) ?? "XOF")
+    );
+  }
+  return currencyCache.get(businessId)!;
+}
+
 async function syncNotifications(businessId: string) {
   const { data: existingUnread } = await supabase
     .from("notifications")
@@ -105,7 +118,7 @@ async function syncNotifications(businessId: string) {
           business_id: businessId,
           type: "CREDIT_ECHU",
           title: "Échéance de crédit dépassée",
-          message: `${plan.customer?.name ?? "Un client"} a une échéance impayée de ${Math.round(i.amount - i.paidAmount)} FCFA.`,
+          message: `${plan.customer?.name ?? "Un client"} a une échéance impayée de ${formatMoney(i.amount - i.paidAmount, await businessCurrency(businessId))}.`,
           link,
         });
       }

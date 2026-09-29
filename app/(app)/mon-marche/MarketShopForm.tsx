@@ -102,7 +102,7 @@ export function MarketShopForm({
         <Check name="deliveryEnabled" label="Je livre" defaultChecked={shop.deliveryEnabled} />
         <div className="grid gap-4 sm:grid-cols-2">
           <Field label={`Frais de livraison (${currencyLabel(currency)})`} htmlFor="deliveryFee">
-            <Input id="deliveryFee" name="deliveryFee" inputMode="numeric" defaultValue={shop.deliveryFee || ""} />
+            <Input id="deliveryFee" name="deliveryFee" inputMode="decimal" defaultValue={shop.deliveryFee || ""} />
           </Field>
           <Field label="Zone et délai de livraison" htmlFor="deliveryNote" hint="Exemple : Ouagadougou, sous 24 h">
             <Input id="deliveryNote" name="deliveryNote" defaultValue={shop.deliveryNote ?? ""} />

@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/Button";
 import { Card, CardBody } from "@/components/ui/Card";
 import { ConfirmButton } from "@/components/ui/ConfirmButton";
 import { EmptyState } from "@/components/ui/Empty";
-import { formatMoney, currencyLabel } from "@/lib/format";
+import { formatMoney, currencyLabel, moneyStep } from "@/lib/format";
 import { SCHOOL_FEE_TYPES } from "@/lib/school-constants";
 import { saveSchoolFeeAction, deleteSchoolFeeAction, type SchoolFee } from "@/lib/actions/school";
 import { useResettingAction } from "@/components/school/useResettingAction";
@@ -39,7 +39,7 @@ export function FeesManager({ fees, classes, currency }: { fees: SchoolFee[]; cl
                 <Input id="label" name="label" placeholder="Ex. Frais d'inscription, Cantine 1er trimestre" defaultValue={editing?.label} required />
               </Field>
               <Field label={`Montant (${unit})`} htmlFor="amount">
-                <Input id="amount" name="amount" type="number" min={0} step="1" defaultValue={editing?.amount ?? 0} required />
+                <Input id="amount" name="amount" type="number" inputMode="decimal" min={0} step={moneyStep(currency)} defaultValue={editing?.amount ?? 0} required />
               </Field>
               <Field label="Classe concernée" htmlFor="classId">
                 <Select id="classId" name="classId" defaultValue={editing?.classId ?? ""}>

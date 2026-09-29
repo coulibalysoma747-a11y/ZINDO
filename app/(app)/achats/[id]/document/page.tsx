@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import { requirePermission } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
 import { supabase } from "@/lib/supabase";
-import { formatDateTime, formatMoney, numberToFrenchWords } from "@/lib/format";
+import { formatDateTime, formatMoney, amountInWords } from "@/lib/format";
 import { isDocumentEnabled, loadDocBusiness, printedByName } from "@/lib/documents";
 import { isZindoMentionEnabled } from "@/lib/zindo-mention";
 import { A4Document, DocSection, DocTable } from "@/components/documents/A4Document";
@@ -43,7 +43,6 @@ export default async function PurchaseReceiptDocumentPage({ params }: { params: 
   if (!business || !data) notFound();
   const purchase = data as unknown as PurchaseRow;
   const money = (v: number) => formatMoney(v, business.currency);
-  const words = business.currency === "XOF" ? "francs CFA" : business.currency;
   const qty = purchase.items.reduce((s, i) => s + i.quantity, 0);
 
   return (
@@ -115,7 +114,7 @@ export default async function PurchaseReceiptDocumentPage({ params }: { params: 
           </table>
         </div>
         <p className="mt-2 text-xs italic">
-          Arrêté à la somme de : {numberToFrenchWords(Math.round(purchase.total))} {words}.
+          Arrêté à la somme de : {amountInWords(purchase.total, business.currency)}.
         </p>
         <p className="mt-4 text-xs">Observations (manquants, articles abîmés…) :</p>
         <p className="text-zinc-300">..............................................................................................................................................................</p>

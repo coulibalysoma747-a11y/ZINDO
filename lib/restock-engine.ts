@@ -122,10 +122,6 @@ function unitLabel(unit: string, n: number) {
   return `${unit}s`;
 }
 
-function fmtMoney(n: number) {
-  return `${new Intl.NumberFormat("fr-FR", { maximumFractionDigits: 0 }).format(Math.round(n))} FCFA`;
-}
-
 function fmtDate(iso: string) {
   return new Date(iso).toLocaleDateString("fr-FR");
 }
@@ -262,8 +258,11 @@ export function computeSmartRestock(input: {
   coverageDays: number;
   budget: number | null;
   now?: number;
+  /** Monnaie du commerce (montants des explications). */
+  currency?: string;
 }): SmartRestockResult {
   const now = input.now ?? Date.now();
+  const fmtMoney = (n: number) => formatMoney(n, input.currency ?? "XOF");
   const coverage = input.coverageDays;
   const supplierById = new Map(input.suppliers.map((s) => [s.id, s]));
   const leadTime = (supplierId: string | null) =>
@@ -401,7 +400,7 @@ export function computeSmartRestock(input: {
     });
   }
 
-  assignSuppliers(rows, supplierById, avgTransport);
+  assignSuppliers(rows, supplierById, avgTransport, fmtMoney);
 
   // Délai du fournisseur retenu : alerte si le produit urgent risque la
   // rupture avant sa livraison.
@@ -489,7 +488,8 @@ function baseRow(
 function assignSuppliers(
   rows: SmartRestockRow[],
   supplierById: Map<string, EngineSupplier>,
-  avgTransport: (id: string | null) => number
+  avgTransport: (id: string | null) => number,
+  fmtMoney: (n: number) => string
 ) {
   const usualSupplier = new Map(rows.map((r) => [r.productId, r.supplierId]));
   // Point de départ : le meilleur coût rendu boutique (prix × quantité +
@@ -602,4 +602,5 @@ function applyBudget(rows: SmartRestockRow[], budget: number | null, avgTranspor
       r.reasons.push("Hors budget : à commander plus tard.");
     }
   }
-}
+}import { formatMoney } from "@/lib/format";
+

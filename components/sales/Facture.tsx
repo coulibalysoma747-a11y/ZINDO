@@ -1,4 +1,4 @@
-import { formatMoney, formatLongDate, numberToFrenchWords } from "@/lib/format";
+import { formatMoney, formatLongDate, amountInWords } from "@/lib/format";
 
 export type FactureItem = {
   reference?: string | null;
@@ -75,8 +75,7 @@ export type FactureData = {
 export function Facture({ data }: { data: FactureData }) {
   const currency = data.currency ?? "XOF";
   const money = (v: number) => formatMoney(v, currency);
-  const amountInWords = numberToFrenchWords(data.total);
-  const currencyWord = currency === "XOF" ? "Francs CFA" : currency;
+  const totalInWords = amountInWords(data.total, currency);
 
   return (
     <>
@@ -216,7 +215,7 @@ export function Facture({ data }: { data: FactureData }) {
         <p className="mt-6 text-sm leading-relaxed text-zinc-700">
           <span className="italic">Arrêtée la présente facture à la somme de</span> :{" "}
           <span className="font-semibold text-zinc-900">
-            {amountInWords} {currencyWord}.
+            {totalInWords}.
           </span>
         </p>
 

@@ -7,6 +7,25 @@ const CFA = new Set(["XOF", "XAF"]);
 // navigateur affichent exactement le même texte.
 const SYMBOLS = new Map(WORLD_CURRENCIES.map(([code, , symbol]) => [code, symbol]));
 
+// Monnaies sans subdivision utilisée (norme ISO 4217) : montants entiers.
+const ZERO_DECIMALS = new Set(["XOF", "XAF", "XPF", "BIF", "CLP", "DJF", "GNF", "ISK", "JPY", "KMF", "KRW", "PYG", "RWF", "UGX", "VND", "VUV"]);
+
+/** Nombre de décimales d'une monnaie : 0 pour le FCFA, le franc guinéen…, 2 pour l'euro, le naira… */
+export function moneyDecimals(currency: string): number {
+  return ZERO_DECIMALS.has(currency) ? 0 : 2;
+}
+
+/** Arrondi d'un montant à la précision de sa monnaie (entier en FCFA, au centime en euro). */
+export function roundMoney(amount: number, currency = "XOF"): number {
+  const factor = 10 ** moneyDecimals(currency);
+  return Math.round(amount * factor) / factor;
+}
+
+/** Pas de saisie d'un champ de montant : « 1 » en FCFA, « 0.01 » en euro. */
+export function moneyStep(currency = "XOF"): string {
+  return moneyDecimals(currency) === 0 ? "1" : "0.01";
+}
+
 /** Symbole court d'une monnaie pour les libellés : FCFA, €, $, ₦, GH₵… (code ISO si inconnu). */
 export function currencyLabel(currency: string): string {
   return CFA.has(currency) ? "FCFA" : SYMBOLS.get(currency) ?? currency;
@@ -146,4 +165,36 @@ export function startOfYesterday() {
   const d = startOfToday();
   d.setDate(d.getDate() - 1);
   return d;
+}
+
+/** Nom de la monnaie accordé au nombre : « franc CFA » / « francs CFA », « euro » / « euros », « dollars des États-Unis »… */
+function currencyWords(currency: string, plural: boolean): string {
+  if (CFA.has(currency)) return plural ? "francs CFA" : "franc CFA";
+  const name = WORLD_CURRENCIES.find(([code]) => code === currency)?.[1] ?? currency;
+  const lower = name.charAt(0).toLowerCase() + name.slice(1);
+  if (!plural || lower === currency) return lower;
+  // Pluriel des mots jusqu'au premier « de / des / du » (« dollars des États-Unis », « nairas nigérians »).
+  let stop = false;
+  return lower
+    .split(" ")
+    .map((word) => {
+      if (stop || /^(de|des|du|d')$/i.test(word)) {
+        stop = true;
+        return word;
+      }
+      return /[sxz]$/i.test(word) ? word : `${word}s`;
+    })
+    .join(" ");
+}
+
+/**
+ * Montant en toutes lettres pour les documents (« Arrêté à la somme de… ») :
+ * « Mille cinq cents francs CFA », « Douze euros et cinquante centimes ».
+ */
+export function amountInWords(amount: number, currency = "XOF"): string {
+  const rounded = roundMoney(Math.abs(amount), currency);
+  const units = Math.floor(rounded);
+  const cents = Math.round((rounded - units) * 100);
+  const main = `${numberToFrenchWords(units)} ${currencyWords(currency, units >= 2)}`;
+  return cents > 0 ? `${main} et ${numberToFrenchWords(cents).toLowerCase()} centime${cents > 1 ? "s" : ""}` : main;
 }

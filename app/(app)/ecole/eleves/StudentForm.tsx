@@ -1,6 +1,6 @@
 "use client";
 
-import { currencyLabel } from "@/lib/format";
+import { currencyLabel, moneyStep } from "@/lib/format";
 import { useActionState } from "react";
 import { Field, Input, Select } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
@@ -86,7 +86,7 @@ export function StudentForm({
             htmlFor="customFee"
             hint="Laissez vide pour appliquer le montant de la classe. Utile pour une réduction ou une bourse."
           >
-            <Input id="customFee" name="customFee" type="number" min={0} step="1" defaultValue={student?.customFee ?? ""} />
+            <Input id="customFee" name="customFee" type="number" inputMode="decimal" min={0} step={moneyStep(currency)} defaultValue={student?.customFee ?? ""} />
           </Field>
 
           {student && (

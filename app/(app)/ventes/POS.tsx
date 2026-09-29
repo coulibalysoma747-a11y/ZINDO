@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/Button";
 import { Field, Input, Select } from "@/components/ui/Input";
 import { SearchInput } from "@/components/ui/SearchInput";
 import { Table, TableHead, TableBody, TableRow, TableHeaderCell, TableCell } from "@/components/ui/Table";
-import { formatMoney, formatDateTime } from "@/lib/format";
+import { formatMoney, formatDateTime, roundMoney } from "@/lib/format";
 import { createSaleAction, reserveSaleNumberAction } from "@/lib/actions/sales";
 import { getSaleDocumentAction, type SaleDocument } from "@/lib/actions/receipt";
 import { getPosProductsAction, findProductByExactCodeAction, searchProductsAction } from "@/lib/actions/product-search";
@@ -479,7 +479,7 @@ export function POS({
   const miscProductRef = useRef<PosProduct | null>(null);
 
   async function addMiscItem() {
-    const price = Math.round(Number(miscAmount));
+    const price = roundMoney(Number(miscAmount), currency);
     if (!Number.isFinite(price) || price <= 0) {
       setMiscError("Tapez le montant de l'article.");
       return;
@@ -1976,8 +1976,9 @@ export function POS({
                   Prix unitaire
                   <input
                     type="number"
-                    inputMode="numeric"
+                    inputMode="decimal"
                     min={0}
+                    step="any"
                     value={shownPrice(line)}
                     onChange={(e) => updateLine(key, { unitPrice: (Number(e.target.value) || 0) * pieceFactor(line) })}
                     className="mt-0.5 w-full rounded-lg border border-zinc-200 px-2 py-2 text-right text-base tabular-nums text-zinc-900 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
@@ -2064,8 +2065,9 @@ export function POS({
                 <td className="px-4 py-3">
                   <input
                     type="number"
-                    inputMode="numeric"
+                    inputMode="decimal"
                     min={0}
+                    step="any"
                     value={shownPrice(line)}
                     onChange={(e) => updateLine(key, { unitPrice: (Number(e.target.value) || 0) * pieceFactor(line) })}
                     onKeyDown={(e) => {
@@ -2937,7 +2939,7 @@ export function POS({
                 id="miscAmount"
                 type="number"
                 min={1}
-                inputMode="numeric"
+                inputMode="decimal"
                 value={miscAmount}
                 onChange={(e) => setMiscAmount(e.target.value)}
                 placeholder="Ex. 500"

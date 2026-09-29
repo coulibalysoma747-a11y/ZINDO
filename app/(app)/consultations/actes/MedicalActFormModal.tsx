@@ -39,7 +39,7 @@ export function MedicalActFormModal({
           <Input id="name" name="name" placeholder="Ex: Consultation générale" defaultValue={act?.name} required autoFocus />
         </Field>
         <Field label="Tarif par défaut" htmlFor="defaultFee">
-          <Input id="defaultFee" name="defaultFee" type="number" min={0} step={1} defaultValue={act?.defaultFee ?? 0} required />
+          <Input id="defaultFee" name="defaultFee" type="number" inputMode="decimal" min={0} step="any" defaultValue={act?.defaultFee ?? 0} required />
         </Field>
         {state?.error && <p className="text-sm text-red-600">{state.error}</p>}
         <div className="flex justify-end gap-2 pt-2">

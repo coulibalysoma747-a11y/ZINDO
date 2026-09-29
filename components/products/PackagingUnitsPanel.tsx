@@ -5,7 +5,7 @@ import { Plus, Trash2, Pencil, Check, X, QrCode } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Field, Input } from "@/components/ui/Input";
 import { Badge } from "@/components/ui/Badge";
-import { formatMoney } from "@/lib/format";
+import { formatMoney, roundMoney } from "@/lib/format";
 import { PackagingTypePicker } from "@/components/products/PackagingTypePicker";
 import {
   addPackagingUnitAction,
@@ -42,7 +42,7 @@ export function PackagingUnitsPanel({
   const [multiplier, setMultiplier] = useState("");
 
   const isPieceMode = priceMode === "piece";
-  const suggestedPrice = Number(multiplier) > 0 ? Math.round(Number(multiplier) * basePrice) : null;
+  const suggestedPrice = Number(multiplier) > 0 ? roundMoney(Number(multiplier) * basePrice, currency) : null;
   const suggestedPieceOrLotPrice = isPieceMode ? basePrice || null : suggestedPrice;
 
   function handleAdd(formData: FormData) {
@@ -51,7 +51,7 @@ export function PackagingUnitsPanel({
     } else if (isPieceMode && formData.get("salePrice")) {
       // La saisie est le prix d'une pièce du lot — on enregistre toujours le
       // prix du lot entier en base (comportement serveur inchangé).
-      formData.set("salePrice", String(Math.round(Number(formData.get("salePrice")) * Number(multiplier))));
+      formData.set("salePrice", String(roundMoney(Number(formData.get("salePrice")) * Number(multiplier), currency)));
     }
     setError(null);
     startTransition(async () => {
@@ -68,7 +68,7 @@ export function PackagingUnitsPanel({
   function handleUpdate(unitId: string, formData: FormData) {
     if (isPieceMode) {
       const enteredMultiplier = Number(formData.get("multiplier")) || 1;
-      formData.set("salePrice", String(Math.round(Number(formData.get("salePrice")) * enteredMultiplier)));
+      formData.set("salePrice", String(roundMoney(Number(formData.get("salePrice")) * enteredMultiplier, currency)));
     }
     setError(null);
     startTransition(async () => {
@@ -175,7 +175,7 @@ export function PackagingUnitsPanel({
                     name="salePrice"
                     type="number"
                     min={0}
-                    defaultValue={isPieceMode ? Math.round(u.salePrice / u.multiplier) : u.salePrice}
+                    defaultValue={isPieceMode ? roundMoney(u.salePrice / u.multiplier, currency) : u.salePrice}
                     required
                   />
                   <div className="flex gap-2">

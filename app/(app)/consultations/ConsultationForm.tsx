@@ -1,5 +1,6 @@
 "use client";
 
+import { currencyLabel, moneyStep } from "@/lib/format";
 import { useActionState, useState } from "react";
 import { X, BookmarkPlus } from "lucide-react";
 import { createConsultationAction } from "@/lib/actions/consultations";
@@ -258,13 +259,13 @@ export function ConsultationForm({
         />
       </div>
 
-      <Field label="Frais de consultation (FCFA)" htmlFor="fee">
+      <Field label={`Frais de consultation (${currencyLabel(currency)})`} htmlFor="fee">
         <Input
           id="fee"
           name="fee"
-          type="number"
+          type="number" inputMode="decimal"
           min={0}
-          step={1}
+          step={moneyStep(currency)}
           required
           value={fee}
           onChange={(e) => setFee(Number(e.target.value))}

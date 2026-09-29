@@ -157,9 +157,9 @@ export function ProductForm({
           <Input
             id="purchasePrice"
             name="purchasePrice"
-            type="number"
+            type="number" inputMode="decimal"
             min={0}
-            step="1"
+            step="any"
             defaultValue={initial?.purchasePrice}
             onChange={(e) => setPurchasePrice(e.target.value)}
             required
@@ -169,9 +169,9 @@ export function ProductForm({
           <Input
             id="salePrice"
             name="salePrice"
-            type="number"
+            type="number" inputMode="decimal"
             min={0}
-            step="1"
+            step="any"
             defaultValue={initial?.salePrice}
             onChange={(e) => setSalePrice(e.target.value)}
             required

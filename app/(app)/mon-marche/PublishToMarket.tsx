@@ -30,7 +30,8 @@ export function PublishToMarket({
   const [pending, startTransition] = useTransition();
 
   function save(nextPublished: boolean) {
-    const promoPrice = promo.trim() ? Number(promo.replace(/\s/g, "")) : null;
+    // Virgule ou point acceptés (« 12,50 » comme « 12.50 »).
+    const promoPrice = promo.trim() ? Number(promo.replace(/\s/g, "").replace(",", ".")) : null;
     if (promoPrice != null && (!Number.isFinite(promoPrice) || promoPrice <= 0)) {
       setMessage({ error: "Prix promotionnel invalide." });
       return;
@@ -87,7 +88,7 @@ export function PublishToMarket({
         <input
           value={promo}
           onChange={(e) => setPromo(e.target.value)}
-          inputMode="numeric"
+          inputMode="decimal"
           placeholder="Prix promo (facultatif)"
           aria-label="Prix promotionnel"
           className="h-9 w-40 rounded-lg border border-zinc-300 px-2 text-sm"

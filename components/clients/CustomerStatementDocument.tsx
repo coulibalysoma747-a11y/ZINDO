@@ -1,5 +1,5 @@
 /* eslint-disable @next/next/no-img-element -- document imprimé : <img> garantit le rendu à l'impression/PDF. */
-import { formatMoney, formatDate, formatDateTime, formatLongDate, numberToFrenchWords } from "@/lib/format";
+import { formatMoney, formatDate, formatDateTime, formatLongDate, amountInWords } from "@/lib/format";
 import type { StatementData } from "@/lib/client-documents";
 import { PAYMENT_METHOD_LABELS } from "@/lib/payment-method-labels";
 import { FitToWidth } from "@/components/purchase-orders/FitToWidth";
@@ -25,7 +25,6 @@ function periodLabel(from: string | null, to: string | null) {
 export function CustomerStatementDocument({ data, zindoMention }: { data: StatementData; zindoMention: boolean }) {
   const { business, custom, customer } = data;
   const money = (v: number) => formatMoney(v, business.currency);
-  const currencyWords = business.currency === "XOF" ? "francs CFA" : business.currency;
   const th = "border border-zinc-900 px-2 py-1.5";
   const td = "border border-zinc-300 px-2 py-1.5";
 
@@ -155,7 +154,7 @@ export function CustomerStatementDocument({ data, zindoMention }: { data: Statem
                 Reste dû à ce jour : <span className="font-extrabold">{money(data.currentDebt)}</span>
               </p>
               <p className="mt-1 italic">
-                Arrêté à la somme de : {numberToFrenchWords(Math.round(data.currentDebt))} {currencyWords}.
+                Arrêté à la somme de : {amountInWords(data.currentDebt, business.currency)}.
               </p>
               {custom.mobileMoneyInfo && <p className="mt-2">Paiement par Mobile Money : {custom.mobileMoneyInfo}</p>}
             </>

@@ -1,6 +1,6 @@
 "use client";
 
-import { currencyLabel } from "@/lib/format";
+import { currencyLabel, moneyStep } from "@/lib/format";
 import { useState, useTransition } from "react";
 import { Field, Input, Select, Textarea } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
@@ -49,10 +49,10 @@ export function CustomOrderDetailsForm({
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <Field label={`Prix convenu (${currencyLabel(currency)})`} htmlFor="agreedPrice">
-          <Input id="agreedPrice" name="agreedPrice" type="number" min={0} step="1" defaultValue={agreedPrice} disabled={disabled} />
+          <Input id="agreedPrice" name="agreedPrice" type="number" inputMode="decimal" min={0} step={moneyStep(currency)} defaultValue={agreedPrice} disabled={disabled} />
         </Field>
         <Field label="Remise" htmlFor="discount">
-          <Input id="discount" name="discount" type="number" min={0} step="1" defaultValue={discount} disabled={disabled} />
+          <Input id="discount" name="discount" type="number" inputMode="decimal" min={0} step={moneyStep(currency)} defaultValue={discount} disabled={disabled} />
         </Field>
       </div>
 

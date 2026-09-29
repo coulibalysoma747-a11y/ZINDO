@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import { requirePermission } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
 import { supabase } from "@/lib/supabase";
-import { formatDate, formatMoney, numberToFrenchWords } from "@/lib/format";
+import { formatDate, formatMoney, amountInWords } from "@/lib/format";
 import { PAYMENT_METHOD_LABELS } from "@/lib/payment-method-labels";
 import { isDocumentEnabled, loadDocBusiness, printedByName, resolvePeriod } from "@/lib/documents";
 import { isZindoMentionEnabled } from "@/lib/zindo-mention";
@@ -56,7 +56,6 @@ export default async function SupplierStatementPage({
   const total = purchases.reduce((s, p) => s + p.total, 0);
   const paid = purchases.reduce((s, p) => s + p.amountPaid, 0);
   const money = (v: number) => formatMoney(v, business.currency);
-  const words = business.currency === "XOF" ? "francs CFA" : business.currency;
 
   return (
     <div>
@@ -134,7 +133,7 @@ export default async function SupplierStatementPage({
                 Reste à payer à ce jour : <span className="font-extrabold">{money(debt)}</span>
               </p>
               <p className="mt-1 italic">
-                Arrêté à la somme de : {numberToFrenchWords(Math.round(debt))} {words}.
+                Arrêté à la somme de : {amountInWords(debt, business.currency)}.
               </p>
             </>
           ) : (

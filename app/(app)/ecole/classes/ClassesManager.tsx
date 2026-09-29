@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/Button";
 import { Card, CardBody } from "@/components/ui/Card";
 import { ConfirmButton } from "@/components/ui/ConfirmButton";
 import { EmptyState } from "@/components/ui/Empty";
-import { formatMoney, currencyLabel } from "@/lib/format";
+import { formatMoney, currencyLabel, moneyStep } from "@/lib/format";
 import { saveSchoolClassAction, deleteSchoolClassAction, type ActionState, type SchoolClass } from "@/lib/actions/school";
 
 export function ClassesManager({ classes, currency }: { classes: SchoolClass[]; currency: string }) {
@@ -36,7 +36,7 @@ export function ClassesManager({ classes, currency }: { classes: SchoolClass[]; 
                 <Input id="level" name="level" placeholder="Primaire, collège, lycée…" defaultValue={editing?.level ?? ""} />
               </Field>
               <Field label={`Scolarité annuelle (${unit})`} htmlFor="annualFee">
-                <Input id="annualFee" name="annualFee" type="number" min={0} step="1" defaultValue={editing?.annualFee ?? 0} />
+                <Input id="annualFee" name="annualFee" type="number" inputMode="decimal" min={0} step={moneyStep(currency)} defaultValue={editing?.annualFee ?? 0} />
               </Field>
             </div>
             {state?.error && <p className="text-sm text-red-600">{state.error}</p>}

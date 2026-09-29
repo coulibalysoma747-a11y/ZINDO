@@ -70,7 +70,8 @@ export async function saveMarketShopAction(_prev: MarketActionState, formData: F
     locationId: optional(formData, "locationId"),
     published: formData.get("published") === "on",
     deliveryEnabled: formData.get("deliveryEnabled") === "on",
-    deliveryFee: String(formData.get("deliveryFee") ?? "").replace(/\s/g, "") || 0,
+    // Virgule ou point acceptés (« 12,50 » comme « 12.50 »).
+    deliveryFee: String(formData.get("deliveryFee") ?? "").replace(/\s/g, "").replace(",", ".") || 0,
     deliveryNote: optional(formData, "deliveryNote"),
     pickupEnabled: formData.get("pickupEnabled") === "on",
     payOnDelivery: formData.get("payOnDelivery") === "on",
