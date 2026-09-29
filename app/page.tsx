@@ -35,6 +35,7 @@ import { DemoVideo } from "@/components/landing/DemoVideo";
 import { WhatsAppFloat } from "@/components/landing/WhatsAppFloat";
 import { PiedDePageComplet } from "@/components/landing/PiedDePageComplet";
 import { AccueilPro } from "@/components/landing/AccueilPro";
+import { AssistantFloat } from "@/components/landing/AssistantFloat";
 import { PublicNavLinks, PublicNavMenu } from "@/components/landing/PublicNav";
 import {
   PertesSection,
@@ -252,6 +253,7 @@ export default async function RootPage({ searchParams }: { searchParams: Promise
       <>
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(STRUCTURED_DATA).replaceAll("{trialDays}", String(trialDays)) }} />
         <AccueilPro trialDays={trialDays} faqs={[...FAQS, ...EXTRA_FAQS]} />
+        <AssistantFloat />
         <WhatsAppFloat compact href="https://wa.me/22604059929" />
       </>
     );

@@ -32,7 +32,6 @@ import { FacebookIcon } from "@/components/icons/FacebookIcon";
 import { TikTokIcon } from "@/components/icons/TikTokIcon";
 import { SOLUTION_PAGES } from "@/lib/seo-pages";
 import { AccueilProHeader } from "@/components/landing/AccueilProHeader";
-import { PublicHelpChat } from "@/components/PublicHelpChat";
 import { CaisseAnimee, CreditsAnimes, StockAnime } from "@/components/landing/AccueilProEcrans";
 import { ApercuCookie, Reveal } from "@/components/landing/AccueilProAnime";
 
@@ -345,10 +344,7 @@ export function AccueilPro({ trialDays, faqs }: { trialDays: number; faqs: Faq[]
         <section id="faq" className="mx-auto grid max-w-6xl scroll-mt-20 gap-12 border-t border-zinc-200 px-4 py-20 sm:px-6 lg:grid-cols-[1fr_1.3fr] lg:py-28">
           <div>
             <h2 className="text-3xl font-medium tracking-[-0.03em] sm:text-4xl">Questions fréquentes</h2>
-            <p className="mt-3 text-zinc-600">Une autre question ? Posez-la à l&apos;assistant, il répond tout de suite.</p>
-            <div className="mt-6">
-              <PublicHelpChat />
-            </div>
+            <p className="mt-3 text-zinc-600">Une autre question ? L&apos;assistant ZINDO répond tout de suite : bouton en bas à droite, à côté de WhatsApp.</p>
           </div>
           <div className="divide-y divide-zinc-200 border-y border-zinc-200">
             {faqs.map((faq) => (
