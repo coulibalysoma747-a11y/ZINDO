@@ -251,8 +251,8 @@ export default async function RootPage({ searchParams }: { searchParams: Promise
     return (
       <>
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(STRUCTURED_DATA).replaceAll("{trialDays}", String(trialDays)) }} />
-        <AccueilPro trialDays={trialDays} faqs={[...FAQS, ...EXTRA_FAQS]} footer={<PiedDePageComplet />} />
-        <WhatsAppFloat href="https://wa.me/22604059929" />
+        <AccueilPro trialDays={trialDays} faqs={[...FAQS, ...EXTRA_FAQS]} />
+        <WhatsAppFloat compact href="https://wa.me/22604059929" />
       </>
     );
   }

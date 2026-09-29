@@ -290,3 +290,11 @@ input[type="number"] {
 @media (prefers-reduced-motion: reduce) {
   .zindo-scan, .zindo-pop { animation: none; }
 }
+@keyframes zindo-appear {
+  from { opacity: 0; transform: translateY(-6px); }
+  to { opacity: 1; transform: none; }
+}
+.zindo-appear { animation: zindo-appear 0.35s ease-out; }
+@media (prefers-reduced-motion: reduce) {
+  .zindo-appear { animation: none; }
+}

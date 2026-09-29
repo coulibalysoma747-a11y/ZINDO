@@ -29,8 +29,10 @@ import {
 } from "lucide-react";
 import { GoogleIcon } from "@/components/icons/GoogleIcon";
 import { ZindoLogo } from "@/components/auth/ZindoLogo";
-import { LanguageSwitcher } from "@/components/LanguageSwitcher";
-import { PublicNavLinks, PublicNavMenu } from "@/components/landing/PublicNav";
+import { FacebookIcon } from "@/components/icons/FacebookIcon";
+import { TikTokIcon } from "@/components/icons/TikTokIcon";
+import { SOLUTION_PAGES } from "@/lib/seo-pages";
+import { AccueilProHeader } from "@/components/landing/AccueilProHeader";
 import { PublicHelpChat } from "@/components/PublicHelpChat";
 import { CaisseAnimee, CreditsAnimes, StockAnime } from "@/components/landing/AccueilProEcrans";
 import { LiveDashboard, Reveal, StoriesCarousel, type Story } from "@/components/landing/AccueilProAnime";
@@ -44,32 +46,10 @@ const WHATSAPP = "https://wa.me/22604059929";
  * visible dès le premier écran, trois fonctions expliquées en détail au lieu
  * d'une suite de cartes. Les écrans montrés sont des maquettes (données d'exemple).
  */
-export function AccueilPro({ trialDays, faqs, footer }: { trialDays: number; faqs: Faq[]; footer: React.ReactNode }) {
+export function AccueilPro({ trialDays, faqs }: { trialDays: number; faqs: Faq[] }) {
   return (
     <div className="theme-locked min-h-screen overflow-x-hidden bg-white text-zindo-ink-900">
-      <div aria-hidden className="zindo-flag-stripe h-1 w-full" />
-
-      <header className="sticky top-0 z-40 border-b border-zinc-200/70 bg-white/85 backdrop-blur-md">
-        <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-4 sm:px-6">
-          <Link href="/" className="flex items-center gap-2.5">
-            <ZindoLogo size={34} />
-            <span className="text-lg font-extrabold tracking-tight">ZINDO</span>
-          </Link>
-          <PublicNavLinks />
-          <div className="flex items-center gap-1.5 sm:gap-3">
-            <div className="hidden sm:block">
-              <LanguageSwitcher />
-            </div>
-            <Link href="/login" className="hidden rounded-lg px-3 py-2 text-sm font-semibold text-zindo-ink-700 hover:text-zindo-green-700 sm:block">
-              Se connecter
-            </Link>
-            <Link href="/inscription" className="whitespace-nowrap rounded-lg bg-zindo-green-500 px-3.5 py-2 text-sm font-bold text-white transition hover:bg-zindo-green-600">
-              Essai gratuit
-            </Link>
-            <PublicNavMenu />
-          </div>
-        </div>
-      </header>
+      <AccueilProHeader />
 
       <main>
         {/* Premier écran : le message à gauche, le logiciel à droite. */}
@@ -83,7 +63,7 @@ export function AccueilPro({ trialDays, faqs, footer }: { trialDays: number; faq
               style={{ backgroundImage: "linear-gradient(white 1px, transparent 1px), linear-gradient(90deg, white 1px, transparent 1px)", backgroundSize: "44px 44px" }}
             />
           </div>
-          <div className="mx-auto grid max-w-6xl items-center gap-14 px-4 pb-20 pt-14 sm:px-6 lg:grid-cols-2 lg:pb-28 lg:pt-24">
+          <div className="mx-auto grid max-w-6xl grid-cols-1 items-center gap-14 px-4 pb-20 pt-32 sm:px-6 lg:grid-cols-2 lg:pb-32 lg:pt-44">
             <div>
               <Reveal>
                 <p className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-3 py-1 text-xs font-semibold text-zindo-green-200 backdrop-blur">
@@ -91,9 +71,9 @@ export function AccueilPro({ trialDays, faqs, footer }: { trialDays: number; faq
                 </p>
               </Reveal>
               <Reveal delay={100}>
-                <h1 className="mt-6 text-[2.6rem] font-extrabold leading-[1.04] tracking-tight sm:text-6xl lg:text-[4rem]">
+                <h1 className="mt-6 text-[2.5rem] font-semibold leading-[1.05] tracking-[-0.03em] sm:text-6xl lg:text-[3.75rem]">
                   Votre stock et vos ventes,{" "}
-                  <span className="bg-gradient-to-r from-zindo-green-300 via-zindo-green-400 to-zindo-gold-400 bg-clip-text text-transparent">justes chaque jour.</span>
+                  <span className="text-zindo-green-300">justes chaque jour.</span>
                 </h1>
               </Reveal>
               <Reveal delay={200}>
@@ -226,7 +206,7 @@ export function AccueilPro({ trialDays, faqs, footer }: { trialDays: number; faq
         </section>
 
         {/* Métiers couverts. */}
-        <section className="border-y border-zinc-100 bg-zinc-50/70">
+        <section id="metiers" className="scroll-mt-20 border-y border-zinc-100 bg-zinc-50/70">
           <div className="mx-auto max-w-6xl px-4 py-20 sm:px-6">
             <SectionTitle
               eyebrow="Adapté à votre métier"
@@ -255,7 +235,7 @@ export function AccueilPro({ trialDays, faqs, footer }: { trialDays: number; faq
           <div className="mx-auto grid max-w-6xl gap-12 px-4 py-20 sm:px-6 lg:grid-cols-[0.9fr_1.1fr] lg:py-28">
             <Reveal>
               <p className="text-xs font-semibold uppercase tracking-wider text-zindo-green-300">Exemples d&apos;utilisation</p>
-              <h2 className="mt-3 text-3xl font-extrabold tracking-tight sm:text-4xl">Ce que ZINDO change, métier par métier</h2>
+              <h2 className="mt-3 text-3xl font-semibold tracking-[-0.02em] sm:text-[2.6rem] sm:leading-[1.1]">Ce que ZINDO change, métier par métier</h2>
               <p className="mt-4 text-zindo-green-100/75">
                 Quelques situations types, pour voir comment ZINDO s&apos;adapte à votre commerce.
               </p>
@@ -274,7 +254,7 @@ export function AccueilPro({ trialDays, faqs, footer }: { trialDays: number; faq
             {STEPS.map((step, i) => (
               <Reveal key={step.title} delay={i * 120} className="relative text-center">
                 <div>
-                  <span className="relative mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-zindo-green-500 text-lg font-extrabold text-white ring-8 ring-white">
+                  <span className="relative mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-zindo-green-500 text-lg font-bold text-white ring-8 ring-white">
                     <span
                       aria-hidden
                       className="absolute inset-0 animate-ping rounded-full bg-zindo-green-400/40 [animation-duration:2.4s] motion-reduce:hidden"
@@ -291,7 +271,7 @@ export function AccueilPro({ trialDays, faqs, footer }: { trialDays: number; faq
         </section>
 
         {/* Tarifs. */}
-        <section id="tarifs" className="mx-auto max-w-6xl px-4 py-20 sm:px-6 lg:py-28">
+        <section id="tarifs" className="scroll-mt-20 mx-auto max-w-6xl px-4 py-20 sm:px-6 lg:py-28">
           <SectionTitle eyebrow="Tarifs" title="Un prix simple, tout compris" text={`Essayez tout pendant ${trialDays} jours. Vous ne payez que si vous continuez.`} />
           <Reveal className="mx-auto mt-12 grid max-w-3xl gap-5 sm:grid-cols-2">
             <PriceCard name="Mensuel" price="7 500" period="FCFA / mois" note="Sans engagement, arrêtez quand vous voulez." />
@@ -313,7 +293,7 @@ export function AccueilPro({ trialDays, faqs, footer }: { trialDays: number; faq
             </div>
             <div className="p-8 sm:p-12">
               <p className="text-xs font-semibold uppercase tracking-wider text-zindo-green-300">Accompagnement</p>
-              <h2 className="mt-3 text-2xl font-extrabold tracking-tight sm:text-3xl">Vous n&apos;êtes pas seul pour démarrer</h2>
+              <h2 className="mt-3 text-2xl font-bold tracking-tight sm:text-3xl">Vous n&apos;êtes pas seul pour démarrer</h2>
               <p className="mt-4 max-w-xl leading-relaxed text-zindo-green-100/80">
                 ZINDO est développé au Burkina Faso par Coulibaly Soma. L&apos;équipe vous aide à régler votre commerce, à saisir vos produits
                 et à former vos employés, puis répond à vos questions sur WhatsApp.
@@ -345,10 +325,10 @@ export function AccueilPro({ trialDays, faqs, footer }: { trialDays: number; faq
         </section>
 
         {/* Questions fréquentes et assistant. */}
-        <section id="faq" className="mx-auto grid max-w-6xl gap-12 px-4 py-20 sm:px-6 lg:grid-cols-[1fr_1.3fr] lg:py-28">
+        <section id="faq" className="scroll-mt-20 mx-auto grid max-w-6xl gap-12 px-4 py-20 sm:px-6 lg:grid-cols-[1fr_1.3fr] lg:py-28">
           <div>
             <p className="text-xs font-semibold uppercase tracking-wider text-zindo-green-700">Questions fréquentes</p>
-            <h2 className="mt-3 text-3xl font-extrabold tracking-tight">Vos questions, nos réponses</h2>
+            <h2 className="mt-3 text-3xl font-bold tracking-tight">Vos questions, nos réponses</h2>
             <p className="mt-3 text-zinc-600">Une autre question ? Posez-la à l&apos;assistant, il répond tout de suite.</p>
             <div className="mt-6">
               <PublicHelpChat />
@@ -370,7 +350,7 @@ export function AccueilPro({ trialDays, faqs, footer }: { trialDays: number; faq
         {/* Dernier appel. */}
         <section className="mx-auto max-w-6xl px-4 pb-20 sm:px-6">
           <div className="rounded-3xl bg-zindo-green-500 px-6 py-14 text-center text-white sm:px-12">
-            <h2 className="text-3xl font-extrabold tracking-tight sm:text-4xl">Commencez aujourd&apos;hui, c&apos;est gratuit</h2>
+            <h2 className="text-3xl font-semibold tracking-[-0.02em] sm:text-[2.6rem] sm:leading-[1.1]">Commencez aujourd&apos;hui, c&apos;est gratuit</h2>
             <p className="mx-auto mt-3 max-w-lg text-zindo-green-50/90">
               {trialDays} jours pour tout essayer avec vos vrais produits. Sans carte bancaire.
             </p>
@@ -384,7 +364,7 @@ export function AccueilPro({ trialDays, faqs, footer }: { trialDays: number; faq
         </section>
       </main>
 
-      {footer}
+      <FooterPro />
     </div>
   );
 }
@@ -466,7 +446,7 @@ function SectionTitle({ eyebrow, title, text }: { eyebrow: string; title: string
   return (
     <Reveal className="mx-auto max-w-2xl text-center">
       <p className="text-xs font-semibold uppercase tracking-wider text-zindo-green-700">{eyebrow}</p>
-      <h2 className="mt-3 text-3xl font-extrabold tracking-tight sm:text-4xl">{title}</h2>
+      <h2 className="mt-3 text-3xl font-semibold tracking-[-0.02em] sm:text-[2.6rem] sm:leading-[1.1]">{title}</h2>
       {text && <p className="mt-4 text-lg text-zinc-600">{text}</p>}
     </Reveal>
   );
@@ -503,7 +483,7 @@ function Feature({
     <div className="grid items-center gap-10 lg:grid-cols-2 lg:gap-16">
       <Reveal className={reverse ? "lg:order-2" : ""}>
         <p className="text-sm font-bold text-zindo-green-600">{eyebrow}</p>
-        <h3 className="mt-2 text-2xl font-extrabold tracking-tight sm:text-3xl">{title}</h3>
+        <h3 className="mt-2 text-2xl font-bold tracking-tight sm:text-3xl">{title}</h3>
         <p className="mt-4 text-lg leading-relaxed text-zinc-600">{text}</p>
         <ul className="mt-6 space-y-3">
           {points.map((p) => (
@@ -531,7 +511,7 @@ function PriceCard({ name, price, period, note, highlighted = false }: { name: s
       )}
       <p className="font-semibold text-zinc-600">{name}</p>
       <p className="mt-3 flex items-baseline gap-2">
-        <span className="text-4xl font-extrabold tracking-tight">{price}</span>
+        <span className="text-4xl font-bold tracking-tight">{price}</span>
         <span className="text-sm text-zinc-500">{period}</span>
       </p>
       <p className="mt-3 text-sm text-zinc-600">{note}</p>
@@ -544,5 +524,89 @@ function PriceCard({ name, price, period, note, highlighted = false }: { name: s
         Commencer l&apos;essai gratuit
       </Link>
     </div>
+  );
+}
+
+const FOOTER_COLUMNS = [
+  {
+    title: "Produit",
+    links: [
+      { label: "Caisse", href: "/fonctionnalites/caisse-hors-ligne" },
+      { label: "Gestion de stock", href: "/fonctionnalites/gestion-de-stock" },
+      { label: "Crédits clients", href: "/fonctionnalites/credits-clients" },
+      { label: "Factures et devis", href: "/fonctionnalites/facturation" },
+      { label: "Tarifs", href: "/tarifs" },
+    ],
+  },
+  {
+    title: "Solutions",
+    links: [
+      ...SOLUTION_PAGES.map((p) => ({ label: p.label, href: `/fonctionnalites/${p.slug}` })),
+      { label: "Marché ZINDO", href: "/marche" },
+    ],
+  },
+  {
+    title: "Entreprise",
+    links: [
+      { label: "À propos", href: "/a-propos" },
+      { label: "Contact", href: "/contact" },
+      { label: "Questions fréquentes", href: "/#faq" },
+    ],
+  },
+  {
+    title: "Légal",
+    links: [
+      { label: "Conditions d'utilisation", href: "/cgu" },
+      { label: "Confidentialité", href: "/confidentialite" },
+    ],
+  },
+];
+
+function FooterPro() {
+  return (
+    <footer className="border-t border-zinc-200 bg-zinc-50">
+      <div className="mx-auto max-w-6xl px-4 pb-10 pt-16 sm:px-6">
+        <div className="grid gap-10 lg:grid-cols-[1.3fr_repeat(4,1fr)]">
+          <div>
+            <Link href="/" className="flex items-center gap-2.5">
+              <ZindoLogo size={30} />
+              <span className="text-lg font-bold tracking-tight">ZINDO</span>
+            </Link>
+            <p className="mt-4 max-w-xs text-sm leading-relaxed text-zinc-500">
+              Logiciel de caisse, de stock et de facturation conçu au Burkina Faso, pour les boutiques comme pour les PME.
+            </p>
+            <a href={WHATSAPP} target="_blank" rel="noopener noreferrer" className="mt-4 inline-block text-sm font-medium text-zindo-ink-700 hover:text-zindo-green-700">
+              WhatsApp : +226 04 05 99 29
+            </a>
+          </div>
+          {FOOTER_COLUMNS.map((col) => (
+            <div key={col.title}>
+              <p className="text-sm font-semibold text-zindo-ink-900">{col.title}</p>
+              <ul className="mt-4 space-y-2.5">
+                {col.links.map((l) => (
+                  <li key={l.href}>
+                    <Link href={l.href} className="text-sm text-zinc-500 transition-colors hover:text-zindo-ink-900">
+                      {l.label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </div>
+        <div className="mt-14 flex flex-col items-center justify-between gap-4 border-t border-zinc-200 pt-6 text-xs text-zinc-500 sm:flex-row">
+          <p>© {new Date().getFullYear()} ZINDO. Tous droits réservés.</p>
+          <p>Abonnement payable par Orange Money, Moov Money ou Wave.</p>
+          <div className="flex items-center gap-2">
+            <a href="https://www.facebook.com/profile.php?id=61594056733577&mibextid=ZbWKwL" target="_blank" rel="noopener noreferrer" aria-label="Facebook" className="flex h-8 w-8 items-center justify-center rounded-full text-zinc-500 hover:bg-zinc-200 hover:text-zindo-ink-900">
+              <FacebookIcon className="h-4 w-4" />
+            </a>
+            <a href="https://www.tiktok.com/@zindo390?_r=1&_t=ZN-99o7lktR2Ws" target="_blank" rel="noopener noreferrer" aria-label="TikTok" className="flex h-8 w-8 items-center justify-center rounded-full text-zinc-500 hover:bg-zinc-200 hover:text-zindo-ink-900">
+              <TikTokIcon className="h-4 w-4" />
+            </a>
+          </div>
+        </div>
+      </div>
+    </footer>
   );
 }

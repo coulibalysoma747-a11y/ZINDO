@@ -49,7 +49,7 @@ export function Frame({ children, title }: { children: React.ReactNode; title: s
         <span className="h-2.5 w-2.5 rounded-full bg-[#ff5f57]" />
         <span className="h-2.5 w-2.5 rounded-full bg-[#febc2e]" />
         <span className="h-2.5 w-2.5 rounded-full bg-[#28c840]" />
-        <span className="ml-2 truncate text-xs font-medium text-zinc-500">{title}</span>
+        <span className="ml-2 min-w-0 truncate text-xs font-medium text-zinc-500">{title}</span>
       </div>
       {children}
     </div>
@@ -127,7 +127,7 @@ export function CaisseAnimee() {
             )}
           </div>
           {paid && (
-            <div className="zindo-row-in absolute right-4 top-16 w-40 rounded-lg bg-white p-3 font-mono text-[10px] shadow-2xl ring-1 ring-black/5">
+            <div className="zindo-appear absolute right-4 top-16 w-40 rounded-lg bg-white p-3 font-mono text-[10px] shadow-2xl ring-1 ring-black/5">
               <p className="text-center font-bold">TICKET N° 1047</p>
               <div className="my-1.5 border-t border-dashed border-zinc-300" />
               {CART.map((i) => (
@@ -207,11 +207,11 @@ export function StockAnime() {
       </Frame>
       <div className="pointer-events-none absolute -bottom-6 right-4 left-4 flex justify-end sm:left-auto">
         {restocked ? (
-          <p key="achat" className="zindo-row-in flex items-center gap-2 rounded-xl bg-zindo-green-950 px-4 py-2.5 text-xs font-semibold text-white shadow-xl">
+          <p key="achat" className="zindo-appear flex items-center gap-2 rounded-xl bg-zindo-green-950 px-4 py-2.5 text-xs font-semibold text-white shadow-xl">
             <PackagePlus className="h-4 w-4 text-zindo-green-300" /> Livraison fournisseur reçue : +20 batteries
           </p>
         ) : qty <= MINIMUM ? (
-          <p key="alerte" className="zindo-row-in flex items-center gap-2 rounded-xl bg-white px-4 py-2.5 text-xs font-semibold text-amber-800 shadow-xl ring-1 ring-amber-200">
+          <p key="alerte" className="zindo-appear flex items-center gap-2 rounded-xl bg-white px-4 py-2.5 text-xs font-semibold text-amber-800 shadow-xl ring-1 ring-amber-200">
             <AlertTriangle className="h-4 w-4 text-amber-500" /> Stock faible : Batterie 12 V, reste {qty}
           </p>
         ) : null}
@@ -275,7 +275,7 @@ export function CreditsAnimes() {
         </div>
       </Frame>
       {repaid && (
-        <p className="zindo-row-in pointer-events-none absolute -bottom-6 right-4 flex items-center gap-2 rounded-xl bg-white px-4 py-2.5 text-xs font-semibold text-zindo-green-800 shadow-xl ring-1 ring-zindo-green-200">
+        <p className="zindo-appear pointer-events-none absolute -bottom-6 right-4 flex items-center gap-2 rounded-xl bg-white px-4 py-2.5 text-xs font-semibold text-zindo-green-800 shadow-xl ring-1 ring-zindo-green-200">
           <Wallet className="h-4 w-4 text-zindo-green-600" /> Moussa Traoré a payé 10 000 FCFA (Orange Money)
         </p>
       )}
