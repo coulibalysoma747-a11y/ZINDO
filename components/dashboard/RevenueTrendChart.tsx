@@ -61,7 +61,7 @@ export function RevenueTrendChart({ values, currency }: { values: number[]; curr
           Ancrée au bord droit (plutôt qu'à la suite du point) pour qu'un gros
           montant ne sorte jamais du viewBox — jamais tronquée, quelle que
           soit sa longueur. */}
-      <text x={WIDTH - 4} y={Math.max(last.y + 4, PAD_TOP)} fontSize={12} fontWeight={600} textAnchor="end" fill="#0b0b0b">
+      <text x={WIDTH - 4} y={Math.max(last.y - 10, 12)} fontSize={12} fontWeight={600} textAnchor="end" fill="#0b0b0b">
         {formatMoney(last.value, currency)}
       </text>
 

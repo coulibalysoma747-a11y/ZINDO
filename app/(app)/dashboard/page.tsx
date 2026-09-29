@@ -10,6 +10,7 @@ import { Card, CardBody, CardHeader } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { EmptyState } from "@/components/ui/Empty";
 import { ButtonLink } from "@/components/ui/Button";
+import { isFeatureEnabled, registerFeatureFlag } from "@/lib/feature-flags";
 import { HistoryFilters } from "@/components/history/HistoryFilters";
 import { RevenueTrendChart } from "@/components/dashboard/RevenueTrendChart";
 import { PaymentBreakdownDetail } from "@/components/dashboard/PaymentBreakdownDetail";
@@ -52,6 +53,12 @@ export default async function DashboardPage({
   const { periode, apercu } = await searchParams;
   const period = periode === "semaine" || periode === "mois" ? periode : "aujourdhui";
   const currentLocation = await getCurrentLocation(user.businessId);
+  await registerFeatureFlag(
+    "tableau_de_bord_pro",
+    "Tableau de bord sans doublons",
+    "Sur ordinateur : un seul en-tête (bonjour, date, boutons d'action) au-dessus des statistiques ; le bloc d'accueil du téléphone (chiffre du jour, raccourcis, alertes) n'est plus répété. Le téléphone ne change pas. Aperçu : /dashboard?apercu=tableau."
+  );
+  const pro = apercu === "tableau" || (await isFeatureEnabled("tableau_de_bord_pro", user.businessId));
 
   if (!currentLocation) {
     return (
@@ -120,6 +127,7 @@ export default async function DashboardPage({
           par l'utilisateur — commun au téléphone et à l'ordinateur. Les stats
           détaillées et tableaux ci-dessous n'apparaissent qu'à partir de sm,
           là où il y a la place de les afficher confortablement. */}
+      <div className={pro ? "sm:hidden" : undefined}>
       <MobileHome
         firstName={user.firstName}
         locationName={currentLocation.name}
@@ -133,8 +141,25 @@ export default async function DashboardPage({
         canManageExpenses={canManageExpenses}
         canViewReports={canViewReports}
       />
+      </div>
 
     <div className="hidden space-y-6 sm:block">
+      {pro && (
+        <div className="flex flex-wrap items-end justify-between gap-4 border-b border-zinc-200 pb-5 dark:border-slate-800">
+          <div>
+            <h1 className="text-2xl font-semibold tracking-tight text-zinc-900">Bonjour, {user.firstName}</h1>
+            <p className="mt-1 text-sm text-zinc-500">
+              {currentLocation.name} · {new Date().toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" })}
+            </p>
+          </div>
+          <DashboardActions
+            canSell={canSell}
+            canManageProducts={canManageProducts}
+            canManagePurchases={canManagePurchases}
+            canManageExpenses={canManageExpenses}
+          />
+        </div>
+      )}
       {(canSell || canViewStock) && (
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
@@ -318,7 +343,7 @@ export default async function DashboardPage({
         </div>
       )}
 
-      {(canSell || canManageProducts || canManagePurchases || canManageExpenses) && (
+      {!pro && (canSell || canManageProducts || canManagePurchases || canManageExpenses) && (
         <div className="flex flex-wrap gap-3">
           {canSell && <ButtonLink href="/ventes">Nouvelle vente</ButtonLink>}
           {canManageProducts && (
@@ -494,6 +519,39 @@ export default async function DashboardPage({
       )}
 
     </div>
+    </div>
+  );
+}
+
+function DashboardActions({
+  canSell,
+  canManageProducts,
+  canManagePurchases,
+  canManageExpenses,
+}: {
+  canSell: boolean;
+  canManageProducts: boolean;
+  canManagePurchases: boolean;
+  canManageExpenses: boolean;
+}) {
+  return (
+    <div className="flex flex-wrap gap-2">
+      {canManageExpenses && (
+        <ButtonLink href="/depenses" variant="outline">
+          Nouvelle dépense
+        </ButtonLink>
+      )}
+      {canManagePurchases && (
+        <ButtonLink href="/achats/nouveau" variant="outline">
+          Nouvel achat
+        </ButtonLink>
+      )}
+      {canManageProducts && (
+        <ButtonLink href="/produits/nouveau" variant="outline">
+          <Plus className="h-4 w-4" /> Nouveau produit
+        </ButtonLink>
+      )}
+      {canSell && <ButtonLink href="/ventes">Nouvelle vente</ButtonLink>}
     </div>
   );
 }
