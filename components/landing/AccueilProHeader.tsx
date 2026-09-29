@@ -35,7 +35,7 @@ const NAV: Entry[] = [
  * En-tête de la page d'accueil : transparent sur le haut de page sombre,
  * blanc dès que l'on fait défiler. Menus déroulants au survol ou au clic.
  */
-export function AccueilProHeader() {
+export function AccueilProHeader({ variant = "transparent" }: { variant?: "transparent" | "light" }) {
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState<string | null>(null);
   const [mobile, setMobile] = useState(false);
@@ -55,7 +55,7 @@ export function AccueilProHeader() {
     };
   }, []);
 
-  const light = scrolled || mobile;
+  const light = scrolled || mobile || variant === "light";
   const link = light ? "text-zindo-ink-700 hover:text-zindo-ink-900" : "text-white/80 hover:text-white";
 
   return (

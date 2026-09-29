@@ -3,7 +3,6 @@ import Image from "next/image";
 import { ZindoLogo } from "@/components/auth/ZindoLogo";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { ArrowLeft, Package, ShoppingCart, Store, BarChart3 } from "lucide-react";
-import { LiveDashboard } from "@/components/landing/AccueilProAnime";
 
 const HIGHLIGHT_TONES = ["text-zindo-green-400", "text-zindo-gold-400", "text-zindo-red-400", "text-zindo-green-400"];
 const HIGHLIGHT_TONES_LIGHT = ["text-zindo-green-600", "text-zindo-gold-600", "text-zindo-red-600", "text-zindo-green-600"];
@@ -200,36 +199,27 @@ function AuthShellPro({ children, locale }: { children: React.ReactNode; locale:
   const home = locale === "en" ? "/en" : "/";
   return (
     <div className="theme-locked flex min-h-screen bg-white">
-      <aside className="relative isolate hidden w-[46%] shrink-0 flex-col justify-between overflow-hidden bg-zindo-green-950 p-12 text-white lg:flex xl:p-16">
-        <div aria-hidden className="pointer-events-none absolute inset-0 -z-10">
-          <div className="absolute -left-40 -top-40 h-[480px] w-[480px] rounded-full bg-zindo-green-500/30 blur-[120px]" />
-          <div className="absolute -bottom-32 -right-24 h-[380px] w-[380px] rounded-full bg-zindo-gold-500/15 blur-[120px]" />
-          <div
-            className="absolute inset-0 opacity-[0.07] [mask-image:radial-gradient(ellipse_at_center,black_30%,transparent_75%)]"
-            style={{ backgroundImage: "linear-gradient(white 1px, transparent 1px), linear-gradient(90deg, white 1px, transparent 1px)", backgroundSize: "44px 44px" }}
-          />
-        </div>
+      <aside className="relative isolate hidden w-[46%] shrink-0 flex-col justify-between overflow-hidden p-12 text-white lg:flex xl:p-16">
+        <Image src="/photos/commercant-comptoir.webp" alt="" fill priority sizes="46vw" className="-z-10 object-cover object-[60%_center]" />
+        <div aria-hidden className="absolute inset-0 -z-10 bg-gradient-to-t from-black/85 via-black/35 to-black/20" />
         <Link href={home} className="flex items-center gap-2.5">
           <ZindoLogo size={34} />
           <span className="text-lg font-bold tracking-tight">ZINDO</span>
         </Link>
         <div>
-          <h2 className="text-4xl font-semibold leading-[1.1] tracking-[-0.03em] xl:text-[2.75rem]">
-            {t.headline} <span className="text-zindo-green-300">{t.accent}</span>
+          <h2 className="max-w-lg text-4xl font-medium leading-[1.1] tracking-[-0.03em] xl:text-[2.75rem]">
+            {t.headline} {t.accent}
           </h2>
-          <p className="mt-4 max-w-md text-[15px] leading-relaxed text-zindo-green-100/75">{t.subhead}</p>
-          <div className="mt-10 max-w-lg">
-            <LiveDashboard phone={false} />
+          <p className="mt-4 max-w-md text-[15px] leading-relaxed text-white/80">{t.subhead}</p>
+          <div className="mt-10 flex items-center gap-3 text-xs text-white/70">
+            <Image src="/brand/founder-coulibaly-soma.jpg" alt="" width={32} height={32} className="h-8 w-8 rounded-full object-cover ring-2 ring-white/30" />
+            <span>{t.founder}</span>
+            <span className="ml-auto">© {new Date().getFullYear()} ZINDO</span>
           </div>
-        </div>
-        <div className="flex items-center gap-3 text-xs text-zindo-green-100/60">
-          <Image src="/brand/founder-coulibaly-soma.jpg" alt="" width={32} height={32} className="h-8 w-8 rounded-full object-cover ring-2 ring-white/15" />
-          <span>{t.founder}</span>
-          <span className="ml-auto">© {new Date().getFullYear()} ZINDO</span>
         </div>
       </aside>
 
-      <div className="relative flex min-w-0 flex-1 flex-col bg-zinc-50/60">
+      <div className="relative flex min-w-0 flex-1 flex-col bg-white">
         <header className="relative z-30 flex items-center justify-between px-5 pt-5 sm:px-8 sm:pt-6">
           <Link href={home} className="inline-flex items-center gap-1.5 text-sm font-medium text-zinc-500 hover:text-zindo-ink-900">
             <ArrowLeft className="h-4 w-4" /> <span className="hidden sm:inline">{t.back}</span>

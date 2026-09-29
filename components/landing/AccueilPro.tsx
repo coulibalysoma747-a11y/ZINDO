@@ -7,27 +7,26 @@ import {
   Check,
   CloudOff,
   Cog,
-  Coins,
   Hammer,
   History,
   Lock,
-  RefreshCw,
-  Server,
-  ShieldCheck,
-  UserCog,
-  X,
   MessageCircle,
   Pill,
   Plus,
+  RefreshCw,
+  Server,
+  ShieldCheck,
   Shirt,
   ShoppingBasket,
   Smartphone,
   Store,
+  UserCog,
   UtensilsCrossed,
   Warehouse,
+  Wallet,
   Wrench,
+  X,
 } from "lucide-react";
-import { GoogleIcon } from "@/components/icons/GoogleIcon";
 import { ZindoLogo } from "@/components/auth/ZindoLogo";
 import { FacebookIcon } from "@/components/icons/FacebookIcon";
 import { TikTokIcon } from "@/components/icons/TikTokIcon";
@@ -35,161 +34,194 @@ import { SOLUTION_PAGES } from "@/lib/seo-pages";
 import { AccueilProHeader } from "@/components/landing/AccueilProHeader";
 import { PublicHelpChat } from "@/components/PublicHelpChat";
 import { CaisseAnimee, CreditsAnimes, StockAnime } from "@/components/landing/AccueilProEcrans";
-import { ApercuCookie, LiveDashboard, Reveal, StoriesCarousel, type Story } from "@/components/landing/AccueilProAnime";
+import { ApercuCookie, Reveal } from "@/components/landing/AccueilProAnime";
 
 type Faq = { question: string; answer: string };
 
 const WHATSAPP = "https://wa.me/22604059929";
 
 /**
- * Page d'accueil publique, version refondue : un message clair, le logiciel
- * visible dès le premier écran, trois fonctions expliquées en détail au lieu
- * d'une suite de cartes. Les écrans montrés sont des maquettes (données d'exemple).
+ * Page d'accueil publique, style sobre (flag accueil_pro) : fond blanc, grands
+ * titres fins, vraies photos de commerces (licences libres, crédits en pied de
+ * page) et une seule couleur, le vert ZINDO. Les écrans du logiciel montrés sont
+ * des maquettes avec des données d'exemple.
  */
 export function AccueilPro({ trialDays, faqs }: { trialDays: number; faqs: Faq[] }) {
   return (
-    <div className="theme-locked min-h-screen overflow-x-hidden bg-white text-zindo-ink-900">
-      <AccueilProHeader />
+    <div className="theme-locked min-h-screen overflow-x-hidden bg-white text-zinc-950">
+      <AccueilProHeader variant="light" />
       <ApercuCookie />
 
       <main>
-        {/* Premier écran : le message à gauche, le logiciel à droite. */}
-        <section className="relative isolate overflow-hidden bg-zindo-green-950 text-white">
-          {/* Décor : halos de couleur et quadrillage estompé. */}
-          <div aria-hidden className="pointer-events-none absolute inset-0 -z-10">
-            <div className="absolute -left-40 -top-40 h-[520px] w-[520px] rounded-full bg-zindo-green-500/30 blur-[120px]" />
-            <div className="absolute -right-32 top-24 h-[420px] w-[420px] rounded-full bg-zindo-gold-500/15 blur-[120px]" />
-            <div
-              className="absolute inset-0 opacity-[0.07] [mask-image:radial-gradient(ellipse_at_center,black_30%,transparent_75%)]"
-              style={{ backgroundImage: "linear-gradient(white 1px, transparent 1px), linear-gradient(90deg, white 1px, transparent 1px)", backgroundSize: "44px 44px" }}
-            />
-          </div>
-          <div className="mx-auto grid max-w-6xl grid-cols-1 items-center gap-14 px-4 pb-20 pt-32 sm:px-6 lg:grid-cols-2 lg:pb-32 lg:pt-44">
-            <div>
-              <Reveal>
-                <p className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-3 py-1 text-xs font-semibold text-zindo-green-200 backdrop-blur">
-                  <span className="h-1.5 w-1.5 rounded-full bg-zindo-green-400" /> Conçu au Burkina Faso, pour l&apos;Afrique
-                </p>
-              </Reveal>
-              <Reveal delay={100}>
-                <h1 className="mt-6 text-[2.5rem] font-semibold leading-[1.05] tracking-[-0.03em] sm:text-6xl lg:text-[3.75rem]">
-                  Votre stock et vos ventes,{" "}
-                  <span className="text-zindo-green-300">justes chaque jour.</span>
-                </h1>
-              </Reveal>
-              <Reveal delay={200}>
-                <p className="mt-6 max-w-lg text-lg leading-relaxed text-zindo-green-100/80">
-                  ZINDO remplace le cahier et Excel : caisse, stock, crédits clients et bénéfices dans une seule application, qui continue de
-                  fonctionner quand Internet coupe.
-                </p>
-              </Reveal>
-              <Reveal delay={300}>
-                <div className="mt-9 flex flex-col gap-3 sm:flex-row">
-                  <Link
-                    href="/inscription"
-                    className="group inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-xl bg-white px-6 py-3.5 text-base font-bold text-zindo-green-800 shadow-lg shadow-black/20 transition hover:bg-zindo-green-50"
-                  >
-                    Essayer gratuitement {trialDays} jours <ArrowRight className="h-4 w-4 transition group-hover:translate-x-0.5" />
-                  </Link>
-                  <a
-                    href="/api/auth/google"
-                    className="inline-flex items-center justify-center gap-2.5 whitespace-nowrap rounded-xl border border-white/20 bg-white/5 px-6 py-3.5 text-base font-semibold text-white backdrop-blur transition hover:bg-white/10"
-                  >
-                    <GoogleIcon className="h-[18px] w-[18px]" /> Continuer avec Google
-                  </a>
-                </div>
-                <ul className="mt-6 flex flex-wrap gap-x-5 gap-y-2 text-sm text-zindo-green-100/80">
-                  {["Sans carte bancaire", "Sans engagement", "Ensuite 7 500 FCFA par mois"].map((t) => (
-                    <li key={t} className="inline-flex items-center gap-1.5">
-                      <Check className="h-4 w-4 text-zindo-green-400" /> {t}
-                    </li>
-                  ))}
-                </ul>
-              </Reveal>
-            </div>
-            <Reveal delay={250}>
-              <LiveDashboard />
+        {/* Premier écran : le message à gauche, un vrai commerçant à droite. */}
+        <section className="mx-auto grid max-w-6xl grid-cols-1 items-center gap-12 px-4 pb-20 pt-28 sm:px-6 lg:grid-cols-[1.05fr_1fr] lg:gap-16 lg:pb-28 lg:pt-36">
+          <div>
+            <Reveal>
+              <p className="text-sm font-semibold uppercase tracking-[0.14em] text-zindo-green-700">Logiciel de caisse et de stock</p>
             </Reveal>
+            <Reveal delay={80}>
+              <h1 className="mt-5 text-[2.6rem] font-medium leading-[1.04] tracking-[-0.035em] sm:text-6xl lg:text-[4.1rem]">
+                Votre stock et vos ventes, justes chaque jour.
+              </h1>
+            </Reveal>
+            <Reveal delay={160}>
+              <p className="mt-6 max-w-xl text-lg leading-relaxed text-zinc-600 sm:text-xl">
+                ZINDO remplace le cahier et Excel : caisse, stock, crédits clients et bénéfices dans une seule application, qui continue de
+                fonctionner quand Internet coupe.
+              </p>
+            </Reveal>
+            <Reveal delay={240}>
+              <div className="mt-9 flex flex-col gap-3 sm:flex-row">
+                <Link
+                  href="/inscription"
+                  className="group inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-full bg-zindo-green-600 px-7 py-4 text-base font-semibold text-white transition hover:bg-zindo-green-700"
+                >
+                  Essayer gratuitement <ArrowRight className="h-4 w-4 transition group-hover:translate-x-0.5" />
+                </Link>
+                <Link
+                  href="#tarifs"
+                  className="inline-flex items-center justify-center whitespace-nowrap rounded-full border border-zinc-300 px-7 py-4 text-base font-semibold text-zinc-900 transition hover:border-zinc-900"
+                >
+                  Voir les tarifs
+                </Link>
+              </div>
+              <p className="mt-5 text-sm text-zinc-500">
+                {trialDays} jours gratuits · Sans carte bancaire · Ensuite 7 500 FCFA par mois
+              </p>
+            </Reveal>
+          </div>
+
+          <Reveal delay={200} className="relative">
+            <div className="relative aspect-[4/3] overflow-hidden rounded-[2rem] bg-zinc-100 lg:aspect-[4/4.4]">
+              <Image
+                src="/photos/commercant-comptoir.webp"
+                alt="Un commerçant souriant derrière son comptoir, dans sa boutique de vêtements"
+                fill
+                priority
+                sizes="(min-width: 1024px) 560px, 100vw"
+                className="object-cover object-[60%_center]"
+              />
+            </div>
+            {/* Une seule touche « logiciel » : la vente qui vient d'être enregistrée. */}
+            <div className="absolute -bottom-6 left-4 right-4 flex items-center gap-3 rounded-2xl bg-white p-4 shadow-[0_20px_50px_-12px_rgb(0_0_0/0.25)] ring-1 ring-black/5 sm:left-auto sm:right-6 sm:w-80">
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-zindo-green-50 text-zindo-green-700">
+                <Check className="h-5 w-5" />
+              </span>
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-semibold">Vente enregistrée</p>
+                <p className="truncate text-xs text-zinc-500">3 articles · Orange Money</p>
+              </div>
+              <p className="shrink-0 text-sm font-semibold tabular-nums">21 500 F</p>
+            </div>
+          </Reveal>
+        </section>
+
+        {/* Bande de confiance, sobre. */}
+        <section className="border-y border-zinc-200">
+          <div className="mx-auto grid max-w-6xl grid-cols-2 gap-6 px-4 py-8 sm:px-6 lg:grid-cols-4">
+            {[
+              [CloudOff, "Fonctionne sans Internet"],
+              [Smartphone, "Téléphone, tablette, ordinateur"],
+              [Wallet, "Orange Money, Moov Money, Wave"],
+              [MessageCircle, "Accompagnement sur WhatsApp"],
+            ].map(([Icon, label]) => {
+              const I = Icon as typeof Store;
+              return (
+                <p key={label as string} className="flex items-center gap-3 text-sm font-medium text-zinc-700">
+                  <I className="h-5 w-5 shrink-0 text-zindo-green-600" /> {label as string}
+                </p>
+              );
+            })}
           </div>
         </section>
 
-        {/* Métiers qui défilent en continu. */}
-        <section aria-label="Métiers pris en charge" className="overflow-hidden border-b border-zinc-100 bg-white py-5">
-          <div className="zindo-marquee flex w-max gap-3">
-            {[...METIERS, ...METIERS].map(({ icon: Icon, label }, i) => (
-              <span
-                key={i}
-                aria-hidden={i >= METIERS.length}
-                className="inline-flex items-center gap-2 whitespace-nowrap rounded-full border border-zinc-200 px-4 py-2 text-sm font-medium text-zindo-ink-700"
-              >
+        {/* Pour chaque commerce : vraies photos. */}
+        <section id="metiers" className="mx-auto max-w-6xl scroll-mt-20 px-4 py-20 sm:px-6 lg:py-28">
+          <Reveal className="max-w-2xl">
+            <h2 className="text-3xl font-medium tracking-[-0.03em] sm:text-5xl">Fait pour les commerces d&apos;ici</h2>
+            <p className="mt-4 text-lg text-zinc-600">
+              À l&apos;inscription, vous choisissez votre activité : ZINDO affiche les écrans et les champs qui vous servent.
+            </p>
+          </Reveal>
+          <div className="mt-12 grid gap-8 md:grid-cols-3">
+            {COMMERCES.map((c, i) => (
+              <Reveal key={c.title} delay={i * 100}>
+                <div className="relative aspect-[4/3] overflow-hidden rounded-2xl bg-zinc-100">
+                  <Image src={c.photo} alt={c.alt} fill sizes="(min-width: 768px) 360px, 100vw" className="object-cover transition duration-700 hover:scale-[1.03]" />
+                </div>
+                <div className="mt-5 border-t border-zinc-200 pt-5">
+                  <h3 className="text-xl font-medium tracking-tight">{c.title}</h3>
+                  <p className="mt-2 text-zinc-600">{c.text}</p>
+                </div>
+              </Reveal>
+            ))}
+          </div>
+          <Reveal className="mt-12 flex flex-wrap gap-2">
+            {METIERS.map(({ icon: Icon, label }) => (
+              <span key={label} className="inline-flex items-center gap-2 rounded-full border border-zinc-200 px-4 py-2 text-sm text-zinc-700">
                 <Icon className="h-4 w-4 text-zindo-green-600" /> {label}
               </span>
             ))}
-          </div>
-        </section>
-
-        {/* Bande de confiance : là où ZINDO fonctionne et comment on paie. */}
-        <section className="border-b border-zinc-100">
-          <div className="mx-auto grid max-w-6xl gap-6 px-4 py-8 text-sm sm:grid-cols-3 sm:px-6">
-            <TrustItem icon={Smartphone} title="Téléphone, tablette, ordinateur" text="Android, iPhone et Windows, même compte partout." />
-            <TrustItem icon={CloudOff} title="Fonctionne sans Internet" text="Les ventes se synchronisent au retour du réseau." />
-            <TrustItem icon={Coins} title="Paiement local" text="Abonnement par Orange Money, Moov Money ou Wave." />
-          </div>
+          </Reveal>
         </section>
 
         {/* Trois fonctions, expliquées une par une. */}
-        <section id="fonctions" className="mx-auto max-w-6xl space-y-24 px-4 py-20 sm:px-6 lg:py-28">
-          <SectionTitle eyebrow="Ce que fait ZINDO" title="Tout votre commerce, au même endroit" />
-          <Feature
-            eyebrow="Caisse"
-            title="Encaissez en quelques secondes"
-            text="Cherchez le produit ou scannez son code-barres, choisissez le moyen de paiement, et le ticket sort. Le stock baisse tout seul."
-            points={[
-              "Ticket 58 ou 80 mm, facture A4 avec QR code de vérification",
-              "Espèces, Mobile Money, carte ou vente à crédit",
-              "Remises, retours et échanges enregistrés",
-              "Vente possible même sans connexion",
-            ]}
-            visual={<CaisseAnimee />}
-          />
-          <Feature
-            reverse
-            eyebrow="Stock"
-            title="Sachez exactement ce qu'il reste en rayon"
-            text="Chaque entrée et chaque sortie est enregistrée avec la date, la personne et le motif. Vous êtes prévenu avant la rupture."
-            points={[
-              "Alerte dès qu'un produit atteint son stock minimum",
-              "Inventaire : stock réel comparé au stock théorique",
-              "Plusieurs boutiques et dépôts, transferts entre eux",
-              "Achats fournisseurs qui remplissent le stock",
-            ]}
-            visual={<StockAnime />}
-          />
-          <Feature
-            eyebrow="Argent"
-            title="Connaissez votre vrai bénéfice"
-            text="Le bénéfice est calculé à chaque vente à partir du prix d'achat. Les crédits clients sont suivis jusqu'au dernier franc."
-            points={[
-              "Chiffre d'affaires et bénéfice du jour, du mois",
-              "Qui vous doit combien, et depuis quand",
-              "Rapports de ventes, d'achats et de stock",
-              "Chaque employé ne voit que ce qui le concerne",
-            ]}
-            visual={<CreditsAnimes />}
-          />
+        <section id="fonctions" className="bg-zinc-50">
+          <div className="mx-auto max-w-6xl space-y-24 px-4 py-20 sm:px-6 lg:space-y-32 lg:py-28">
+            <Reveal className="max-w-2xl">
+              <h2 className="text-3xl font-medium tracking-[-0.03em] sm:text-5xl">Tout votre commerce, au même endroit</h2>
+            </Reveal>
+            <Feature
+              eyebrow="Caisse"
+              title="Encaissez en quelques secondes"
+              text="Cherchez le produit ou scannez son code-barres, choisissez le moyen de paiement, et le ticket sort. Le stock baisse tout seul."
+              points={[
+                "Ticket 58 ou 80 mm, facture A4 avec QR code de vérification",
+                "Espèces, Mobile Money, carte ou vente à crédit",
+                "Remises, retours et échanges enregistrés",
+                "Vente possible même sans connexion",
+              ]}
+              visual={<CaisseAnimee />}
+            />
+            <Feature
+              reverse
+              eyebrow="Stock"
+              title="Sachez exactement ce qu'il reste en rayon"
+              text="Chaque entrée et chaque sortie est enregistrée avec la date, la personne et le motif. Vous êtes prévenu avant la rupture."
+              points={[
+                "Alerte dès qu'un produit atteint son stock minimum",
+                "Inventaire : stock réel comparé au stock théorique",
+                "Plusieurs boutiques et dépôts, transferts entre eux",
+                "Achats fournisseurs qui remplissent le stock",
+              ]}
+              visual={<StockAnime />}
+            />
+            <Feature
+              eyebrow="Argent"
+              title="Connaissez votre vrai bénéfice"
+              text="Le bénéfice est calculé à chaque vente à partir du prix d'achat. Les crédits clients sont suivis jusqu'au dernier franc."
+              points={[
+                "Chiffre d'affaires et bénéfice du jour, du mois",
+                "Qui vous doit combien, et depuis quand",
+                "Rapports de ventes, d'achats et de stock",
+                "Chaque employé ne voit que ce qui le concerne",
+              ]}
+              visual={<CreditsAnimes />}
+            />
+          </div>
         </section>
 
-        {/* Comparatif : ce que le commerçant gagne en quittant le cahier et Excel. */}
-        <section className="mx-auto max-w-6xl px-4 pb-20 sm:px-6 lg:pb-28">
+        {/* Comparatif. */}
+        <section className="mx-auto max-w-6xl px-4 py-20 sm:px-6 lg:py-28">
           <SectionTitle eyebrow="Comparatif" title="Cahier, Excel ou ZINDO ?" text="Ce qui change concrètement dans votre journée." />
           <Reveal className="mt-12 overflow-x-auto rounded-2xl border border-zinc-200">
             <table className="w-full text-left text-[13px] sm:text-sm">
               <thead>
                 <tr className="border-b border-zinc-200 bg-zinc-50">
-                  <th className="px-5 py-4 font-semibold text-zinc-500" />
+                  <th className="px-3 py-4 font-semibold text-zinc-500 sm:px-5" />
                   <th className="px-2 py-4 text-center font-semibold text-zinc-500 sm:px-4">Cahier</th>
                   <th className="px-2 py-4 text-center font-semibold text-zinc-500 sm:px-4">Excel</th>
-                  <th className="bg-zindo-green-50 px-2 py-4 text-center font-bold sm:px-4 text-zindo-green-700">ZINDO</th>
+                  <th className="bg-zindo-green-50 px-2 py-4 text-center font-bold text-zindo-green-700 sm:px-4">ZINDO</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-zinc-100">
@@ -206,43 +238,32 @@ export function AccueilPro({ trialDays, faqs }: { trialDays: number; faqs: Faq[]
           </Reveal>
         </section>
 
-        {/* Métiers couverts. */}
-        <section id="metiers" className="scroll-mt-20 border-y border-zinc-100 bg-zinc-50/70">
-          <div className="mx-auto max-w-6xl px-4 py-20 sm:px-6">
-            <SectionTitle
-              eyebrow="Adapté à votre métier"
-              title="Des écrans faits pour votre activité"
-              text="À l'inscription, vous choisissez votre activité : ZINDO affiche les champs et les modules qui vous servent."
-            />
-            <ul className="mt-12 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-              {METIERS.map(({ icon: Icon, label, detail }) => (
-                <li key={label} className="flex items-start gap-3 rounded-xl border border-zinc-200 bg-white p-4">
-                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-zindo-green-50 text-zindo-green-700">
-                    <Icon className="h-[18px] w-[18px]" />
-                  </span>
-                  <span className="min-w-0">
-                    <span className="block text-sm font-semibold">{label}</span>
-                    <span className="mt-0.5 block text-xs leading-snug text-zinc-500">{detail}</span>
-                  </span>
-                </li>
-              ))}
-            </ul>
-          </div>
-        </section>
-
-        {/* Exemples d'utilisation (pas des avis clients). */}
-        <section className="relative isolate overflow-hidden bg-zindo-green-950 text-white">
-          <div aria-hidden className="pointer-events-none absolute -right-40 -top-40 -z-10 h-[480px] w-[480px] rounded-full bg-zindo-green-500/25 blur-[120px]" />
-          <div className="mx-auto grid max-w-6xl gap-12 px-4 py-20 sm:px-6 lg:grid-cols-[0.9fr_1.1fr] lg:py-28">
-            <Reveal>
-              <p className="text-xs font-semibold uppercase tracking-wider text-zindo-green-300">Exemples d&apos;utilisation</p>
-              <h2 className="mt-3 text-3xl font-semibold tracking-[-0.02em] sm:text-[2.6rem] sm:leading-[1.1]">Ce que ZINDO change, métier par métier</h2>
-              <p className="mt-4 text-zindo-green-100/75">
-                Quelques situations types, pour voir comment ZINDO s&apos;adapte à votre commerce.
-              </p>
-            </Reveal>
-            <Reveal delay={150}>
-              <StoriesCarousel stories={STORIES} />
+        {/* Conçu au Burkina Faso : vraie photo de Ouagadougou. */}
+        <section className="relative isolate overflow-hidden">
+          <Image
+            src="/photos/rue-commercante-ouagadougou.webp"
+            alt="Boutiques d'une rue commerçante de Ouagadougou"
+            fill
+            sizes="100vw"
+            className="-z-10 object-cover"
+          />
+          <div aria-hidden className="absolute inset-0 -z-10 bg-gradient-to-r from-black/80 via-black/60 to-black/20" />
+          <div className="mx-auto max-w-6xl px-4 py-24 text-white sm:px-6 lg:py-32">
+            <Reveal className="max-w-xl">
+              <p className="text-sm font-semibold uppercase tracking-[0.14em] text-zindo-green-300">Conçu au Burkina Faso</p>
+              <h2 className="mt-4 text-3xl font-medium leading-tight tracking-[-0.03em] sm:text-5xl">Pensé pour la réalité des commerces d&apos;Afrique de l&apos;Ouest</h2>
+              <ul className="mt-8 space-y-3 text-white/85">
+                {[
+                  "Le FCFA et les monnaies de 250 pays, avec ou sans centimes",
+                  "La caisse continue quand le réseau coupe",
+                  "Abonnement payé par Orange Money, Moov Money ou Wave",
+                  "Une équipe joignable sur WhatsApp, en français",
+                ].map((t) => (
+                  <li key={t} className="flex items-start gap-3">
+                    <Check className="mt-1 h-4 w-4 shrink-0 text-zindo-green-300" /> {t}
+                  </li>
+                ))}
+              </ul>
             </Reveal>
           </div>
         </section>
@@ -251,28 +272,21 @@ export function AccueilPro({ trialDays, faqs }: { trialDays: number; faqs: Faq[]
         <section className="mx-auto max-w-6xl px-4 pt-20 sm:px-6 lg:pt-28">
           <SectionTitle eyebrow="Démarrage" title="Prêt à vendre en trois étapes" />
           <div className="relative mt-14 grid gap-10 md:grid-cols-3 md:gap-6">
-            <span aria-hidden className="absolute left-[16.6%] right-[16.6%] top-6 hidden h-px bg-gradient-to-r from-zindo-green-200 via-zindo-green-400 to-zindo-green-200 md:block" />
+            <span aria-hidden className="absolute left-[16.6%] right-[16.6%] top-6 hidden h-px bg-zinc-200 md:block" />
             {STEPS.map((step, i) => (
               <Reveal key={step.title} delay={i * 120} className="relative text-center">
-                <div>
-                  <span className="relative mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-zindo-green-500 text-lg font-bold text-white ring-8 ring-white">
-                    <span
-                      aria-hidden
-                      className="absolute inset-0 animate-ping rounded-full bg-zindo-green-400/40 [animation-duration:2.4s] motion-reduce:hidden"
-                      style={{ animationDelay: `${i * 0.8}s` }}
-                    />
-                    <span className="relative">{i + 1}</span>
-                  </span>
-                  <h3 className="mt-5 text-lg font-bold">{step.title}</h3>
-                  <p className="mx-auto mt-2 max-w-xs text-sm leading-relaxed text-zinc-600">{step.text}</p>
-                </div>
+                <span className="relative mx-auto flex h-12 w-12 items-center justify-center rounded-full border border-zinc-300 bg-white text-lg font-medium">
+                  {i + 1}
+                </span>
+                <h3 className="mt-5 text-lg font-semibold">{step.title}</h3>
+                <p className="mx-auto mt-2 max-w-xs text-sm leading-relaxed text-zinc-600">{step.text}</p>
               </Reveal>
             ))}
           </div>
         </section>
 
         {/* Tarifs. */}
-        <section id="tarifs" className="scroll-mt-20 mx-auto max-w-6xl px-4 py-20 sm:px-6 lg:py-28">
+        <section id="tarifs" className="mx-auto max-w-6xl scroll-mt-20 px-4 py-20 sm:px-6 lg:py-28">
           <SectionTitle eyebrow="Tarifs" title="Un prix simple, tout compris" text={`Essayez tout pendant ${trialDays} jours. Vous ne payez que si vous continuez.`} />
           <Reveal className="mx-auto mt-12 grid max-w-3xl gap-5 sm:grid-cols-2">
             <PriceCard name="Mensuel" price="7 500" period="FCFA / mois" note="Sans engagement, arrêtez quand vous voulez." />
@@ -286,50 +300,51 @@ export function AccueilPro({ trialDays, faqs }: { trialDays: number; faqs: Faq[]
           </p>
         </section>
 
-        {/* Accompagnement et fondateur. */}
-        <section className="mx-auto max-w-6xl px-4 sm:px-6">
-          <div className="grid overflow-hidden rounded-3xl bg-zindo-green-950 text-white lg:grid-cols-[380px_1fr]">
-            <div className="relative h-72 lg:h-auto">
-              <Image src="/brand/founder-coulibaly-soma.jpg" alt="Coulibaly Soma, fondateur de ZINDO" fill sizes="(min-width: 1024px) 380px, 100vw" className="object-cover object-top" />
+        {/* Sécurité des données : uniquement des faits vérifiables. */}
+        <section className="bg-zinc-50">
+          <div className="mx-auto max-w-6xl px-4 py-20 sm:px-6 lg:py-28">
+            <SectionTitle eyebrow="Sécurité" title="Vos données sont protégées" text="Votre stock et vos chiffres n'appartiennent qu'à vous." />
+            <div className="mt-12 grid gap-px overflow-hidden rounded-2xl border border-zinc-200 bg-zinc-200 sm:grid-cols-2 lg:grid-cols-3">
+              {SECURITY.map(({ icon: Icon, title, text }, i) => (
+                <Reveal key={title} delay={(i % 3) * 100} className="bg-white p-6">
+                  <Icon className="h-5 w-5 text-zindo-green-600" />
+                  <h3 className="mt-4 font-semibold">{title}</h3>
+                  <p className="mt-1.5 text-sm leading-relaxed text-zinc-600">{text}</p>
+                </Reveal>
+              ))}
             </div>
-            <div className="p-8 sm:p-12">
-              <p className="text-xs font-semibold uppercase tracking-wider text-zindo-green-300">Accompagnement</p>
-              <h2 className="mt-3 text-2xl font-bold tracking-tight sm:text-3xl">Vous n&apos;êtes pas seul pour démarrer</h2>
-              <p className="mt-4 max-w-xl leading-relaxed text-zindo-green-100/80">
-                ZINDO est développé au Burkina Faso par Coulibaly Soma. L&apos;équipe vous aide à régler votre commerce, à saisir vos produits
-                et à former vos employés, puis répond à vos questions sur WhatsApp.
+          </div>
+        </section>
+
+        {/* Accompagnement et fondateur. */}
+        <section className="mx-auto max-w-6xl px-4 py-20 sm:px-6 lg:py-28">
+          <div className="grid items-center gap-10 lg:grid-cols-[380px_1fr] lg:gap-16">
+            <Reveal className="relative aspect-[4/5] overflow-hidden rounded-[2rem] bg-zinc-100">
+              <Image src="/brand/founder-coulibaly-soma.jpg" alt="Coulibaly Soma, fondateur de ZINDO" fill sizes="(min-width: 1024px) 380px, 100vw" className="object-cover object-top" />
+            </Reveal>
+            <Reveal delay={120}>
+              <p className="text-sm font-semibold uppercase tracking-[0.14em] text-zindo-green-700">Accompagnement</p>
+              <h2 className="mt-4 text-3xl font-medium tracking-[-0.03em] sm:text-5xl">Vous n&apos;êtes pas seul pour démarrer</h2>
+              <p className="mt-5 max-w-xl text-lg leading-relaxed text-zinc-600">
+                ZINDO est développé au Burkina Faso par Coulibaly Soma. L&apos;équipe vous aide à régler votre commerce, à saisir vos produits et
+                à former vos employés, puis répond à vos questions sur WhatsApp.
               </p>
               <a
                 href={WHATSAPP}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="mt-7 inline-flex items-center gap-2 rounded-xl bg-white px-5 py-3 text-sm font-bold text-zindo-green-800 transition hover:bg-zindo-green-50"
+                className="mt-8 inline-flex items-center gap-2 rounded-full border border-zinc-300 px-6 py-3.5 text-sm font-semibold transition hover:border-zinc-900"
               >
-                <MessageCircle className="h-4 w-4" /> Écrire sur WhatsApp : +226 04 05 99 29
+                <MessageCircle className="h-4 w-4 text-zindo-green-600" /> Écrire sur WhatsApp : +226 04 05 99 29
               </a>
-            </div>
-          </div>
-        </section>
-
-        {/* Sécurité des données : uniquement des faits vérifiables. */}
-        <section className="mx-auto max-w-6xl px-4 pt-20 sm:px-6 lg:pt-28">
-          <SectionTitle eyebrow="Sécurité" title="Vos données sont protégées" text="Votre stock et vos chiffres n'appartiennent qu'à vous." />
-          <div className="mt-12 grid gap-px overflow-hidden rounded-2xl border border-zinc-200 bg-zinc-200 sm:grid-cols-2 lg:grid-cols-3">
-            {SECURITY.map(({ icon: Icon, title, text }, i) => (
-              <Reveal key={title} delay={(i % 3) * 100} className="bg-white p-6">
-                <Icon className="h-5 w-5 text-zindo-green-600" />
-                <h3 className="mt-4 font-bold">{title}</h3>
-                <p className="mt-1.5 text-sm leading-relaxed text-zinc-600">{text}</p>
-              </Reveal>
-            ))}
+            </Reveal>
           </div>
         </section>
 
         {/* Questions fréquentes et assistant. */}
-        <section id="faq" className="scroll-mt-20 mx-auto grid max-w-6xl gap-12 px-4 py-20 sm:px-6 lg:grid-cols-[1fr_1.3fr] lg:py-28">
+        <section id="faq" className="mx-auto grid max-w-6xl scroll-mt-20 gap-12 border-t border-zinc-200 px-4 py-20 sm:px-6 lg:grid-cols-[1fr_1.3fr] lg:py-28">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-wider text-zindo-green-700">Questions fréquentes</p>
-            <h2 className="mt-3 text-3xl font-bold tracking-tight">Vos questions, nos réponses</h2>
+            <h2 className="text-3xl font-medium tracking-[-0.03em] sm:text-4xl">Questions fréquentes</h2>
             <p className="mt-3 text-zinc-600">Une autre question ? Posez-la à l&apos;assistant, il répond tout de suite.</p>
             <div className="mt-6">
               <PublicHelpChat />
@@ -337,8 +352,8 @@ export function AccueilPro({ trialDays, faqs }: { trialDays: number; faqs: Faq[]
           </div>
           <div className="divide-y divide-zinc-200 border-y border-zinc-200">
             {faqs.map((faq) => (
-              <details key={faq.question} className="group py-4">
-                <summary className="flex cursor-pointer list-none items-center justify-between gap-4 font-semibold">
+              <details key={faq.question} className="group py-5">
+                <summary className="flex cursor-pointer list-none items-center justify-between gap-4 font-medium">
                   {faq.question}
                   <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-zinc-300 text-zinc-500 transition group-open:rotate-45">+</span>
                 </summary>
@@ -350,14 +365,14 @@ export function AccueilPro({ trialDays, faqs }: { trialDays: number; faqs: Faq[]
 
         {/* Dernier appel. */}
         <section className="mx-auto max-w-6xl px-4 pb-20 sm:px-6">
-          <div className="rounded-3xl bg-zindo-green-500 px-6 py-14 text-center text-white sm:px-12">
-            <h2 className="text-3xl font-semibold tracking-[-0.02em] sm:text-[2.6rem] sm:leading-[1.1]">Commencez aujourd&apos;hui, c&apos;est gratuit</h2>
-            <p className="mx-auto mt-3 max-w-lg text-zindo-green-50/90">
+          <div className="rounded-[2rem] bg-zinc-950 px-6 py-16 text-center text-white sm:px-12 sm:py-20">
+            <h2 className="text-3xl font-medium tracking-[-0.03em] sm:text-5xl">Commencez aujourd&apos;hui, c&apos;est gratuit</h2>
+            <p className="mx-auto mt-4 max-w-lg text-zinc-400">
               {trialDays} jours pour tout essayer avec vos vrais produits. Sans carte bancaire.
             </p>
             <Link
               href="/inscription"
-              className="mt-8 inline-flex items-center gap-2 rounded-xl bg-white px-7 py-3.5 text-base font-bold text-zindo-green-700 transition hover:bg-zindo-green-50"
+              className="mt-9 inline-flex items-center gap-2 rounded-full bg-zindo-green-500 px-7 py-4 text-base font-semibold text-white transition hover:bg-zindo-green-600"
             >
               Créer mon compte <ArrowRight className="h-4 w-4" />
             </Link>
@@ -369,6 +384,27 @@ export function AccueilPro({ trialDays, faqs }: { trialDays: number; faqs: Faq[]
     </div>
   );
 }
+
+const COMMERCES = [
+  {
+    title: "Boutiques et magasins",
+    text: "Caisse rapide, stock par rayon, crédits clients et plusieurs vendeurs.",
+    photo: "/photos/commercante-boutique.webp",
+    alt: "Une commerçante debout parmi les produits de sa boutique",
+  },
+  {
+    title: "Alimentation et grossistes",
+    text: "Vente au détail et en gros, sacs et cartons, plusieurs dépôts.",
+    photo: "/photos/vente-riz-ouagadougou.webp",
+    alt: "Étal de vente de riz et de vêtements à Ouagadougou",
+  },
+  {
+    title: "Pharmacies et dépôts",
+    text: "Lots, dates de péremption et alertes avant la rupture.",
+    photo: "/photos/pharmacie-rayons.webp",
+    alt: "Rayons de médicaments dans une pharmacie",
+  },
+];
 
 // [critère, cahier, Excel] — ZINDO coche toujours.
 const COMPARISON: [string, boolean, boolean][] = [
@@ -405,29 +441,6 @@ function Mark({ ok }: { ok: boolean }) {
   );
 }
 
-const STORIES: Story[] = [
-  {
-    business: "Exemple : une quincaillerie",
-    city: "Bobo-Dioulasso",
-    text: "Les ventes à crédit sont suivies client par client : en fin de mois, le gérant sait exactement qui relancer, et pour combien.",
-  },
-  {
-    business: "Exemple : une boutique de pièces détachées",
-    city: "Ouagadougou",
-    text: "Le vendeur trouve une référence en deux secondes avec la douchette, et le patron est prévenu avant qu'une pièce ne manque.",
-  },
-  {
-    business: "Exemple : une alimentation",
-    city: "Koudougou",
-    text: "Quand le réseau coupe, la caisse continue : les ventes partent sur le serveur dès que la connexion revient.",
-  },
-  {
-    business: "Exemple : un grossiste avec deux dépôts",
-    city: "Abidjan",
-    text: "Le stock de chaque dépôt se consulte depuis le téléphone, et chaque transfert est enregistré avec le nom de l'employé.",
-  },
-];
-
 const METIERS = [
   { icon: Store, label: "Boutique générale", detail: "Caisse rapide, stock et crédits" },
   { icon: Hammer, label: "Quincaillerie", detail: "Détail, gros et conditionnements" },
@@ -447,21 +460,9 @@ function SectionTitle({ eyebrow, title, text }: { eyebrow: string; title: string
   return (
     <Reveal className="mx-auto max-w-2xl text-center">
       <p className="text-xs font-semibold uppercase tracking-wider text-zindo-green-700">{eyebrow}</p>
-      <h2 className="mt-3 text-3xl font-semibold tracking-[-0.02em] sm:text-[2.6rem] sm:leading-[1.1]">{title}</h2>
+      <h2 className="mt-3 text-3xl font-medium tracking-[-0.03em] sm:text-5xl">{title}</h2>
       {text && <p className="mt-4 text-lg text-zinc-600">{text}</p>}
     </Reveal>
-  );
-}
-
-function TrustItem({ icon: Icon, title, text }: { icon: typeof Store; title: string; text: string }) {
-  return (
-    <div className="flex items-start gap-3">
-      <Icon className="mt-0.5 h-5 w-5 shrink-0 text-zindo-green-600" />
-      <div>
-        <p className="font-semibold">{title}</p>
-        <p className="mt-0.5 text-zinc-500">{text}</p>
-      </div>
-    </div>
   );
 }
 
@@ -484,7 +485,7 @@ function Feature({
     <div className="grid items-center gap-10 lg:grid-cols-2 lg:gap-16">
       <Reveal className={reverse ? "lg:order-2" : ""}>
         <p className="text-sm font-bold text-zindo-green-600">{eyebrow}</p>
-        <h3 className="mt-2 text-2xl font-bold tracking-tight sm:text-3xl">{title}</h3>
+        <h3 className="mt-2 text-2xl font-medium tracking-[-0.02em] sm:text-4xl">{title}</h3>
         <p className="mt-4 text-lg leading-relaxed text-zinc-600">{text}</p>
         <ul className="mt-6 space-y-3">
           {points.map((p) => (
@@ -498,7 +499,7 @@ function Feature({
         </ul>
       </Reveal>
       <Reveal delay={150} className={reverse ? "lg:order-1" : ""}>
-        <div className="transition duration-500 hover:-translate-y-1">{visual}</div>
+        <div className="rounded-[2rem] bg-gradient-to-br from-zindo-green-50 via-white to-zinc-100 p-5 ring-1 ring-zinc-200/70 sm:p-10">{visual}</div>
       </Reveal>
     </div>
   );
@@ -595,7 +596,11 @@ function FooterPro() {
             </div>
           ))}
         </div>
-        <div className="mt-14 flex flex-col items-center justify-between gap-4 border-t border-zinc-200 pt-6 text-xs text-zinc-500 sm:flex-row">
+        <p className="mt-14 text-[11px] leading-relaxed text-zinc-400">
+          Photos : Tobin Jones et AMISOM (domaine public, CC0) ; « Ouagadougou shop », Wegmann, et « Vente riz de Bagré Ouaga », Sputniktilt
+          (CC BY-SA 3.0, Wikimedia Commons) ; « A Drug Store in Nigeria », Beendy234 (CC0). Écrans du logiciel : données d&apos;exemple.
+        </p>
+        <div className="mt-6 flex flex-col items-center justify-between gap-4 border-t border-zinc-200 pt-6 text-xs text-zinc-500 sm:flex-row">
           <p>© {new Date().getFullYear()} ZINDO. Tous droits réservés.</p>
           <p>Abonnement payable par Orange Money, Moov Money ou Wave.</p>
           <div className="flex items-center gap-2">
