@@ -1,5 +1,6 @@
 "use client";
 
+import { currencyLabel } from "@/lib/format";
 import { useActionState } from "react";
 import { Field, Input, Select } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
@@ -20,7 +21,7 @@ export function StudentForm({
 }) {
   const [state, formAction, pending] = useActionState<ActionState, FormData>(saveStudentAction, undefined);
   const keep = useKeepValuesOnError(state);
-  const unit = currency === "XOF" ? "FCFA" : currency;
+  const unit = currencyLabel(currency);
 
   return (
     <Card>

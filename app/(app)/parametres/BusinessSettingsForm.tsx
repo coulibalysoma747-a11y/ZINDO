@@ -1,13 +1,13 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import Link from "next/link";
 import { Printer } from "lucide-react";
 import { Field, Input, Select, Textarea } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { ImageUploadField } from "@/components/ui/ImageUploadField";
 import { CountryCityPicker } from "@/components/ui/CountryCityPicker";
-import { countryCodeFromName, DEFAULT_COUNTRY_CODE } from "@/lib/countries";
+import { countryCodeFromName, CURRENCIES, DEFAULT_COUNTRY_CODE } from "@/lib/countries";
 import { updateBusinessSettingsAction, type ActionState } from "@/lib/actions/settings";
 import { TicketPreviewButton } from "./TicketPreviewButton";
 import { useKeepValuesOnError } from "@/lib/keep-form-values";
@@ -52,6 +52,7 @@ export function BusinessSettingsForm({
   /** Flag « ticket_test » : lien vers /parametres/ticket-test. */
   ticketTestEnabled?: boolean;
 }) {
+  const [currency, setCurrency] = useState(business.currency);
   const [state, formAction, pending] = useActionState<ActionState, FormData>(
     updateBusinessSettingsAction,
     undefined
@@ -80,13 +81,15 @@ export function BusinessSettingsForm({
           <Input id="email" name="email" type="email" defaultValue={business.email ?? ""} />
         </Field>
         <div className="sm:col-span-2">
-          <CountryCityPicker defaultCountry={countryCodeFromName(business.country) ?? DEFAULT_COUNTRY_CODE} defaultCity={business.city ?? ""} />
+          <CountryCityPicker onCountryChange={(c) => setCurrency(c.currency || "XOF")} defaultCountry={countryCodeFromName(business.country) ?? DEFAULT_COUNTRY_CODE} defaultCity={business.city ?? ""} />
         </div>
-        <Field label="Devise" htmlFor="currency">
-          <Select id="currency" name="currency" defaultValue={business.currency}>
-            <option value="XOF">FCFA (XOF)</option>
-            <option value="EUR">Euro (EUR)</option>
-            <option value="USD">Dollar US (USD)</option>
+        <Field label="Devise" htmlFor="currency" hint="Choisie automatiquement selon le pays ; vous pouvez la changer.">
+          <Select id="currency" name="currency" value={currency} onChange={(e) => setCurrency(e.target.value)}>
+            {CURRENCIES.map((c) => (
+              <option key={c.code} value={c.code}>
+                {c.name} ({c.code})
+              </option>
+            ))}
           </Select>
         </Field>
         <Field label="Format du ticket" htmlFor="ticketWidth">

@@ -28,7 +28,7 @@ export default async function MyMarketOrdersPage({ searchParams }: { searchParam
 
   let query = supabase
     .from("market_orders")
-    .select("id, number, status, total, createdAt:created_at, shop:market_shops(name), items:market_order_items(name, photoUrl:photo_url)", { count: "exact" })
+    .select("id, number, status, total, currency, createdAt:created_at, shop:market_shops(name), items:market_order_items(name, photoUrl:photo_url)", { count: "exact" })
     .eq("buyer_id", buyer.id)
     .order("created_at", { ascending: false })
     .range(from, from + PAGE_SIZE - 1);
@@ -41,6 +41,7 @@ export default async function MyMarketOrdersPage({ searchParams }: { searchParam
     number: string;
     status: string;
     total: number;
+    currency: string;
     createdAt: string;
     shop: { name: string } | null;
     items: { name: string; photoUrl: string | null }[];
@@ -77,7 +78,7 @@ export default async function MyMarketOrdersPage({ searchParams }: { searchParam
             <p className="text-xs text-zinc-500">
               {formatDateTime(o.createdAt)} · {o.shop?.name}
             </p>
-            <p className="text-sm font-bold text-zinc-900">{formatMoney(o.total)}</p>
+            <p className="text-sm font-bold text-zinc-900">{formatMoney(o.total, o.currency)}</p>
             <OrderStatusBadge status={o.status} label={marketOrderStatusLabel(o.status)} />
           </div>
           <div className="flex -space-x-2">

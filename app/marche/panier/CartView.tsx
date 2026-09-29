@@ -50,7 +50,7 @@ export function CartView({ buyer }: { buyer: Buyer }) {
     const perShop = (shops ?? []).map((s) => {
       const subtotal = s.items.reduce((sum, i) => sum + i.unitPrice * i.quantity, 0);
       const delivery = choices[s.shopId]?.deliveryMode === "LIVRAISON" ? s.deliveryFee : 0;
-      return { shopId: s.shopId, subtotal, delivery };
+      return { shopId: s.shopId, subtotal, delivery, currency: s.currency };
     });
     return {
       perShop,
@@ -121,7 +121,7 @@ export function CartView({ buyer }: { buyer: Buyer }) {
                   )}
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-medium text-zinc-900">{item.name}</p>
-                    <p className="text-sm font-bold text-zindo-green-700">{formatMoney(item.unitPrice)}</p>
+                    <p className="text-sm font-bold text-zindo-green-700">{formatMoney(item.unitPrice, shop.currency)}</p>
                     {item.quantity > item.available && (
                       <p className="text-xs text-red-600">{item.available > 0 ? `Il n'en reste que ${item.available}` : "Rupture de stock"}</p>
                     )}
@@ -153,7 +153,7 @@ export function CartView({ buyer }: { buyer: Buyer }) {
                     {shop.deliveryEnabled && (
                       <ChoiceButton active={choice.deliveryMode === "LIVRAISON"} onClick={() => setChoice(shop.shopId, { deliveryMode: "LIVRAISON", paymentMethod: paymentOptions(shop, "LIVRAISON")[0]?.key })}>
                         <Truck className="mr-1.5 inline h-4 w-4" />
-                        Livraison {shop.deliveryFee > 0 ? `(${formatMoney(shop.deliveryFee)})` : "(gratuite)"}
+                        Livraison {shop.deliveryFee > 0 ? `(${formatMoney(shop.deliveryFee, shop.currency)})` : "(gratuite)"}
                       </ChoiceButton>
                     )}
                     {shop.pickupEnabled && (
@@ -177,7 +177,7 @@ export function CartView({ buyer }: { buyer: Buyer }) {
                   {choice.paymentMethod === "MOBILE_MONEY" && (
                     <div className="space-y-2 rounded-xl bg-amber-50 p-3 text-xs text-amber-900">
                       <p>
-                        Envoyez <strong>{formatMoney(totals.perShop.find((t) => t.shopId === shop.shopId)!.subtotal + (choice.deliveryMode === "LIVRAISON" ? shop.deliveryFee : 0))}</strong> au vendeur, puis indiquez la
+                        Envoyez <strong>{formatMoney(totals.perShop.find((t) => t.shopId === shop.shopId)!.subtotal + (choice.deliveryMode === "LIVRAISON" ? shop.deliveryFee : 0), shop.currency)}</strong> au vendeur, puis indiquez la
                         référence du transfert. Le vendeur confirmera la commande après vérification.
                       </p>
                       {shop.orangeMoneyNumber && <p className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full bg-orange-500" /> Orange Money : <strong>{shop.orangeMoneyNumber}</strong></p>}
@@ -211,12 +211,22 @@ export function CartView({ buyer }: { buyer: Buyer }) {
 
       <aside className="h-fit space-y-4 rounded-2xl bg-white p-4 ring-1 ring-zinc-200 lg:sticky lg:top-20">
         <div className="space-y-1 text-sm">
-          <Row label="Sous-total" value={formatMoney(totals.subtotal)} />
-          <Row label="Livraison" value={formatMoney(totals.delivery)} />
-          <div className="flex justify-between border-t border-zinc-100 pt-2 text-base font-bold">
-            <span>Total</span>
-            <span className="text-zindo-green-700">{formatMoney(totals.subtotal + totals.delivery)}</span>
-          </div>
+          {/* Un total par monnaie : les boutiques peuvent être dans des pays différents. */}
+          {[...new Set(totals.perShop.map((t) => t.currency))].map((currency) => {
+            const rows = totals.perShop.filter((t) => t.currency === currency);
+            const subtotal = rows.reduce((sum, t) => sum + t.subtotal, 0);
+            const delivery = rows.reduce((sum, t) => sum + t.delivery, 0);
+            return (
+              <div key={currency} className="space-y-1">
+                <Row label="Sous-total" value={formatMoney(subtotal, currency)} />
+                <Row label="Livraison" value={formatMoney(delivery, currency)} />
+                <div className="flex justify-between border-t border-zinc-100 pt-2 text-base font-bold">
+                  <span>Total</span>
+                  <span className="text-zindo-green-700">{formatMoney(subtotal + delivery, currency)}</span>
+                </div>
+              </div>
+            );
+          })}
           {shops.length > 1 && <p className="text-xs text-zinc-500">Une commande sera créée pour chacune des {shops.length} boutiques.</p>}
         </div>
 

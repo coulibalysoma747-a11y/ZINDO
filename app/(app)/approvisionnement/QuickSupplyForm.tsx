@@ -1,5 +1,6 @@
 "use client";
 
+import { currencyLabel } from "@/lib/format";
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Field, Input, Select, Textarea } from "@/components/ui/Input";
@@ -104,7 +105,7 @@ export function QuickSupplyForm({
           <Field label="Quantité reçue" htmlFor="quantity">
             <Input id="quantity" type="number" min={1} value={quantity} onChange={(e) => setQuantity(e.target.value)} />
           </Field>
-          <Field label={`Prix payé / pièce (${currency === "XOF" ? "FCFA" : currency})`} htmlFor="unitPrice">
+          <Field label={`Prix payé / pièce (${currencyLabel(currency)})`} htmlFor="unitPrice">
             <Input id="unitPrice" type="number" min={0} value={unitPrice} onChange={(e) => setUnitPrice(e.target.value)} />
           </Field>
         </div>

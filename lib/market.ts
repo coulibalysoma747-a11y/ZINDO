@@ -55,6 +55,8 @@ export type MarketProduct = {
   reviewCount: number;
   /** Mise en avant payante en cours (badge « Mis en avant »). */
   boosted: boolean;
+  /** Monnaie des prix (celle de la boutique). */
+  currency: string;
   shop: MarketShopSummary;
 };
 
@@ -64,6 +66,8 @@ export type MarketShopSummary = {
   city: string | null;
   /** Code ISO du pays de la boutique (BF, CI…). */
   countryCode?: string;
+  /** Monnaie du commerce (XOF, EUR…) : prix et totaux de la boutique. */
+  currency?: string;
   logoUrl: string | null;
   verified: boolean;
   rating: number | null;

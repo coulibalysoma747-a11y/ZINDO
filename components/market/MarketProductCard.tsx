@@ -33,8 +33,8 @@ export function MarketProductCard({ product, favorite = false }: { product: Mark
         <Stars rating={product.rating} count={product.reviewCount} />
         <div className="mt-auto flex items-end justify-between gap-2 pt-1">
           <div className="min-w-0">
-            <p className="text-base font-extrabold text-zinc-900">{formatMoney(product.promoPrice ?? product.price)}</p>
-            {product.promoPrice != null && <p className="text-xs text-zinc-400 line-through">{formatMoney(product.price)}</p>}
+            <p className="text-base font-extrabold text-zinc-900">{formatMoney(product.promoPrice ?? product.price, product.currency)}</p>
+            {product.promoPrice != null && <p className="text-xs text-zinc-400 line-through">{formatMoney(product.price, product.currency)}</p>}
           </div>
           <span className="relative z-10">
             <QuickAddButton productId={product.productId} disabled={outOfStock} />

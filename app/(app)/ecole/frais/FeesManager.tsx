@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/Button";
 import { Card, CardBody } from "@/components/ui/Card";
 import { ConfirmButton } from "@/components/ui/ConfirmButton";
 import { EmptyState } from "@/components/ui/Empty";
-import { formatMoney } from "@/lib/format";
+import { formatMoney, currencyLabel } from "@/lib/format";
 import { SCHOOL_FEE_TYPES } from "@/lib/school-constants";
 import { saveSchoolFeeAction, deleteSchoolFeeAction, type SchoolFee } from "@/lib/actions/school";
 import { useResettingAction } from "@/components/school/useResettingAction";
@@ -15,7 +15,7 @@ import { useResettingAction } from "@/components/school/useResettingAction";
 export function FeesManager({ fees, classes, currency }: { fees: SchoolFee[]; classes: { id: string; name: string }[]; currency: string }) {
   const [editing, setEditing] = useState<SchoolFee | null>(null);
   const [state, formAction, pending] = useResettingAction(saveSchoolFeeAction, () => setEditing(null));
-  const unit = currency === "XOF" ? "FCFA" : currency;
+  const unit = currencyLabel(currency);
 
   return (
     <div className="space-y-6">

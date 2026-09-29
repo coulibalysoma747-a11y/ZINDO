@@ -12,8 +12,8 @@ test("montants en FCFA, arrondis, milliers séparés", () => {
   assert.equal(plain(formatMoney(0)), "0 FCFA");
 });
 
-test("autre devise : le code s'affiche tel quel", () => {
-  assert.equal(plain(formatMoney(10, "EUR")), "10 EUR");
+test("autre devise : son symbole s'affiche", () => {
+  assert.equal(plain(formatMoney(10, "EUR")), "10 €");
 });
 
 test("montants en lettres pour les factures", () => {
@@ -36,4 +36,11 @@ test("montants en lettres pour les factures", () => {
     [2500000, "Deux Million Cinq Cent Mille"],
   ];
   for (const [n, words] of cases) assert.equal(numberToFrenchWords(n), words, `${n}`);
+});
+
+test("autres monnaies : symbole, décimales seulement si utiles", () => {
+  assert.equal(plain(formatMoney(5000, "XAF")), "5 000 FCFA");
+  assert.equal(plain(formatMoney(12.5, "EUR")), "12,50 €");
+  assert.equal(plain(formatMoney(1250, "NGN")), "1 250 ₦");
+  assert.equal(plain(formatMoney(40, "GHS")), "40 GH₵");
 });

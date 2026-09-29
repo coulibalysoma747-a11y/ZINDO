@@ -78,7 +78,7 @@ export default async function MarketSearchPage({ searchParams }: { searchParams:
           ))}
         </select>
       </Fieldset>
-      <Fieldset title="Prix (FCFA)">
+      <Fieldset title="Prix">
         <div className="flex items-center gap-2">
           <input name="min" inputMode="numeric" defaultValue={params.min ?? ""} placeholder="Min" className="h-10 w-full rounded-lg border border-zinc-300 px-2" />
           <span className="text-zinc-400">–</span>

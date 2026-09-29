@@ -1,5 +1,6 @@
 "use client";
 
+import { currencyLabel } from "@/lib/format";
 import { useActionState, useState } from "react";
 import { Field, Input, Select } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
@@ -24,7 +25,7 @@ export function PaymentForm({
     const res = await addStudentPaymentAction(prev, fd);
     return res?.success ? { ...res, n: (prev?.n ?? 0) + 1 } : { ...res, n: prev?.n };
   }, undefined);
-  const unit = currency === "XOF" ? "FCFA" : currency;
+  const unit = currencyLabel(currency);
 
   return (
     <Card>

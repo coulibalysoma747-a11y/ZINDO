@@ -35,6 +35,7 @@ export default async function MyMarketShopPage() {
       <Card>
         <CardBody>
           <MarketShopForm
+            currency={user.business.currency}
             locations={locations.filter((l) => l.active).map((l) => ({ id: l.id, name: l.name }))}
             shop={
               shop ?? {

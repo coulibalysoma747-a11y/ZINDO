@@ -25,7 +25,7 @@ import { verifyTotp, consumeBackupCode } from "@/lib/totp";
 import type { Role } from "@/lib/db-types";
 import { attachReferralFromSignup } from "@/lib/referral-signup";
 import { getSubscriptionState, applyStandardTrial } from "@/lib/subscription";
-import { isCountryCode, countryNameFr } from "@/lib/countries";
+import { isCountryCode, countryNameFr, currencyForCountry } from "@/lib/countries";
 
 export type ActionState = { error?: string } | undefined;
 
@@ -366,6 +366,9 @@ export async function registerAction(
   }
 
   const row = data[0] as { user_id: string; business_id: string; role: string };
+  // Monnaie du pays choisi (le commerce est créé en XOF par défaut).
+  const currency = currencyForCountry(countryCode);
+  if (currency !== "XOF") await supabase.from("businesses").update({ currency }).eq("id", row.business_id);
   await applyStandardTrial(row.business_id);
   await attachReferralFromSignup({ businessId: row.business_id, phone, typedCode: formData.get("referralCode") });
   await createSession({ userId: row.user_id, businessId: row.business_id, role: row.role as Role });

@@ -188,7 +188,7 @@ export default async function MarketShopPage({ params, searchParams }: { params:
             {shop.deliveryEnabled && (
               <li className="flex items-start gap-2">
                 <Truck className="mt-0.5 h-4 w-4 shrink-0 text-zindo-green-700" />
-                Livraison {shop.deliveryFee > 0 ? formatMoney(shop.deliveryFee) : "gratuite"}
+                Livraison {shop.deliveryFee > 0 ? formatMoney(shop.deliveryFee, shop.currency) : "gratuite"}
                 {shop.deliveryNote ? ` · ${shop.deliveryNote}` : ""}
               </li>
             )}

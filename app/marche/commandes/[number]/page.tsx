@@ -23,6 +23,7 @@ type OrderRow = {
   subtotal: number;
   deliveryFee: number;
   total: number;
+  currency: string;
   cancelReason: string | null;
   createdAt: string;
   shopId: string;
@@ -39,7 +40,7 @@ export default async function MarketOrderTrackingPage({ params }: { params: Prom
   const { data } = await supabase
     .from("market_orders")
     .select(
-      "id, number, status, shopId:shop_id, deliveryMode:delivery_mode, deliveryAddress:delivery_address, deliveryCity:delivery_city, paymentMethod:payment_method, subtotal, deliveryFee:delivery_fee, total, cancelReason:cancel_reason, createdAt:created_at, " +
+      "id, number, status, currency, shopId:shop_id, deliveryMode:delivery_mode, deliveryAddress:delivery_address, deliveryCity:delivery_city, paymentMethod:payment_method, subtotal, deliveryFee:delivery_fee, total, cancelReason:cancel_reason, createdAt:created_at, " +
         "shop:market_shops(name, slug, phone, whatsapp, address, city), items:market_order_items(productId:product_id, name, photoUrl:photo_url, unitPrice:unit_price, quantity), events:market_order_events(status, createdAt:created_at)"
     )
     .eq("number", number)
@@ -107,7 +108,7 @@ export default async function MarketOrderTrackingPage({ params }: { params: Prom
               )}
               <span className="flex-1">{item.name}</span>
               <span className="text-zinc-500">×{item.quantity}</span>
-              <span className="font-semibold">{formatMoney(item.unitPrice * item.quantity)}</span>
+              <span className="font-semibold">{formatMoney(item.unitPrice * item.quantity, order.currency)}</span>
             </div>
             {order.status === "LIVREE" && <ReviewForm orderId={order.id} productId={item.productId} initial={reviewByProduct.get(item.productId) ?? null} />}
           </div>
@@ -115,15 +116,15 @@ export default async function MarketOrderTrackingPage({ params }: { params: Prom
         <div className="space-y-1 border-t border-zinc-100 pt-2 text-sm">
           <div className="flex justify-between text-zinc-600">
             <span>Sous-total</span>
-            <span>{formatMoney(order.subtotal)}</span>
+            <span>{formatMoney(order.subtotal, order.currency)}</span>
           </div>
           <div className="flex justify-between text-zinc-600">
             <span>Livraison</span>
-            <span>{formatMoney(order.deliveryFee)}</span>
+            <span>{formatMoney(order.deliveryFee, order.currency)}</span>
           </div>
           <div className="flex justify-between font-bold">
             <span>Total</span>
-            <span className="text-zindo-green-700">{formatMoney(order.total)}</span>
+            <span className="text-zindo-green-700">{formatMoney(order.total, order.currency)}</span>
           </div>
         </div>
         <p className="text-sm text-zinc-600">

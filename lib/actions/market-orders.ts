@@ -37,6 +37,7 @@ export type CartShop = {
   moovMoneyNumber: string | null;
   address: string | null;
   city: string | null;
+  currency: string;
   items: { productId: string; name: string; photoUrl: string | null; unitPrice: number; available: number; quantity: number }[];
 };
 
@@ -69,7 +70,7 @@ export async function getCartDetailsAction(lines: CartLine[]): Promise<CartShop[
     if (!result.has(shop.id)) {
       const { id: _id, ...rest } = setting;
       void _id;
-      result.set(shop.id, { ...rest, shopId: shop.id, slug: shop.slug, name: shop.name, address: shop.address, city: shop.city, items: [] });
+      result.set(shop.id, { ...rest, shopId: shop.id, slug: shop.slug, name: shop.name, address: shop.address, city: shop.city, currency: shop.currency ?? "XOF", items: [] });
     }
     result.get(shop.id)!.items.push({
       productId: product.productId,
@@ -163,6 +164,7 @@ export async function placeMarketOrdersAction(input: PlaceOrderInput): Promise<{
         payment_method: choice.paymentMethod,
         mobile_money_operator: choice.paymentMethod === "MOBILE_MONEY" ? choice.mobileMoneyOperator : null,
         mobile_money_reference: choice.paymentMethod === "MOBILE_MONEY" ? choice.mobileMoneyReference : null,
+        currency: shop.currency,
         subtotal,
         delivery_fee: deliveryFee,
         total: subtotal + deliveryFee,
@@ -183,7 +185,7 @@ export async function placeMarketOrdersAction(input: PlaceOrderInput): Promise<{
     // Le vendeur est prévenu tout de suite : cloche ZINDO + notification push sur ses appareils.
     const businessId = businessOf.get(shop.shopId)!;
     const link = `/mon-marche/commandes/${order.id}`;
-    const message = `${d.customerName} · ${shop.items.length} produit${shop.items.length > 1 ? "s" : ""} · ${formatMoney(subtotal + deliveryFee)}`;
+    const message = `${d.customerName} · ${shop.items.length} produit${shop.items.length > 1 ? "s" : ""} · ${formatMoney(subtotal + deliveryFee, shop.currency)}`;
     await supabase.from("notifications").insert({ business_id: businessId, type: "INFO", title: `Nouvelle commande Marché ${order.number}`, message, link });
     await sendPushToBusiness(businessId, { title: `🛒 Nouvelle commande ${order.number}`, body: message, link });
   }

@@ -5,6 +5,7 @@ import { Field, Input, Textarea, Select } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { ImageUploadField } from "@/components/ui/ImageUploadField";
 import { CountryCityPicker } from "@/components/ui/CountryCityPicker";
+import { currencyLabel } from "@/lib/format";
 import { saveMarketShopAction, type MarketActionState } from "@/lib/actions/market";
 import { useKeepValuesOnError } from "@/lib/keep-form-values";
 
@@ -45,9 +46,11 @@ function Check({ name, label, defaultChecked }: { name: string; label: string; d
 export function MarketShopForm({
   shop,
   locations,
+  currency = "XOF",
 }: {
   shop: MarketShopFormValues;
   locations: { id: string; name: string }[];
+  currency?: string;
 }) {
   const [state, formAction, pending] = useActionState<MarketActionState, FormData>(saveMarketShopAction, undefined);
   const keep = useKeepValuesOnError(state);
@@ -98,7 +101,7 @@ export function MarketShopForm({
         <Check name="pickupEnabled" label="Retrait en boutique" defaultChecked={shop.pickupEnabled} />
         <Check name="deliveryEnabled" label="Je livre" defaultChecked={shop.deliveryEnabled} />
         <div className="grid gap-4 sm:grid-cols-2">
-          <Field label="Frais de livraison (FCFA)" htmlFor="deliveryFee">
+          <Field label={`Frais de livraison (${currencyLabel(currency)})`} htmlFor="deliveryFee">
             <Input id="deliveryFee" name="deliveryFee" inputMode="numeric" defaultValue={shop.deliveryFee || ""} />
           </Field>
           <Field label="Zone et délai de livraison" htmlFor="deliveryNote" hint="Exemple : Ouagadougou, sous 24 h">

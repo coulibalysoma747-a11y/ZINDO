@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/Button";
 import { Card, CardBody } from "@/components/ui/Card";
 import { ConfirmButton } from "@/components/ui/ConfirmButton";
 import { EmptyState } from "@/components/ui/Empty";
-import { formatMoney } from "@/lib/format";
+import { formatMoney, currencyLabel } from "@/lib/format";
 import { saveSchoolClassAction, deleteSchoolClassAction, type ActionState, type SchoolClass } from "@/lib/actions/school";
 
 export function ClassesManager({ classes, currency }: { classes: SchoolClass[]; currency: string }) {
@@ -20,7 +20,7 @@ export function ClassesManager({ classes, currency }: { classes: SchoolClass[]; 
     setEditing(null);
     return { ...res, n: (prev?.n ?? 0) + 1 };
   }, undefined);
-  const unit = currency === "XOF" ? "FCFA" : currency;
+  const unit = currencyLabel(currency);
 
   return (
     <div className="space-y-6">

@@ -63,9 +63,9 @@ export type MarketShop = MarketShopSummary & {
 
 const SHOP_COLUMNS =
   "id, businessId:business_id, locationId:location_id, slug, name, description, logoUrl:logo_url, coverUrl:cover_url, phone, whatsapp, city, countryCode:country_code, address, hours, " +
-  "deliveryEnabled:delivery_enabled, deliveryFee:delivery_fee, deliveryNote:delivery_note, pickupEnabled:pickup_enabled, createdAt:created_at, business:businesses!inner(suspended)";
+  "deliveryEnabled:delivery_enabled, deliveryFee:delivery_fee, deliveryNote:delivery_note, pickupEnabled:pickup_enabled, createdAt:created_at, business:businesses!inner(suspended, currency)";
 
-type ShopRow = Omit<MarketShop, "verified" | "rating" | "reviewCount"> & { business: { suspended: boolean } };
+type ShopRow = Omit<MarketShop, "verified" | "rating" | "reviewCount"> & { business: { suspended: boolean; currency: string } };
 
 async function verifiedBusinessIds(businessIds: string[]): Promise<Set<string>> {
   if (businessIds.length === 0) return new Set();
@@ -106,10 +106,9 @@ async function toShops(rows: ShopRow[]): Promise<MarketShop[]> {
   ]);
   return visible.map((r) => {
     const { business, ...shop } = r;
-    void business;
     const rating = ratings.get(shop.id);
     // Ville présentable partout (« NIANGOLOKO » → « Niangoloko »).
-    return { ...shop, city: shop.city ? displayCity(shop.city) : null, verified: verified.has(shop.businessId), rating: rating?.rating ?? null, reviewCount: rating?.count ?? 0, boosted: boosts.shopIds.has(shop.id) };
+    return { ...shop, currency: business.currency || "XOF", city: shop.city ? displayCity(shop.city) : null, verified: verified.has(shop.businessId), rating: rating?.rating ?? null, reviewCount: rating?.count ?? 0, boosted: boosts.shopIds.has(shop.id) };
   });
 }
 
@@ -261,6 +260,7 @@ export async function loadMarketProducts({
       rating: rating?.rating ?? null,
       reviewCount: rating?.count ?? 0,
       boosted: boosts.listingIds.has(r.id),
+      currency: shop.currency ?? "XOF",
       shop: { slug: shop.slug, name: shop.name, city: shop.city, logoUrl: shop.logoUrl, verified: shop.verified, rating: shop.rating, reviewCount: shop.reviewCount },
     };
   });

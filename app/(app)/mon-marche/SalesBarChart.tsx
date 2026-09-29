@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { formatMoney } from "@/lib/format";
 
 /**
  * Ventes livrées par jour (ou par mois) : une seule série, barres fines
@@ -10,7 +11,7 @@ import { useState } from "react";
 export function SalesBarChart({ points, currency }: { points: { label: string; value: number }[]; currency: string }) {
   const [active, setActive] = useState<number | null>(null);
   const max = Math.max(...points.map((p) => p.value), 1);
-  const format = (v: number) => `${Math.round(v).toLocaleString("fr-FR")} ${currency === "XOF" ? "FCFA" : currency}`;
+  const format = (v: number) => formatMoney(v, currency);
   // Graduations discrètes : 0, moitié, maximum.
   const ticks = [max, max / 2, 0];
 

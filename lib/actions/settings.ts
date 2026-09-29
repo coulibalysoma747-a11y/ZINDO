@@ -8,7 +8,7 @@ import { requirePermission, requireUser } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
 import { logAction } from "@/lib/audit";
 import { saveBusinessLogo, deleteUploadedImage, uploadedImageUrl } from "@/lib/photo-upload";
-import { countryNameFr, isCountryCode } from "@/lib/countries";
+import { countryNameFr, isCountryCode, isCurrencyCode } from "@/lib/countries";
 import type { PaymentMethod, Role } from "@/lib/db-types";
 
 export type ActionState = { error?: string; success?: string } | undefined;
@@ -20,7 +20,7 @@ const businessSchema = z.object({
   address: z.string().optional(),
   city: z.string().optional(),
   country: z.string().optional(),
-  currency: z.string().min(1),
+  currency: z.string().refine(isCurrencyCode, "Monnaie invalide"),
   ticketWidth: z.enum(["58mm", "80mm", "A4"]),
   ticketFooter: z.string().optional(),
   qrCodeSize: z.coerce.number().int().min(0),

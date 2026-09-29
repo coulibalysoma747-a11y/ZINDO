@@ -74,8 +74,8 @@ export default async function MarketProductPage({ params }: { params: Promise<{ 
           </div>
 
           <div className="flex flex-wrap items-baseline gap-3">
-            <span className="text-3xl font-extrabold text-zinc-900">{formatMoney(product.promoPrice ?? product.price)}</span>
-            {product.promoPrice != null && <span className="text-lg text-zinc-400 line-through">{formatMoney(product.price)}</span>}
+            <span className="text-3xl font-extrabold text-zinc-900">{formatMoney(product.promoPrice ?? product.price, product.currency)}</span>
+            {product.promoPrice != null && <span className="text-lg text-zinc-400 line-through">{formatMoney(product.price, product.currency)}</span>}
             <span className={inStock ? "rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700" : "rounded-full bg-red-50 px-2.5 py-1 text-xs font-semibold text-red-700"}>
               {inStock ? `En stock · ${product.available} ${product.unit}` : "Rupture de stock"}
             </span>
@@ -85,7 +85,7 @@ export default async function MarketProductPage({ params }: { params: Promise<{ 
 
           <div className="divide-y divide-zinc-100 rounded-2xl bg-white ring-1 ring-zinc-200">
             {shop.deliveryEnabled && (
-              <InfoRow icon={Truck} title={`Livraison ${shop.deliveryFee > 0 ? formatMoney(shop.deliveryFee) : "gratuite"}`} text={shop.deliveryNote ?? "Délai à confirmer avec le vendeur"} />
+              <InfoRow icon={Truck} title={`Livraison ${shop.deliveryFee > 0 ? formatMoney(shop.deliveryFee, shop.currency) : "gratuite"}`} text={shop.deliveryNote ?? "Délai à confirmer avec le vendeur"} />
             )}
             {shop.pickupEnabled && <InfoRow icon={Store} title="Retrait en boutique" text={[shop.address, shop.city].filter(Boolean).join(", ") || "À la boutique du vendeur"} />}
             {shop.hours && <InfoRow icon={Clock} title="Horaires" text={shop.hours} />}

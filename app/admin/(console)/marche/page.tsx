@@ -231,7 +231,7 @@ async function OrdersTab({ page }: { page: number }) {
   const from = (page - 1) * ADMIN_PAGE_SIZE;
   const { data, count } = await supabase
     .from("market_orders")
-    .select("id, number, status, total, customerName:customer_name, customerPhone:customer_phone, createdAt:created_at, shop:market_shops(name)", { count: "exact" })
+    .select("id, number, status, total, currency, customerName:customer_name, customerPhone:customer_phone, createdAt:created_at, shop:market_shops(name)", { count: "exact" })
     .order("created_at", { ascending: false })
     .range(from, from + ADMIN_PAGE_SIZE - 1);
   const orders = (data ?? []) as unknown as {
@@ -239,6 +239,7 @@ async function OrdersTab({ page }: { page: number }) {
     number: string;
     status: string;
     total: number;
+    currency: string;
     customerName: string;
     customerPhone: string;
     createdAt: string;
@@ -259,7 +260,7 @@ async function OrdersTab({ page }: { page: number }) {
               {o.customerName}
               <p className="text-xs text-zinc-500">{o.customerPhone}</p>
             </td>
-            <td className="px-4 py-3 text-right font-semibold">{formatMoney(o.total)}</td>
+            <td className="px-4 py-3 text-right font-semibold">{formatMoney(o.total, o.currency)}</td>
             <td className="px-4 py-3">
               <OrderStatusBadge status={o.status} label={marketOrderStatusLabel(o.status)} />
             </td>

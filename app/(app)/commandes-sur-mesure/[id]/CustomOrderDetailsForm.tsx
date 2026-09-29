@@ -1,5 +1,6 @@
 "use client";
 
+import { currencyLabel } from "@/lib/format";
 import { useState, useTransition } from "react";
 import { Field, Input, Select, Textarea } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
@@ -47,7 +48,7 @@ export function CustomOrderDetailsForm({
       </Field>
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-        <Field label={`Prix convenu (${currency === "XOF" ? "FCFA" : currency})`} htmlFor="agreedPrice">
+        <Field label={`Prix convenu (${currencyLabel(currency)})`} htmlFor="agreedPrice">
           <Input id="agreedPrice" name="agreedPrice" type="number" min={0} step="1" defaultValue={agreedPrice} disabled={disabled} />
         </Field>
         <Field label="Remise" htmlFor="discount">

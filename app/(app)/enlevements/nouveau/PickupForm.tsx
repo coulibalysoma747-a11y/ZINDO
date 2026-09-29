@@ -8,7 +8,7 @@ import { Card, CardBody } from "@/components/ui/Card";
 import { ProductPicker } from "@/components/products/ProductPicker";
 import { ProductThumbnail } from "@/components/products/ProductThumbnail";
 import { createPickupAction, type ActionState } from "@/lib/actions/pickups";
-import { formatMoney } from "@/lib/format";
+import { formatMoney, currencyLabel } from "@/lib/format";
 import { useKeepValuesOnError } from "@/lib/keep-form-values";
 
 type SelectedProduct = { id: string; name: string; photoUrl?: string | null; purchasePrice: number };
@@ -78,7 +78,7 @@ export function PickupForm({
             <Field label="Quantité" htmlFor="quantity">
               <Input id="quantity" name="quantity" type="number" min={1} defaultValue={1} required />
             </Field>
-            <Field label={`Prix consenti / pièce (${currency === "XOF" ? "FCFA" : currency})`} htmlFor="unitPrice">
+            <Field label={`Prix consenti / pièce (${currencyLabel(currency)})`} htmlFor="unitPrice">
               <Input
                 id="unitPrice"
                 name="unitPrice"

@@ -1,5 +1,6 @@
 "use client";
 
+import { currencyLabel } from "@/lib/format";
 import { useState, useTransition } from "react";
 import { Field, Input, Select, Textarea } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
@@ -45,7 +46,7 @@ export function RepairDetailsForm({
       </Field>
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-        <Field label={`Main-d'œuvre (${currency === "XOF" ? "FCFA" : currency})`} htmlFor="laborCost">
+        <Field label={`Main-d'œuvre (${currencyLabel(currency)})`} htmlFor="laborCost">
           <Input id="laborCost" name="laborCost" type="number" min={0} step="1" defaultValue={laborCost} disabled={disabled} />
         </Field>
         <Field label="Remise" htmlFor="discount">

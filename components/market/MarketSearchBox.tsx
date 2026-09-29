@@ -3,9 +3,10 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { BadgeCheck, Loader2, Search, Store, X } from "lucide-react";
+import { formatMoney } from "@/lib/format";
 
 type Suggestions = {
-  products: { id: string; name: string; photoUrl: string | null; price: number; shop: string; available: boolean }[];
+  products: { id: string; name: string; photoUrl: string | null; price: number; currency: string; shop: string; available: boolean }[];
   shops: { slug: string; name: string; city: string | null; logoUrl: string | null; verified: boolean }[];
 };
 
@@ -74,7 +75,6 @@ export function MarketSearchBox() {
   }
 
   const showPanel = open && q.trim().length >= 2 && data !== null;
-  const money = (v: number) => `${Math.round(v).toLocaleString("fr-FR")} FCFA`;
 
   return (
     <div ref={box} className="relative w-full">
@@ -134,7 +134,7 @@ export function MarketSearchBox() {
                       <span className="block truncate text-xs text-zinc-500">{p.shop}</span>
                     </span>
                     <span className="shrink-0 text-right">
-                      <span className="block text-sm font-bold text-zinc-900">{money(p.price)}</span>
+                      <span className="block text-sm font-bold text-zinc-900">{formatMoney(p.price, p.currency)}</span>
                       {!p.available && <span className="block text-[11px] text-red-600">Rupture</span>}
                     </span>
                   </button>

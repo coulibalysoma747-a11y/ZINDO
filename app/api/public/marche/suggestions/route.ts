@@ -19,6 +19,7 @@ export async function GET(request: NextRequest) {
         name: p.name,
         photoUrl: p.photoUrl,
         price: p.promoPrice ?? p.price,
+        currency: p.currency,
         shop: p.shop.name,
         available: p.available > 0,
       })),

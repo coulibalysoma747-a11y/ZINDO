@@ -40,6 +40,8 @@ export function QuickCashNotes({
     onAmountPaidChange(String(total));
   }
 
+  // Billets du franc CFA seulement : pour une autre monnaie, seul « Exact » reste.
+  const notes = currency === "XOF" || currency === "XAF" ? NOTES : [];
   const given = amountPaidInput === "" ? null : Number(amountPaidInput);
   const change = given === null ? 0 : given - total;
 
@@ -53,7 +55,7 @@ export function QuickCashNotes({
         >
           Exact
         </button>
-        {NOTES.map((note) => (
+        {notes.map((note) => (
           <button
             key={note}
             type="button"

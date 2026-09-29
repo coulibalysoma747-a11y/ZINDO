@@ -1,8 +1,8 @@
-import { WORLD_COUNTRIES } from "@/lib/world-countries";
+import { WORLD_COUNTRIES, WORLD_CURRENCIES } from "@/lib/world-countries";
 
 // Tous les pays du monde (lib/world-countries.ts, source GeoNames), le Burkina
-// Faso restant le pays par défaut. Les noms viennent d'Intl.DisplayNames : ils
-// sont justes et accentués dans les deux langues, côté serveur comme navigateur.
+// Faso restant le pays par défaut. Noms et ordre figés dans les données : le
+// serveur et le navigateur affichent exactement le même texte.
 export type CountryCode = string;
 
 export type Country = {
@@ -29,21 +29,15 @@ const PHONE_EXAMPLES: Record<string, string> = {
 // Ville donnée en exemple quand ce n'est pas la capitale administrative.
 const EXAMPLE_CITIES: Record<string, string> = { CI: "Abidjan", BJ: "Cotonou" };
 
-const FR = new Intl.DisplayNames(["fr"], { type: "region" });
-const EN = new Intl.DisplayNames(["en"], { type: "region" });
-
-// Codes obsolètes de GeoNames (Antilles néerlandaises, Serbie-et-Monténégro) : doublons.
-const OBSOLETE = new Set(["AN", "CS"]);
-
 /** Tous les pays, triés par nom français. */
-export const COUNTRIES: Country[] = WORLD_COUNTRIES.filter(([code]) => !OBSOLETE.has(code)).map(([code, dialCode, currency, capital]) => ({
+export const COUNTRIES: Country[] = WORLD_COUNTRIES.map(([code, fr, en, dialCode, currency, capital]) => ({
   code,
-  name: { fr: FR.of(code) ?? code, en: EN.of(code) ?? code },
+  name: { fr, en },
   dialCode,
   phoneExample: PHONE_EXAMPLES[code] ?? "",
   capital: EXAMPLE_CITIES[code] ?? capital,
   currency,
-})).sort((a, b) => a.name.fr.localeCompare(b.name.fr, "fr"));
+}));
 
 export const DEFAULT_COUNTRY_CODE: CountryCode = "BF";
 
@@ -94,4 +88,16 @@ export function toWhatsAppDigits(phone: string, businessCountryName: string | nu
   const digits = phone.replace(/\D/g, "");
   const dial = dialCodeForCountryName(businessCountryName).replace("+", "");
   return digits.startsWith(dial) ? digits : `${dial}${digits}`;
+}
+
+/** Monnaie d'un pays (XOF par défaut) : appliquée au commerce à l'inscription. */
+export function currencyForCountry(code: string | null | undefined): string {
+  return getCountry(code).currency || "XOF";
+}
+
+/** Monnaies des pays du monde (une fois chacune), triées par nom français. */
+export const CURRENCIES: { code: string; name: string }[] = WORLD_CURRENCIES.map(([code, name]) => ({ code, name }));
+
+export function isCurrencyCode(value: string | null | undefined): boolean {
+  return !!value && CURRENCIES.some((c) => c.code === value);
 }

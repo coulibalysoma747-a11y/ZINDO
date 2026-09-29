@@ -1,7 +1,23 @@
+import { WORLD_CURRENCIES } from "@/lib/world-countries";
+
+/** Francs CFA (UEMOA et CEMAC) : affichés « FCFA », sans centimes. */
+const CFA = new Set(["XOF", "XAF"]);
+
+// Symboles figés dans les données (lib/world-countries.ts) : le serveur et le
+// navigateur affichent exactement le même texte.
+const SYMBOLS = new Map(WORLD_CURRENCIES.map(([code, , symbol]) => [code, symbol]));
+
+/** Symbole court d'une monnaie pour les libellés : FCFA, €, $, ₦, GH₵… (code ISO si inconnu). */
+export function currencyLabel(currency: string): string {
+  return CFA.has(currency) ? "FCFA" : SYMBOLS.get(currency) ?? currency;
+}
+
 export function formatMoney(amount: number, currency = "XOF") {
-  const rounded = Math.round(amount);
-  const formatted = new Intl.NumberFormat("fr-FR").format(rounded);
-  return `${formatted} ${currency === "XOF" ? "FCFA" : currency}`;
+  if (CFA.has(currency)) return `${new Intl.NumberFormat("fr-FR").format(Math.round(amount))} FCFA`;
+  // Autres monnaies : décimales seulement si le montant en a (1 250 ₦, mais 12,50 €).
+  const whole = Number.isInteger(Math.round(amount * 100) / 100);
+  const number = new Intl.NumberFormat("fr-FR", whole ? { maximumFractionDigits: 0 } : { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(amount);
+  return `${number} ${currencyLabel(currency)}`;
 }
 
 export function formatDate(date: Date | string) {

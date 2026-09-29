@@ -11,7 +11,7 @@ import { registerFeatureFlag, isFeatureEnabledGlobally } from "@/lib/feature-fla
 import type { Role } from "@/lib/db-types";
 import { attachReferralFromSignup } from "@/lib/referral-signup";
 import { applyStandardTrial } from "@/lib/subscription";
-import { isCountryCode, countryNameFr, DEFAULT_COUNTRY_CODE } from "@/lib/countries";
+import { isCountryCode, countryNameFr, currencyForCountry, DEFAULT_COUNTRY_CODE } from "@/lib/countries";
 
 export type ActionState = { error?: string } | undefined;
 
@@ -144,6 +144,9 @@ export async function confirmGoogleSignupCodeAction(
   }
 
   const row = data[0] as { user_id: string; business_id: string; role: string };
+  // Monnaie du pays choisi (le commerce est créé en XOF par défaut).
+  const currency = currencyForCountry(isCountryCode(pending.country) ? pending.country : DEFAULT_COUNTRY_CODE);
+  if (currency !== "XOF") await supabase.from("businesses").update({ currency }).eq("id", row.business_id);
   await applyStandardTrial(row.business_id);
   await attachReferralFromSignup({ businessId: row.business_id, phone: pending.phone ?? "" });
   await destroyPendingGoogleSignupSession();

@@ -9,8 +9,8 @@ export type ThreadMessage = {
   body: string | null;
   photoUrl: string | null;
   createdAt: string;
-  listing: { productId: string; name: string; photoUrl: string | null; price: number } | null;
-  order: { number: string; total: number; status: string } | null;
+  listing: { productId: string; name: string; photoUrl: string | null; price: number; currency: string } | null;
+  order: { number: string; total: number; status: string; currency: string } | null;
 };
 
 export type ConversationHeader = {
@@ -35,7 +35,7 @@ export async function loadThread(conversationId: string): Promise<ThreadMessage[
     .from("market_messages")
     .select(
       "id, sender, body, photoUrl:photo_url, createdAt:created_at, " +
-        "listing:market_listings(promoPrice:promo_price, product:products(id, name, photoUrl:photo_url, salePrice:sale_price)), order:market_orders(number, total, status)"
+        "listing:market_listings(promoPrice:promo_price, business:businesses(currency), product:products(id, name, photoUrl:photo_url, salePrice:sale_price)), order:market_orders(number, total, status, currency)"
     )
     .eq("conversation_id", conversationId)
     .order("created_at")
@@ -46,8 +46,8 @@ export async function loadThread(conversationId: string): Promise<ThreadMessage[
     body: string | null;
     photoUrl: string | null;
     createdAt: string;
-    listing: { promoPrice: number | null; product: { id: string; name: string; photoUrl: string | null; salePrice: number } | null } | null;
-    order: { number: string; total: number; status: string } | null;
+    listing: { promoPrice: number | null; business: { currency: string } | null; product: { id: string; name: string; photoUrl: string | null; salePrice: number } | null } | null;
+    order: { number: string; total: number; status: string; currency: string } | null;
   }[]).map((m) => ({
     id: m.id,
     sender: m.sender,
@@ -55,7 +55,7 @@ export async function loadThread(conversationId: string): Promise<ThreadMessage[
     photoUrl: m.photoUrl,
     createdAt: m.createdAt,
     listing: m.listing?.product
-      ? { productId: m.listing.product.id, name: m.listing.product.name, photoUrl: m.listing.product.photoUrl, price: m.listing.promoPrice ?? m.listing.product.salePrice }
+      ? { productId: m.listing.product.id, name: m.listing.product.name, photoUrl: m.listing.product.photoUrl, price: m.listing.promoPrice ?? m.listing.product.salePrice, currency: m.listing.business?.currency ?? "XOF" }
       : null,
     order: m.order,
   }));

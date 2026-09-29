@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ImagePlus, Package, Paperclip, Send, X } from "lucide-react";
 import { uploadImageDirect } from "@/components/ui/direct-upload";
+import { formatMoney } from "@/lib/format";
 import { createBuyerImageUploadAction, sendBuyerMessageAction, sendSellerMessageAction } from "@/lib/actions/market-messages";
 
 export type ChatMessage = {
@@ -13,12 +14,11 @@ export type ChatMessage = {
   body: string | null;
   photoUrl: string | null;
   createdAt: string;
-  listing: { productId: string; name: string; photoUrl: string | null; price: number } | null;
-  order: { number: string; total: number; status: string } | null;
+  listing: { productId: string; name: string; photoUrl: string | null; price: number; currency: string } | null;
+  order: { number: string; total: number; status: string; currency: string } | null;
 };
 
 const REFRESH_MS = 8000;
-const money = (v: number) => `${Math.round(v).toLocaleString("fr-FR")} FCFA`;
 const time = (iso: string) => new Date(iso).toLocaleString("fr-FR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
 
 /**
@@ -105,7 +105,7 @@ export function ChatThread({
                     )}
                     <span className="min-w-0">
                       <span className="block truncate font-semibold">{m.listing.name}</span>
-                      <span className="text-xs opacity-80">{money(m.listing.price)}</span>
+                      <span className="text-xs opacity-80">{formatMoney(m.listing.price, m.listing.currency)}</span>
                     </span>
                   </Link>
                 )}
@@ -120,7 +120,7 @@ export function ChatThread({
                       ) : (
                         <span className="font-semibold">Commande {m.order.number}</span>
                       )}
-                      <span className="block text-xs opacity-80">{money(m.order.total)}</span>
+                      <span className="block text-xs opacity-80">{formatMoney(m.order.total, m.order.currency)}</span>
                     </span>
                   </div>
                 )}
