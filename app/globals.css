@@ -276,3 +276,17 @@ input[type="number"] {
 @media (prefers-reduced-motion: reduce) {
   .zindo-marquee, .zindo-float, .zindo-row-in { animation: none; }
 }
+@keyframes zindo-scan {
+  from { left: -33%; }
+  to { left: 100%; }
+}
+@keyframes zindo-pop {
+  0% { transform: scale(1); }
+  40% { transform: scale(1.12); color: var(--color-zindo-green-600); }
+  100% { transform: scale(1); }
+}
+.zindo-scan { animation: zindo-scan 0.7s ease-out; }
+.zindo-pop { animation: zindo-pop 0.5s ease-out; }
+@media (prefers-reduced-motion: reduce) {
+  .zindo-scan, .zindo-pop { animation: none; }
+}

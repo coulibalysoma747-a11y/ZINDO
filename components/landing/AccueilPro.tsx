@@ -32,6 +32,7 @@ import { ZindoLogo } from "@/components/auth/ZindoLogo";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { PublicNavLinks, PublicNavMenu } from "@/components/landing/PublicNav";
 import { PublicHelpChat } from "@/components/PublicHelpChat";
+import { CaisseAnimee, CreditsAnimes, StockAnime } from "@/components/landing/AccueilProEcrans";
 import { LiveDashboard, Reveal, StoriesCarousel, type Story } from "@/components/landing/AccueilProAnime";
 
 type Faq = { question: string; answer: string };
@@ -168,7 +169,7 @@ export function AccueilPro({ trialDays, faqs, footer }: { trialDays: number; faq
               "Remises, retours et échanges enregistrés",
               "Vente possible même sans connexion",
             ]}
-            visual={<CaisseMock />}
+            visual={<CaisseAnimee />}
           />
           <Feature
             reverse
@@ -181,7 +182,7 @@ export function AccueilPro({ trialDays, faqs, footer }: { trialDays: number; faq
               "Plusieurs boutiques et dépôts, transferts entre eux",
               "Achats fournisseurs qui remplissent le stock",
             ]}
-            visual={<StockMock />}
+            visual={<StockAnime />}
           />
           <Feature
             eyebrow="Argent"
@@ -193,7 +194,7 @@ export function AccueilPro({ trialDays, faqs, footer }: { trialDays: number; faq
               "Rapports de ventes, d'achats et de stock",
               "Chaque employé ne voit que ce qui le concerne",
             ]}
-            visual={<CreditsMock />}
+            visual={<CreditsAnimes />}
           />
         </section>
 
@@ -274,7 +275,12 @@ export function AccueilPro({ trialDays, faqs, footer }: { trialDays: number; faq
               <Reveal key={step.title} delay={i * 120} className="relative text-center">
                 <div>
                   <span className="relative mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-zindo-green-500 text-lg font-extrabold text-white ring-8 ring-white">
-                    {i + 1}
+                    <span
+                      aria-hidden
+                      className="absolute inset-0 animate-ping rounded-full bg-zindo-green-400/40 [animation-duration:2.4s] motion-reduce:hidden"
+                      style={{ animationDelay: `${i * 0.8}s` }}
+                    />
+                    <span className="relative">{i + 1}</span>
                   </span>
                   <h3 className="mt-5 text-lg font-bold">{step.title}</h3>
                   <p className="mx-auto mt-2 max-w-xs text-sm leading-relaxed text-zinc-600">{step.text}</p>
@@ -537,134 +543,6 @@ function PriceCard({ name, price, period, note, highlighted = false }: { name: s
       >
         Commencer l&apos;essai gratuit
       </Link>
-    </div>
-  );
-}
-
-/* ---------- Maquettes du logiciel (données d'exemple) ---------- */
-
-function Frame({ children, title }: { children: React.ReactNode; title: string }) {
-  return (
-    <div className="overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-[0_24px_60px_-20px_rgb(5_58_32/0.25)]">
-      <div className="flex items-center gap-2 border-b border-zinc-100 bg-zinc-50 px-4 py-2.5">
-        <span className="h-2.5 w-2.5 rounded-full bg-zinc-300" />
-        <span className="h-2.5 w-2.5 rounded-full bg-zinc-300" />
-        <span className="h-2.5 w-2.5 rounded-full bg-zinc-300" />
-        <span className="ml-2 truncate text-xs font-medium text-zinc-500">{title}</span>
-      </div>
-      {children}
-    </div>
-  );
-}
-
-function CaisseMock() {
-  return (
-    <div aria-hidden>
-      <Frame title="Caisse">
-        <div className="p-5">
-          <div className="flex items-center gap-2 rounded-lg border border-zinc-200 px-3 py-2 text-sm text-zinc-400">
-            <Barcode className="h-4 w-4" /> Scanner ou rechercher un produit…
-          </div>
-          <ul className="mt-4 divide-y divide-zinc-100 text-sm">
-            {[
-              ["Huile moteur 1 L", "3", "7 500"],
-              ["Chambre à air", "2", "8 000"],
-              ["Ampoule LED", "4", "6 000"],
-            ].map(([p, q, t]) => (
-              <li key={p} className="flex items-center justify-between py-2.5">
-                <span>
-                  {p} <span className="text-zinc-400">× {q}</span>
-                </span>
-                <span className="font-semibold">{t} FCFA</span>
-              </li>
-            ))}
-          </ul>
-          <div className="mt-3 flex items-center justify-between rounded-lg bg-zinc-50 px-3 py-3">
-            <span className="text-sm text-zinc-600">Total</span>
-            <span className="text-xl font-extrabold">21 500 FCFA</span>
-          </div>
-          <div className="mt-3 grid grid-cols-3 gap-2 text-center text-xs font-semibold">
-            <span className="rounded-lg border-2 border-zindo-green-500 bg-zindo-green-50 py-2 text-zindo-green-700">Espèces</span>
-            <span className="rounded-lg border border-zinc-200 py-2 text-zinc-600">Mobile Money</span>
-            <span className="rounded-lg border border-zinc-200 py-2 text-zinc-600">Crédit</span>
-          </div>
-          <div className="mt-3 rounded-lg bg-zindo-green-500 py-3 text-center text-sm font-bold text-white">Valider et imprimer le ticket</div>
-        </div>
-      </Frame>
-    </div>
-  );
-}
-
-function StockMock() {
-  const rows: [string, string, number, "ok" | "low" | "out"][] = [
-    ["Plaquette de frein", "FR-001", 25, "ok"],
-    ["Batterie 12 V", "BA-012", 3, "low"],
-    ["Pneu 2.75-17", "PN-275", 0, "out"],
-    ["Filtre à huile", "FH-110", 18, "ok"],
-  ];
-  const badge = {
-    ok: "bg-zindo-green-50 text-zindo-green-700",
-    low: "bg-amber-50 text-amber-700",
-    out: "bg-red-50 text-red-700",
-  };
-  const label = { ok: "En stock", low: "Stock faible", out: "Rupture" };
-  return (
-    <div aria-hidden>
-      <Frame title="Stock · Boutique principale">
-        <table className="w-full text-left text-sm">
-          <thead className="bg-zinc-50/60 text-xs text-zinc-500">
-            <tr>
-              <th className="px-5 py-2.5 font-medium">Produit</th>
-              <th className="px-3 py-2.5 text-right font-medium">Qté</th>
-              <th className="px-5 py-2.5 text-right font-medium">État</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-zinc-100">
-            {rows.map(([name, ref, qty, s]) => (
-              <tr key={ref}>
-                <td className="px-5 py-3">
-                  <p className="font-medium">{name}</p>
-                  <p className="text-xs text-zinc-400">{ref}</p>
-                </td>
-                <td className="px-3 py-3 text-right font-semibold">{qty}</td>
-                <td className="px-5 py-3 text-right">
-                  <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${badge[s]}`}>{label[s]}</span>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </Frame>
-    </div>
-  );
-}
-
-function CreditsMock() {
-  return (
-    <div aria-hidden>
-      <Frame title="Crédits clients">
-        <div className="p-5">
-          <div className="rounded-xl bg-zindo-green-950 p-4 text-white">
-            <p className="text-xs text-zindo-green-200">Total dû par vos clients</p>
-            <p className="mt-1 text-2xl font-extrabold">850 000 FCFA</p>
-          </div>
-          <ul className="mt-4 divide-y divide-zinc-100 text-sm">
-            {[
-              ["Moussa Traoré", "depuis 12 jours", "25 000"],
-              ["Awa Ouédraogo", "depuis 3 jours", "12 500"],
-              ["Garage Kaboré", "échéance demain", "140 000"],
-            ].map(([n, since, v]) => (
-              <li key={n} className="flex items-center justify-between py-3">
-                <span>
-                  <span className="block font-medium">{n}</span>
-                  <span className="text-xs text-zinc-400">{since}</span>
-                </span>
-                <span className="font-semibold">{v} FCFA</span>
-              </li>
-            ))}
-          </ul>
-        </div>
-      </Frame>
     </div>
   );
 }
