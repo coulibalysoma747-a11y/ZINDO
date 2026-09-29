@@ -34,7 +34,7 @@ import { SOLUTION_PAGES } from "@/lib/seo-pages";
 import { AccueilProHeader } from "@/components/landing/AccueilProHeader";
 import { PublicHelpChat } from "@/components/PublicHelpChat";
 import { CaisseAnimee, CreditsAnimes, StockAnime } from "@/components/landing/AccueilProEcrans";
-import { ApercuCookie, Reveal } from "@/components/landing/AccueilProAnime";
+import { ApercuCookie, LiveDashboard, Reveal } from "@/components/landing/AccueilProAnime";
 
 type Faq = { question: string; answer: string };
 
@@ -91,27 +91,9 @@ export function AccueilPro({ trialDays, faqs }: { trialDays: number; faqs: Faq[]
             </Reveal>
           </div>
 
-          <Reveal delay={200} className="relative">
-            <div className="relative aspect-[4/3] overflow-hidden rounded-[2rem] bg-zinc-100 lg:aspect-[4/4.4]">
-              <Image
-                src="/photos/accueil-cliente-marche.webp"
-                alt="Une cliente en pagne fait ses achats devant un étal de céréales et de produits"
-                fill
-                priority
-                sizes="(min-width: 1024px) 560px, 100vw"
-                className="object-cover object-center"
-              />
-            </div>
-            {/* Une seule touche « logiciel » : la vente qui vient d'être enregistrée. */}
-            <div className="absolute -bottom-6 left-4 right-4 flex items-center gap-3 rounded-2xl bg-white p-4 shadow-[0_20px_50px_-12px_rgb(0_0_0/0.25)] ring-1 ring-black/5 sm:left-auto sm:right-6 sm:w-80">
-              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-zindo-green-50 text-zindo-green-700">
-                <Check className="h-5 w-5" />
-              </span>
-              <div className="min-w-0 flex-1">
-                <p className="text-sm font-semibold">Vente enregistrée</p>
-                <p className="truncate text-xs text-zinc-500">3 articles · Orange Money</p>
-              </div>
-              <p className="shrink-0 text-sm font-semibold tabular-nums">21 500 F</p>
+          <Reveal delay={200}>
+            <div className="rounded-[2rem] bg-gradient-to-br from-zindo-green-50 via-white to-zinc-100 p-5 pb-20 ring-1 ring-zinc-200/70 sm:p-10 sm:pb-24">
+              <LiveDashboard />
             </div>
           </Reveal>
         </section>
@@ -163,24 +145,6 @@ export function AccueilPro({ trialDays, faqs }: { trialDays: number; faqs: Faq[]
               </span>
             ))}
           </Reveal>
-        </section>
-
-        {/* Galerie : de vrais marchés du Burkina Faso. */}
-        <section className="mx-auto max-w-6xl px-4 pb-20 sm:px-6 lg:pb-28">
-          <Reveal className="max-w-2xl">
-            <h2 className="text-3xl font-medium tracking-[-0.03em] sm:text-5xl">Du Rood Woko au marché de Bobo</h2>
-            <p className="mt-4 text-lg text-zinc-600">
-              ZINDO est né ici, au milieu des marchés, des boutiques et des dépôts du Burkina Faso.
-            </p>
-          </Reveal>
-          <div className="mt-12 grid grid-cols-2 gap-3 sm:gap-4 lg:h-[520px] lg:grid-cols-4 lg:grid-rows-2">
-            {GALERIE.map((g, i) => (
-              <Reveal key={g.src} delay={i * 80} className={`group relative overflow-hidden rounded-2xl bg-zinc-100 ${g.className}`}>
-                <Image src={g.src} alt={g.alt} fill sizes={g.sizes} className="object-cover transition duration-700 group-hover:scale-[1.03]" />
-                <span className="absolute bottom-3 left-3 rounded-full bg-black/55 px-3 py-1 text-xs font-medium text-white backdrop-blur-sm">{g.place}</span>
-              </Reveal>
-            ))}
-          </div>
         </section>
 
         {/* Trois fonctions, expliquées une par une. */}
@@ -412,10 +376,10 @@ const COMMERCES = [
     alt: "Devanture d'un magasin de pièces détachées au Burkina Faso",
   },
   {
-    title: "Marchés et alimentation",
-    text: "Vente au détail et en gros, sacs et cartons, caisse rapide même sans réseau.",
-    photo: "/photos/vendeuse-tomates.webp",
-    alt: "Une vendeuse en pagne dispose ses tomates sur un marché",
+    title: "Pharmacies et dépôts",
+    text: "Lots, dates de péremption et alertes avant la rupture.",
+    photo: "/photos/pharmacie-rayons.webp",
+    alt: "Rayons de médicaments dans une pharmacie",
   },
   {
     title: "Pagnes et vêtements",
@@ -424,13 +388,6 @@ const COMMERCES = [
     alt: "Pagnes tissés Faso Dan Fani empilés",
   },
 ];
-
-const GALERIE = [
-  { src: "/photos/marche-banfora.webp", alt: "Étals de légumes au marché de Banfora", place: "Banfora", className: "col-span-2 aspect-[16/10] lg:row-span-2 lg:aspect-auto", sizes: "(min-width: 1024px) 560px, 100vw" },
-  { src: "/photos/marche-bobo-dioulasso.webp", alt: "Scène de marché à Bobo-Dioulasso", place: "Bobo-Dioulasso", className: "aspect-[4/5] lg:row-span-2 lg:aspect-auto", sizes: "(min-width: 1024px) 280px, 50vw" },
-  { src: "/photos/rood-woko-ouagadougou.webp", alt: "Le marché Rood Woko à Ouagadougou", place: "Rood Woko, Ouagadougou", className: "aspect-[4/3] lg:aspect-auto", sizes: "(min-width: 1024px) 280px, 50vw" },
-  { src: "/photos/marche-gaoua.webp", alt: "Commerçantes au marché de Gaoua", place: "Gaoua", className: "col-span-2 aspect-[16/9] sm:col-span-1 sm:aspect-[4/3] lg:col-span-1 lg:aspect-auto", sizes: "(min-width: 1024px) 280px, 50vw" },
-]
 
 // [critère, cahier, Excel] — ZINDO coche toujours.
 const COMPARISON: [string, boolean, boolean][] = [
@@ -623,10 +580,9 @@ function FooterPro() {
           ))}
         </div>
         <p className="mt-14 text-[11px] leading-relaxed text-zinc-400">
-          Photos (Wikimedia Commons) : « Madame shopping », PGskot ; « Magasin de pièces détachées », WILLAV-FR ; « Vendeuse de tomate »,
-          Masséni Héma ; « Pagnes tissés Faso Dan Fani », Souleymane Yalgweogo (CC BY-SA 4.0) ; « BoboDioulasso-Market », Semiliki ; « Rood Woko
-          Ouagadougou 2013 », Sputniktilt ; marchés de Bobo-Dioulasso et de Gaoua, Adam Jones (CC BY-SA 3.0) ; marché de Banfora, Marco Schmidt
-          (CC BY-SA 2.5). Écrans du logiciel : données d&apos;exemple.
+          Photos (Wikimedia Commons) : « Magasin de pièces détachées », WILLAV-FR, et « Pagnes tissés Faso Dan Fani », Souleymane Yalgweogo
+          (CC BY-SA 4.0) ; « BoboDioulasso-Market », Semiliki (CC BY-SA 3.0) ; « A Drug Store in Nigeria », Beendy234 (CC0). Écrans du logiciel :
+          données d&apos;exemple.
         </p>
         <div className="mt-6 flex flex-col items-center justify-between gap-4 border-t border-zinc-200 pt-6 text-xs text-zinc-500 sm:flex-row">
           <p>© {new Date().getFullYear()} ZINDO. Tous droits réservés.</p>

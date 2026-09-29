@@ -200,7 +200,7 @@ function AuthShellPro({ children, locale }: { children: React.ReactNode; locale:
   return (
     <div className="theme-locked flex min-h-screen bg-white">
       <aside className="relative isolate hidden w-[46%] shrink-0 flex-col justify-between overflow-hidden p-12 text-white lg:flex xl:p-16">
-        <Image src="/photos/vendeuse-tomates.webp" alt="" fill priority sizes="46vw" className="-z-10 object-cover object-center" />
+        <Image src="/photos/grand-marche-bobo-dioulasso.webp" alt="" fill priority sizes="46vw" className="-z-10 object-cover object-center" />
         <div aria-hidden className="absolute inset-0 -z-10 bg-gradient-to-t from-black/85 via-black/35 to-black/20" />
         <Link href={home} className="flex items-center gap-2.5">
           <ZindoLogo size={34} />
