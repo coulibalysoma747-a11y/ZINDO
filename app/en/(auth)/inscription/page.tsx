@@ -12,14 +12,10 @@ export default function EnglishRegisterPage() {
   return (
     <Card>
       <CardBody className="space-y-5">
-        <div>
-          <h2 className="text-lg font-semibold text-zinc-900">Create your business</h2>
-          <p className="text-sm text-zinc-500">Get started with ZINDO in seconds</p>
-        </div>
         <RegisterForm locale="en" />
         <p className="text-center text-sm text-zinc-500">
           Already have an account?{" "}
-          <Link href="/en/login" className="font-medium text-emerald-600 hover:underline">
+          <Link href="/en/login" className="font-semibold text-zindo-green-700 hover:underline">
             Sign in
           </Link>
         </p>

@@ -15,7 +15,7 @@ const TEXT = {
       </>
     ),
     subhead:
-      "Des milliers de commerçants au Burkina Faso utilisent ZINDO pour suivre leur stock, leurs ventes et leurs bénéfices, chaque jour.",
+      "Conçu au Burkina Faso pour les boutiques et les PME : suivez votre stock, vos ventes et vos bénéfices, chaque jour, même sans connexion.",
     createdBy: "Créé par Coulibaly Soma",
     founderName: "Coulibaly Soma",
     founderTagline: "Fondateur ZINDO — à vos côtés à chaque étape.",
@@ -42,7 +42,7 @@ const TEXT = {
       </>
     ),
     subhead:
-      "Thousands of merchants in Burkina Faso use ZINDO every day to track their stock, sales, and profits.",
+      "Built in Burkina Faso for shops and small businesses: track your stock, sales and profits every day, even offline.",
     createdBy: "Created by Coulibaly Soma",
     founderName: "Coulibaly Soma",
     founderTagline: "ZINDO Founder — with you every step of the way.",
