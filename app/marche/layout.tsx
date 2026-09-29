@@ -7,7 +7,6 @@ import { getCurrentBuyer } from "@/lib/market-buyer";
 import { countUnread } from "@/lib/market-messages";
 import { CartCount } from "@/components/market/cart-store";
 import { MarketSearchBox } from "@/components/market/MarketSearchBox";
-import { InstallAppButton } from "@/components/InstallAppButton";
 
 export const metadata = {
   title: "Marché ZINDO",
