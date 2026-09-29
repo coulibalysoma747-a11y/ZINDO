@@ -4,6 +4,7 @@ import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import { supabase } from "@/lib/supabase";
 import { logAction } from "@/lib/audit";
+import { forget } from "@/lib/memo";
 import { PERMISSIONS } from "@/lib/permissions";
 import { requireMarketSeller } from "@/lib/market-seller";
 
@@ -70,6 +71,7 @@ export async function buyBoostAction(input: z.infer<typeof boostSchema>): Promis
   await logAction({ businessId: user.businessId, userId: user.id, action: "CREATE", entity: "market_boost", entityId: d.targetId, details: `Mise en avant ${d.kind} ${d.days} j` });
   revalidatePath("/mon-marche/visibilite");
   revalidatePath("/marche", "layout");
+  forget("marche:");
   const until = new Date(endsAt as string).toLocaleDateString("fr-FR", { day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" });
   return { success: `Mise en avant active jusqu'au ${until}.` };
 }

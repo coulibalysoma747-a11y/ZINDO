@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { supabase } from "@/lib/supabase";
 import { requireSuperAdmin } from "@/lib/superadmin-auth";
 import { logAdminAction } from "@/lib/admin-audit";
+import { forget } from "@/lib/memo";
 
 /** Administration du Marché ZINDO (console /admin/marche) : boutiques, annonces, signalements, avis. */
 
@@ -12,6 +13,7 @@ type Result = { error?: string; success?: string };
 function refresh() {
   revalidatePath("/admin/marche");
   revalidatePath("/marche", "layout");
+  forget("marche:");
 }
 
 /** Suspend (motif obligatoire) ou rétablit une boutique : suspendue, elle disparaît du Marché. */

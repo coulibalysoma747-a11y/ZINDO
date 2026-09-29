@@ -6,6 +6,7 @@ import { redirect } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { logAction } from "@/lib/audit";
 import { requirePermission } from "@/lib/auth";
+import { forget } from "@/lib/memo";
 import { PERMISSIONS, type Permission } from "@/lib/permissions";
 import { isMarketEnabledFor } from "@/lib/market-data";
 import { isMarketCategory, MAX_LISTING_PHOTOS, slugifyShopName } from "@/lib/market";
@@ -159,6 +160,7 @@ export async function saveMarketShopAction(_prev: MarketActionState, formData: F
   });
   revalidatePath("/mon-marche");
   revalidatePath("/marche", "layout");
+  forget("marche:");
   return { success: "Boutique enregistrée." };
 }
 
@@ -227,6 +229,7 @@ export async function saveMarketListingAction(input: {
   revalidatePath("/mon-marche");
   revalidatePath(`/produits/${d.productId}`);
   revalidatePath("/marche", "layout");
+  forget("marche:");
   return { success: d.published ? "Produit publié sur le Marché." : "Produit retiré du Marché." };
 }
 
@@ -289,6 +292,7 @@ export async function bulkMarketListingAction(input: z.infer<typeof bulkSchema>)
     await logAction({ businessId: user.businessId, userId: user.id, action: "UPDATE", entity: "market_listing", details: `${owned.length} produit(s) retiré(s) du Marché` });
     revalidatePath("/mon-marche/produits");
     revalidatePath("/marche", "layout");
+  forget("marche:");
     return { success: `${owned.length} produit${owned.length > 1 ? "s" : ""} retiré${owned.length > 1 ? "s" : ""} du Marché.`, done: owned.length };
   }
 
@@ -312,6 +316,7 @@ export async function bulkMarketListingAction(input: z.infer<typeof bulkSchema>)
   await logAction({ businessId: user.businessId, userId: user.id, action: "UPDATE", entity: "market_listing", details: `${rows.length} produit(s) publié(s) sur le Marché` });
   revalidatePath("/mon-marche/produits");
   revalidatePath("/marche", "layout");
+  forget("marche:");
   const withoutPhoto = skipped ? `${skipped} produit${skipped > 1 ? "s" : ""} sans photo (ajoutez une photo pour ${skipped > 1 ? "les" : "le"} publier)` : "";
   if (rows.length === 0) return { error: `Aucun produit publié : ${withoutPhoto}.`, done: 0, skipped };
   return {

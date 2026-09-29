@@ -1,6 +1,7 @@
 import "server-only";
 import { cache } from "react";
 import { supabase } from "@/lib/supabase";
+import { memo } from "@/lib/memo";
 import { getCurrentUser } from "@/lib/auth";
 import { isFeatureEnabled, isFeatureEnabledGlobally, registerFeatureFlag } from "@/lib/feature-flags";
 import { MARKET_EXCLUDED_ACTIVITIES, MARKET_FLAG, type MarketProduct, type MarketShopSummary, type MarketSort } from "@/lib/market";
@@ -32,8 +33,12 @@ export async function isMarketEnabledFor(businessId: string, activityKey: string
  * (pour tester sans rien montrer au public).
  */
 export async function canViewMarket(): Promise<boolean> {
-  await registerMarketFlag();
-  if (await isFeatureEnabledGlobally(MARKET_FLAG)) return true;
+  // Flag global gardé 60 s en mémoire : lu à chaque page publique du Marché.
+  const open = await memo("marche:flag-global", 60_000, async () => {
+    await registerMarketFlag();
+    return isFeatureEnabledGlobally(MARKET_FLAG);
+  });
+  if (open) return true;
   const user = await getCurrentUser();
   return !!user && (await isFeatureEnabled(MARKET_FLAG, user.businessId));
 }
@@ -108,6 +113,11 @@ async function toShops(rows: ShopRow[]): Promise<MarketShop[]> {
 
 /** Boutiques publiées (ni le commerce ni la boutique suspendus), les plus récentes d'abord. */
 export async function loadPublishedShops(): Promise<MarketShop[]> {
+  // Liste commune à tous les visiteurs : gardée 30 s en mémoire (voir lib/memo.ts).
+  return memo("marche:shops", 30_000, loadPublishedShopsFromDb);
+}
+
+async function loadPublishedShopsFromDb(): Promise<MarketShop[]> {
   const { data, error } = await supabase
     .from("market_shops")
     .select(SHOP_COLUMNS)
@@ -301,7 +311,9 @@ export async function recordMarketView(target: { listingId?: string; shopId?: st
 }
 
 /** Mises en avant payantes en cours (produits et boutiques), lues une fois par requête. */
-export const loadActiveBoosts = cache(async (): Promise<{ listingIds: Set<string>; shopIds: Set<string> }> => {
+export const loadActiveBoosts = cache((): Promise<{ listingIds: Set<string>; shopIds: Set<string> }> => memo("marche:boosts", 30_000, loadActiveBoostsFromDb));
+
+async function loadActiveBoostsFromDb(): Promise<{ listingIds: Set<string>; shopIds: Set<string> }> {
   const { data } = await supabase
     .from("market_boosts")
     .select("listingId:listing_id, shopId:shop_id")
@@ -312,4 +324,4 @@ export const loadActiveBoosts = cache(async (): Promise<{ listingIds: Set<string
     listingIds: new Set(rows.flatMap((r) => (r.listingId ? [r.listingId] : []))),
     shopIds: new Set(rows.flatMap((r) => (r.shopId ? [r.shopId] : []))),
   };
-});
+}
