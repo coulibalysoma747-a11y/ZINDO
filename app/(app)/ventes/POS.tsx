@@ -759,6 +759,7 @@ export function POS({
       }
       setStockAlert(null);
     }
+    resetSearchAfterAdd();
     // Bips distincts (flag bips_scan) : ajout normal, ou ajout avec stock insuffisant.
     const stockShort =
       extras.scanFeedback &&
@@ -965,7 +966,15 @@ export function POS({
       .finally(() => setLoadingUnits(false));
   }
 
+  /** Flag recherche_videe_apres_ajout : recherche vidée et curseur replacé pour taper le produit suivant. */
+  function resetSearchAfterAdd() {
+    if (!extras.clearSearchOnAdd || !search) return;
+    setSearch("");
+    requestAnimationFrame(() => document.getElementById("pos-search")?.focus());
+  }
+
   function addTrackedUnit(product: PosProduct, unit: { id: string; chassisNumber: string }) {
+    resetSearchAfterAdd();
     playAddToCartSound();
     setCart((prev) => [
       ...prev,

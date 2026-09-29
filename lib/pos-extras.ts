@@ -47,6 +47,11 @@ const POS_EXTRA_FLAGS = {
     label: "Caisse : raccourcis clavier (F1 à F4)",
     description: "Sur ordinateur : F1 ouvre le scanner, F2 place le curseur dans la recherche, F3 valide la vente, F4 vide le panier (avec confirmation).",
   },
+  clearSearchOnAdd: {
+    key: "recherche_videe_apres_ajout",
+    label: "Caisse : recherche vidée après l’ajout",
+    description: "Dès qu’un produit trouvé par la recherche part au panier, la barre de recherche se vide et le curseur y revient : le vendeur tape aussitôt le produit suivant.",
+  },
 } as const;
 
 /** miscItem : flag article_divers, déclaré dans lib/misc-item.ts (le serveur de vente s'en sert aussi). */
