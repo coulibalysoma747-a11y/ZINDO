@@ -3,6 +3,7 @@ import { Store, Users, ShoppingCart, ShieldOff, LifeBuoy } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { formatDateTime } from "@/lib/format";
 import { Card, CardBody, CardHeader } from "@/components/ui/Card";
+import { maintenant, situation, type SubscriptionRow } from "@/lib/abonnement-situation";
 import { Badge } from "@/components/ui/Badge";
 
 export default async function AdminDashboardPage() {
@@ -21,7 +22,7 @@ export default async function AdminDashboardPage() {
     supabase.from("support_tickets").select("*", { count: "exact", head: true }).neq("status", "RESOLU"),
     supabase
       .from("businesses")
-      .select("id, name, plan, suspended, createdAt:created_at, users(count)")
+      .select("id, name, suspended, createdAt:created_at, users(count), business_subscriptions(status, billingCycle:billing_cycle, trialEndsAt:trial_ends_at, currentPeriodEnd:current_period_end)")
       .order("created_at", { ascending: false })
       .limit(8),
   ]);
@@ -29,11 +30,13 @@ export default async function AdminDashboardPage() {
   const recentBusinesses = (recentBusinessesRaw ?? []) as unknown as {
     id: string;
     name: string;
-    plan: string;
     suspended: boolean;
     createdAt: string;
     users: { count: number }[];
+    business_subscriptions: Omit<SubscriptionRow, "businessId">[] | Omit<SubscriptionRow, "businessId"> | null;
   }[];
+
+  const now = maintenant();
 
   const stats = [
     { label: "Commerçants", value: businessCount ?? 0, icon: Store, tone: "text-zindo-green-600 bg-zindo-green-50" },
@@ -93,7 +96,7 @@ export default async function AdminDashboardPage() {
                   <tr>
                     <th className="px-4 py-2 font-medium">Nom</th>
                     <th className="px-4 py-2 font-medium">Utilisateurs</th>
-                    <th className="px-4 py-2 font-medium">Plan</th>
+                    <th className="px-4 py-2 font-medium">Abonnement</th>
                     <th className="px-4 py-2 font-medium">Statut</th>
                     <th className="px-4 py-2 font-medium">Créé le</th>
                   </tr>
@@ -107,11 +110,17 @@ export default async function AdminDashboardPage() {
                         </Link>
                       </td>
                       <td className="px-4 py-2 text-zinc-600">{b.users?.[0]?.count ?? 0}</td>
-                      <td className="px-4 py-2 text-zinc-600">{b.plan}</td>
+                      <td className="px-4 py-2">
+                        {(() => {
+                          const raw = Array.isArray(b.business_subscriptions) ? b.business_subscriptions[0] : b.business_subscriptions;
+                          const s = situation(b, raw ? { ...raw, businessId: b.id } : undefined, now);
+                          return <span className={`whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-medium ${s.tone}`}>{s.label}</span>;
+                        })()}
+                      </td>
                       <td className="px-4 py-2">
                         {b.suspended ? <Badge tone="red">Suspendu</Badge> : <Badge tone="emerald">Actif</Badge>}
                       </td>
-                      <td className="px-4 py-2 text-zinc-600">{formatDateTime(b.createdAt)}</td>
+                      <td className="whitespace-nowrap px-4 py-2 text-zinc-600">{formatDateTime(b.createdAt)}</td>
                     </tr>
                   ))}
                 </tbody>
