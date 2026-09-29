@@ -12,12 +12,15 @@ export function Sidebar({
   items,
   userName,
   menuSearch = false,
+  dark = false,
 }: {
   businessName: string;
   items: NavItem[];
   userName: string;
   /** Champ « Chercher un module » en haut du menu (flag « recherche_menu »). */
   menuSearch?: boolean;
+  /** Barre sombre (flag « interface_pro ») : réutilise les styles du mode sombre, pour la barre seule. */
+  dark?: boolean;
 }) {
   const footerHrefs = ["/support", "/parametres"];
   const footerItems = footerHrefs
@@ -26,11 +29,11 @@ export function Sidebar({
   const groups = groupNavItems(items.filter((item) => !footerHrefs.includes(item.href)));
 
   return (
-    <aside className="sticky top-0 hidden h-screen w-60 shrink-0 flex-col border-r border-zinc-200 bg-white md:flex dark:border-slate-800 dark:bg-slate-900">
+    <aside className={`${dark ? "dark " : ""}sticky top-0 hidden h-screen w-60 shrink-0 flex-col border-r border-zinc-200 bg-white md:flex dark:border-slate-800 dark:bg-slate-900`}>
       <div className="flex h-16 shrink-0 items-center gap-2.5 border-b border-zinc-200 px-4 dark:border-slate-800">
         <ZindoLogo size={30} className="!rounded-lg !shadow-none" />
         <div className="min-w-0 flex-1">
-          <p className="text-sm font-bold leading-tight text-zinc-900">ZINDO</p>
+          <p className="text-sm font-bold leading-tight text-zinc-900 dark:text-white">ZINDO</p>
           <p className="truncate text-xs text-zinc-500" title={businessName}>
             {businessName}
           </p>
@@ -56,7 +59,7 @@ export function Sidebar({
           {userName.slice(0, 1).toUpperCase()}
         </div>
         <div className="min-w-0 flex-1">
-          <p className="truncate text-sm font-medium text-zinc-900">{userName}</p>
+          <p className="truncate text-sm font-medium text-zinc-900 dark:text-white">{userName}</p>
           <p className="text-xs text-zinc-500">Mon compte</p>
         </div>
         <ChevronsUpDown className="h-4 w-4 shrink-0 text-zinc-400" />

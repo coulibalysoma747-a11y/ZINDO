@@ -1,4 +1,5 @@
 import { cookies, headers } from "next/headers";
+import { isFeatureEnabled } from "@/lib/feature-flags";
 import { redirect } from "next/navigation";
 import { requireUserForBilling, hasPermission } from "@/lib/auth";
 import { getVisibleNavItems } from "@/lib/nav-server";
@@ -66,7 +67,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   // problème qui se retrouverait elle-même redirigée vers elle-même.
   if (!isImpersonating && !isBillingPage && subscriptionBlocked) redirect("/abonnement");
 
-  const [navItems, canSell, canManageProducts, canManageStock, canManagePurchases, offlineEnabled, globalSearchEnabled, menuSearchEnabled, salesHub, fourTabs, posPhone, selectOnFocus] = await Promise.all([
+  const [navItems, canSell, canManageProducts, canManageStock, canManagePurchases, offlineEnabled, globalSearchEnabled, menuSearchEnabled, salesHub, fourTabs, posPhone, selectOnFocus, interfacePro] = await Promise.all([
     getVisibleNavItems(user.businessId, user.role, user.id, user.business.activityKey, currentLocation?.id),
     hasPermission(user.businessId, user.role, PERMISSIONS.SALES_CREATE, user.id),
     hasPermission(user.businessId, user.role, PERMISSIONS.PRODUCTS_MANAGE, user.id),
@@ -79,6 +80,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     isFourTabBarEnabled(user.businessId),
     isPosPhoneEnabled(user.businessId),
     isSelectOnFocusEnabled(user.businessId),
+    isFeatureEnabled("interface_pro", user.businessId),
   ]);
   // Caisse plein écran sur téléphone (flag caisse_telephone) : ni en-tête, ni
   // bandeau, ni barre du bas sur la caisse et la facture A4 — la caisse a son
@@ -111,6 +113,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           businessName={user.business.name}
           items={menuItems}
           menuSearch={menuSearchEnabled}
+          dark={interfacePro}
           userName={`${user.firstName} ${user.lastName}`}
         />
       </div>
@@ -122,7 +125,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           {platformConfig.announcementActive && platformConfig.announcementMessage && (
             <AnnouncementBanner message={platformConfig.announcementMessage} tone={platformConfig.announcementTone} />
           )}
-          {businessSettings.hasPhysicalStore === null && user.role === "ADMIN" && !storeBannerHidden && <HasPhysicalStoreBanner />}
+          {businessSettings.hasPhysicalStore === null && user.role === "ADMIN" && !storeBannerHidden && <HasPhysicalStoreBanner pro={interfacePro} />}
           <Topbar
             userName={`${user.firstName} ${user.lastName}`}
             role={ROLE_LABELS[user.role]}
