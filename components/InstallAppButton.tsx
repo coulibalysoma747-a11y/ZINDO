@@ -95,6 +95,20 @@ export function InstallAppButton({
                 <X className="h-5 w-5 text-zinc-400" />
               </button>
             </div>
+            {/* Chrome peut proposer l'installation quelques secondes après l'ouverture de l'aide. */}
+            {deferredPrompt && (
+              <button
+                type="button"
+                onClick={() => {
+                  setShowHelp(false);
+                  handleClick();
+                }}
+                className="mt-3 flex w-full items-center justify-center gap-2 rounded-lg bg-zindo-green-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-zindo-green-700"
+              >
+                <Download className="h-4 w-4" />
+                Installer maintenant
+              </button>
+            )}
             {isIos ? (
               <p className="mt-2 text-sm text-zinc-600">
                 Sur iPhone/iPad : appuyez sur <Share className="inline h-4 w-4 -mt-0.5" /> (Partager) en bas de
