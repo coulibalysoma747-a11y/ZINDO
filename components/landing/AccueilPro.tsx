@@ -35,7 +35,7 @@ import { SOLUTION_PAGES } from "@/lib/seo-pages";
 import { AccueilProHeader } from "@/components/landing/AccueilProHeader";
 import { PublicHelpChat } from "@/components/PublicHelpChat";
 import { CaisseAnimee, CreditsAnimes, StockAnime } from "@/components/landing/AccueilProEcrans";
-import { LiveDashboard, Reveal, StoriesCarousel, type Story } from "@/components/landing/AccueilProAnime";
+import { ApercuCookie, LiveDashboard, Reveal, StoriesCarousel, type Story } from "@/components/landing/AccueilProAnime";
 
 type Faq = { question: string; answer: string };
 
@@ -50,6 +50,7 @@ export function AccueilPro({ trialDays, faqs }: { trialDays: number; faqs: Faq[]
   return (
     <div className="theme-locked min-h-screen overflow-x-hidden bg-white text-zindo-ink-900">
       <AccueilProHeader />
+      <ApercuCookie />
 
       <main>
         {/* Premier écran : le message à gauche, le logiciel à droite. */}

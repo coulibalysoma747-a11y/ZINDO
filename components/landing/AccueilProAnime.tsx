@@ -28,7 +28,7 @@ function useReducedMotion() {
 }
 
 /** Tableau de bord d'exemple : une nouvelle vente arrive toutes les 2,5 secondes. */
-export function LiveDashboard() {
+export function LiveDashboard({ phone = true }: { phone?: boolean }) {
   const reduced = useReducedMotion();
   const [count, setCount] = useState(3);
 
@@ -44,7 +44,7 @@ export function LiveDashboard() {
 
   return (
     <div className="relative" aria-hidden>
-      <div className="overflow-hidden rounded-2xl border border-white/10 bg-white text-zindo-ink-900 md:mr-16 shadow-[0_40px_80px_-24px_rgb(0_0_0/0.55)]">
+      <div className={`overflow-hidden rounded-2xl border border-white/10 bg-white text-zindo-ink-900 ${phone ? "md:mr-16" : ""} shadow-[0_40px_80px_-24px_rgb(0_0_0/0.55)]`}>
         <div className="flex items-center gap-2 border-b border-zinc-100 bg-zinc-50 px-4 py-2.5">
           <span className="h-2.5 w-2.5 rounded-full bg-[#ff5f57]" />
           <span className="h-2.5 w-2.5 rounded-full bg-[#febc2e]" />
@@ -94,6 +94,7 @@ export function LiveDashboard() {
       </div>
 
       {/* Téléphone : la même caisse sur mobile. */}
+      {phone && (
       <div className="zindo-float absolute -bottom-16 -right-4 hidden w-[168px] rounded-[2rem] border-[7px] border-zinc-900 bg-white shadow-2xl md:block">
         <div className="mx-auto mt-1.5 h-1.5 w-12 rounded-full bg-zinc-900" />
         <div className="px-3 pb-4 pt-2 text-zindo-ink-900">
@@ -113,6 +114,7 @@ export function LiveDashboard() {
           <div className="mt-2.5 rounded-lg bg-zindo-green-500 py-2 text-center text-[10px] font-bold text-white">Encaisser</div>
         </div>
       </div>
+      )}
 
       {/* Indicateur hors connexion. */}
       <div className="zindo-float absolute -left-3 -top-5 hidden items-center gap-2 rounded-full bg-white px-3 py-1.5 text-xs font-semibold text-zindo-ink-900 shadow-xl ring-1 ring-black/5 sm:flex [animation-delay:1.5s]">
@@ -209,4 +211,15 @@ export function StoriesCarousel({ stories }: { stories: Story[] }) {
       </div>
     </div>
   );
+}
+
+/**
+ * Mémorise l'aperçu de la nouvelle page d'accueil dans ce navigateur (24 h), pour
+ * que la connexion et l'inscription s'affichent aussi dans le nouveau style.
+ */
+export function ApercuCookie() {
+  useEffect(() => {
+    document.cookie = "zindo_apercu=pro; path=/; max-age=86400; samesite=lax";
+  }, []);
+  return null;
 }
