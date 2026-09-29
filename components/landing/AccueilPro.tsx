@@ -25,6 +25,7 @@ import { ZindoLogo } from "@/components/auth/ZindoLogo";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { PublicNavLinks, PublicNavMenu } from "@/components/landing/PublicNav";
 import { PublicHelpChat } from "@/components/PublicHelpChat";
+import { LiveDashboard, Reveal, StoriesCarousel, type Story } from "@/components/landing/AccueilProAnime";
 
 type Faq = { question: string; answer: string };
 
@@ -64,42 +65,77 @@ export function AccueilPro({ trialDays, faqs, footer }: { trialDays: number; faq
 
       <main>
         {/* Premier écran : le message à gauche, le logiciel à droite. */}
-        <section className="relative overflow-hidden border-b border-zinc-100 bg-gradient-to-b from-zindo-green-50/70 via-white to-white">
-          <div className="mx-auto grid max-w-6xl items-center gap-12 px-4 pb-16 pt-12 sm:px-6 lg:grid-cols-2 lg:pb-24 lg:pt-20">
+        <section className="relative isolate overflow-hidden bg-zindo-green-950 text-white">
+          {/* Décor : halos de couleur et quadrillage estompé. */}
+          <div aria-hidden className="pointer-events-none absolute inset-0 -z-10">
+            <div className="absolute -left-40 -top-40 h-[520px] w-[520px] rounded-full bg-zindo-green-500/30 blur-[120px]" />
+            <div className="absolute -right-32 top-24 h-[420px] w-[420px] rounded-full bg-zindo-gold-500/15 blur-[120px]" />
+            <div
+              className="absolute inset-0 opacity-[0.07] [mask-image:radial-gradient(ellipse_at_center,black_30%,transparent_75%)]"
+              style={{ backgroundImage: "linear-gradient(white 1px, transparent 1px), linear-gradient(90deg, white 1px, transparent 1px)", backgroundSize: "44px 44px" }}
+            />
+          </div>
+          <div className="mx-auto grid max-w-6xl items-center gap-14 px-4 pb-20 pt-14 sm:px-6 lg:grid-cols-2 lg:pb-28 lg:pt-24">
             <div>
-              <p className="inline-flex items-center gap-2 rounded-full border border-zindo-green-200 bg-white px-3 py-1 text-xs font-semibold text-zindo-green-700">
-                <span className="h-1.5 w-1.5 rounded-full bg-zindo-green-500" /> Conçu au Burkina Faso
-              </p>
-              <h1 className="mt-5 text-4xl font-extrabold leading-[1.08] tracking-tight sm:text-5xl lg:text-[3.4rem]">
-                Votre stock et vos ventes, <span className="text-zindo-green-600">justes chaque jour.</span>
-              </h1>
-              <p className="mt-5 max-w-lg text-lg leading-relaxed text-zinc-600">
-                ZINDO remplace le cahier et Excel : caisse, stock, crédits clients et bénéfices dans une seule application, qui continue de
-                fonctionner quand Internet coupe.
-              </p>
-              <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-                <Link
-                  href="/inscription"
-                  className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-xl bg-zindo-green-500 px-6 py-3.5 text-base font-bold text-white shadow-lg shadow-zindo-green-500/25 transition hover:bg-zindo-green-600"
-                >
-                  Essayer gratuitement {trialDays} jours <ArrowRight className="h-4 w-4" />
-                </Link>
-                <a
-                  href="/api/auth/google"
-                  className="inline-flex items-center justify-center gap-2.5 whitespace-nowrap rounded-xl border border-zinc-300 bg-white px-6 py-3.5 text-base font-semibold text-zindo-ink-700 transition hover:border-zinc-400"
-                >
-                  <GoogleIcon className="h-[18px] w-[18px]" /> Continuer avec Google
-                </a>
-              </div>
-              <ul className="mt-6 flex flex-wrap gap-x-5 gap-y-2 text-sm text-zinc-600">
-                {["Sans carte bancaire", "Sans engagement", "Ensuite 7 500 FCFA par mois"].map((t) => (
-                  <li key={t} className="inline-flex items-center gap-1.5">
-                    <Check className="h-4 w-4 text-zindo-green-600" /> {t}
-                  </li>
-                ))}
-              </ul>
+              <Reveal>
+                <p className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-3 py-1 text-xs font-semibold text-zindo-green-200 backdrop-blur">
+                  <span className="h-1.5 w-1.5 rounded-full bg-zindo-green-400" /> Conçu au Burkina Faso, pour l&apos;Afrique
+                </p>
+              </Reveal>
+              <Reveal delay={100}>
+                <h1 className="mt-6 text-[2.6rem] font-extrabold leading-[1.04] tracking-tight sm:text-6xl lg:text-[4rem]">
+                  Votre stock et vos ventes,{" "}
+                  <span className="bg-gradient-to-r from-zindo-green-300 via-zindo-green-400 to-zindo-gold-400 bg-clip-text text-transparent">justes chaque jour.</span>
+                </h1>
+              </Reveal>
+              <Reveal delay={200}>
+                <p className="mt-6 max-w-lg text-lg leading-relaxed text-zindo-green-100/80">
+                  ZINDO remplace le cahier et Excel : caisse, stock, crédits clients et bénéfices dans une seule application, qui continue de
+                  fonctionner quand Internet coupe.
+                </p>
+              </Reveal>
+              <Reveal delay={300}>
+                <div className="mt-9 flex flex-col gap-3 sm:flex-row">
+                  <Link
+                    href="/inscription"
+                    className="group inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-xl bg-white px-6 py-3.5 text-base font-bold text-zindo-green-800 shadow-lg shadow-black/20 transition hover:bg-zindo-green-50"
+                  >
+                    Essayer gratuitement {trialDays} jours <ArrowRight className="h-4 w-4 transition group-hover:translate-x-0.5" />
+                  </Link>
+                  <a
+                    href="/api/auth/google"
+                    className="inline-flex items-center justify-center gap-2.5 whitespace-nowrap rounded-xl border border-white/20 bg-white/5 px-6 py-3.5 text-base font-semibold text-white backdrop-blur transition hover:bg-white/10"
+                  >
+                    <GoogleIcon className="h-[18px] w-[18px]" /> Continuer avec Google
+                  </a>
+                </div>
+                <ul className="mt-6 flex flex-wrap gap-x-5 gap-y-2 text-sm text-zindo-green-100/80">
+                  {["Sans carte bancaire", "Sans engagement", "Ensuite 7 500 FCFA par mois"].map((t) => (
+                    <li key={t} className="inline-flex items-center gap-1.5">
+                      <Check className="h-4 w-4 text-zindo-green-400" /> {t}
+                    </li>
+                  ))}
+                </ul>
+              </Reveal>
             </div>
-            <DashboardMock />
+            <Reveal delay={250}>
+              <LiveDashboard />
+            </Reveal>
+          </div>
+        </section>
+
+        {/* Métiers qui défilent en continu. */}
+        <section aria-label="Métiers pris en charge" className="overflow-hidden border-b border-zinc-100 bg-white py-5">
+          <div className="zindo-marquee flex w-max gap-3">
+            {[...METIERS, ...METIERS].map(({ icon: Icon, label }, i) => (
+              <span
+                key={i}
+                aria-hidden={i >= METIERS.length}
+                className="inline-flex items-center gap-2 whitespace-nowrap rounded-full border border-zinc-200 px-4 py-2 text-sm font-medium text-zindo-ink-700"
+              >
+                <Icon className="h-4 w-4 text-zindo-green-600" /> {label}
+              </span>
+            ))}
           </div>
         </section>
 
@@ -178,13 +214,30 @@ export function AccueilPro({ trialDays, faqs, footer }: { trialDays: number; faq
           </div>
         </section>
 
+        {/* Exemples d'utilisation (pas des avis clients). */}
+        <section className="relative isolate overflow-hidden bg-zindo-green-950 text-white">
+          <div aria-hidden className="pointer-events-none absolute -right-40 -top-40 -z-10 h-[480px] w-[480px] rounded-full bg-zindo-green-500/25 blur-[120px]" />
+          <div className="mx-auto grid max-w-6xl gap-12 px-4 py-20 sm:px-6 lg:grid-cols-[0.9fr_1.1fr] lg:py-28">
+            <Reveal>
+              <p className="text-xs font-semibold uppercase tracking-wider text-zindo-green-300">Exemples d&apos;utilisation</p>
+              <h2 className="mt-3 text-3xl font-extrabold tracking-tight sm:text-4xl">Ce que ZINDO change, métier par métier</h2>
+              <p className="mt-4 text-zindo-green-100/75">
+                Quelques situations types, pour voir comment ZINDO s&apos;adapte à votre commerce.
+              </p>
+            </Reveal>
+            <Reveal delay={150}>
+              <StoriesCarousel stories={STORIES} />
+            </Reveal>
+          </div>
+        </section>
+
         {/* Tarifs. */}
         <section id="tarifs" className="mx-auto max-w-6xl px-4 py-20 sm:px-6 lg:py-28">
           <SectionTitle eyebrow="Tarifs" title="Un prix simple, tout compris" text={`Essayez tout pendant ${trialDays} jours. Vous ne payez que si vous continuez.`} />
-          <div className="mx-auto mt-12 grid max-w-3xl gap-5 sm:grid-cols-2">
+          <Reveal className="mx-auto mt-12 grid max-w-3xl gap-5 sm:grid-cols-2">
             <PriceCard name="Mensuel" price="7 500" period="FCFA / mois" note="Sans engagement, arrêtez quand vous voulez." />
             <PriceCard highlighted name="Annuel" price="75 000" period="FCFA / an" note="Soit 2 mois offerts (15 000 FCFA d'économie)." />
-          </div>
+          </Reveal>
           <p className="mt-6 text-center text-sm text-zinc-500">
             Toutes les fonctionnalités, plusieurs boutiques et utilisateurs, mises à jour incluses.{" "}
             <Link href="/tarifs" className="font-semibold text-zindo-green-700 hover:underline">
@@ -263,6 +316,29 @@ export function AccueilPro({ trialDays, faqs, footer }: { trialDays: number; faq
   );
 }
 
+const STORIES: Story[] = [
+  {
+    business: "Exemple : une quincaillerie",
+    city: "Bobo-Dioulasso",
+    text: "Les ventes à crédit sont suivies client par client : en fin de mois, le gérant sait exactement qui relancer, et pour combien.",
+  },
+  {
+    business: "Exemple : une boutique de pièces détachées",
+    city: "Ouagadougou",
+    text: "Le vendeur trouve une référence en deux secondes avec la douchette, et le patron est prévenu avant qu'une pièce ne manque.",
+  },
+  {
+    business: "Exemple : une alimentation",
+    city: "Koudougou",
+    text: "Quand le réseau coupe, la caisse continue : les ventes partent sur le serveur dès que la connexion revient.",
+  },
+  {
+    business: "Exemple : un grossiste avec deux dépôts",
+    city: "Abidjan",
+    text: "Le stock de chaque dépôt se consulte depuis le téléphone, et chaque transfert est enregistré avec le nom de l'employé.",
+  },
+];
+
 const METIERS = [
   { icon: Store, label: "Boutique générale", detail: "Caisse rapide, stock et crédits" },
   { icon: Hammer, label: "Quincaillerie", detail: "Détail, gros et conditionnements" },
@@ -280,11 +356,11 @@ const METIERS = [
 
 function SectionTitle({ eyebrow, title, text }: { eyebrow: string; title: string; text?: string }) {
   return (
-    <div className="mx-auto max-w-2xl text-center">
+    <Reveal className="mx-auto max-w-2xl text-center">
       <p className="text-xs font-semibold uppercase tracking-wider text-zindo-green-700">{eyebrow}</p>
       <h2 className="mt-3 text-3xl font-extrabold tracking-tight sm:text-4xl">{title}</h2>
       {text && <p className="mt-4 text-lg text-zinc-600">{text}</p>}
-    </div>
+    </Reveal>
   );
 }
 
@@ -317,7 +393,7 @@ function Feature({
 }) {
   return (
     <div className="grid items-center gap-10 lg:grid-cols-2 lg:gap-16">
-      <div className={reverse ? "lg:order-2" : ""}>
+      <Reveal className={reverse ? "lg:order-2" : ""}>
         <p className="text-sm font-bold text-zindo-green-600">{eyebrow}</p>
         <h3 className="mt-2 text-2xl font-extrabold tracking-tight sm:text-3xl">{title}</h3>
         <p className="mt-4 text-lg leading-relaxed text-zinc-600">{text}</p>
@@ -331,8 +407,10 @@ function Feature({
             </li>
           ))}
         </ul>
-      </div>
-      <div className={reverse ? "lg:order-1" : ""}>{visual}</div>
+      </Reveal>
+      <Reveal delay={150} className={reverse ? "lg:order-1" : ""}>
+        <div className="transition duration-500 hover:-translate-y-1">{visual}</div>
+      </Reveal>
     </div>
   );
 }
@@ -373,61 +451,6 @@ function Frame({ children, title }: { children: React.ReactNode; title: string }
         <span className="ml-2 truncate text-xs font-medium text-zinc-500">{title}</span>
       </div>
       {children}
-    </div>
-  );
-}
-
-function DashboardMock() {
-  const bars = [38, 52, 44, 70, 58, 84, 66];
-  return (
-    <div className="relative" aria-hidden>
-      <Frame title="Quincaillerie Diallo · Tableau de bord">
-        <div className="grid grid-cols-3 gap-2 p-3 sm:gap-3 sm:p-5">
-          {[
-            ["Ventes du jour", "125 000", "+12 %"],
-            ["Bénéfice estimé", "32 500", "+8 %"],
-            ["Valeur du stock", "4 850 000", ""],
-          ].map(([label, value, delta]) => (
-            <div key={label} className="min-w-0 rounded-xl border border-zinc-100 p-2.5 sm:p-3">
-              <p className="truncate text-[10px] text-zinc-500 sm:text-[11px]">{label}</p>
-              <p className="mt-1 text-sm font-extrabold tracking-tight sm:text-lg">
-                {value} <span className="hidden text-[11px] font-semibold text-zinc-400 sm:inline">FCFA</span>
-              </p>
-              {delta && <p className="text-[11px] font-semibold text-zindo-green-600">{delta}</p>}
-            </div>
-          ))}
-        </div>
-        <div className="grid gap-4 px-3 pb-4 sm:grid-cols-[1.2fr_1fr] sm:px-5 sm:pb-5">
-          <div className="rounded-xl border border-zinc-100 p-3">
-            <p className="text-xs font-semibold">Ventes de la semaine</p>
-            <div className="mt-3 flex h-20 items-end gap-2 sm:h-28">
-              {bars.map((h, i) => (
-                <span key={i} className={`flex-1 rounded-t-md ${i === 5 ? "bg-zindo-green-500" : "bg-zindo-green-100"}`} style={{ height: `${h}%` }} />
-              ))}
-            </div>
-          </div>
-          <div className="hidden rounded-xl border border-zinc-100 p-3 sm:block">
-            <p className="text-xs font-semibold">Dernières ventes</p>
-            <ul className="mt-2 space-y-2 text-xs">
-              {[
-                ["Ciment 50 kg × 4", "24 000"],
-                ["Peinture 5 L", "18 500"],
-                ["Tuyau PVC × 6", "9 000"],
-              ].map(([p, v]) => (
-                <li key={p} className="flex justify-between gap-2">
-                  <span className="truncate text-zinc-600">{p}</span>
-                  <span className="font-semibold">{v}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
-        </div>
-      </Frame>
-      <div className="absolute -bottom-6 -right-3 hidden w-52 rounded-xl border border-zinc-200 bg-white p-3 shadow-xl sm:block">
-        <p className="text-[11px] font-semibold text-amber-700">Stock faible</p>
-        <p className="mt-0.5 text-sm font-bold">Batterie 12 V</p>
-        <p className="text-xs text-zinc-500">Reste 3 · minimum 5</p>
-      </div>
     </div>
   );
 }

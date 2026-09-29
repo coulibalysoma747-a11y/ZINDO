@@ -255,3 +255,24 @@ input[type="number"] {
   -moz-appearance: textfield;
   appearance: textfield;
 }
+
+/* Page d'accueil (accueil_pro) : défilement des métiers, flottement des maquettes, arrivée d'une vente. */
+@keyframes zindo-marquee {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+@keyframes zindo-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+@keyframes zindo-row-in {
+  from { opacity: 0; transform: translateY(-6px); background-color: rgb(16 132 74 / 0.12); }
+  to { opacity: 1; transform: none; background-color: transparent; }
+}
+.zindo-marquee { animation: zindo-marquee 40s linear infinite; }
+.zindo-marquee:hover { animation-play-state: paused; }
+.zindo-float { animation: zindo-float 6s ease-in-out infinite; }
+.zindo-row-in { animation: zindo-row-in 0.6s ease-out; }
+@media (prefers-reduced-motion: reduce) {
+  .zindo-marquee, .zindo-float, .zindo-row-in { animation: none; }
+}
