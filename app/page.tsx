@@ -34,6 +34,7 @@ import { HeroCarousel } from "@/components/landing/HeroCarousel";
 import { DemoVideo } from "@/components/landing/DemoVideo";
 import { WhatsAppFloat } from "@/components/landing/WhatsAppFloat";
 import { PiedDePageComplet } from "@/components/landing/PiedDePageComplet";
+import { AccueilPro } from "@/components/landing/AccueilPro";
 import { PublicNavLinks, PublicNavMenu } from "@/components/landing/PublicNav";
 import {
   PertesSection,
@@ -241,6 +242,20 @@ export default async function RootPage({ searchParams }: { searchParams: Promise
   const fullFooter =
     (await searchParams).apercu === "pied" || (await isFeatureEnabledGlobally("pied_page_complet"));
   const faqs = fullLanding ? [...FAQS, ...EXTRA_FAQS] : FAQS;
+  await registerFeatureFlag(
+    "accueil_pro",
+    "Nouvelle page d'accueil",
+    "Page d'accueil publique refondue : message clair, maquettes du logiciel, trois fonctions détaillées, métiers, tarifs, accompagnement, questions fréquentes. Aperçu sans activation : /?apercu=pro. À activer globalement."
+  );
+  if ((await searchParams).apercu === "pro" || (await isFeatureEnabledGlobally("accueil_pro"))) {
+    return (
+      <>
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(STRUCTURED_DATA).replaceAll("{trialDays}", String(trialDays)) }} />
+        <AccueilPro trialDays={trialDays} faqs={[...FAQS, ...EXTRA_FAQS]} footer={<PiedDePageComplet />} />
+        <WhatsAppFloat href="https://wa.me/22604059929" />
+      </>
+    );
+  }
 
   return (
     <div className="theme-locked relative overflow-x-hidden bg-zindo-cream">
