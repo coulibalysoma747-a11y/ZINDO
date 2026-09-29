@@ -7,6 +7,7 @@ import type { SuperAdminRole } from "@prisma/client";
 
 const NAV_ITEMS = [
   { label: "Tableau de bord", href: "/admin", founderOnly: false },
+  { label: "Cockpit", href: "/admin/cockpit", founderOnly: true },
   { label: "Utilisateurs", href: "/admin/utilisateurs", founderOnly: false },
   { label: "Commerçants", href: "/admin/commercants", founderOnly: false },
   { label: "Suivi", href: "/admin/suivi", founderOnly: false },

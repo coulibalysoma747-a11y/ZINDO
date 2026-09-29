@@ -2,12 +2,13 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, Store, Users, KeyRound, UserCog, LogOut, ShieldCheck, Shield, Crown, LifeBuoy, FlaskConical, BadgeCheck, ShoppingBag, Palette, Wallet, Settings2, Gift, HeartPulse } from "lucide-react";
+import { LayoutDashboard, Store, Users, KeyRound, UserCog, LogOut, ShieldCheck, Shield, Crown, LifeBuoy, FlaskConical, BadgeCheck, ShoppingBag, Palette, Wallet, Settings2, Gift, HeartPulse, Gauge } from "lucide-react";
 import { superAdminLogoutAction } from "@/lib/actions/admin-auth";
 import type { SuperAdminRole } from "@prisma/client";
 
 const NAV_ITEMS = [
   { label: "Tableau de bord", href: "/admin", icon: LayoutDashboard, founderOnly: false },
+  { label: "Cockpit du fondateur", href: "/admin/cockpit", icon: Gauge, founderOnly: true },
   { label: "Utilisateurs", href: "/admin/utilisateurs", icon: Users, founderOnly: false },
   { label: "Commerçants", href: "/admin/commercants", icon: Store, founderOnly: false },
   { label: "Suivi des commerçants", href: "/admin/suivi", icon: HeartPulse, founderOnly: false },
