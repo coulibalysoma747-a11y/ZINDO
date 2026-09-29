@@ -8,6 +8,7 @@ import { requirePermission, requireUser } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
 import { logAction } from "@/lib/audit";
 import { saveBusinessLogo, deleteUploadedImage, uploadedImageUrl } from "@/lib/photo-upload";
+import { countryNameFr, isCountryCode } from "@/lib/countries";
 import type { PaymentMethod, Role } from "@/lib/db-types";
 
 export type ActionState = { error?: string; success?: string } | undefined;
@@ -18,6 +19,7 @@ const businessSchema = z.object({
   email: z.string().email("E-mail invalide").optional().or(z.literal("")),
   address: z.string().optional(),
   city: z.string().optional(),
+  country: z.string().optional(),
   currency: z.string().min(1),
   ticketWidth: z.enum(["58mm", "80mm", "A4"]),
   ticketFooter: z.string().optional(),
@@ -42,6 +44,7 @@ export async function updateBusinessSettingsAction(
     email: formData.get("email") || "",
     address: formData.get("address") || undefined,
     city: formData.get("city") || undefined,
+    country: formData.get("country") || undefined,
     currency: formData.get("currency"),
     ticketWidth: formData.get("ticketWidth"),
     ticketFooter: formData.get("ticketFooter") || undefined,
@@ -81,6 +84,8 @@ export async function updateBusinessSettingsAction(
       email: parsed.data.email || null,
       address: parsed.data.address ?? null,
       city: parsed.data.city ?? null,
+      // Pays enregistré en toutes lettres (colonne texte), comme à l’inscription.
+      ...(isCountryCode(parsed.data.country) ? { country: countryNameFr(parsed.data.country) } : {}),
       currency: parsed.data.currency,
       ticket_width: parsed.data.ticketWidth,
       ticket_footer: parsed.data.ticketFooter ?? null,

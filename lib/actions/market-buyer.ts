@@ -3,8 +3,9 @@
 import bcrypt from "bcryptjs";
 import { z } from "zod";
 import { redirect } from "next/navigation";
+import { revalidatePath } from "next/cache";
 import { supabase } from "@/lib/supabase";
-import { createBuyerSession, destroyBuyerSession } from "@/lib/market-buyer";
+import { createBuyerSession, destroyBuyerSession, getCurrentBuyer } from "@/lib/market-buyer";
 import { normalizeBuyerPhone, safeMarketRedirect } from "@/lib/market";
 import { isCountryCode } from "@/lib/countries";
 
@@ -105,4 +106,35 @@ export async function loginBuyerAction(_prev: BuyerAuthState, formData: FormData
 export async function logoutBuyerAction() {
   await destroyBuyerSession();
   redirect("/marche");
+}
+
+const profileSchema = z.object({
+  name: z.string().trim().min(2, "Nom requis").max(80),
+  companyName: z.string().trim().max(120).optional(),
+  countryCode: z.string().refine(isCountryCode, "Choisissez votre pays"),
+  city: z.string().trim().max(80).optional(),
+});
+
+export type BuyerProfileState = { error?: string; success?: string } | undefined;
+
+/** L'acheteur met à jour ses informations (nom, entreprise, pays, ville). */
+export async function updateBuyerProfileAction(_prev: BuyerProfileState, formData: FormData): Promise<BuyerProfileState> {
+  const buyer = await getCurrentBuyer();
+  if (!buyer) return { error: "Connectez-vous." };
+  const parsed = profileSchema.safeParse({
+    name: formData.get("name"),
+    companyName: (formData.get("companyName") as string) || undefined,
+    countryCode: formData.get("countryCode"),
+    city: (formData.get("city") as string) || undefined,
+  });
+  if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Formulaire invalide" };
+  const d = parsed.data;
+  if (buyer.kind === "PRO" && !d.companyName) return { error: "Indiquez le nom de l'entreprise." };
+  const { error } = await supabase
+    .from("market_buyers")
+    .update({ name: d.name, company_name: buyer.kind === "PRO" ? d.companyName : null, country_code: d.countryCode, city: d.city ?? null })
+    .eq("id", buyer.id);
+  if (error) return { error: "Enregistrement impossible, réessayez." };
+  revalidatePath("/marche/compte");
+  return { success: "Vos informations sont enregistrées." };
 }

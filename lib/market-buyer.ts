@@ -49,6 +49,7 @@ export type MarketBuyer = {
   kind: "PARTICULIER" | "PRO";
   companyName: string | null;
   city: string | null;
+  countryCode: string;
   address: string | null;
 };
 
@@ -61,7 +62,7 @@ async function getCurrentBuyerUncached(): Promise<MarketBuyer | null> {
     if (typeof payload.buyerId !== "string") return null;
     const { data } = await supabase
       .from("market_buyers")
-      .select("id, name, phone, kind, companyName:company_name, city, address, blocked")
+      .select("id, name, phone, kind, companyName:company_name, city, countryCode:country_code, address, blocked")
       .eq("id", payload.buyerId)
       .maybeSingle();
     if (!data || data.blocked) return null;

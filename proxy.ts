@@ -93,7 +93,10 @@ export async function proxy(request: NextRequest) {
 
   const allowedWhenLoggedIn =
     PUBLIC_PATHS_ALLOWED_WHEN_LOGGED_IN.some((p) => pathname === p || pathname.startsWith(`${p}/`)) ||
-    pathname.startsWith("/api/auth/google");
+    pathname.startsWith("/api/auth/google") ||
+    // Services publics en lecture (villes, suggestions du Marché) : aussi utilisés
+    // par un commerçant connecté (Paramètres, Ma boutique, Marché).
+    pathname.startsWith("/api/public");
   if (isPublic && session && !allowedWhenLoggedIn) {
     return NextResponse.redirect(new URL("/dashboard", request.url));
   }

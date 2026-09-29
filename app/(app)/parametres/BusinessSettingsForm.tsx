@@ -6,6 +6,8 @@ import { Printer } from "lucide-react";
 import { Field, Input, Select, Textarea } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { ImageUploadField } from "@/components/ui/ImageUploadField";
+import { CountryCityPicker } from "@/components/ui/CountryCityPicker";
+import { countryCodeFromName, DEFAULT_COUNTRY_CODE } from "@/lib/countries";
 import { updateBusinessSettingsAction, type ActionState } from "@/lib/actions/settings";
 import { TicketPreviewButton } from "./TicketPreviewButton";
 import { useKeepValuesOnError } from "@/lib/keep-form-values";
@@ -16,6 +18,8 @@ type Business = {
   email: string | null;
   address: string | null;
   city: string | null;
+  /** Pays en toutes lettres (businesses.country), ex. « Burkina Faso ». */
+  country?: string | null;
   currency: string;
   ticketWidth: string;
   ticketFooter: string;
@@ -75,9 +79,9 @@ export function BusinessSettingsForm({
         <Field label="E-mail" htmlFor="email">
           <Input id="email" name="email" type="email" defaultValue={business.email ?? ""} />
         </Field>
-        <Field label="Ville" htmlFor="city">
-          <Input id="city" name="city" defaultValue={business.city ?? ""} />
-        </Field>
+        <div className="sm:col-span-2">
+          <CountryCityPicker defaultCountry={countryCodeFromName(business.country) ?? DEFAULT_COUNTRY_CODE} defaultCity={business.city ?? ""} />
+        </div>
         <Field label="Devise" htmlFor="currency">
           <Select id="currency" name="currency" defaultValue={business.currency}>
             <option value="XOF">FCFA (XOF)</option>

@@ -3,6 +3,7 @@ import Link from "next/link";
 import { getCurrentBuyer } from "@/lib/market-buyer";
 import { logoutBuyerAction } from "@/lib/actions/market-buyer";
 import { BuyerAuthForms } from "./BuyerAuthForms";
+import { BuyerProfileForm } from "./BuyerProfileForm";
 
 export const dynamic = "force-dynamic";
 
@@ -42,6 +43,7 @@ export default async function MarketAccountPage({ searchParams }: { searchParams
           <Store className="h-5 w-5 text-zinc-500" /> Vendre sur le Marché (créer mon commerce ZINDO)
         </Link>
       </div>
+      <BuyerProfileForm buyer={buyer} />
       <form action={logoutBuyerAction}>
         <button className="w-full rounded-xl border border-zinc-300 bg-white py-2.5 text-sm font-semibold text-red-600">Se déconnecter</button>
       </form>
