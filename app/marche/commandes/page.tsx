@@ -1,3 +1,4 @@
+import { vignette } from "@/lib/vignette";
 import { CheckCircle2, Package } from "lucide-react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
@@ -85,7 +86,7 @@ export default async function MyMarketOrdersPage({ searchParams }: { searchParam
             {o.items.slice(0, 3).map((i, idx) =>
               i.photoUrl ? (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img key={idx} src={i.photoUrl} alt="" className="h-11 w-11 rounded-lg object-cover ring-2 ring-white" />
+                <img key={idx} src={vignette(i.photoUrl, 44)} loading="lazy" decoding="async" alt="" className="h-11 w-11 rounded-lg object-cover ring-2 ring-white" />
               ) : (
                 <span key={idx} className="flex h-11 w-11 items-center justify-center rounded-lg bg-zinc-100 ring-2 ring-white"><Package className="h-5 w-5 text-zinc-400" /></span>
               )

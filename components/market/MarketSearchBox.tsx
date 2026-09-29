@@ -1,4 +1,5 @@
 "use client";
+import { vignette } from "@/lib/vignette";
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -128,7 +129,7 @@ export function MarketSearchBox() {
                 <li key={p.id} role="option" aria-selected={active === i}>
                   <button type="button" onMouseEnter={() => setActive(i)} onClick={() => go(`/marche/produit/${p.id}`)} className={`flex w-full items-center gap-3 px-4 py-2.5 text-left ${active === i ? "bg-zinc-50" : ""}`}>
                     {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={p.photoUrl ?? ""} alt="" className="h-10 w-10 shrink-0 rounded-lg object-cover ring-1 ring-zinc-200" />
+                    <img src={vignette(p.photoUrl, 40) ?? ""} loading="lazy" decoding="async" alt="" className="h-10 w-10 shrink-0 rounded-lg object-cover ring-1 ring-zinc-200" />
                     <span className="min-w-0 flex-1">
                       <span className="block truncate text-sm font-medium text-zinc-900">{p.name}</span>
                       <span className="block truncate text-xs text-zinc-500">{p.shop}</span>

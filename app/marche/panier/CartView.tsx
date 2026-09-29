@@ -1,4 +1,5 @@
 "use client";
+import { vignette } from "@/lib/vignette";
 
 import { useEffect, useMemo, useState, useTransition } from "react";
 import Link from "next/link";
@@ -115,7 +116,7 @@ export function CartView({ buyer }: { buyer: Buyer }) {
                 <div key={item.productId} className="flex items-center gap-3">
                   {item.photoUrl ? (
                     // eslint-disable-next-line @next/next/no-img-element
-                    <img src={item.photoUrl} alt="" className="h-14 w-14 shrink-0 rounded-xl object-cover" />
+                    <img src={vignette(item.photoUrl, 56)} loading="lazy" decoding="async" alt="" className="h-14 w-14 shrink-0 rounded-xl object-cover" />
                   ) : (
                     <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-zinc-100"><Package className="h-6 w-6 text-zinc-400" /></div>
                   )}

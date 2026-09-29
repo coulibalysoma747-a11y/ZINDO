@@ -1,4 +1,5 @@
 "use client";
+import { vignette } from "@/lib/vignette";
 
 import { useMemo, useState } from "react";
 import { ShoppingBasket, Plus, Minus, Trash2, Truck, Store, CheckCircle2, Tag } from "lucide-react";
@@ -158,7 +159,7 @@ export function StorefrontView({ store, products }: { store: Store; products: Pr
       <header className="border-b border-zinc-200 bg-white">
         {store.coverPhotoUrl && (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={store.coverPhotoUrl} alt={store.storeName} className="h-32 w-full object-cover sm:h-48" />
+          <img src={vignette(store.coverPhotoUrl, 512)} alt={store.storeName} className="h-32 w-full object-cover sm:h-48" />
         )}
         <div className="px-4 py-6">
           <div className="flex items-center gap-2 text-orange-500">
@@ -214,7 +215,7 @@ export function StorefrontView({ store, products }: { store: Store; products: Pr
                 <div className="relative mb-2 flex h-20 items-center justify-center overflow-hidden rounded bg-zinc-100">
                   {p.photoUrl ? (
                     // eslint-disable-next-line @next/next/no-img-element
-                    <img src={p.photoUrl} alt={p.name} className="h-full w-full object-cover" />
+                    <img src={vignette(p.photoUrl, 300)} alt={p.name} loading="lazy" decoding="async" className="h-full w-full object-cover" />
                   ) : (
                     <ShoppingBasket className="h-6 w-6 text-zinc-300" />
                   )}

@@ -1,4 +1,5 @@
 "use client";
+import { vignette } from "@/lib/vignette";
 
 import { useState, useTransition } from "react";
 import Link from "next/link";
@@ -94,7 +95,7 @@ export function ProductsTable({ rows }: { rows: ProductRow[] }) {
                 <input type="checkbox" checked={selected.has(p.id)} onChange={() => toggle(p.id)} className="h-4 w-4 shrink-0" aria-label={`Sélectionner ${p.name}`} />
                 {p.photoUrl ? (
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img src={p.photoUrl} alt="" className="h-14 w-14 shrink-0 rounded-xl object-cover ring-1 ring-zinc-200" />
+                  <img src={vignette(p.photoUrl, 56)} loading="lazy" decoding="async" alt="" className="h-14 w-14 shrink-0 rounded-xl object-cover ring-1 ring-zinc-200" />
                 ) : (
                   <Link href={`/produits/${p.id}/modifier`} className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl border border-dashed border-amber-300 bg-amber-50 text-center text-[10px] font-semibold leading-tight text-amber-800">
                     Ajouter

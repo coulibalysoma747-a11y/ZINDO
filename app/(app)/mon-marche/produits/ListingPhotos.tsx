@@ -1,4 +1,5 @@
 "use client";
+import { vignette } from "@/lib/vignette";
 
 import { useState, useTransition } from "react";
 import { ImagePlus, X } from "lucide-react";
@@ -45,7 +46,7 @@ export function ListingPhotos({ listingId, photos: initial }: { listingId: strin
       {photos.map((p) => (
         <span key={p.id} className="relative">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={p.url} alt="" className="h-12 w-12 rounded-lg object-cover ring-1 ring-zinc-200" />
+          <img src={vignette(p.url, 48)} loading="lazy" decoding="async" alt="" className="h-12 w-12 rounded-lg object-cover ring-1 ring-zinc-200" />
           <button
             type="button"
             aria-label="Retirer la photo"

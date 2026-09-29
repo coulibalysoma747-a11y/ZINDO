@@ -1,3 +1,4 @@
+import { vignette } from "@/lib/vignette";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { BadgeCheck, ChevronRight, ShieldCheck, Smartphone, Store, Truck } from "lucide-react";
@@ -58,7 +59,7 @@ export default async function MarketHomePage({ searchParams }: { searchParams: P
               {heroPhotos.map((p, i) => (
                 <Link key={p.listingId} href={`/marche/produit/${p.productId}`} className={`overflow-hidden rounded-2xl bg-white/10 ring-1 ring-white/20 ${i % 2 ? "translate-y-6" : ""}`}>
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={p.photoUrl ?? ""} alt={p.name} className="aspect-[4/3] w-full object-cover" />
+                  <img src={vignette(p.photoUrl, 300) ?? ""} loading="lazy" decoding="async" alt={p.name} className="aspect-[4/3] w-full object-cover" />
                 </Link>
               ))}
             </div>

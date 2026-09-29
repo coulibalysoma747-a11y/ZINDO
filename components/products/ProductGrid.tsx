@@ -1,4 +1,5 @@
 "use client";
+import { vignette } from "@/lib/vignette";
 
 import { Package, Plus } from "lucide-react";
 import { formatMoney } from "@/lib/format";
@@ -74,7 +75,9 @@ export function ProductGrid({
             {product.photoUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
-                src={product.photoUrl}
+                src={vignette(product.photoUrl, 200)}
+                loading="lazy"
+                decoding="async"
                 alt={product.name}
                 className="h-full w-full object-cover"
               />

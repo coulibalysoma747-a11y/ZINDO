@@ -1,3 +1,4 @@
+import { vignette } from "@/lib/vignette";
 import { Package } from "lucide-react";
 import { cn } from "@/lib/cn";
 
@@ -25,7 +26,7 @@ export function ProductThumbnail({
     >
       {photoUrl ? (
         // eslint-disable-next-line @next/next/no-img-element
-        <img src={photoUrl} alt={name} className="h-full w-full object-cover" />
+        <img src={vignette(photoUrl, size)} alt={name} loading="lazy" decoding="async" className="h-full w-full object-cover" />
       ) : (
         <Package className="text-zinc-300" style={{ width: size * 0.45, height: size * 0.45 }} />
       )}

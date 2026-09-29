@@ -1,3 +1,4 @@
+import { vignette } from "@/lib/vignette";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { Check, Package, Store } from "lucide-react";
@@ -102,7 +103,7 @@ export default async function MarketOrderTrackingPage({ params }: { params: Prom
             <div className="flex items-center gap-3 text-sm">
               {item.photoUrl ? (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img src={item.photoUrl} alt="" className="h-12 w-12 rounded-lg object-cover" />
+                <img src={vignette(item.photoUrl, 48)} loading="lazy" decoding="async" alt="" className="h-12 w-12 rounded-lg object-cover" />
               ) : (
                 <span className="flex h-12 w-12 items-center justify-center rounded-lg bg-zinc-100"><Package className="h-5 w-5 text-zinc-400" /></span>
               )}

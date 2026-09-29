@@ -1,4 +1,5 @@
 "use client";
+import { vignette } from "@/lib/vignette";
 
 import { useState } from "react";
 
@@ -23,7 +24,7 @@ export function ProductGallery({ photos, alt, badge }: { photos: string[]; alt: 
               className={`h-16 w-16 shrink-0 overflow-hidden rounded-xl ring-2 ${i === current ? "ring-zindo-green-600" : "ring-transparent opacity-70 hover:opacity-100"}`}
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={url} alt="" className="h-full w-full object-cover" />
+              <img src={vignette(url, 64)} alt="" loading="lazy" decoding="async" className="h-full w-full object-cover" />
             </button>
           ))}
         </div>

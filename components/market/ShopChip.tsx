@@ -1,3 +1,4 @@
+import { vignette } from "@/lib/vignette";
 import Link from "next/link";
 import { BadgeCheck, Flame, MapPin } from "lucide-react";
 import type { MarketShopSummary } from "@/lib/market";
@@ -6,7 +7,7 @@ import { Stars } from "./Stars";
 export function ShopLogo({ shop, size = 40 }: { shop: Pick<MarketShopSummary, "name" | "logoUrl">; size?: number }) {
   return shop.logoUrl ? (
     // eslint-disable-next-line @next/next/no-img-element
-    <img src={shop.logoUrl} alt="" style={{ width: size, height: size }} className="shrink-0 rounded-full bg-white object-cover ring-1 ring-zinc-200" />
+    <img src={vignette(shop.logoUrl, size)} alt="" loading="lazy" decoding="async" style={{ width: size, height: size }} className="shrink-0 rounded-full bg-white object-cover ring-1 ring-zinc-200" />
   ) : (
     <span
       style={{ width: size, height: size, fontSize: size * 0.4 }}
@@ -48,7 +49,7 @@ export function ShopCard({ shop }: { shop: MarketShopSummary & { coverUrl: strin
       <div className="relative h-24 bg-gradient-to-br from-zindo-green-600 to-zindo-green-900">
         {shop.coverUrl && (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={shop.coverUrl} alt="" loading="lazy" className="h-full w-full object-cover transition duration-300 group-hover:scale-105" />
+          <img src={vignette(shop.coverUrl, 300)} alt="" loading="lazy" decoding="async" className="h-full w-full object-cover transition duration-300 group-hover:scale-105" />
         )}
         {shop.boosted && (
           <span className="absolute right-2 top-2 inline-flex items-center gap-1 rounded-lg bg-orange-500 px-2 py-0.5 text-[11px] font-bold text-white shadow">

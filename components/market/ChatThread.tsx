@@ -1,4 +1,5 @@
 "use client";
+import { vignette } from "@/lib/vignette";
 
 import { useEffect, useRef, useState, useTransition } from "react";
 import Link from "next/link";
@@ -101,7 +102,7 @@ export function ChatThread({
                   <Link href={`/marche/produit/${m.listing.productId}`} target="_blank" className={`flex items-center gap-2 rounded-xl p-2 ${mine ? "bg-white/15" : "bg-zinc-50 ring-1 ring-zinc-200"}`}>
                     {m.listing.photoUrl && (
                       // eslint-disable-next-line @next/next/no-img-element
-                      <img src={m.listing.photoUrl} alt="" className="h-10 w-10 rounded-lg object-cover" />
+                      <img src={vignette(m.listing.photoUrl, 40)} loading="lazy" decoding="async" alt="" className="h-10 w-10 rounded-lg object-cover" />
                     )}
                     <span className="min-w-0">
                       <span className="block truncate font-semibold">{m.listing.name}</span>
@@ -127,7 +128,7 @@ export function ChatThread({
                 {m.photoUrl && (
                   <a href={m.photoUrl} target="_blank" rel="noopener noreferrer">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={m.photoUrl} alt="Photo jointe" className="max-h-64 rounded-xl object-cover" />
+                    <img src={vignette(m.photoUrl, 256)} alt="Photo jointe" loading="lazy" decoding="async" className="max-h-64 rounded-xl object-cover" />
                   </a>
                 )}
                 {m.body && <p className="whitespace-pre-line break-words">{m.body}</p>}
@@ -153,7 +154,7 @@ export function ChatThread({
             {photoUrl && (
               <span className="relative">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={photoUrl} alt="" className="h-14 w-14 rounded-lg object-cover" />
+                <img src={vignette(photoUrl, 56)} alt="" className="h-14 w-14 rounded-lg object-cover" />
                 <button type="button" aria-label="Retirer la photo" onClick={() => setPhotoUrl(null)} className="absolute -right-1.5 -top-1.5 rounded-full bg-zinc-900 p-0.5 text-white">
                   <X className="h-3 w-3" />
                 </button>

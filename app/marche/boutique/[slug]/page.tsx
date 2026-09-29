@@ -1,3 +1,4 @@
+import { vignette } from "@/lib/vignette";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { BadgeCheck, Clock, MapPin, MessageCircle, Phone, Store, Truck } from "lucide-react";
@@ -47,7 +48,7 @@ export default async function MarketShopPage({ params, searchParams }: { params:
         <div className="h-32 bg-gradient-to-br from-zindo-green-600 to-zindo-green-900 sm:h-52">
           {shop.coverUrl && (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={shop.coverUrl} alt="" className="h-full w-full object-cover" />
+            <img src={vignette(shop.coverUrl, 512)} alt="" className="h-full w-full object-cover" />
           )}
         </div>
         <div className="flex flex-col gap-4 p-4 sm:flex-row sm:items-end sm:justify-between sm:p-6">
