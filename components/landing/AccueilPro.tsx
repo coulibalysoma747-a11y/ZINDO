@@ -9,6 +9,13 @@ import {
   Cog,
   Coins,
   Hammer,
+  History,
+  Lock,
+  RefreshCw,
+  Server,
+  ShieldCheck,
+  UserCog,
+  X,
   MessageCircle,
   Pill,
   Plus,
@@ -190,6 +197,33 @@ export function AccueilPro({ trialDays, faqs, footer }: { trialDays: number; faq
           />
         </section>
 
+        {/* Comparatif : ce que le commerçant gagne en quittant le cahier et Excel. */}
+        <section className="mx-auto max-w-6xl px-4 pb-20 sm:px-6 lg:pb-28">
+          <SectionTitle eyebrow="Comparatif" title="Cahier, Excel ou ZINDO ?" text="Ce qui change concrètement dans votre journée." />
+          <Reveal className="mt-12 overflow-x-auto rounded-2xl border border-zinc-200">
+            <table className="w-full text-left text-[13px] sm:text-sm">
+              <thead>
+                <tr className="border-b border-zinc-200 bg-zinc-50">
+                  <th className="px-5 py-4 font-semibold text-zinc-500" />
+                  <th className="px-2 py-4 text-center font-semibold text-zinc-500 sm:px-4">Cahier</th>
+                  <th className="px-2 py-4 text-center font-semibold text-zinc-500 sm:px-4">Excel</th>
+                  <th className="bg-zindo-green-50 px-2 py-4 text-center font-bold sm:px-4 text-zindo-green-700">ZINDO</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-zinc-100">
+                {COMPARISON.map(([label, cahier, excel]) => (
+                  <tr key={label}>
+                    <td className="px-3 py-3.5 font-medium sm:px-5">{label}</td>
+                    <td className="px-2 py-3.5 text-center sm:px-4"><Mark ok={cahier} /></td>
+                    <td className="px-2 py-3.5 text-center sm:px-4"><Mark ok={excel} /></td>
+                    <td className="bg-zindo-green-50/60 px-2 py-3.5 text-center sm:px-4"><Mark ok /></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </Reveal>
+        </section>
+
         {/* Métiers couverts. */}
         <section className="border-y border-zinc-100 bg-zinc-50/70">
           <div className="mx-auto max-w-6xl px-4 py-20 sm:px-6">
@@ -231,6 +265,25 @@ export function AccueilPro({ trialDays, faqs, footer }: { trialDays: number; faq
           </div>
         </section>
 
+        {/* Démarrage en trois étapes. */}
+        <section className="mx-auto max-w-6xl px-4 pt-20 sm:px-6 lg:pt-28">
+          <SectionTitle eyebrow="Démarrage" title="Prêt à vendre en trois étapes" />
+          <div className="relative mt-14 grid gap-10 md:grid-cols-3 md:gap-6">
+            <span aria-hidden className="absolute left-[16.6%] right-[16.6%] top-6 hidden h-px bg-gradient-to-r from-zindo-green-200 via-zindo-green-400 to-zindo-green-200 md:block" />
+            {STEPS.map((step, i) => (
+              <Reveal key={step.title} delay={i * 120} className="relative text-center">
+                <div>
+                  <span className="relative mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-zindo-green-500 text-lg font-extrabold text-white ring-8 ring-white">
+                    {i + 1}
+                  </span>
+                  <h3 className="mt-5 text-lg font-bold">{step.title}</h3>
+                  <p className="mx-auto mt-2 max-w-xs text-sm leading-relaxed text-zinc-600">{step.text}</p>
+                </div>
+              </Reveal>
+            ))}
+          </div>
+        </section>
+
         {/* Tarifs. */}
         <section id="tarifs" className="mx-auto max-w-6xl px-4 py-20 sm:px-6 lg:py-28">
           <SectionTitle eyebrow="Tarifs" title="Un prix simple, tout compris" text={`Essayez tout pendant ${trialDays} jours. Vous ne payez que si vous continuez.`} />
@@ -268,6 +321,20 @@ export function AccueilPro({ trialDays, faqs, footer }: { trialDays: number; faq
                 <MessageCircle className="h-4 w-4" /> Écrire sur WhatsApp : +226 04 05 99 29
               </a>
             </div>
+          </div>
+        </section>
+
+        {/* Sécurité des données : uniquement des faits vérifiables. */}
+        <section className="mx-auto max-w-6xl px-4 pt-20 sm:px-6 lg:pt-28">
+          <SectionTitle eyebrow="Sécurité" title="Vos données sont protégées" text="Votre stock et vos chiffres n'appartiennent qu'à vous." />
+          <div className="mt-12 grid gap-px overflow-hidden rounded-2xl border border-zinc-200 bg-zinc-200 sm:grid-cols-2 lg:grid-cols-3">
+            {SECURITY.map(({ icon: Icon, title, text }, i) => (
+              <Reveal key={title} delay={(i % 3) * 100} className="bg-white p-6">
+                <Icon className="h-5 w-5 text-zindo-green-600" />
+                <h3 className="mt-4 font-bold">{title}</h3>
+                <p className="mt-1.5 text-sm leading-relaxed text-zinc-600">{text}</p>
+              </Reveal>
+            ))}
           </div>
         </section>
 
@@ -313,6 +380,41 @@ export function AccueilPro({ trialDays, faqs, footer }: { trialDays: number; faq
 
       {footer}
     </div>
+  );
+}
+
+// [critère, cahier, Excel] — ZINDO coche toujours.
+const COMPARISON: [string, boolean, boolean][] = [
+  ["Stock à jour après chaque vente", false, false],
+  ["Bénéfice calculé automatiquement", false, true],
+  ["Ticket et facture imprimés", false, false],
+  ["Alerte avant la rupture", false, false],
+  ["Crédits clients suivis avec échéances", false, false],
+  ["Droits différents pour chaque employé", false, false],
+  ["Fonctionne sans Internet", true, true],
+  ["Données sauvegardées en ligne", false, false],
+];
+
+const STEPS = [
+  { title: "Créez votre compte", text: "Le nom de votre commerce, votre ville, votre numéro : c'est tout. Aucune carte bancaire." },
+  { title: "Ajoutez vos produits", text: "Un par un, avec le code-barres ou par import. Notre équipe peut vous aider sur WhatsApp." },
+  { title: "Vendez", text: "La caisse est prête : chaque vente met à jour votre stock et vos bénéfices." },
+];
+
+const SECURITY = [
+  { icon: Lock, title: "Connexion chiffrée", text: "Tous les échanges passent par une connexion sécurisée (HTTPS)." },
+  { icon: Server, title: "Serveurs professionnels", text: "Vos données sont hébergées sur des serveurs en Europe (Francfort)." },
+  { icon: RefreshCw, title: "Copie en ligne", text: "Changez de téléphone ou d'ordinateur : vous retrouvez tout en vous connectant." },
+  { icon: UserCog, title: "Droits par employé", text: "Le vendeur vend, le magasinier gère le stock : chacun ne voit que son travail." },
+  { icon: History, title: "Historique des actions", text: "Qui a vendu, modifié ou supprimé quoi, et quand : tout est enregistré." },
+  { icon: ShieldCheck, title: "Pas de suppression par erreur", text: "Une confirmation est demandée avant toute suppression importante." },
+];
+
+function Mark({ ok }: { ok: boolean }) {
+  return ok ? (
+    <Check className="mx-auto h-5 w-5 text-zindo-green-600" aria-label="Oui" />
+  ) : (
+    <X className="mx-auto h-5 w-5 text-zinc-300" aria-label="Non" />
   );
 }
 
