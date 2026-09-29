@@ -12,15 +12,7 @@ export function AssistantFloat() {
     <>
       {open && (
         <div className="zindo-appear fixed inset-x-3 bottom-20 z-40 sm:inset-x-auto sm:right-5 sm:w-[380px]">
-          <div className="mb-2 flex items-center justify-between rounded-2xl bg-zinc-950 shadow-lg px-4 py-3 text-white">
-            <p className="flex items-center gap-2 text-sm font-semibold">
-              <Bot className="h-4 w-4 text-zindo-green-300" /> Assistant ZINDO
-            </p>
-            <button type="button" onClick={() => setOpen(false)} aria-label="Fermer l'assistant" className="rounded-lg p-1 hover:bg-white/10">
-              <X className="h-4 w-4" />
-            </button>
-          </div>
-          <PublicHelpChat />
+          <PublicHelpChat onClose={() => setOpen(false)} />
         </div>
       )}
       <button
