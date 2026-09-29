@@ -1,6 +1,9 @@
-// Pays d'Afrique de l'Ouest pris en charge par ZINDO. Tous partagent le franc
-// CFA (XOF, zone UEMOA) — pas de conversion de devise à gérer entre eux.
-export type CountryCode = "BF" | "CI" | "ML" | "NE" | "SN" | "TG" | "BJ" | "GW";
+import { WORLD_COUNTRIES } from "@/lib/world-countries";
+
+// Tous les pays du monde (lib/world-countries.ts, source GeoNames), le Burkina
+// Faso restant le pays par défaut. Les noms viennent d'Intl.DisplayNames : ils
+// sont justes et accentués dans les deux langues, côté serveur comme navigateur.
+export type CountryCode = string;
 
 export type Country = {
   code: CountryCode;
@@ -8,27 +11,60 @@ export type Country = {
   dialCode: string; // indicatif téléphonique international
   phoneExample: string; // format local, sans indicatif
   capital: string; // exemple de ville, utilisé comme placeholder
+  currency: string; // monnaie ISO (XOF, EUR…)
 };
 
-export const COUNTRIES: Country[] = [
-  { code: "BF", name: { fr: "Burkina Faso", en: "Burkina Faso" }, dialCode: "+226", phoneExample: "70 00 00 00", capital: "Ouagadougou" },
-  { code: "CI", name: { fr: "Côte d'Ivoire", en: "Côte d'Ivoire" }, dialCode: "+225", phoneExample: "07 00 00 00 00", capital: "Abidjan" },
-  { code: "ML", name: { fr: "Mali", en: "Mali" }, dialCode: "+223", phoneExample: "70 00 00 00", capital: "Bamako" },
-  { code: "NE", name: { fr: "Niger", en: "Niger" }, dialCode: "+227", phoneExample: "90 00 00 00", capital: "Niamey" },
-  { code: "SN", name: { fr: "Sénégal", en: "Senegal" }, dialCode: "+221", phoneExample: "70 000 00 00", capital: "Dakar" },
-  { code: "TG", name: { fr: "Togo", en: "Togo" }, dialCode: "+228", phoneExample: "90 00 00 00", capital: "Lomé" },
-  { code: "BJ", name: { fr: "Bénin", en: "Benin" }, dialCode: "+229", phoneExample: "90 00 00 00", capital: "Cotonou" },
-  { code: "GW", name: { fr: "Guinée-Bissau", en: "Guinea-Bissau" }, dialCode: "+245", phoneExample: "955 000 000", capital: "Bissau" },
-];
+// Formats de numéro connus (pays déjà servis par ZINDO) ; ailleurs, pas d'exemple.
+const PHONE_EXAMPLES: Record<string, string> = {
+  BF: "70 00 00 00",
+  CI: "07 00 00 00 00",
+  ML: "70 00 00 00",
+  NE: "90 00 00 00",
+  SN: "70 000 00 00",
+  TG: "90 00 00 00",
+  BJ: "90 00 00 00",
+  GW: "955 000 000",
+};
+
+// Ville donnée en exemple quand ce n'est pas la capitale administrative.
+const EXAMPLE_CITIES: Record<string, string> = { CI: "Abidjan", BJ: "Cotonou" };
+
+const FR = new Intl.DisplayNames(["fr"], { type: "region" });
+const EN = new Intl.DisplayNames(["en"], { type: "region" });
+
+// Codes obsolètes de GeoNames (Antilles néerlandaises, Serbie-et-Monténégro) : doublons.
+const OBSOLETE = new Set(["AN", "CS"]);
+
+/** Tous les pays, triés par nom français. */
+export const COUNTRIES: Country[] = WORLD_COUNTRIES.filter(([code]) => !OBSOLETE.has(code)).map(([code, dialCode, currency, capital]) => ({
+  code,
+  name: { fr: FR.of(code) ?? code, en: EN.of(code) ?? code },
+  dialCode,
+  phoneExample: PHONE_EXAMPLES[code] ?? "",
+  capital: EXAMPLE_CITIES[code] ?? capital,
+  currency,
+})).sort((a, b) => a.name.fr.localeCompare(b.name.fr, "fr"));
 
 export const DEFAULT_COUNTRY_CODE: CountryCode = "BF";
 
+const BY_CODE = new Map(COUNTRIES.map((c) => [c.code, c]));
+
 export function getCountry(code: string | null | undefined): Country {
-  return COUNTRIES.find((c) => c.code === code) ?? COUNTRIES.find((c) => c.code === DEFAULT_COUNTRY_CODE)!;
+  return (code && BY_CODE.get(code)) || BY_CODE.get(DEFAULT_COUNTRY_CODE)!;
 }
 
 export function isCountryCode(value: string | null | undefined): value is CountryCode {
-  return COUNTRIES.some((c) => c.code === value);
+  return !!value && BY_CODE.has(value);
+}
+
+/** Recherche d'un pays sans tenir compte des accents ni des majuscules (« cote » → Côte d'Ivoire). */
+export function normalizeSearch(value: string): string {
+  return value
+    .replace(/[’‘ʼ]/g, "'")
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .toLowerCase()
+    .trim();
 }
 
 // Nom du pays (fr) attendu par la colonne businesses.country (texte libre,
@@ -37,12 +73,17 @@ export function countryNameFr(code: string | null | undefined): string {
   return getCountry(code).name.fr;
 }
 
+/** Code ISO à partir de businesses.country (nom français, texte libre). */
+export function countryCodeFromName(countryName: string | null | undefined): CountryCode | null {
+  const wanted = normalizeSearch(countryName ?? "");
+  return COUNTRIES.find((c) => normalizeSearch(c.name.fr) === wanted)?.code ?? null;
+}
+
 // Retrouve l'indicatif téléphonique à partir de businesses.country (texte
 // libre en français, ex. "Côte d'Ivoire") — utilisé pour deviner l'indicatif
 // par défaut d'un numéro client saisi sans indicatif (WhatsApp, SMS...).
 export function dialCodeForCountryName(countryName: string | null | undefined): string {
-  const match = COUNTRIES.find((c) => c.name.fr.toLowerCase() === (countryName ?? "").trim().toLowerCase());
-  return (match ?? getCountry(DEFAULT_COUNTRY_CODE)).dialCode;
+  return getCountry(countryCodeFromName(countryName)).dialCode;
 }
 
 // Normalise un numéro de téléphone pour un lien wa.me : uniquement des

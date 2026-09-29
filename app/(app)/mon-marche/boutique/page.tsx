@@ -2,6 +2,7 @@ import { PERMISSIONS } from "@/lib/permissions";
 import { supabase } from "@/lib/supabase";
 import { getLocations } from "@/lib/location";
 import { slugifyShopName } from "@/lib/market";
+import { countryCodeFromName, DEFAULT_COUNTRY_CODE } from "@/lib/countries";
 import { requireMarketSeller } from "@/lib/market-seller";
 import { Card, CardBody } from "@/components/ui/Card";
 import { MarketSellerNav } from "../MarketSellerNav";
@@ -15,7 +16,7 @@ export default async function MyMarketShopPage() {
     supabase
       .from("market_shops")
       .select(
-        "slug, name, description, logoUrl:logo_url, coverUrl:cover_url, phone, whatsapp, city, address, hours, locationId:location_id, published, " +
+        "slug, name, description, logoUrl:logo_url, coverUrl:cover_url, phone, whatsapp, city, countryCode:country_code, address, hours, locationId:location_id, published, " +
           "deliveryEnabled:delivery_enabled, deliveryFee:delivery_fee, deliveryNote:delivery_note, pickupEnabled:pickup_enabled, payOnDelivery:pay_on_delivery, payOnPickup:pay_on_pickup, mobileMoneyEnabled:mobile_money_enabled, orangeMoneyNumber:orange_money_number, moovMoneyNumber:moov_money_number"
       )
       .eq("business_id", user.businessId)
@@ -45,6 +46,7 @@ export default async function MyMarketShopPage() {
                 phone: user.business.phone,
                 whatsapp: user.business.phone,
                 city: user.business.city,
+                countryCode: countryCodeFromName(user.business.country) ?? DEFAULT_COUNTRY_CODE,
                 address: user.business.address,
                 hours: null,
                 locationId: null,

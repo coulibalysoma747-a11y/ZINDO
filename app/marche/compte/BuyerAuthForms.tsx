@@ -2,6 +2,7 @@
 
 import { useActionState, useState } from "react";
 import { loginBuyerAction, signupBuyerAction, type BuyerAuthState } from "@/lib/actions/market-buyer";
+import { CountryCityPicker } from "@/components/ui/CountryCityPicker";
 
 const inputClass = "mt-1 h-11 w-full rounded-xl border border-zinc-300 bg-white px-3 text-sm";
 
@@ -64,10 +65,7 @@ export function BuyerAuthForms({ initialMode, suite }: { initialMode: "login" | 
             Numéro de téléphone
             <input name="phone" inputMode="tel" required autoComplete="tel" className={inputClass} />
           </label>
-          <label className="block text-sm font-medium text-zinc-700">
-            Ville
-            <input name="city" className={inputClass} />
-          </label>
+          <CountryCityPicker countryName="countryCode" />
           <label className="block text-sm font-medium text-zinc-700">
             Mot de passe (6 caractères minimum)
             <input name="password" type="password" required minLength={6} autoComplete="new-password" className={inputClass} />

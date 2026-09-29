@@ -6,7 +6,8 @@ import { registerAction } from "@/lib/actions/auth";
 import { keepFormValues } from "@/lib/keep-form-values";
 import { Field, Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
-import { COUNTRIES, getCountry, type CountryCode } from "@/lib/countries";
+import { DEFAULT_COUNTRY_CODE, getCountry, type CountryCode } from "@/lib/countries";
+import { CountryCityPicker } from "@/components/ui/CountryCityPicker";
 
 const TEXT = {
   fr: {
@@ -67,9 +68,9 @@ export function RegisterForm({
   showReferralField?: boolean;
 }) {
   const [state, action, pending] = useActionState(registerAction, undefined);
-  const [countryCode, setCountryCode] = useState<CountryCode | "">("");
+  const [countryCode, setCountryCode] = useState<CountryCode>(DEFAULT_COUNTRY_CODE);
   const t = TEXT[locale];
-  const country = countryCode ? getCountry(countryCode) : null;
+  const country = getCountry(countryCode);
 
   return (
     <form action={action} onSubmit={keepFormValues(action)} className="space-y-4">
@@ -82,27 +83,14 @@ export function RegisterForm({
           <Input id="lastName" name="lastName" autoComplete="family-name" autoCapitalize="words" required />
         </Field>
       </div>
-      <Field label={t.country} htmlFor="country">
-        <select
-          id="country"
-          name="country"
-          value={countryCode}
-          onChange={(e) => setCountryCode(e.target.value as CountryCode)}
-          required
-          className="h-11 w-full rounded-xl border border-zinc-200 bg-white px-3 text-[15px] text-zindo-ink-900 outline-none transition focus:border-zindo-green-500 focus:ring-4 focus:ring-zindo-green-100"
-        >
-          <option value="" disabled>
-            {t.countryPlaceholder}
-          </option>
-          {COUNTRIES.map((c) => (
-            <option key={c.code} value={c.code}>
-              {c.name[locale]} ({c.dialCode})
-            </option>
-          ))}
-        </select>
-      </Field>
+      <CountryCityPicker
+        locale={locale}
+        countryLabel={t.country}
+        cityLabel={t.city}
+        onCountryChange={(c) => setCountryCode(c.code)}
+      />
       <Field label={t.phone} htmlFor="phone">
-        <Input id="phone" name="phone" type="tel" inputMode="tel" autoComplete="tel-national" placeholder={country?.phoneExample ?? t.phonePlaceholder} required />
+        <Input id="phone" name="phone" type="tel" inputMode="tel" autoComplete="tel-national" placeholder={country.phoneExample || t.phonePlaceholder} required />
       </Field>
       <Field label={t.email} htmlFor="email">
         <Input id="email" name="email" type="email" inputMode="email" autoComplete="email" autoCapitalize="none" />
@@ -113,9 +101,6 @@ export function RegisterForm({
       <hr className="border-zinc-100" />
       <Field label={t.businessName} htmlFor="businessName">
         <Input id="businessName" name="businessName" autoComplete="organization" autoCapitalize="words" placeholder={t.businessPlaceholder} required />
-      </Field>
-      <Field label={t.city} htmlFor="city">
-        <Input id="city" name="city" autoComplete="address-level2" autoCapitalize="words" placeholder={country?.capital ?? t.cityPlaceholder} />
       </Field>
       {showReferralField && (
         <Field label={locale === "en" ? "Referral code (optional)" : "Code de parrainage (facultatif)"} htmlFor="referralCode">

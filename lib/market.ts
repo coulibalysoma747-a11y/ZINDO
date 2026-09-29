@@ -62,6 +62,8 @@ export type MarketShopSummary = {
   slug: string;
   name: string;
   city: string | null;
+  /** Code ISO du pays de la boutique (BF, CI…). */
+  countryCode?: string;
   logoUrl: string | null;
   verified: boolean;
   rating: number | null;

@@ -2,6 +2,7 @@ import "server-only";
 import { cache } from "react";
 import { supabase } from "@/lib/supabase";
 import { memo } from "@/lib/memo";
+import { displayCity } from "@/lib/market-location";
 import { getCurrentUser } from "@/lib/auth";
 import { isFeatureEnabled, isFeatureEnabledGlobally, registerFeatureFlag } from "@/lib/feature-flags";
 import { MARKET_EXCLUDED_ACTIVITIES, MARKET_FLAG, type MarketProduct, type MarketShopSummary, type MarketSort } from "@/lib/market";
@@ -61,7 +62,7 @@ export type MarketShop = MarketShopSummary & {
 };
 
 const SHOP_COLUMNS =
-  "id, businessId:business_id, locationId:location_id, slug, name, description, logoUrl:logo_url, coverUrl:cover_url, phone, whatsapp, city, address, hours, " +
+  "id, businessId:business_id, locationId:location_id, slug, name, description, logoUrl:logo_url, coverUrl:cover_url, phone, whatsapp, city, countryCode:country_code, address, hours, " +
   "deliveryEnabled:delivery_enabled, deliveryFee:delivery_fee, deliveryNote:delivery_note, pickupEnabled:pickup_enabled, createdAt:created_at, business:businesses!inner(suspended)";
 
 type ShopRow = Omit<MarketShop, "verified" | "rating" | "reviewCount"> & { business: { suspended: boolean } };
@@ -107,7 +108,8 @@ async function toShops(rows: ShopRow[]): Promise<MarketShop[]> {
     const { business, ...shop } = r;
     void business;
     const rating = ratings.get(shop.id);
-    return { ...shop, verified: verified.has(shop.businessId), rating: rating?.rating ?? null, reviewCount: rating?.count ?? 0, boosted: boosts.shopIds.has(shop.id) };
+    // Ville présentable partout (« NIANGOLOKO » → « Niangoloko »).
+    return { ...shop, city: shop.city ? displayCity(shop.city) : null, verified: verified.has(shop.businessId), rating: rating?.rating ?? null, reviewCount: rating?.count ?? 0, boosted: boosts.shopIds.has(shop.id) };
   });
 }
 

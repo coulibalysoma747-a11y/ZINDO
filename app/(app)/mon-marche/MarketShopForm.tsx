@@ -4,6 +4,7 @@ import { useActionState } from "react";
 import { Field, Input, Textarea, Select } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { ImageUploadField } from "@/components/ui/ImageUploadField";
+import { CountryCityPicker } from "@/components/ui/CountryCityPicker";
 import { saveMarketShopAction, type MarketActionState } from "@/lib/actions/market";
 import { useKeepValuesOnError } from "@/lib/keep-form-values";
 
@@ -16,6 +17,7 @@ export type MarketShopFormValues = {
   phone: string | null;
   whatsapp: string | null;
   city: string | null;
+  countryCode: string;
   address: string | null;
   hours: string | null;
   locationId: string | null;
@@ -67,15 +69,13 @@ export function MarketShopForm({
         <ImageUploadField name="logo" removeFieldName="removeLogo" initialUrl={shop.logoUrl} label="Logo" hint="JPEG, PNG ou WebP." shape="circle" directUploadFolder="marche" />
         <ImageUploadField name="cover" removeFieldName="removeCover" initialUrl={shop.coverUrl} label="Photo de couverture" hint="Une photo large de votre boutique." directUploadFolder="marche" />
       </div>
+      <CountryCityPicker countryName="countryCode" defaultCountry={shop.countryCode} defaultCity={shop.city ?? ""} cityRequired />
       <div className="grid gap-4 sm:grid-cols-2">
         <Field label="Téléphone" htmlFor="phone">
           <Input id="phone" name="phone" inputMode="tel" defaultValue={shop.phone ?? ""} />
         </Field>
         <Field label="WhatsApp" htmlFor="whatsapp">
           <Input id="whatsapp" name="whatsapp" inputMode="tel" defaultValue={shop.whatsapp ?? ""} />
-        </Field>
-        <Field label="Ville" htmlFor="city">
-          <Input id="city" name="city" defaultValue={shop.city ?? ""} />
         </Field>
         <Field label="Adresse" htmlFor="address">
           <Input id="address" name="address" defaultValue={shop.address ?? ""} />

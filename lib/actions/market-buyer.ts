@@ -6,6 +6,7 @@ import { redirect } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { createBuyerSession, destroyBuyerSession } from "@/lib/market-buyer";
 import { normalizeBuyerPhone, safeMarketRedirect } from "@/lib/market";
+import { isCountryCode } from "@/lib/countries";
 
 /** Comptes acheteurs du Marché (compte léger, sans gestion commerciale). */
 
@@ -21,6 +22,7 @@ const signupSchema = z.object({
   kind: z.enum(["PARTICULIER", "PRO"]),
   companyName: z.string().trim().max(120).optional(),
   city: z.string().trim().max(80).optional(),
+  countryCode: z.string().refine(isCountryCode, "Choisissez votre pays"),
 });
 
 export async function signupBuyerAction(_prev: BuyerAuthState, formData: FormData): Promise<BuyerAuthState> {
@@ -31,6 +33,7 @@ export async function signupBuyerAction(_prev: BuyerAuthState, formData: FormDat
     kind: formData.get("kind") === "PRO" ? "PRO" : "PARTICULIER",
     companyName: (formData.get("companyName") as string) || undefined,
     city: (formData.get("city") as string) || undefined,
+    countryCode: formData.get("countryCode"),
   });
   if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Formulaire invalide" };
   const d = parsed.data;
@@ -50,6 +53,7 @@ export async function signupBuyerAction(_prev: BuyerAuthState, formData: FormDat
       kind: d.kind,
       company_name: d.kind === "PRO" ? d.companyName : null,
       city: d.city ?? null,
+      country_code: d.countryCode,
       last_login_at: new Date().toISOString(),
     })
     .select("id")

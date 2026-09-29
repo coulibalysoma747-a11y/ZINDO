@@ -5,10 +5,13 @@ import { getBuyerFavorites } from "@/lib/market-buyer";
 import { MARKET_CATEGORIES, MARKET_SORTS, isMarketCategory, marketCategoryLabel, type MarketSort } from "@/lib/market";
 import { MarketProductGrid } from "@/components/market/MarketProductCard";
 import { ShopChip } from "@/components/market/ShopChip";
+import { LocationFilter } from "@/components/market/LocationFilter";
+import { locationOptions, matchesLocation } from "@/lib/market-location";
+import { getCountry, normalizeSearch } from "@/lib/countries";
 
 export const dynamic = "force-dynamic";
 
-type Params = { q?: string; categorie?: string; promo?: string; stock?: string; min?: string; max?: string; ville?: string; tri?: string; page?: string };
+type Params = { q?: string; categorie?: string; promo?: string; stock?: string; min?: string; max?: string; pays?: string; ville?: string; tri?: string; page?: string };
 
 /** Produits ajoutés à chaque « Afficher plus ». */
 const STEP = 48;
@@ -24,14 +27,16 @@ export default async function MarketSearchPage({ searchParams }: { searchParams:
   const q = (params.q ?? "").trim();
   const category = params.categorie && isMarketCategory(params.categorie) ? params.categorie : "";
   const sort: MarketSort = MARKET_SORTS.some((s) => s.key === params.tri) ? (params.tri as MarketSort) : "recents";
-  const city = (params.ville ?? "").trim();
+  const countryFilter = (params.pays ?? "").toUpperCase();
+  const cityKey = normalizeSearch(params.ville ?? "");
   const minPrice = toNumber(params.min);
   const maxPrice = toNumber(params.max);
 
   const shown = STEP * Math.max(1, Math.min(20, Math.floor(Number(params.page) || 1)));
   const allShops = await loadPublishedShops();
-  const cities = [...new Set(allShops.map((s) => s.city?.trim()).filter((c): c is string => !!c))].sort((a, b) => a.localeCompare(b));
-  const shops = city ? allShops.filter((s) => s.city?.trim().toLowerCase() === city.toLowerCase()) : allShops;
+  const locations = locationOptions(allShops);
+  const shops = countryFilter || cityKey ? allShops.filter((s) => matchesLocation(s, countryFilter, cityKey)) : allShops;
+  const cityName = cityKey ? locations.cities[countryFilter]?.find((c) => c.key === cityKey)?.name ?? params.ville : "";
 
   const [found, favorites] = await Promise.all([
     loadMarketProducts({ shops, q, category, promoOnly: params.promo === "1", inStockOnly: params.stock === "1", minPrice, maxPrice, sort, boostFirst: true, limit: shown + 1 }),
@@ -51,7 +56,8 @@ export default async function MarketSearchPage({ searchParams }: { searchParams:
   };
   const activeFilters = [
     category && { label: marketCategoryLabel(category), href: hrefWith({ categorie: undefined }) },
-    city && { label: city, href: hrefWith({ ville: undefined }) },
+    countryFilter && { label: getCountry(countryFilter).name.fr, href: hrefWith({ pays: undefined, ville: undefined }) },
+    cityName && { label: cityName, href: hrefWith({ ville: undefined }) },
     params.promo === "1" && { label: "En promotion", href: hrefWith({ promo: undefined }) },
     params.stock === "1" && { label: "En stock", href: hrefWith({ stock: undefined }) },
     minPrice != null && { label: `Dès ${minPrice.toLocaleString("fr-FR")} F`, href: hrefWith({ min: undefined }) },
@@ -79,16 +85,9 @@ export default async function MarketSearchPage({ searchParams }: { searchParams:
           <input name="max" inputMode="numeric" defaultValue={params.max ?? ""} placeholder="Max" className="h-10 w-full rounded-lg border border-zinc-300 px-2" />
         </div>
       </Fieldset>
-      {cities.length > 0 && (
-        <Fieldset title="Ville">
-          <select name="ville" defaultValue={city} className="h-10 w-full rounded-lg border border-zinc-300 bg-white px-2">
-            <option value="">Toutes les villes</option>
-            {cities.map((c) => (
-              <option key={c} value={c}>
-                {c}
-              </option>
-            ))}
-          </select>
+      {locations.countries.length > 0 && (
+        <Fieldset title="Pays et ville">
+          <LocationFilter options={locations} country={countryFilter} city={cityKey} />
         </Fieldset>
       )}
       <Fieldset title="Disponibilité">

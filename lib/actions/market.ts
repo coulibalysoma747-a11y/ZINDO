@@ -10,6 +10,7 @@ import { forget } from "@/lib/memo";
 import { PERMISSIONS, type Permission } from "@/lib/permissions";
 import { isMarketEnabledFor } from "@/lib/market-data";
 import { isMarketCategory, MAX_LISTING_PHOTOS, slugifyShopName } from "@/lib/market";
+import { isCountryCode } from "@/lib/countries";
 import { saveMarketShopImage, deleteUploadedImage, uploadedImageUrl } from "@/lib/photo-upload";
 
 /**
@@ -31,7 +32,8 @@ const shopSchema = z.object({
   description: z.string().trim().max(1000).optional(),
   phone: z.string().trim().max(30).optional(),
   whatsapp: z.string().trim().max(30).optional(),
-  city: z.string().trim().max(80).optional(),
+  city: z.string().trim().min(1, "Indiquez la ville de la boutique").max(80),
+  countryCode: z.string().refine(isCountryCode, "Choisissez le pays de la boutique"),
   address: z.string().trim().max(200).optional(),
   hours: z.string().trim().max(200).optional(),
   locationId: z.string().trim().optional(),
@@ -61,7 +63,8 @@ export async function saveMarketShopAction(_prev: MarketActionState, formData: F
     description: optional(formData, "description"),
     phone: optional(formData, "phone"),
     whatsapp: optional(formData, "whatsapp"),
-    city: optional(formData, "city"),
+    city: formData.get("city"),
+    countryCode: formData.get("countryCode"),
     address: optional(formData, "address"),
     hours: optional(formData, "hours"),
     locationId: optional(formData, "locationId"),
@@ -126,7 +129,8 @@ export async function saveMarketShopAction(_prev: MarketActionState, formData: F
     description: d.description ?? null,
     phone: d.phone ?? null,
     whatsapp: d.whatsapp ?? null,
-    city: d.city ?? null,
+    city: d.city,
+    country_code: d.countryCode,
     address: d.address ?? null,
     hours: d.hours ?? null,
     location_id: d.locationId ?? null,
