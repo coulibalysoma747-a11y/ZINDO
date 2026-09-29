@@ -76,12 +76,6 @@ export default async function MarketLayout({ children }: { children: React.React
               <Link href="/marche/compte" aria-label="Mon compte" className={`${iconLink} hidden md:flex`}>
                 <User className="h-[22px] w-[22px]" />
               </Link>
-              <InstallAppButton
-                iconOnly
-                label="Installer le Marché"
-                appName="le Marché ZINDO"
-                className="flex shrink-0 items-center gap-1.5 rounded-xl bg-zindo-green-600 px-3 py-2 text-xs font-semibold text-white hover:bg-zindo-green-700"
-              />
               {cart}
             </nav>
           </div>
