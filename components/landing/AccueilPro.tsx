@@ -94,12 +94,12 @@ export function AccueilPro({ trialDays, faqs }: { trialDays: number; faqs: Faq[]
           <Reveal delay={200} className="relative">
             <div className="relative aspect-[4/3] overflow-hidden rounded-[2rem] bg-zinc-100 lg:aspect-[4/4.4]">
               <Image
-                src="/photos/commercant-comptoir.webp"
-                alt="Un commerçant souriant derrière son comptoir, dans sa boutique de vêtements"
+                src="/photos/accueil-cliente-marche.webp"
+                alt="Une cliente en pagne fait ses achats devant un étal de céréales et de produits"
                 fill
                 priority
                 sizes="(min-width: 1024px) 560px, 100vw"
-                className="object-cover object-[60%_center]"
+                className="object-cover object-center"
               />
             </div>
             {/* Une seule touche « logiciel » : la vente qui vient d'être enregistrée. */}
@@ -163,6 +163,24 @@ export function AccueilPro({ trialDays, faqs }: { trialDays: number; faqs: Faq[]
               </span>
             ))}
           </Reveal>
+        </section>
+
+        {/* Galerie : de vrais marchés du Burkina Faso. */}
+        <section className="mx-auto max-w-6xl px-4 pb-20 sm:px-6 lg:pb-28">
+          <Reveal className="max-w-2xl">
+            <h2 className="text-3xl font-medium tracking-[-0.03em] sm:text-5xl">Du Rood Woko au marché de Bobo</h2>
+            <p className="mt-4 text-lg text-zinc-600">
+              ZINDO est né ici, au milieu des marchés, des boutiques et des dépôts du Burkina Faso.
+            </p>
+          </Reveal>
+          <div className="mt-12 grid grid-cols-2 gap-3 sm:gap-4 lg:h-[520px] lg:grid-cols-4 lg:grid-rows-2">
+            {GALERIE.map((g, i) => (
+              <Reveal key={g.src} delay={i * 80} className={`group relative overflow-hidden rounded-2xl bg-zinc-100 ${g.className}`}>
+                <Image src={g.src} alt={g.alt} fill sizes={g.sizes} className="object-cover transition duration-700 group-hover:scale-[1.03]" />
+                <span className="absolute bottom-3 left-3 rounded-full bg-black/55 px-3 py-1 text-xs font-medium text-white backdrop-blur-sm">{g.place}</span>
+              </Reveal>
+            ))}
+          </div>
         </section>
 
         {/* Trois fonctions, expliquées une par une. */}
@@ -241,8 +259,8 @@ export function AccueilPro({ trialDays, faqs }: { trialDays: number; faqs: Faq[]
         {/* Conçu au Burkina Faso : vraie photo de Ouagadougou. */}
         <section className="relative isolate overflow-hidden">
           <Image
-            src="/photos/rue-commercante-ouagadougou.webp"
-            alt="Boutiques d'une rue commerçante de Ouagadougou"
+            src="/photos/grand-marche-bobo-dioulasso.webp"
+            alt="Le Grand Marché de Bobo-Dioulasso et son architecture en terre"
             fill
             sizes="100vw"
             className="-z-10 object-cover"
@@ -264,6 +282,7 @@ export function AccueilPro({ trialDays, faqs }: { trialDays: number; faqs: Faq[]
                   </li>
                 ))}
               </ul>
+              <p className="mt-10 text-xs text-white/60">Photo : le Grand Marché de Bobo-Dioulasso.</p>
             </Reveal>
           </div>
         </section>
@@ -387,24 +406,31 @@ export function AccueilPro({ trialDays, faqs }: { trialDays: number; faqs: Faq[]
 
 const COMMERCES = [
   {
-    title: "Boutiques et magasins",
-    text: "Caisse rapide, stock par rayon, crédits clients et plusieurs vendeurs.",
-    photo: "/photos/commercante-boutique.webp",
-    alt: "Une commerçante debout parmi les produits de sa boutique",
+    title: "Boutiques et pièces détachées",
+    text: "Références, marques, stock par rayon, crédits clients et plusieurs vendeurs.",
+    photo: "/photos/magasin-pieces-detachees.webp",
+    alt: "Devanture d'un magasin de pièces détachées au Burkina Faso",
   },
   {
-    title: "Alimentation et grossistes",
-    text: "Vente au détail et en gros, sacs et cartons, plusieurs dépôts.",
-    photo: "/photos/vente-riz-ouagadougou.webp",
-    alt: "Étal de vente de riz et de vêtements à Ouagadougou",
+    title: "Marchés et alimentation",
+    text: "Vente au détail et en gros, sacs et cartons, caisse rapide même sans réseau.",
+    photo: "/photos/vendeuse-tomates.webp",
+    alt: "Une vendeuse en pagne dispose ses tomates sur un marché",
   },
   {
-    title: "Pharmacies et dépôts",
-    text: "Lots, dates de péremption et alertes avant la rupture.",
-    photo: "/photos/pharmacie-rayons.webp",
-    alt: "Rayons de médicaments dans une pharmacie",
+    title: "Pagnes et vêtements",
+    text: "Tailles, couleurs, variantes et commandes sur mesure.",
+    photo: "/photos/pagnes-faso-dan-fani.webp",
+    alt: "Pagnes tissés Faso Dan Fani empilés",
   },
 ];
+
+const GALERIE = [
+  { src: "/photos/marche-banfora.webp", alt: "Étals de légumes au marché de Banfora", place: "Banfora", className: "col-span-2 aspect-[16/10] lg:row-span-2 lg:aspect-auto", sizes: "(min-width: 1024px) 560px, 100vw" },
+  { src: "/photos/marche-bobo-dioulasso.webp", alt: "Scène de marché à Bobo-Dioulasso", place: "Bobo-Dioulasso", className: "aspect-[4/5] lg:row-span-2 lg:aspect-auto", sizes: "(min-width: 1024px) 280px, 50vw" },
+  { src: "/photos/rood-woko-ouagadougou.webp", alt: "Le marché Rood Woko à Ouagadougou", place: "Rood Woko, Ouagadougou", className: "aspect-[4/3] lg:aspect-auto", sizes: "(min-width: 1024px) 280px, 50vw" },
+  { src: "/photos/marche-gaoua.webp", alt: "Commerçantes au marché de Gaoua", place: "Gaoua", className: "col-span-2 aspect-[16/9] sm:col-span-1 sm:aspect-[4/3] lg:col-span-1 lg:aspect-auto", sizes: "(min-width: 1024px) 280px, 50vw" },
+]
 
 // [critère, cahier, Excel] — ZINDO coche toujours.
 const COMPARISON: [string, boolean, boolean][] = [
@@ -597,8 +623,10 @@ function FooterPro() {
           ))}
         </div>
         <p className="mt-14 text-[11px] leading-relaxed text-zinc-400">
-          Photos : Tobin Jones et AMISOM (domaine public, CC0) ; « Ouagadougou shop », Wegmann, et « Vente riz de Bagré Ouaga », Sputniktilt
-          (CC BY-SA 3.0, Wikimedia Commons) ; « A Drug Store in Nigeria », Beendy234 (CC0). Écrans du logiciel : données d&apos;exemple.
+          Photos (Wikimedia Commons) : « Madame shopping », PGskot ; « Magasin de pièces détachées », WILLAV-FR ; « Vendeuse de tomate »,
+          Masséni Héma ; « Pagnes tissés Faso Dan Fani », Souleymane Yalgweogo (CC BY-SA 4.0) ; « BoboDioulasso-Market », Semiliki ; « Rood Woko
+          Ouagadougou 2013 », Sputniktilt ; marchés de Bobo-Dioulasso et de Gaoua, Adam Jones (CC BY-SA 3.0) ; marché de Banfora, Marco Schmidt
+          (CC BY-SA 2.5). Écrans du logiciel : données d&apos;exemple.
         </p>
         <div className="mt-6 flex flex-col items-center justify-between gap-4 border-t border-zinc-200 pt-6 text-xs text-zinc-500 sm:flex-row">
           <p>© {new Date().getFullYear()} ZINDO. Tous droits réservés.</p>
