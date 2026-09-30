@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { requireUser, hasPermission } from "@/lib/auth";
-import { SCHOOL_ACTIVITY_KEY, SCHOOL_FLAG } from "@/lib/nav";
+import { MEDICAL_ACTIVITY_KEY, SCHOOL_ACTIVITY_KEY, SCHOOL_FLAG } from "@/lib/nav";
 import { PERMISSIONS } from "@/lib/permissions";
 import { getDashboardData, getDashboardOverview, getLocationsStockOverview } from "@/lib/actions/dashboard";
 import { getCurrentLocation } from "@/lib/location";
@@ -58,6 +58,13 @@ export default async function DashboardPage({
     (await hasPermission(user.businessId, user.role, PERMISSIONS.SCHOOL_MANAGE, user.id))
   ) {
     redirect("/ecole/tableau-de-bord");
+  }
+  // Un cabinet médical ouvre ses statistiques (consultations, recettes, pathologies).
+  if (
+    user.business.activityKey === MEDICAL_ACTIVITY_KEY &&
+    (await hasPermission(user.businessId, user.role, PERMISSIONS.CONSULTATIONS_MANAGE, user.id))
+  ) {
+    redirect("/consultations/statistiques");
   }
   const currency = user.business.currency;
   const { periode, apercu } = await searchParams;
