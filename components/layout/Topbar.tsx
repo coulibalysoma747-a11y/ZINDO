@@ -53,7 +53,7 @@ export function Topbar({
             <Menu className="h-5 w-5" />
           </button>
           <Link href="/dashboard" className="flex min-w-0 items-center gap-2">
-            <ZindoLogo size={28} />
+            <ZindoLogo size={28} className="!rounded-lg !shadow-none" />
             <span className="truncate text-sm font-bold text-zinc-900">{businessName}</span>
           </Link>
         </div>
