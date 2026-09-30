@@ -1,5 +1,7 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { requireUser, hasPermission } from "@/lib/auth";
+import { SCHOOL_ACTIVITY_KEY, SCHOOL_FLAG } from "@/lib/nav";
 import { PERMISSIONS } from "@/lib/permissions";
 import { getDashboardData, getDashboardOverview, getLocationsStockOverview } from "@/lib/actions/dashboard";
 import { getCurrentLocation } from "@/lib/location";
@@ -49,6 +51,14 @@ export default async function DashboardPage({
   searchParams: Promise<{ periode?: string; apercu?: string }>;
 }) {
   const user = await requireUser();
+  // Une école voit son propre tableau de bord (élèves, présences, scolarité), pas des chiffres de boutique.
+  if (
+    user.business.activityKey === SCHOOL_ACTIVITY_KEY &&
+    (await isFeatureEnabled(SCHOOL_FLAG, user.businessId)) &&
+    (await hasPermission(user.businessId, user.role, PERMISSIONS.SCHOOL_MANAGE, user.id))
+  ) {
+    redirect("/ecole/tableau-de-bord");
+  }
   const currency = user.business.currency;
   const { periode, apercu } = await searchParams;
   const period = periode === "semaine" || periode === "mois" ? periode : "aujourdhui";

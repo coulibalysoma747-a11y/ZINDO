@@ -91,11 +91,13 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   // ordinateur, et la Facture A4 et l'historique des ventes, rangés dans cet
   // écran comme chez FasoStock, sortent du menu. navItems reste complet pour
   // les droits d'accès (barre du bas, écran Vente).
-  const menuItems = salesHub
+  const isSchool = user.business.activityKey === "ecole" && navItems.some((i) => i.href === "/ecole/tableau-de-bord");
+  const baseMenu = salesHub
     ? navItems
         .filter((i) => i.href !== "/factures" && i.href !== "/ventes/historique")
         .map((i) => (i.href === "/ventes" ? { ...i, href: "/ventes/accueil", activeMatch: ["/ventes", "/factures"] } : i))
     : navItems;
+  const menuItems = isSchool ? baseMenu.filter((i) => i.href !== "/dashboard") : baseMenu;
 
   // Menu latéral fermé par l'utilisateur (voir components/layout/SidebarToggle.tsx).
   const cookieStore = await cookies();
@@ -125,7 +127,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           {platformConfig.announcementActive && platformConfig.announcementMessage && (
             <AnnouncementBanner message={platformConfig.announcementMessage} tone={platformConfig.announcementTone} />
           )}
-          {businessSettings.hasPhysicalStore === null && user.role === "ADMIN" && !storeBannerHidden && <HasPhysicalStoreBanner pro={interfacePro} />}
+          {businessSettings.hasPhysicalStore === null && user.role === "ADMIN" && !storeBannerHidden && !isSchool && <HasPhysicalStoreBanner pro={interfacePro} />}
           <Topbar
             userName={`${user.firstName} ${user.lastName}`}
             role={ROLE_LABELS[user.role]}
