@@ -58,7 +58,10 @@ export default async function DashboardPage({
     "Tableau de bord sans doublons",
     "Sur ordinateur : un seul en-tête (bonjour, date, boutons d'action) au-dessus des statistiques ; le bloc d'accueil du téléphone (chiffre du jour, raccourcis, alertes) n'est plus répété. Le téléphone ne change pas. Aperçu : /dashboard?apercu=tableau."
   );
-  const pro = apercu === "tableau" || (await isFeatureEnabled("tableau_de_bord_pro", user.businessId));
+  const pro =
+    apercu === "tableau" ||
+    (await isFeatureEnabled("tableau_de_bord_pro", user.businessId)) ||
+    (await isFeatureEnabled("interface_pro", user.businessId));
 
   if (!currentLocation) {
     return (
@@ -173,6 +176,7 @@ export default async function DashboardPage({
       {canSell && (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <StatCard
+            solid={pro ? "green" : undefined}
             label="CA encaissé"
             value={formatMoney(overview.current.cashedIn, currency)}
             icon={Wallet}
@@ -180,6 +184,7 @@ export default async function DashboardPage({
             delta={overview.deltas.cashedIn}
           />
           <StatCard
+            solid={pro ? "teal" : undefined}
             label="Marge"
             value={formatMoney(overview.current.margin, currency)}
             icon={Percent}
@@ -188,6 +193,7 @@ export default async function DashboardPage({
             delta={overview.deltas.margin}
           />
           <StatCard
+            solid={pro ? "red" : undefined}
             label="Dépenses"
             value={formatMoney(overview.current.expenses, currency)}
             icon={Receipt}
@@ -195,6 +201,7 @@ export default async function DashboardPage({
             delta={overview.deltas.expenses}
           />
           <StatCard
+            solid={pro ? (overview.current.netProfit >= 0 ? "gold" : "red") : undefined}
             label="Bénéfice net"
             value={formatMoney(overview.current.netProfit, currency)}
             icon={PiggyBank}
@@ -203,6 +210,7 @@ export default async function DashboardPage({
             delta={overview.deltas.netProfit}
           />
           <StatCard
+            solid={pro ? "blue" : undefined}
             label="Ventes"
             value={String(overview.current.salesCount)}
             icon={ShoppingCart}
@@ -210,6 +218,7 @@ export default async function DashboardPage({
             delta={overview.deltas.salesCount}
           />
           <StatCard
+            solid={pro ? "violet" : undefined}
             label="Ticket moyen"
             value={formatMoney(overview.current.avgTicket, currency)}
             icon={Ticket}
@@ -217,6 +226,7 @@ export default async function DashboardPage({
             delta={overview.deltas.avgTicket}
           />
           <StatCard
+            solid={pro ? "orange" : undefined}
             label="Achats"
             value={formatMoney(overview.current.purchases, currency)}
             icon={Truck}
@@ -225,6 +235,7 @@ export default async function DashboardPage({
           />
           {canViewStock && (
             <StatCard
+            solid={pro ? "slate" : undefined}
               label="Valeur du stock"
               value={formatMoney(overview.stockValue, currency)}
               icon={Boxes}
@@ -232,6 +243,27 @@ export default async function DashboardPage({
               hint={`${data.productCount} produit(s) en stock`}
             />
           )}
+        </div>
+      )}
+
+      {pro && canSell && overview.current.creditRepayments > 0 && overview.current.cashedIn > 0 && (
+        <div className="rounded-xl border border-zinc-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
+          <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
+            <span className="flex items-center gap-2 font-medium text-zinc-800 dark:text-slate-200">
+              <span className="h-2.5 w-2.5 rounded-full bg-[#10844a]" /> Ventes de la période {formatMoney(overview.current.cashedIn - overview.current.creditRepayments, currency)}
+            </span>
+            <span className="flex items-center gap-2 font-medium text-zinc-800 dark:text-slate-200">
+              <span className="h-2.5 w-2.5 rounded-full bg-[#d99a12]" /> Crédits remboursés {formatMoney(overview.current.creditRepayments, currency)}
+            </span>
+          </div>
+          <div className="mt-3 flex h-2.5 overflow-hidden rounded-full bg-zinc-100 dark:bg-slate-800">
+            <span className="bg-[#10844a]" style={{ width: `${Math.max(0, ((overview.current.cashedIn - overview.current.creditRepayments) / overview.current.cashedIn) * 100)}%` }} />
+            <span className="bg-[#d99a12]" style={{ width: `${Math.min(100, (overview.current.creditRepayments / overview.current.cashedIn) * 100)}%` }} />
+          </div>
+          <p className="mt-2 text-xs text-zinc-500">
+            Sur {formatMoney(overview.current.cashedIn, currency)} encaissés, {formatMoney(overview.current.creditRepayments, currency)} viennent de crédits d&apos;anciennes ventes : votre vente réelle est de{" "}
+            <b className="text-zinc-800 dark:text-slate-200">{formatMoney(overview.current.cashedIn - overview.current.creditRepayments, currency)}</b>.
+          </p>
         </div>
       )}
       {!canSell && canViewStock && (
