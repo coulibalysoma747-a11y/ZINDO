@@ -166,6 +166,7 @@ export default async function DashboardPage({
             </p>
           </div>
           <DashboardActions
+            activityKey={user.business.activityKey}
             canSell={canSell}
             canManageProducts={canManageProducts}
             canManagePurchases={canManagePurchases}
@@ -566,18 +567,35 @@ export default async function DashboardPage({
 }
 
 function DashboardActions({
+  activityKey,
   canSell,
   canManageProducts,
   canManagePurchases,
   canManageExpenses,
 }: {
+  activityKey: string | null;
   canSell: boolean;
   canManageProducts: boolean;
   canManagePurchases: boolean;
   canManageExpenses: boolean;
 }) {
+  // Actions propres au métier, en premier (cabinet médical, restaurant).
+  const metier =
+    activityKey === "cabinet_medical"
+      ? [
+          { href: "/rendez-vous", label: "Rendez-vous" },
+          { href: "/consultations/nouvelle", label: "Nouvelle consultation", main: true },
+        ]
+      : activityKey === "restaurant_maquis"
+        ? [{ href: "/tables", label: "Tables et commandes", main: true }]
+        : [];
   return (
     <div className="flex flex-wrap gap-2">
+      {metier.map((m) => (
+        <ButtonLink key={m.href} href={m.href} variant={m.main ? undefined : "outline"}>
+          {m.label}
+        </ButtonLink>
+      ))}
       {canManageExpenses && (
         <ButtonLink href="/depenses" variant="outline">
           Nouvelle dépense
@@ -593,7 +611,11 @@ function DashboardActions({
           <Plus className="h-4 w-4" /> Nouveau produit
         </ButtonLink>
       )}
-      {canSell && <ButtonLink href="/ventes">Nouvelle vente</ButtonLink>}
+      {canSell && (
+        <ButtonLink href="/ventes" variant={metier.length ? "outline" : undefined}>
+          Nouvelle vente
+        </ButtonLink>
+      )}
     </div>
   );
 }
