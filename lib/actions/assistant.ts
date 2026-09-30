@@ -6,7 +6,8 @@ import { getCurrentLocation } from "@/lib/location";
 import { createChatCompletion, isAssistantConfigured, DeepSeekError, type DeepSeekMessage } from "@/lib/ai/deepseek";
 import { ASSISTANT_TOOLS, createToolExecutor } from "@/lib/ai/tools";
 import { MEDICAL_ASSISTANT_TOOLS, createMedicalToolExecutor } from "@/lib/ai/medical-tools";
-import { MEDICAL_ACTIVITY_KEY } from "@/lib/nav";
+import { MEDICAL_ACTIVITY_KEY, SCHOOL_ACTIVITY_KEY } from "@/lib/nav";
+import { SCHOOL_ASSISTANT_TOOLS, createSchoolToolExecutor } from "@/lib/ai/school-tools";
 
 export type ChatMessage = { role: "user" | "assistant"; content: string };
 
@@ -37,11 +38,25 @@ export async function askAssistantAction(
   // boutique — voir docs/cahier-des-charges-cabinet-medical.md §8.
   const isMedical = user.business.activityKey === MEDICAL_ACTIVITY_KEY;
 
+  const moneyLabel = user.business.currency === "XOF" || user.business.currency === "XAF" ? "FCFA" : user.business.currency;
   let tools = ASSISTANT_TOOLS;
   let executeTool: (name: string, input: Record<string, unknown>) => Promise<string>;
   let systemPrompt: string;
 
-  if (isMedical) {
+  if (user.business.activityKey === SCHOOL_ACTIVITY_KEY) {
+    tools = SCHOOL_ASSISTANT_TOOLS;
+    executeTool = createSchoolToolExecutor(user.businessId);
+    systemPrompt = `Tu es l'assistant intelligent de ZINDO, une application de gestion pour les commerces et les écoles d'Afrique de l'Ouest.
+Tu aides ${user.firstName}, de l'école "${user.business.name}", à suivre son école : élèves, classes, scolarité (payée, restante, retards de paiement), absences et retards.
+
+Règles :
+- Réponds toujours en français, de façon concise et actionnable (quelques phrases, jamais un essai).
+- Utilise systématiquement les outils fournis pour obtenir des données réelles avant de répondre — ne devine jamais de chiffres.
+- Les montants sont en ${moneyLabel}. Formate-les avec des espaces comme séparateurs de milliers (ex : 125 000 ${moneyLabel}).
+- N'utilise jamais d'astérisques ni de mise en forme Markdown : du texte simple, avec des tirets pour les listes.
+- Parle d'élèves, de parents, de classes et de scolarité : jamais de stock, de produits ni de ventes.
+- Si une question sort du cadre de l'école, réponds poliment que tu es limité à ces sujets.`;
+  } else if (isMedical) {
     tools = MEDICAL_ASSISTANT_TOOLS;
     executeTool = createMedicalToolExecutor(user.businessId);
     systemPrompt = `Tu es l'assistant intelligent de ZINDO, une application de gestion pour les commerces et cabinets d'Afrique de l'Ouest.
@@ -50,7 +65,8 @@ Tu aides ${user.firstName}, du cabinet "${user.business.name}", à comprendre l'
 Règles :
 - Réponds toujours en français, de façon concise et actionnable (quelques phrases, jamais un essai).
 - Utilise systématiquement les outils fournis pour obtenir des données réelles avant de répondre — ne devine jamais de chiffres.
-- Les montants sont en ${user.business.currency}. Formate-les avec des espaces comme séparateurs de milliers (ex : 125 000 ${user.business.currency}).
+- Les montants sont en ${moneyLabel}. Formate-les avec des espaces comme séparateurs de milliers (ex : 125 000 ${moneyLabel}).
+- N'utilise jamais d'astérisques ni de mise en forme Markdown : du texte simple, avec des tirets pour les listes.
 - Ne mentionne jamais de nom ni de donnée nominative de patient : les outils ne renvoient que des statistiques agrégées, respecte cette anonymisation dans tes réponses aussi (secret médical).
 - Si une question sort du cadre de l'activité du cabinet (consultations, diagnostics, actes, patientèle, bilan financier), réponds poliment que tu es limité à ces sujets.
 - Sois précis et cite des chiffres concrets issus des outils plutôt que des généralités.`;
@@ -66,7 +82,8 @@ Tu aides ${user.firstName}, gérant de "${user.business.name}", à comprendre le
 Règles :
 - Réponds toujours en français, de façon concise et actionnable (quelques phrases, jamais un essai).
 - Utilise systématiquement les outils fournis pour obtenir des données réelles avant de répondre — ne devine jamais de chiffres.
-- Les montants sont en ${user.business.currency}. Formate-les avec des espaces comme séparateurs de milliers (ex : 125 000 ${user.business.currency}).
+- Les montants sont en ${moneyLabel}. Formate-les avec des espaces comme séparateurs de milliers (ex : 125 000 ${moneyLabel}).
+- N'utilise jamais d'astérisques ni de mise en forme Markdown : du texte simple, avec des tirets pour les listes.
 - Si une question sort du cadre de la gestion du commerce (stock, ventes, clients, marges, crédits), réponds poliment que tu es limité à ces sujets.
 - Sois précis et cite des chiffres concrets issus des outils plutôt que des généralités.`;
   }

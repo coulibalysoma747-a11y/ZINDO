@@ -3,7 +3,7 @@ import { PERMISSIONS } from "@/lib/permissions";
 import { getCurrentLocation } from "@/lib/location";
 import { getBusinessInsights } from "@/lib/actions/insights";
 import { isAssistantConfigured } from "@/lib/ai/deepseek";
-import { MEDICAL_ACTIVITY_KEY } from "@/lib/nav";
+import { MEDICAL_ACTIVITY_KEY, SCHOOL_ACTIVITY_KEY } from "@/lib/nav";
 import { Card, CardBody, CardHeader } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/Empty";
 import { ButtonLink } from "@/components/ui/Button";
@@ -19,13 +19,14 @@ export default async function AssistantPage() {
   // pour une activité avec caisse/stock, donc toujours vide et hors-sujet
   // ici. Voir docs/cahier-des-charges-cabinet-medical.md §8.
   const isMedical = user.business.activityKey === MEDICAL_ACTIVITY_KEY;
+  const isSchool = user.business.activityKey === SCHOOL_ACTIVITY_KEY;
 
-  if (isMedical) {
+  if (isMedical || isSchool) {
     return (
       <div className="space-y-6">
         <div>
           <h1 className="text-xl font-bold text-zinc-900">Assistant IA</h1>
-          <p className="text-sm text-zinc-500">Réponses à vos questions sur l&apos;activité de votre cabinet.</p>
+          <p className="text-sm text-zinc-500">Réponses à vos questions sur l&apos;activité de votre {isSchool ? "école" : "cabinet"}.</p>
         </div>
 
         {!configured && (
@@ -43,7 +44,7 @@ export default async function AssistantPage() {
 
         <div>
           <h2 className="mb-2 font-semibold text-zinc-900">Poser une question</h2>
-          <AssistantChat configured={configured} medical />
+          <AssistantChat configured={configured} medical={isMedical} school={isSchool} />
         </div>
       </div>
     );

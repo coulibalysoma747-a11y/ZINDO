@@ -20,8 +20,15 @@ const MEDICAL_SUGGESTIONS = [
   "Quel est le profil de ma patientèle cette semaine ?",
 ];
 
-export function AssistantChat({ configured, medical = false }: { configured: boolean; medical?: boolean }) {
-  const suggestions = medical ? MEDICAL_SUGGESTIONS : SUGGESTIONS;
+const SCHOOL_SUGGESTIONS = [
+  "Quels élèves n'ont pas fini de payer la scolarité ?",
+  "Combien reste-t-il à encaisser cette année ?",
+  "Quels élèves sont le plus souvent absents ?",
+  "Combien d'élèves par classe ?",
+];
+
+export function AssistantChat({ configured, medical = false, school = false }: { configured: boolean; medical?: boolean; school?: boolean }) {
+  const suggestions = school ? SCHOOL_SUGGESTIONS : medical ? MEDICAL_SUGGESTIONS : SUGGESTIONS;
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -91,7 +98,7 @@ export function AssistantChat({ configured, medical = false }: { configured: boo
                   : "rounded-bl-sm bg-zinc-100 text-zinc-800"
               }`}
             >
-              {m.content}
+              {m.content.replace(/\*\*/g, "")}
             </div>
             {m.role === "user" && (
               <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-zinc-200">
