@@ -87,6 +87,29 @@ export const ROLE_LABELS: Record<Role, string> = {
   GESTIONNAIRE_STOCK: "Gestionnaire de stock",
 };
 
+/** Noms des rôles dans une école : mêmes rôles techniques, mots de l'école. */
+export const SCHOOL_ROLE_LABELS: Record<Role, string> = {
+  ADMIN: "Directeur (administrateur)",
+  VENDEUR: "Secrétariat / caisse",
+  GESTIONNAIRE_STOCK: "Enseignant",
+};
+
+/** Libellés des rôles selon l'activité (« ecole » : Directeur, Secrétariat, Enseignant). */
+export function roleLabels(activityKey?: string | null): Record<Role, string> {
+  return activityKey === "ecole" ? SCHOOL_ROLE_LABELS : ROLE_LABELS;
+}
+
+/** Seuls droits qui ont un sens pour une école (le reste concerne caisse, stock, produits). */
+export const SCHOOL_PERMISSION_KEYS: string[] = [
+  PERMISSIONS.SCHOOL_MANAGE,
+  PERMISSIONS.SCHOOL_TEACH,
+  PERMISSIONS.EXPENSES_MANAGE,
+  PERMISSIONS.REPORTS_VIEW,
+  PERMISSIONS.ASSISTANT_USE,
+  PERMISSIONS.USERS_MANAGE,
+  PERMISSIONS.SETTINGS_MANAGE,
+];
+
 export const PERMISSION_LABELS: Record<string, string> = {
   [PERMISSIONS.PRODUCTS_VIEW]: "Consulter les produits",
   [PERMISSIONS.PRODUCTS_MANAGE]: "Gérer les produits",

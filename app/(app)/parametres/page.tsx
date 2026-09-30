@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { expenseCategoriesFor } from "@/lib/business-settings";
 import { Pencil } from "lucide-react";
 import { requirePermission } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
@@ -231,7 +232,7 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
     </Card>
   );
 
-  const expensesPanel = <ExpenseCategoriesPanel categories={businessSettings.expenseCategories} />;
+  const expensesPanel = <ExpenseCategoriesPanel categories={expenseCategoriesFor(businessSettings.expenseCategories, user.business.activityKey)} />;
 
   const invoiceTemplatePanel = invoiceTemplatesEnabled && (
     <InvoiceTemplatePanel
@@ -278,6 +279,7 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
         <PermissionsPanel
           overrides={(overrides ?? []) as unknown as { role: Role; permission: string; allowed: boolean }[]}
           hiddenPermissions={saleDeleteEnabled ? [] : [PERMISSIONS.SALES_DELETE]}
+          school={isSchool}
         />
       </CardBody>
     </Card>

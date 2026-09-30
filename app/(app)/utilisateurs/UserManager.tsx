@@ -10,7 +10,7 @@ import { createUserAction, type ActionState } from "@/lib/actions/users";
 import { ROLE_LABELS } from "@/lib/permissions";
 import { useKeepValuesOnError } from "@/lib/keep-form-values";
 
-export function UserManager() {
+export function UserManager({ labels }: { labels?: Record<string, string> } = {}) {
   const [open, setOpen] = useState(false);
   const router = useRouter();
   const [state, formAction, pending] = useActionState<ActionState, FormData>(createUserAction, undefined);
@@ -50,7 +50,7 @@ export function UserManager() {
           </Field>
           <Field label="Rôle" htmlFor="role">
             <Select id="role" name="role" defaultValue="VENDEUR">
-              {Object.entries(ROLE_LABELS).map(([value, label]) => (
+              {Object.entries(labels ?? ROLE_LABELS).map(([value, label]) => (
                 <option key={value} value={value}>
                   {label}
                 </option>

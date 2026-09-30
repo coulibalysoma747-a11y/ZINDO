@@ -132,3 +132,25 @@ export async function updateBusinessSettings(businessId: string, patch: Business
 
 /** Mémorisé le temps d'une requête : le layout et la page l'appellent tous les deux. */
 export const getBusinessSettings = cache(getBusinessSettingsUncached);
+
+const SCHOOL_EXPENSE_CATEGORIES = [
+  "Salaires des enseignants",
+  "Salaires du personnel",
+  "Fournitures scolaires",
+  "Loyer",
+  "Électricité/eau",
+  "Entretien et réparations",
+  "Cantine",
+  "Transport scolaire",
+  "Examens et concours",
+  "Autre",
+];
+
+/**
+ * Catégories de dépenses proposées : celles du commerce, ou, pour une école qui
+ * n'a pas encore personnalisé la liste, des catégories d'école.
+ */
+export function expenseCategoriesFor(categories: string[], activityKey?: string | null): string[] {
+  const untouched = categories.join("|") === DEFAULTS.expenseCategories.join("|");
+  return activityKey === "ecole" && untouched ? SCHOOL_EXPENSE_CATEGORIES : categories;
+}

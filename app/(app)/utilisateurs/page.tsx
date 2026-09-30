@@ -1,5 +1,5 @@
 import { requirePermission } from "@/lib/auth";
-import { PERMISSIONS, ROLE_LABELS } from "@/lib/permissions";
+import { PERMISSIONS, ROLE_LABELS, roleLabels } from "@/lib/permissions";
 import { supabase } from "@/lib/supabase";
 import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
@@ -36,7 +36,7 @@ export default async function UsersPage() {
             {users.length} compte(s) sur {admin.business.name}
           </p>
         </div>
-        <UserManager />
+        <UserManager labels={roleLabels(admin.business.activityKey)} />
       </div>
 
       <Card className="overflow-x-auto">
@@ -52,7 +52,7 @@ export default async function UsersPage() {
           </TableHead>
           <TableBody>
             {users.map((u) => (
-              <UserRow key={u.id} user={u} isSelf={u.id === admin.id} canEdit={extendedEdit} />
+              <UserRow key={u.id} labels={roleLabels(admin.business.activityKey)} user={u} isSelf={u.id === admin.id} canEdit={extendedEdit} />
             ))}
           </TableBody>
         </Table>
@@ -62,12 +62,14 @@ export default async function UsersPage() {
 }
 
 function UserRow({
+  labels,
   user,
   isSelf,
   canEdit,
 }: {
   user: { id: string; firstName: string; lastName: string; phone: string; role: keyof typeof ROLE_LABELS; active: boolean };
   isSelf: boolean;
+  labels: Record<string, string>;
   canEdit: boolean;
 }) {
   return (
@@ -77,7 +79,7 @@ function UserRow({
       </TableCell>
       <TableCell className="text-zinc-600 dark:text-slate-400">{user.phone}</TableCell>
       <TableCell>
-        <Badge tone="blue">{ROLE_LABELS[user.role]}</Badge>
+        <Badge tone="blue">{labels[user.role]}</Badge>
       </TableCell>
       <TableCell>
         <Badge tone={user.active ? "emerald" : "zinc"}>{user.active ? "Actif" : "Désactivé"}</Badge>
@@ -85,7 +87,7 @@ function UserRow({
       <TableCell align="right">
         <div className="flex items-center justify-end gap-2">
           {canEdit && <EditUserButton user={user} />}
-          {!isSelf && <UserRowActions userId={user.id} userName={`${user.firstName} ${user.lastName}`} active={user.active} />}
+          {!isSelf && <UserRowActions labels={labels} userId={user.id} userName={`${user.firstName} ${user.lastName}`} active={user.active} />}
         </div>
       </TableCell>
     </TableRow>

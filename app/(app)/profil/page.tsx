@@ -1,5 +1,5 @@
 import { requireUser } from "@/lib/auth";
-import { ROLE_LABELS } from "@/lib/permissions";
+import { roleLabels } from "@/lib/permissions";
 import { Card, CardBody, CardHeader } from "@/components/ui/Card";
 import { ProfileForm } from "./ProfileForm";
 import { PasswordForm } from "./PasswordForm";
@@ -19,7 +19,7 @@ export default async function ProfilePage() {
       <div>
         <h1 className="text-xl font-bold text-zinc-900">Mon profil</h1>
         <p className="text-sm text-zinc-500">
-          {ROLE_LABELS[user.role]} · {user.business.name}
+          {roleLabels(user.business.activityKey)[user.role]} · {user.business.name}
         </p>
       </div>
 

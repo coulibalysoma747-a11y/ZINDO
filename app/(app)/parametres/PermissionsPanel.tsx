@@ -2,7 +2,7 @@
 
 import { useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { DEFAULT_ROLE_PERMISSIONS, PERMISSIONS, PERMISSION_LABELS, ROLE_LABELS } from "@/lib/permissions";
+import { DEFAULT_ROLE_PERMISSIONS, PERMISSIONS, PERMISSION_LABELS, SCHOOL_PERMISSION_KEYS, roleLabels } from "@/lib/permissions";
 import { togglePermissionAction } from "@/lib/actions/settings";
 import { Table, TableHead, TableBody, TableRow, TableHeaderCell, TableCell } from "@/components/ui/Table";
 import type { Role } from "@prisma/client";
@@ -12,11 +12,15 @@ const ROLES: Role[] = ["ADMIN", "VENDEUR", "GESTIONNAIRE_STOCK"];
 export function PermissionsPanel({
   overrides,
   hiddenPermissions = [],
+  school = false,
 }: {
   overrides: { role: Role; permission: string; allowed: boolean }[];
   /** Droits d'une fonctionnalité encore désactivée pour ce commerce (flag). */
   hiddenPermissions?: string[];
+  /** École : rôles Directeur / Secrétariat / Enseignant et droits de l'école seulement. */
+  school?: boolean;
 }) {
+  const labels = roleLabels(school ? "ecole" : null);
   const [pending, startTransition] = useTransition();
   const router = useRouter();
 
@@ -34,14 +38,14 @@ export function PermissionsPanel({
             <TableHeaderCell className="normal-case tracking-normal">Permission</TableHeaderCell>
             {ROLES.map((r) => (
               <TableHeaderCell key={r} align="center" className="normal-case tracking-normal">
-                {ROLE_LABELS[r]}
+                {labels[r]}
               </TableHeaderCell>
             ))}
           </TableRow>
         </TableHead>
         <TableBody>
           {Object.values(PERMISSIONS)
-            .filter((permission) => !hiddenPermissions.includes(permission))
+            .filter((permission) => !hiddenPermissions.includes(permission) && (!school || SCHOOL_PERMISSION_KEYS.includes(permission)))
             .map((permission) => (
             <TableRow key={permission}>
               <TableCell className="text-zinc-700 dark:text-slate-300">{PERMISSION_LABELS[permission] ?? permission}</TableCell>

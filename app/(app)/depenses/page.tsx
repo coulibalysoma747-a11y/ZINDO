@@ -1,4 +1,5 @@
 import { FileText } from "lucide-react";
+import { expenseCategoriesFor } from "@/lib/business-settings";
 import { requirePermission } from "@/lib/auth";
 import { isDocumentEnabled } from "@/lib/documents";
 import { PERMISSIONS } from "@/lib/permissions";
@@ -83,7 +84,7 @@ export default async function ExpensesPage({
           <h1 className="text-xl font-bold text-zinc-900">Dépenses</h1>
           <p className="text-sm text-zinc-500">{currentLocation.name}</p>
         </div>
-        <ExpenseManager categories={businessSettings.expenseCategories} />
+        <ExpenseManager categories={expenseCategoriesFor(businessSettings.expenseCategories, user.business.activityKey)} />
       </div>
 
       <Card>
@@ -134,7 +135,7 @@ export default async function ExpensesPage({
                   <TableCell align="right" className="font-medium text-red-600 tabular-nums">{formatMoney(e.amount, currency)}</TableCell>
                   <TableCell align="right">
                     <div className="flex justify-end gap-1">
-                      {extendedEdit && <EditExpenseButton expense={e} categories={businessSettings.expenseCategories} />}
+                      {extendedEdit && <EditExpenseButton expense={e} categories={expenseCategoriesFor(businessSettings.expenseCategories, user.business.activityKey)} />}
                       <DeleteExpenseButton id={e.id} label={e.label} />
                     </div>
                   </TableCell>

@@ -9,6 +9,7 @@ import { ResetPasswordButton } from "./ResetPasswordButton";
 import type { Role } from "@prisma/client";
 
 export function UserRowActions({
+  labels,
   userId,
   userName,
   active,
@@ -16,6 +17,7 @@ export function UserRowActions({
   userId: string;
   userName: string;
   active: boolean;
+  labels?: Record<string, string>;
 }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
@@ -37,7 +39,7 @@ export function UserRowActions({
         className="h-8 rounded-lg border border-zinc-200 px-2 text-xs text-zinc-600"
       >
         <option value="">Changer le rôle...</option>
-        {Object.entries(ROLE_LABELS).map(([value, label]) => (
+        {Object.entries(labels ?? ROLE_LABELS).map(([value, label]) => (
           <option key={value} value={value}>
             {label}
           </option>

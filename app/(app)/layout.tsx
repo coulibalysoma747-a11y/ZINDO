@@ -22,7 +22,7 @@ import { MobileTabBarFour } from "@/components/layout/MobileTabBarFour";
 import { ImpersonationBanner } from "@/components/layout/ImpersonationBanner";
 import { AnnouncementBanner } from "@/components/layout/AnnouncementBanner";
 import { HasPhysicalStoreBanner } from "@/components/layout/HasPhysicalStoreBanner";
-import { ROLE_LABELS, PERMISSIONS } from "@/lib/permissions";
+import { roleLabels, PERMISSIONS } from "@/lib/permissions";
 import { ensureDesktopOfflineFlagRegistered } from "@/lib/actions/desktop-offline";
 import { isBrowserOfflineEnabled } from "@/lib/actions/browser-offline";
 import { OfflineShell } from "@/components/layout/OfflineShell";
@@ -130,7 +130,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           {businessSettings.hasPhysicalStore === null && user.role === "ADMIN" && !storeBannerHidden && !isSchool && <HasPhysicalStoreBanner pro={interfacePro} />}
           <Topbar
             userName={`${user.firstName} ${user.lastName}`}
-            role={ROLE_LABELS[user.role]}
+            role={roleLabels(user.business.activityKey)[user.role]}
             navItems={menuItems}
             businessName={user.business.name}
             locations={locations}
