@@ -39,6 +39,9 @@ export function SidebarLink({ item }: { item: NavItem }) {
 
   return (
     <Link
+      // Pas de préchargement : le menu compte ~30 modules, les télécharger tous à
+      // chaque page ralentit l'application et consomme le forfait des commerçants.
+      prefetch={false}
       href={href}
       aria-current={active ? "page" : undefined}
       className={cn(

@@ -83,6 +83,7 @@ export function MobileNav({
                     return (
                       <Link
                         key={item.href}
+                        prefetch={false}
                         href={item.href}
                         onClick={onClose}
                         className={cn(
