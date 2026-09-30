@@ -90,7 +90,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
       <head><meta name="google-site-verification" content="hLIb2IvzFGtm2VC6hR9cK5choC2_bbHh2Ew2qfNdvTQ" />
         <meta name="google-site-verification" content="L7aDO0-c1dbXK57FghtP6dRtWVjmCp-M-Gy-suFmwsE" />
         <meta name="theme-color" content="#176d30" />
-        <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
+        <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png?v=2" />
         <ThemeInitScript theme={theme} />
         {/* Capte la proposition d’installation avant l’hydratation (voir InstallAppButton). */}
         <script dangerouslySetInnerHTML={{ __html: "window.addEventListener('beforeinstallprompt',function(e){e.preventDefault();window.__zindoInstallPrompt=e;});" }} />

@@ -31,7 +31,7 @@ export function Sidebar({
   return (
     <aside className={`${dark ? "dark " : ""}sticky top-0 hidden h-screen w-60 shrink-0 flex-col border-r border-zinc-200 bg-white md:flex dark:border-slate-800 dark:bg-slate-900`}>
       <div className="flex h-16 shrink-0 items-center gap-2.5 border-b border-zinc-200 px-4 dark:border-slate-800">
-        <ZindoLogo size={30} className="!rounded-lg !shadow-none" />
+        <ZindoLogo size={30} />
         <div className="min-w-0 flex-1">
           <p className="text-sm font-bold leading-tight text-zinc-900 dark:text-white">ZINDO</p>
           <p className="truncate text-xs text-zinc-500" title={businessName}>

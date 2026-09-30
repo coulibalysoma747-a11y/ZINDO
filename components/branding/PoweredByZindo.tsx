@@ -21,7 +21,7 @@ export function PoweredByZindo({
       className="mt-8 flex items-center gap-4 rounded-xl border border-emerald-200 bg-emerald-50/70 px-5 py-3 print:break-inside-avoid"
       style={{ WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" }}
     >
-      <img src="/brand/zindo-emblem.png" alt="ZINDO" className="h-11 w-11 shrink-0 rounded-lg" />
+      <img src="/brand/zindo-emblem.png" alt="ZINDO" className="h-11 w-11 shrink-0" />
       <div className="min-w-0 flex-1 text-[11px] leading-snug text-zinc-700">
         <p className="text-sm font-bold text-emerald-800">{label}</p>
         <p>Gérez votre stock, vos ventes et vos commandes depuis votre téléphone — même sans Internet.</p>

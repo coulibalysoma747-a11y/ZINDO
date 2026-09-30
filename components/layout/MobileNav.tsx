@@ -43,7 +43,7 @@ export function MobileNav({
         <div className="min-h-0 flex-1 overflow-y-auto">
           <div className="flex items-center justify-between gap-2 border-b border-zinc-100 p-4 dark:border-slate-800">
             <div className="flex min-w-0 items-center gap-3">
-              <ZindoLogo size={32} className="!rounded-lg !shadow-none" />
+              <ZindoLogo size={32} />
               <div className="min-w-0">
                 <p className="truncate text-sm font-bold text-zinc-900">ZINDO</p>
                 <p className="truncate text-xs font-medium text-zinc-500">{businessName}</p>

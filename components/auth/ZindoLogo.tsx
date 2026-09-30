@@ -1,21 +1,11 @@
-import Image from "next/image";
-
 /**
- * Marque ZINDO — logo fourni par l'utilisateur (public/brand/zindo-emblem.png,
- * recadré depuis public/brand/zindo-logo-full.jpeg). Régénérer les icônes
- * dérivées (favicon, PWA...) via `node scripts/generate-brand-assets.mjs`
- * si ce fichier change.
+ * Marque ZINDO — symbole « Z » (public/brand/zindo-logo.svg, choisi le 30/09/2026).
+ * Les icônes dérivées (favicon, PWA…) se régénèrent via
+ * `node scripts/generate-brand-assets.mjs` si ce fichier change.
  */
 export function ZindoLogo({ size = 60, className }: { size?: number; className?: string }) {
   return (
-    <Image
-      src="/brand/zindo-emblem.png"
-      alt="Logo ZINDO"
-      width={size}
-      height={size}
-      priority
-      className={`shrink-0 rounded-2xl shadow-lg shadow-zindo-ink-900/25 ${className ?? ""}`}
-      style={{ width: size, height: size }}
-    />
+    // eslint-disable-next-line @next/next/no-img-element -- SVG léger, net à toutes les tailles.
+    <img src="/brand/zindo-logo.svg" alt="Logo ZINDO" width={size} height={size} className={`shrink-0 ${className ?? ""}`} style={{ width: size, height: size }} />
   );
 }
