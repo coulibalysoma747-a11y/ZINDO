@@ -108,13 +108,17 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
   // masque plutôt que d'afficher des réglages sans effet. Voir
   // docs/cahier-des-charges-cabinet-medical.md §7.
   const isMedical = user.business.activityKey === MEDICAL_ACTIVITY_KEY;
+  // École : ni caisse, ni stock, ni produits — mêmes réglages simplifiés que le cabinet,
+  // « Établissement » au lieu de « Commerce », sans la zone qui vide produits/ventes/stock.
+  const isSchool = user.business.activityKey === "ecole";
+  const placeLabel = isSchool ? "Établissement" : "Commerce";
 
   const fasoStockApiKey = businessRow?.fasoStockApiKey as string | null;
   // Les paramètres en onglets n'affichent plus FasoStock : inutile alors
   // d'interroger son API à chaque ouverture de la page. Ailleurs, la carte
   // ne s'affiche plus qu'aux commerces qui ont déjà branché une clé (migration
   // en cours) : pas de publicité pour un concurrent chez tous les autres.
-  const showFasoStock = !isMedical && !tabsEnabled && !!fasoStockApiKey;
+  const showFasoStock = !isMedical && !isSchool && !tabsEnabled && !!fasoStockApiKey;
   let fasoStockStores: FasoStockStore[] = [];
   if (fasoStockApiKey && showFasoStock) {
     try {
@@ -163,7 +167,7 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
   const businessCard = (
     <Card>
       <CardHeader>
-        <h2 className="font-semibold text-zinc-900">Commerce</h2>
+        <h2 className="font-semibold text-zinc-900">{placeLabel}</h2>
       </CardHeader>
       <CardBody>
         <BusinessSettingsForm
@@ -284,7 +288,7 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
   const header = (
     <div>
       <h1 className="text-xl font-bold text-zinc-900">Paramètres</h1>
-      <p className="text-sm text-zinc-500">Configurez votre commerce, vos moyens de paiement et vos permissions.</p>
+      <p className="text-sm text-zinc-500">Configurez votre {isSchool ? "établissement" : "commerce"}, vos moyens de paiement et vos permissions.</p>
     </div>
   );
 
@@ -301,13 +305,13 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
     // Cabinet médical : pas de caisse ni de stock au sens des autres
     // activités, donc ni onglets Stock, Factures et Modules, ni réglages de
     // caisse (même règle que la page d'origine, plus bas).
-    const tabs: SettingsTab[] = isMedical
+    const tabs: SettingsTab[] = isMedical || isSchool
       ? [
-          { key: "commerce", label: "Commerce", content: <>{activityCard}{businessCard}{currencyCard}</> },
+          { key: "commerce", label: placeLabel, content: <>{activityCard}{businessCard}{currencyCard}</> },
           { key: "paiements", label: "Paiements", content: paymentMethodsCard },
           { key: "depenses", label: "Dépenses", content: section("Dépenses", expensesPanel) },
           { key: "equipe", label: "Équipe", content: permissionsCard },
-          { key: "avance", label: "Avancé", content: dangerZone },
+          ...(isSchool ? [] : [{ key: "avance", label: "Avancé", content: dangerZone }]),
         ]
       : [
           { key: "commerce", label: "Commerce", content: <>{activityCard}{businessCard}{currencyCard}</> },
@@ -393,7 +397,7 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
       {fasoStockCard}
       {currencyCard}
 
-      {isMedical ? (
+      {isMedical || isSchool ? (
         // Cabinet médical : seules les catégories de dépenses restent
         // pertinentes (réutilisées par le bilan financier de
         // /consultations/statistiques) — le reste de "Règles de vente"
@@ -435,7 +439,7 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
       )}
 
       {permissionsCard}
-      {dangerZone}
+      {!isSchool && dangerZone}
     </div>
   );
 }
