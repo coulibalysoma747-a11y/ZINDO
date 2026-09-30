@@ -26,13 +26,13 @@ const PAGE_SIZE = 200;
 export default async function ProductsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; categorie?: string; marque?: string; conditionnement?: string; filtre?: string; page?: string }>;
+  searchParams: Promise<{ q?: string; categorie?: string; marque?: string; conditionnement?: string; filtre?: string; page?: string; vue?: string }>;
 }) {
   const user = await requirePermission(PERMISSIONS.PRODUCTS_VIEW);
-  const { q, categorie, marque, conditionnement, filtre, page } = await searchParams;
+  const { q, categorie, marque, conditionnement, filtre, page, vue } = await searchParams;
   const currentPage = Math.max(1, parseInt(page ?? "1", 10) || 1);
   const offset = (currentPage - 1) * PAGE_SIZE;
-  const [currentLocation, activityConfig, packagingEnabled, catalogImportEnabled, trashEnabled, mobileLayout] = await Promise.all([
+  const [currentLocation, activityConfig, packagingEnabled, catalogImportEnabled, trashEnabled, mobileLayout, pro] = await Promise.all([
     getCurrentLocation(user.businessId),
     getActivityConfig(user.business.activityKey),
     isPackagingUnitsModuleEnabled(user.businessId),
@@ -45,7 +45,9 @@ export default async function ProductsPage({
       "Produits : page adaptée au téléphone",
       "Sur téléphone : grand bouton « Nouveau produit » en haut, outils (export, import, QR, corbeille) rangés sous « Outils », filtres repliés sous « Filtres » ; les produits sont visibles dès l'ouverture."
     ).then(() => isFeatureEnabled("produits_mobile", user.businessId)),
+    isFeatureEnabled("interface_pro", user.businessId),
   ]);
+  const cartes = pro && vue === "cartes";
   const productsLabel = resolveTerm(activityConfig, "products");
 
   // Le filtre par statut de stock ("rupture"/"stock-faible") se calcule après
@@ -156,6 +158,19 @@ export default async function ProductsPage({
         ? withStock.filter((p) => p.quantity <= 0)
         : withStock;
 
+  let compteurs: { faible: number; rupture: number; tous: number } | null = null;
+  if (pro) {
+    const { data: tous } = await supabase.from("products").select("id, minStock:min_stock").eq("business_id", user.businessId).eq("active", true);
+    let faible = 0;
+    let rupture = 0;
+    for (const t of (tous ?? []) as { id: string; minStock: number }[]) {
+      const qte = stockByProduct.get(t.id) ?? 0;
+      if (qte <= 0) rupture++;
+      else if (qte <= t.minStock) faible++;
+    }
+    compteurs = { faible, rupture, tous: (tous ?? []).length };
+  }
+
   const totalCount = usesStockFilter ? stockFiltered.length : rawCount ?? 0;
   const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
   const filtered = usesStockFilter ? stockFiltered.slice(offset, offset + PAGE_SIZE) : stockFiltered;
@@ -168,6 +183,21 @@ export default async function ProductsPage({
     if (conditionnement) params.set("conditionnement", conditionnement);
     if (filtre) params.set("filtre", filtre);
     if (targetPage > 1) params.set("page", String(targetPage));
+    if (cartes) params.set("vue", "cartes");
+    const qs = params.toString();
+    return qs ? `/produits?${qs}` : "/produits";
+  };
+
+  const lienProduits = (changes: { filtre?: string | null; vue?: string | null }) => {
+    const params = new URLSearchParams();
+    if (q) params.set("q", q);
+    if (categorie) params.set("categorie", categorie);
+    if (marque) params.set("marque", marque);
+    if (conditionnement) params.set("conditionnement", conditionnement);
+    const f = changes.filtre === undefined ? filtre : changes.filtre;
+    const v = changes.vue === undefined ? (cartes ? "cartes" : null) : changes.vue;
+    if (f) params.set("filtre", f);
+    if (v) params.set("vue", v);
     const qs = params.toString();
     return qs ? `/produits?${qs}` : "/produits";
   };
@@ -198,6 +228,31 @@ export default async function ProductsPage({
 
   return (
     <div className={mobileLayout ? "space-y-4 sm:space-y-6" : "space-y-6"}>
+      {pro ? (
+        <div className="flex flex-wrap items-end justify-between gap-3 border-b border-zinc-200 pb-4 dark:border-slate-800">
+          <div>
+            <h1 className="text-2xl font-semibold tracking-tight text-zinc-900">{productsLabel}</h1>
+            <p className="mt-1 text-sm text-zinc-500">
+              {totalCount ?? 0} produit(s){totalPages > 1 ? ` · page ${currentPage}/${totalPages}` : ""} · stock de {currentLocation?.name ?? "—"}
+            </p>
+          </div>
+          <div className={`items-center gap-2 ${mobileLayout ? "hidden sm:flex" : "flex"}`}>
+            <details className="group relative">
+              <summary className="flex h-9 cursor-pointer list-none items-center gap-1.5 rounded-lg border border-zinc-300 bg-white px-3 text-sm font-medium text-zinc-700 hover:border-zinc-400 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200">
+                <Wrench className="h-4 w-4" /> Outils <ChevronDown className="h-3.5 w-3.5 transition group-open:rotate-180" />
+              </summary>
+              <div className="absolute right-0 z-20 mt-2 flex w-60 flex-col gap-1.5 rounded-xl border border-zinc-200 bg-white p-2 shadow-xl dark:border-slate-700 dark:bg-slate-900 [&>a]:w-full [&>a]:justify-start">
+                {tools}
+              </div>
+            </details>
+            <div className="hidden sm:block">
+              <ButtonLink href="/produits/nouveau">
+                <Plus className="h-4 w-4" /> Nouveau produit
+              </ButtonLink>
+            </div>
+          </div>
+        </div>
+      ) : (
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-xl font-bold tracking-tight text-zinc-900">{productsLabel}</h1>
@@ -215,6 +270,7 @@ export default async function ProductsPage({
           </div>
         </div>
       </div>
+      )}
 
       {/* Téléphone (flag produits_mobile) : l'action principale en grand, les
           outils rangés, pour voir les produits dès l'ouverture de la page. */}
@@ -238,6 +294,32 @@ export default async function ProductsPage({
       <CatalogTabs active="produits" />
 
       <ProductSearchBar categories={categories ?? []} brands={brands ?? []} showPackagingFilter={packagingEnabled} compactOnMobile={mobileLayout} />
+      {pro && compteurs && (
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex flex-wrap gap-2">
+            {[
+              { key: null, label: "Tous", n: compteurs.tous, tone: "bg-zinc-900 text-white", idle: "border border-zinc-200 bg-white text-zinc-700" },
+              { key: "stock-faible", label: "Stock faible", n: compteurs.faible, tone: "bg-amber-500 text-white", idle: "border border-amber-200 bg-amber-50 text-amber-800" },
+              { key: "rupture", label: "Rupture", n: compteurs.rupture, tone: "bg-red-600 text-white", idle: "border border-red-200 bg-red-50 text-red-700" },
+            ].map((c) => {
+              const actif = (filtre ?? null) === c.key;
+              return (
+                <Link key={c.label} href={lienProduits({ filtre: c.key })} className={`inline-flex items-center gap-2 rounded-full px-3.5 py-1.5 text-sm font-medium transition ${actif ? c.tone : c.idle}`}>
+                  {c.label} <span className="tabular-nums opacity-80">{c.n}</span>
+                </Link>
+              );
+            })}
+          </div>
+          <div className="hidden overflow-hidden rounded-lg border border-zinc-300 text-sm sm:flex dark:border-slate-700">
+            <Link href={lienProduits({ vue: null })} className={`px-3 py-1.5 font-medium ${cartes ? "bg-white text-zinc-600 hover:text-zinc-900 dark:bg-slate-900" : "bg-zinc-900 text-white"}`}>
+              Liste
+            </Link>
+            <Link href={lienProduits({ vue: "cartes" })} className={`px-3 py-1.5 font-medium ${cartes ? "bg-zinc-900 text-white" : "bg-white text-zinc-600 hover:text-zinc-900 dark:bg-slate-900"}`}>
+              Cartes
+            </Link>
+          </div>
+        </div>
+      )}
 
       {filtered.length === 0 ? (
         <EmptyState
@@ -254,6 +336,30 @@ export default async function ProductsPage({
           {/* Tableau : bureau/tablette. En dessous de sm, une table à 7 colonnes
               n'est lisible qu'en faisant défiler horizontalement en boucle pour
               chaque produit — remplacée par une liste de cartes (voir plus bas). */}
+          {cartes ? (
+            <div className="hidden gap-3 sm:grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+              {filtered.map((p) => {
+                const etat = p.quantity <= 0 ? "rupture" : p.quantity <= (p.minStock as number) ? "faible" : "ok";
+                return (
+                  <Link
+                    key={p.id as string}
+                    href={`/produits/${p.id}`}
+                    className="group flex gap-3 rounded-xl border border-zinc-200 bg-white p-3 transition hover:border-zindo-green-400 hover:shadow-md dark:border-slate-800 dark:bg-slate-900"
+                  >
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate font-semibold text-zinc-900 group-hover:text-zindo-green-700 dark:text-slate-100">{p.name as string}</p>
+                      <p className="truncate text-xs text-zinc-400">{[p.reference as string, p.category?.name].filter(Boolean).join(" · ")}</p>
+                      <p className="mt-2 font-semibold tabular-nums text-zinc-900 dark:text-slate-100">{formatMoney(p.salePrice as number, user.business.currency)}</p>
+                      <p className={`mt-0.5 text-xs font-medium tabular-nums ${etat === "rupture" ? "text-red-600" : etat === "faible" ? "text-amber-600" : "text-zinc-500"}`}>
+                        {etat === "rupture" ? "Rupture" : `${p.quantity} ${p.unit as string} en stock`}
+                      </p>
+                    </div>
+                    <ProductThumbnail photoUrl={p.photoUrl as string | null} name={p.name as string} size={72} rounded="rounded-lg" />
+                  </Link>
+                );
+              })}
+            </div>
+          ) : (
           <Card className="hidden overflow-x-auto sm:block">
             <Table className="min-w-[720px]">
               <TableHead>
@@ -320,6 +426,7 @@ export default async function ProductsPage({
               </TableBody>
             </Table>
           </Card>
+          )}
 
           {/* Liste de cartes : téléphone. */}
           <div className="space-y-2 sm:hidden">
