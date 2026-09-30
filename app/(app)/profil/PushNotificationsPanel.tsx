@@ -107,10 +107,25 @@ export function PushNotificationsPanel() {
         crédit dépassées — même quand ZINDO n&apos;est pas ouvert.
       </p>
       {status === "denied" && (
-        <p className="text-sm text-amber-600">
-          Notifications bloquées pour ZINDO dans votre navigateur — autorisez-les dans les réglages du site pour les
-          activer.
-        </p>
+        <div className="space-y-1 text-sm text-amber-600">
+          <p>Les notifications sont bloquées pour ZINDO sur cet appareil. Pour les débloquer :</p>
+          <ul className="list-disc space-y-0.5 pl-5">
+            <li>
+              Sur ordinateur (Chrome, Edge) : cliquez sur le cadenas à gauche de l&apos;adresse, mettez
+              « Notifications » sur « Autoriser », puis rechargez la page.
+            </li>
+            <li>
+              Sur téléphone Android : touchez le cadenas à gauche de l&apos;adresse, puis « Autorisations » →
+              « Notifications » → « Autoriser ». Si ZINDO est installé sur l&apos;écran d&apos;accueil : Paramètres du
+              téléphone → Applications → ZINDO → Notifications.
+            </li>
+            <li>
+              Sur iPhone : ajoutez d&apos;abord ZINDO à l&apos;écran d&apos;accueil (Safari → Partager → « Sur
+              l&apos;écran d&apos;accueil »), puis Réglages → Notifications → ZINDO.
+            </li>
+          </ul>
+          <p>Le bouton « Activer sur cet appareil » apparaîtra ensuite ici.</p>
+        </div>
       )}
       {status !== "denied" && (
         <Button type="button" variant={status === "enabled" ? "outline" : "primary"} disabled={pending} onClick={status === "enabled" ? disable : enable}>

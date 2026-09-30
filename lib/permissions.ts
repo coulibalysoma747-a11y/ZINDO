@@ -9,6 +9,8 @@ export const PERMISSIONS = {
   STOCK_MANAGE: "stock.gerer",
   SALES_CREATE: "ventes.creer",
   SALES_VIEW: "ventes.consulter",
+  /** Supprimer définitivement une vente déjà annulée (flag alerte_vente_annulee) — Administrateur seulement par défaut. */
+  SALES_DELETE: "ventes.supprimer",
   CUSTOMERS_VIEW: "clients.consulter",
   CUSTOMERS_MANAGE: "clients.gerer",
   SUPPLIERS_MANAGE: "fournisseurs.gerer",
@@ -93,6 +95,7 @@ export const PERMISSION_LABELS: Record<string, string> = {
   [PERMISSIONS.STOCK_MANAGE]: "Gérer le stock (entrées/sorties)",
   [PERMISSIONS.SALES_CREATE]: "Effectuer des ventes",
   [PERMISSIONS.SALES_VIEW]: "Consulter les ventes",
+  [PERMISSIONS.SALES_DELETE]: "Supprimer une vente annulée",
   [PERMISSIONS.CUSTOMERS_VIEW]: "Consulter les clients",
   [PERMISSIONS.CUSTOMERS_MANAGE]: "Gérer les clients",
   [PERMISSIONS.SUPPLIERS_MANAGE]: "Gérer les fournisseurs",

@@ -19,6 +19,7 @@ import { getBusinessSettings } from "@/lib/business-settings";
 import { isDebtExemptionEnabled } from "@/lib/debt-exemption";
 import { findMiscItemProductIds, MISC_ITEM_REFERENCE } from "@/lib/misc-item";
 import { sendPushToBusiness } from "@/lib/push";
+import { isSaleCancelAlertEnabled, sendSaleCancelAlert, sendSaleDeleteAlert } from "@/lib/sale-cancel-alert";
 import { formatMoney } from "@/lib/format";
 import { consumeExpiryBatchesFefo } from "@/lib/actions/expiry";
 import { checkBelowCost, checkCancelRules, checkCreditLimit, checkMaxDiscount } from "@/lib/sale-rules";
@@ -760,10 +761,84 @@ async function cancelSaleImpl(saleId: string, reason?: string) {
     details: motif ? motif.slice(3) : undefined,
   });
 
+  // Alerte « Vente annulée » (flag alerte_vente_annulee) : après la réponse,
+  // pour ne pas ralentir l'annulation. Pas pour l'annulation d'un bon de retour.
+  if (!links.returnOfSaleId) {
+    after(() =>
+      sendSaleCancelAlert({
+        businessId: user.businessId,
+        saleId: sale.id as string,
+        saleNumber: sale.number as string,
+        total: Number(sale.total),
+        currency: user.business.currency,
+        userName: `${user.firstName} ${user.lastName}`.trim(),
+        reason,
+      })
+    );
+  }
+
   revalidatePath("/ventes/historique");
   revalidatePath(`/ventes/${sale.id}`);
   revalidatePath("/produits");
   return { success: "Vente annulée, stock réintégré" };
+}
+
+/**
+ * Suppression définitive d'une vente déjà annulée (flag alerte_vente_annulee,
+ * droit « Supprimer une vente annulée »). Le stock a déjà été réintégré par
+ * l'annulation : on ne touche plus au stock ici.
+ */
+export async function deleteCancelledSaleAction(saleId: string): Promise<{ error?: string; success?: string }> {
+  try {
+    const user = await requirePermission(PERMISSIONS.SALES_DELETE);
+    if (!(await isSaleCancelAlertEnabled(user.businessId))) return { error: "Fonction non disponible" };
+
+    const { data: sale } = await supabase
+      .from("sales")
+      .select("id, number, status, total")
+      .eq("id", saleId)
+      .eq("business_id", user.businessId)
+      .maybeSingle();
+    if (!sale) return { error: "Vente introuvable" };
+    if (sale.status !== "ANNULEE") return { error: "Annulez d'abord la vente avant de la supprimer." };
+
+    const { error } = await supabase.from("sales").delete().eq("id", sale.id).eq("business_id", user.businessId);
+    if (error) {
+      // 23503 : un autre document pointe encore vers cette vente (paiement,
+      // bon de retour, expédition, devis converti...).
+      if (error.code === "23503") {
+        return { error: "Cette vente est liée à d'autres documents (paiement, retour, expédition, devis...) : suppression impossible." };
+      }
+      console.error("[deleteCancelledSaleAction] Échec :", error.message);
+      return { error: "Impossible de supprimer la vente" };
+    }
+
+    const userName = `${user.firstName} ${user.lastName}`.trim();
+    after(async () => {
+      await logAction({
+        businessId: user.businessId,
+        userId: user.id,
+        action: "DELETE",
+        entity: "Sale",
+        entityId: sale.id as string,
+        details: `Vente annulée ${sale.number} supprimée (total ${sale.total})`,
+      });
+      await sendSaleDeleteAlert({
+        businessId: user.businessId,
+        saleNumber: sale.number as string,
+        total: Number(sale.total),
+        currency: user.business.currency,
+        userName,
+      });
+    });
+
+    revalidatePath("/ventes/historique");
+    return { success: "Vente supprimée" };
+  } catch (e) {
+    rethrowIfNavigationSignal(e);
+    console.error("[deleteCancelledSaleAction] Erreur inattendue :", e);
+    return { error: "Une erreur inattendue est survenue. Réessayez dans un instant." };
+  }
 }
 
 export async function getEnabledPaymentMethods() {

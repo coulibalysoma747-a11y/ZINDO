@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Pencil } from "lucide-react";
 import { requirePermission } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
+import { isSaleCancelAlertEnabled } from "@/lib/sale-cancel-alert";
 import { supabase } from "@/lib/supabase";
 import { findActivity } from "@/lib/activities";
 import { MEDICAL_ACTIVITY_KEY } from "@/lib/nav";
@@ -262,6 +263,8 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
     </Card>
   );
 
+  // Droit « Supprimer une vente annulée » : visible seulement avec le flag alerte_vente_annulee.
+  const saleDeleteEnabled = await isSaleCancelAlertEnabled(user.businessId);
   const permissionsCard = (
     <Card>
       <CardHeader>
@@ -270,6 +273,7 @@ export default async function SettingsPage({ searchParams }: { searchParams: Pro
       <CardBody>
         <PermissionsPanel
           overrides={(overrides ?? []) as unknown as { role: Role; permission: string; allowed: boolean }[]}
+          hiddenPermissions={saleDeleteEnabled ? [] : [PERMISSIONS.SALES_DELETE]}
         />
       </CardBody>
     </Card>

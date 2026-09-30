@@ -6,10 +6,13 @@ import { PasswordForm } from "./PasswordForm";
 import { ThemeSelector } from "./ThemeSelector";
 import { TwoFactorPanel } from "./TwoFactorPanel";
 import { PushNotificationsPanel } from "./PushNotificationsPanel";
+import { ensureSaleCancelAlertFlagRegistered } from "@/lib/sale-cancel-alert";
 import type { ThemePreference } from "@/lib/actions/preferences";
 
 export default async function ProfilePage() {
   const user = await requireUser();
+  // Fait apparaître le flag « Alerte vente annulée » dans /admin/fonctionnalites.
+  void ensureSaleCancelAlertFlagRegistered();
 
   return (
     <div className="max-w-2xl space-y-6">

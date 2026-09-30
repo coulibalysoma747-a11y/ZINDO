@@ -5,6 +5,7 @@ import { requirePermission } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
 import { supabase } from "@/lib/supabase";
 import { logAction } from "@/lib/audit";
+import { sendSalesWipeAlert } from "@/lib/sale-cancel-alert";
 
 export type WipeScope = "products" | "sales" | "purchases" | "transfers" | "stock" | "movements";
 
@@ -98,6 +99,20 @@ export async function wipeBusinessDataAction(
     entity: "DangerZone",
     details: `${SCOPE_LABELS[scope]}${locationId ? ` (boutique ${locationId})` : " (toute l'entreprise)"}`,
   });
+
+  // Alerte « Ventes effacées » (flag alerte_vente_annulee).
+  if (scope === "sales") {
+    let locationName: string | null = null;
+    if (locationId) {
+      const { data: loc } = await supabase.from("locations").select("name").eq("id", locationId).maybeSingle();
+      locationName = (loc?.name as string | undefined) ?? null;
+    }
+    await sendSalesWipeAlert({
+      businessId: user.businessId,
+      userName: `${user.firstName} ${user.lastName}`.trim(),
+      locationName,
+    });
+  }
 
   revalidatePath("/parametres");
   return { success: `${SCOPE_LABELS[scope]} vidé(s)` };

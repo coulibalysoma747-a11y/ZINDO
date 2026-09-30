@@ -11,8 +11,11 @@ const ROLES: Role[] = ["ADMIN", "VENDEUR", "GESTIONNAIRE_STOCK"];
 
 export function PermissionsPanel({
   overrides,
+  hiddenPermissions = [],
 }: {
   overrides: { role: Role; permission: string; allowed: boolean }[];
+  /** Droits d'une fonctionnalité encore désactivée pour ce commerce (flag). */
+  hiddenPermissions?: string[];
 }) {
   const [pending, startTransition] = useTransition();
   const router = useRouter();
@@ -37,7 +40,9 @@ export function PermissionsPanel({
           </TableRow>
         </TableHead>
         <TableBody>
-          {Object.values(PERMISSIONS).map((permission) => (
+          {Object.values(PERMISSIONS)
+            .filter((permission) => !hiddenPermissions.includes(permission))
+            .map((permission) => (
             <TableRow key={permission}>
               <TableCell className="text-zinc-700 dark:text-slate-300">{PERMISSION_LABELS[permission] ?? permission}</TableCell>
               {ROLES.map((role) => (

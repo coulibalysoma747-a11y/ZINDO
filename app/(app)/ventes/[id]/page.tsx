@@ -1,5 +1,8 @@
 import { notFound } from "next/navigation";
-import { requireUser } from "@/lib/auth";
+import { hasPermission, requireUser } from "@/lib/auth";
+import { PERMISSIONS } from "@/lib/permissions";
+import { isSaleCancelAlertEnabled } from "@/lib/sale-cancel-alert";
+import { DeleteSaleButton } from "./DeleteSaleButton";
 import { supabase } from "@/lib/supabase";
 import { getSaleDocumentAction } from "@/lib/actions/receipt";
 import { getInstallmentPlanAction } from "@/lib/actions/installments";
@@ -47,6 +50,17 @@ export default async function SaleReceiptPage({
       remainingDebt={returnInfo.remainingDebt}
     />
   ) : null;
+  // Suppression d'une vente annulée (flag alerte_vente_annulee + droit dédié).
+  const canDelete =
+    doc.isCancelled &&
+    (await isSaleCancelAlertEnabled(user.businessId)) &&
+    (await hasPermission(user.businessId, user.role, PERMISSIONS.SALES_DELETE, user.id));
+  const deletePanel = canDelete ? (
+    <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-red-200 bg-red-50 px-4 py-3 dark:border-red-900/50 dark:bg-red-950/30">
+      <p className="text-sm text-red-700 dark:text-red-300">Cette vente est annulée. Vous pouvez la supprimer définitivement.</p>
+      <DeleteSaleButton saleId={id} />
+    </div>
+  ) : null;
   // Une vente qui a des retours, ou un bon de retour, ne se modifie plus.
   const linkedToReturn = !!returnInfo && (!!returnInfo.original || returnInfo.returns.some((r) => r.status !== "ANNULEE"));
   const canEdit = doc.canEdit && !linkedToReturn;
@@ -71,6 +85,7 @@ export default async function SaleReceiptPage({
   if (doc.documentType === "FACTURE_ENGIN") {
     return (
       <>
+      {deletePanel}
       {returnPanel}
       <FactureEnginView
         data={doc.data}
@@ -87,6 +102,7 @@ export default async function SaleReceiptPage({
   if (doc.documentType === "FACTURE") {
     return (
       <>
+      {deletePanel}
       {returnPanel}
       <FactureView
         data={doc.data}
@@ -104,6 +120,7 @@ export default async function SaleReceiptPage({
 
   return (
     <>
+    {deletePanel}
     {returnPanel}
     <SaleReceiptView
       data={doc.data}
