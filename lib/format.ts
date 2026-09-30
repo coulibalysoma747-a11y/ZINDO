@@ -70,73 +70,53 @@ export function formatLongDate(date: Date | string) {
   return new Intl.DateTimeFormat("fr-FR", { day: "numeric", month: "long", year: "numeric" }).format(d);
 }
 
-const FR_UNITS = ["Zéro", "Un", "Deux", "Trois", "Quatre", "Cinq", "Six", "Sept", "Huit", "Neuf"];
-const FR_TEENS = ["Dix", "Onze", "Douze", "Treize", "Quatorze", "Quinze", "Seize"];
-const FR_TENS: Record<number, string> = { 2: "Vingt", 3: "Trente", 4: "Quarante", 5: "Cinquante", 6: "Soixante" };
+const FR_UNITS = ["zéro", "un", "deux", "trois", "quatre", "cinq", "six", "sept", "huit", "neuf"];
+const FR_TEENS = ["dix", "onze", "douze", "treize", "quatorze", "quinze", "seize", "dix-sept", "dix-huit", "dix-neuf"];
+const FR_TENS = ["", "", "vingt", "trente", "quarante", "cinquante", "soixante"];
 
-function frTeenOrOnes(n: number): string {
-  // n de 10 à 19
-  if (n < 17) return FR_TEENS[n - 10];
-  return `Dix ${FR_UNITS[n - 10]}`; // 17, 18, 19
-}
-
-function frUnder100(n: number): string {
+/** 0 à 99, orthographe traditionnelle : « vingt et un », « soixante-dix », « quatre-vingts ». */
+function frUnder100(n: number, final: boolean): string {
   if (n < 10) return FR_UNITS[n];
-  if (n < 17) return FR_TEENS[n - 10];
-  if (n < 20) return `Dix ${FR_UNITS[n - 10]}`;
+  if (n < 20) return FR_TEENS[n - 10];
   if (n < 70) {
     const t = Math.floor(n / 10);
     const u = n % 10;
     if (u === 0) return FR_TENS[t];
-    if (u === 1) return `${FR_TENS[t]} Et Un`;
-    return `${FR_TENS[t]} ${FR_UNITS[u]}`;
+    return u === 1 ? `${FR_TENS[t]} et un` : `${FR_TENS[t]}-${FR_UNITS[u]}`;
   }
-  if (n < 80) {
-    const u = n - 60; // 10..19
-    if (u === 11) return "Soixante Et Onze";
-    return `Soixante ${frTeenOrOnes(u)}`;
-  }
-  const u = n - 80; // 0..19
-  if (u === 0) return "Quatre Vingt"; // 80
-  if (u < 10) return `Quatre Vingt ${FR_UNITS[u]}`; // 81-89 : pas de "et" (contrairement à 21, 31...)
-  return `Quatre Vingt ${frTeenOrOnes(u)}`; // 90-99
+  if (n < 80) return n === 71 ? "soixante et onze" : `soixante-${FR_TEENS[n - 70]}`;
+  if (n === 80) return final ? "quatre-vingts" : "quatre-vingt";
+  if (n < 90) return `quatre-vingt-${FR_UNITS[n - 80]}`;
+  return `quatre-vingt-${FR_TEENS[n - 90]}`;
 }
 
-function frUnder1000(n: number): string {
-  if (n === 0) return "";
+/** 0 à 999 ; `final` : rien ne suit (« deux cents », « quatre-vingts ») — faux devant « mille ». */
+function frUnder1000(n: number, final: boolean): string {
   const h = Math.floor(n / 100);
   const rest = n % 100;
   const parts: string[] = [];
-  if (h > 0) {
-    if (h > 1) parts.push(FR_UNITS[h]);
-    parts.push("Cent");
-  }
-  if (rest > 0) parts.push(frUnder100(rest));
+  if (h > 0) parts.push(h === 1 ? "cent" : `${FR_UNITS[h]} ${rest === 0 && final ? "cents" : "cent"}`);
+  if (rest > 0 || h === 0) parts.push(frUnder100(rest, final));
   return parts.join(" ");
 }
 
 /**
- * Convertit un montant en toutes lettres, pour la mention "Arrêtée la
- * présente facture à la somme de : ..." des factures A4 — convention
- * commerciale ouest-africaine où "Cent"/"Vingt"/"Mille"/"Million" restent
- * invariables (jamais de -s), sans traits d'union entre les mots.
+ * Nombre entier en toutes lettres, orthographe française traditionnelle :
+ * « mille six cent quatre-vingt-dix », « deux cents », « trois millions ».
  */
 export function numberToFrenchWords(n: number): string {
   const value = Math.round(Math.abs(n));
-  if (value === 0) return "Zéro";
-
+  if (value === 0) return "zéro";
   const billions = Math.floor(value / 1_000_000_000);
   const millions = Math.floor((value % 1_000_000_000) / 1_000_000);
   const thousands = Math.floor((value % 1_000_000) / 1_000);
   const rest = value % 1000;
-
   const parts: string[] = [];
-  if (billions > 0) parts.push(`${frUnder1000(billions)} Milliard`);
-  if (millions > 0) parts.push(`${frUnder1000(millions)} Million`);
-  if (thousands > 0) parts.push(thousands === 1 ? "Mille" : `${frUnder1000(thousands)} Mille`);
-  if (rest > 0) parts.push(frUnder1000(rest));
-
-  return parts.join(" ").replace(/\s+/g, " ").trim();
+  if (billions > 0) parts.push(`${frUnder1000(billions, true)} milliard${billions > 1 ? "s" : ""}`);
+  if (millions > 0) parts.push(`${frUnder1000(millions, true)} million${millions > 1 ? "s" : ""}`);
+  if (thousands > 0) parts.push(thousands === 1 ? "mille" : `${frUnder1000(thousands, false)} mille`);
+  if (rest > 0) parts.push(frUnder1000(rest, true));
+  return parts.join(" ");
 }
 
 export function startOfToday() {
@@ -196,5 +176,6 @@ export function amountInWords(amount: number, currency = "XOF"): string {
   const units = Math.floor(rounded);
   const cents = Math.round((rounded - units) * 100);
   const main = `${numberToFrenchWords(units)} ${currencyWords(currency, units >= 2)}`;
-  return cents > 0 ? `${main} et ${numberToFrenchWords(cents).toLowerCase()} centime${cents > 1 ? "s" : ""}` : main;
+  // Majuscules, comme sur les factures officielles (choix du propriétaire, 30/09/2026).
+  return (cents > 0 ? `${main} et ${numberToFrenchWords(cents)} centime${cents > 1 ? "s" : ""}` : main).toUpperCase();
 }
