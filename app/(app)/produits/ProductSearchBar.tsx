@@ -11,6 +11,7 @@ export function ProductSearchBar({
   brands,
   showPackagingFilter = false,
   compactOnMobile = false,
+  pro = false,
 }: {
   categories: { id: string; name: string }[];
   brands: { id: string; name: string }[];
@@ -18,6 +19,8 @@ export function ProductSearchBar({
   showPackagingFilter?: boolean;
   /** Téléphone : filtres repliés derrière un bouton « Filtres » (flag produits_mobile). */
   compactOnMobile?: boolean;
+  /** Interface pro : recherche et filtres sur une seule ligne. */
+  pro?: boolean;
 }) {
   const router = useRouter();
   const pathname = usePathname();
@@ -33,6 +36,41 @@ export function ProductSearchBar({
     else params.delete(key);
     params.delete("page");
     startTransition(() => router.push(`${pathname}?${params.toString()}`));
+  }
+
+  if (pro) {
+    const selectClass = "!h-[42px] !w-auto min-w-[170px] !rounded-xl";
+    return (
+      <div className="flex min-w-0 flex-wrap items-center gap-3">
+        <div className="min-w-[240px] flex-1">
+          <SearchInput
+            placeholder="Rechercher par nom, référence ou code-barres…"
+            aria-label="Rechercher un produit"
+            defaultValue={searchParams.get("q") ?? ""}
+            onChange={(e) => updateParam("q", e.target.value)}
+          />
+        </div>
+        <Select aria-label="Catégorie" className={selectClass} defaultValue={searchParams.get("categorie") ?? ""} onChange={(e) => updateParam("categorie", e.target.value)}>
+          <option value="">Catégorie : toutes</option>
+          {categories.map((c) => (
+            <option key={c.id} value={c.id}>{c.name}</option>
+          ))}
+        </Select>
+        <Select aria-label="Marque" className={selectClass} defaultValue={searchParams.get("marque") ?? ""} onChange={(e) => updateParam("marque", e.target.value)}>
+          <option value="">Marque : toutes</option>
+          {brands.map((b) => (
+            <option key={b.id} value={b.name}>{b.name}</option>
+          ))}
+        </Select>
+        {showPackagingFilter && (
+          <Select aria-label="Conditionnement" className={selectClass} defaultValue={searchParams.get("conditionnement") ?? ""} onChange={(e) => updateParam("conditionnement", e.target.value)}>
+            <option value="">Conditionnement : tous</option>
+            <option value="avec">Avec conditionnement</option>
+            <option value="sans">Sans conditionnement</option>
+          </Select>
+        )}
+      </div>
+    );
   }
 
   return (

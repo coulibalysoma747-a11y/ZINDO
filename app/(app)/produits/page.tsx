@@ -50,7 +50,13 @@ export default async function ProductsPage({
     isFeatureEnabled("interface_pro", user.businessId),
   ]);
   const cartes = pro && vue === "cartes";
-  const canManage = pro && (await hasPermission(user.businessId, user.role, PERMISSIONS.PRODUCTS_MANAGE, user.id));
+  const [canManage, canSeeMargin] = pro
+    ? await Promise.all([
+        hasPermission(user.businessId, user.role, PERMISSIONS.PRODUCTS_MANAGE, user.id),
+        // La marge révèle les prix d'achat : réservée à qui peut consulter les rapports.
+        hasPermission(user.businessId, user.role, PERMISSIONS.REPORTS_VIEW, user.id),
+      ])
+    : [false, false];
   const productsLabel = resolveTerm(activityConfig, "products");
 
   // Le filtre par statut de stock ("rupture"/"stock-faible") se calcule après
@@ -85,7 +91,7 @@ export default async function ProductsPage({
   let query = supabase
     .from("products")
     .select(
-      "id, name, reference, brand, unit, salePrice:sale_price, minStock:min_stock, photoUrl:photo_url, categoryId:category_id, category:categories(name), trackUnits:track_units"
+      "id, name, reference, brand, unit, salePrice:sale_price, minStock:min_stock, photoUrl:photo_url, categoryId:category_id, category:categories(name), trackUnits:track_units, purchasePrice:purchase_price"
     )
     .eq("business_id", user.businessId)
     .eq("active", true)
@@ -241,15 +247,35 @@ export default async function ProductsPage({
               {totalCount ?? 0} produit(s){totalPages > 1 ? ` · page ${currentPage}/${totalPages}` : ""} · stock de {currentLocation?.name ?? "—"}
             </p>
           </div>
-          <div className={`items-center gap-2 ${mobileLayout ? "hidden sm:flex" : "flex"}`}>
-            <details className="group relative">
-              <summary className="flex h-9 cursor-pointer list-none items-center gap-1.5 rounded-lg border border-zinc-300 bg-white px-3 text-sm font-medium text-zinc-700 hover:border-zinc-400 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200">
-                <Wrench className="h-4 w-4" /> Outils <ChevronDown className="h-3.5 w-3.5 transition group-open:rotate-180" />
-              </summary>
-              <div className="absolute right-0 z-20 mt-2 flex w-60 flex-col gap-1.5 rounded-xl border border-zinc-200 bg-white p-2 shadow-xl dark:border-slate-700 dark:bg-slate-900 [&>a]:w-full [&>a]:justify-start">
-                {tools}
-              </div>
-            </details>
+          <div className={`flex-wrap items-center gap-2 ${mobileLayout ? "hidden sm:flex" : "flex"}`}>
+            <ButtonLink href="/produits/importer-csv" variant="outline">
+              <FileUp className="h-4 w-4" /> Importer
+            </ButtonLink>
+            <ButtonLink href="/produits/export" variant="outline">
+              <FileDown className="h-4 w-4" /> Exporter
+            </ButtonLink>
+            <ButtonLink href="/produits/etiquettes" variant="outline">
+              <QrCode className="h-4 w-4" /> Étiquettes
+            </ButtonLink>
+            {(trashEnabled || catalogImportEnabled) && (
+              <details className="group relative">
+                <summary className="flex h-9 cursor-pointer list-none items-center gap-1.5 rounded-lg border border-zinc-300 bg-white px-3 text-sm font-medium text-zinc-700 hover:border-zinc-400 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200">
+                  Plus <ChevronDown className="h-3.5 w-3.5 transition group-open:rotate-180" />
+                </summary>
+                <div className="absolute right-0 z-20 mt-2 flex w-60 flex-col gap-1.5 rounded-xl border border-zinc-200 bg-white p-2 shadow-xl dark:border-slate-700 dark:bg-slate-900 [&>a]:w-full [&>a]:justify-start">
+                  {trashEnabled && (
+                    <ButtonLink href="/produits/corbeille" variant="outline">
+                      <Trash2 className="h-4 w-4" /> Corbeille
+                    </ButtonLink>
+                  )}
+                  {catalogImportEnabled && (
+                    <ButtonLink href="/produits/importer" variant="outline">
+                      <FileUp className="h-4 w-4" /> Importer un catalogue
+                    </ButtonLink>
+                  )}
+                </div>
+              </details>
+            )}
             <div className="hidden sm:block">
               <ButtonLink href="/produits/nouveau">
                 <Plus className="h-4 w-4" /> Nouveau produit
@@ -296,7 +322,7 @@ export default async function ProductsPage({
         </div>
       )}
 
-      <CatalogTabs active="produits" />
+      <CatalogTabs active="produits" pro={pro} />
 
       {pro && compteurs && (
         <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
@@ -306,28 +332,28 @@ export default async function ProductsPage({
           <StatCard label="En rupture" value={String(compteurs.rupture)} icon={PackageX} tone={compteurs.rupture > 0 ? "red" : "emerald"} />
         </div>
       )}
-      <ProductSearchBar categories={categories ?? []} brands={brands ?? []} showPackagingFilter={packagingEnabled} compactOnMobile={mobileLayout} />
+      <ProductSearchBar pro={pro} categories={categories ?? []} brands={brands ?? []} showPackagingFilter={packagingEnabled} compactOnMobile={mobileLayout} />
       {pro && compteurs && (
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="flex flex-wrap gap-2">
+          <div className="inline-flex rounded-xl border border-zinc-200 bg-white p-1 dark:border-slate-700 dark:bg-slate-900">
             {[
-              { key: null, label: "Tous", n: compteurs.tous, tone: "bg-zinc-900 text-white", idle: "border border-zinc-200 bg-white text-zinc-700" },
-              { key: "stock-faible", label: "Stock faible", n: compteurs.faible, tone: "bg-amber-500 text-white", idle: "border border-amber-200 bg-amber-50 text-amber-800" },
-              { key: "rupture", label: "Rupture", n: compteurs.rupture, tone: "bg-red-600 text-white", idle: "border border-red-200 bg-red-50 text-red-700" },
+              { key: null, label: "Tous", n: compteurs.tous, tone: "bg-[#0f7a4a] text-white", idle: "text-zinc-600 hover:text-zinc-900" },
+              { key: "stock-faible", label: "Stock faible", n: compteurs.faible, tone: "bg-[#0f7a4a] text-white", idle: "text-zinc-600 hover:text-zinc-900" },
+              { key: "rupture", label: "Rupture", n: compteurs.rupture, tone: "bg-[#0f7a4a] text-white", idle: "text-zinc-600 hover:text-zinc-900" },
             ].map((c) => {
               const actif = (filtre ?? null) === c.key;
               return (
-                <Link key={c.label} href={lienProduits({ filtre: c.key })} className={`inline-flex items-center gap-2 rounded-full px-3.5 py-1.5 text-sm font-medium transition ${actif ? c.tone : c.idle}`}>
+                <Link key={c.label} href={lienProduits({ filtre: c.key })} className={`inline-flex items-center gap-2 rounded-lg px-3.5 py-1.5 text-sm font-medium transition ${actif ? c.tone : c.idle}`}>
                   {c.label} <span className="tabular-nums opacity-80">{c.n}</span>
                 </Link>
               );
             })}
           </div>
-          <div className="hidden overflow-hidden rounded-lg border border-zinc-300 text-sm sm:flex dark:border-slate-700">
-            <Link href={lienProduits({ vue: null })} className={`px-3 py-1.5 font-medium ${cartes ? "bg-white text-zinc-600 hover:text-zinc-900 dark:bg-slate-900" : "bg-zinc-900 text-white"}`}>
+          <div className="hidden gap-1 rounded-xl border border-zinc-200 bg-white p-1 text-sm sm:flex dark:border-slate-700 dark:bg-slate-900">
+            <Link href={lienProduits({ vue: null })} className={`rounded-lg px-3 py-1.5 font-medium ${cartes ? "bg-white text-zinc-600 hover:text-zinc-900 dark:bg-slate-900" : "bg-[#0f7a4a] text-white"}`}>
               Liste
             </Link>
-            <Link href={lienProduits({ vue: "cartes" })} className={`px-3 py-1.5 font-medium ${cartes ? "bg-zinc-900 text-white" : "bg-white text-zinc-600 hover:text-zinc-900 dark:bg-slate-900"}`}>
+            <Link href={lienProduits({ vue: "cartes" })} className={`rounded-lg px-3 py-1.5 font-medium ${cartes ? "bg-[#0f7a4a] text-white" : "bg-white text-zinc-600 hover:text-zinc-900 dark:bg-slate-900"}`}>
               Cartes
             </Link>
           </div>
@@ -378,11 +404,12 @@ export default async function ProductsPage({
               <TableHead>
                 <TableRow interactive={false}>
                   <TableHeaderCell>Produit</TableHeaderCell>
-                  <TableHeaderCell>Référence</TableHeaderCell>
+                  {!pro && <TableHeaderCell>Référence</TableHeaderCell>}
                   <TableHeaderCell>Catégorie</TableHeaderCell>
                   <TableHeaderCell align="right">Prix de vente</TableHeaderCell>
+                  {canSeeMargin && <TableHeaderCell align="right">Marge</TableHeaderCell>}
                   <TableHeaderCell align="right">Stock ({currentLocation?.name ?? "—"})</TableHeaderCell>
-                  <TableHeaderCell>Statut</TableHeaderCell>
+                  {!pro && <TableHeaderCell>Statut</TableHeaderCell>}
                   <TableHeaderCell />
                 </TableRow>
               </TableHead>
@@ -396,6 +423,7 @@ export default async function ProductsPage({
                           <Link href={`/produits/${p.id}`} className="font-medium text-zinc-900 hover:text-emerald-600 dark:text-slate-100">
                             {p.name as string}
                           </Link>
+                          {pro && <p className="font-mono text-xs text-zinc-400">{p.reference as string}</p>}
                           {p.brand ? <p className="text-xs text-zinc-400">{p.brand as string}</p> : null}
                           {p.aliases.length > 0 && (
                             <p className="truncate text-xs text-zinc-400">Aussi : {p.aliases.join(", ")}</p>
@@ -403,14 +431,31 @@ export default async function ProductsPage({
                         </div>
                       </div>
                     </TableCell>
-                    <TableCell className="font-mono text-xs text-zinc-500">{p.reference as string}</TableCell>
+                    {!pro && <TableCell className="font-mono text-xs text-zinc-500">{p.reference as string}</TableCell>}
                     <TableCell className="text-zinc-600 dark:text-slate-400">{p.category?.name ?? "—"}</TableCell>
                     <TableCell align="right" className="font-medium tabular-nums text-zinc-900 dark:text-slate-100">
                       {formatMoney(p.salePrice as number, user.business.currency)}
                     </TableCell>
+                    {canSeeMargin && (
+                      <TableCell align="right" className="tabular-nums text-zinc-600 dark:text-slate-400">
+                        {Number(p.salePrice) - (Number(p.purchasePrice) || 0) >= 0 ? "+ " : "− "}
+                        {formatMoney(Math.abs(Number(p.salePrice) - (Number(p.purchasePrice) || 0)), user.business.currency)}
+                      </TableCell>
+                    )}
                     <TableCell align="right" className="tabular-nums text-zinc-700 dark:text-slate-300">
-                      {p.quantity} {p.unit as string}
+                      {pro ? (
+                        p.quantity <= 0 ? (
+                          <Badge tone="red">Rupture</Badge>
+                        ) : p.quantity <= (p.minStock as number) ? (
+                          <Badge tone="amber">Faible · {p.quantity}</Badge>
+                        ) : (
+                          <Badge tone="emerald">{p.quantity} {p.unit as string}</Badge>
+                        )
+                      ) : (
+                        <>{p.quantity} {p.unit as string}</>
+                      )}
                     </TableCell>
+                    {!pro && (
                     <TableCell>
                       {p.quantity <= 0 ? (
                         <Badge tone="red">Rupture</Badge>
@@ -420,6 +465,7 @@ export default async function ProductsPage({
                         <Badge tone="emerald">En stock</Badge>
                       )}
                     </TableCell>
+                    )}
                     <TableCell align="right">
                       <div className="flex items-center justify-end gap-1">
                         {packagingEnabled && !p.trackUnits && (
