@@ -40,6 +40,7 @@ const TEXT = {
     submitting: "Création de votre compte…",
     submit: "Créer mon compte",
     reassurance: (days: number) => [`${days} jours d'essai gratuit`, "Sans carte bancaire", "Données protégées"],
+    marketReassurance: ["Gratuit pour vendre sur le Marché", "Aucune commission", "Données protégées"],
     referral: "Code de parrainage (facultatif)",
     cguHref: "/cgu",
     confidentialiteHref: "/confidentialite",
@@ -73,6 +74,7 @@ const TEXT = {
     submitting: "Creating your account…",
     submit: "Create my account",
     reassurance: (days: number) => [`${days}-day free trial`, "No credit card", "Data protected"],
+    marketReassurance: ["Free to sell on the Market", "No commission", "Data protected"],
     referral: "Referral code (optional)",
     cguHref: "/en/cgu",
     confidentialiteHref: "/en/confidentialite",
@@ -89,6 +91,7 @@ export function RegisterForm({
   referralCode = null,
   showReferralField = false,
   trialDays = 14,
+  marketSeller = false,
 }: {
   locale?: "fr" | "en";
   /** Code reçu via un lien de parrainage (zindo.site/r/CODE) — voir lib/referral.ts. */
@@ -97,6 +100,8 @@ export function RegisterForm({
   showReferralField?: boolean;
   /** Durée de l'essai gratuit affichée sous le bouton. */
   trialDays?: number;
+  /** Arrivée depuis « Vendre sur le Marché » : ni essai ni paiement à afficher. */
+  marketSeller?: boolean;
 }) {
   const [state, action, pending] = useActionState(registerAction, undefined);
   const [countryCode, setCountryCode] = useState<CountryCode>(DEFAULT_COUNTRY_CODE);
@@ -229,7 +234,7 @@ export function RegisterForm({
 
       {/* Réassurance. */}
       <ul className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1 border-t border-zinc-100 pt-4 text-xs text-zinc-500">
-        {t.reassurance(trialDays).map((item, i) => (
+        {(marketSeller ? t.marketReassurance : t.reassurance(trialDays)).map((item, i) => (
           <li key={item} className="inline-flex items-center gap-1.5">
             {i === 0 ? <Check className="h-3.5 w-3.5 text-zindo-green-600" /> : i === 1 ? <Lock className="h-3.5 w-3.5 text-zindo-green-600" /> : <ShieldCheck className="h-3.5 w-3.5 text-zindo-green-600" />}
             {item}

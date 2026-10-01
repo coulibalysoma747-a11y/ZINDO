@@ -157,9 +157,9 @@ export default async function MarketHomePage({ searchParams }: { searchParams: P
       <section className="flex flex-col items-start justify-between gap-4 rounded-3xl bg-zinc-900 p-6 text-white sm:flex-row sm:items-center sm:p-8">
         <div>
           <p className="text-lg font-bold">Vous êtes commerçant ?</p>
-          <p className="text-sm text-white/70">Publiez vos produits du stock ZINDO sur le Marché, gratuitement. Prix et quantités restent synchronisés.</p>
+          <p className="text-sm text-white/70">Vendez sur le Marché gratuitement, sans abonnement ni commission. Vous ne payez que pour mettre vos produits en avant.</p>
         </div>
-        <Link href="/inscription" className="shrink-0 rounded-xl bg-zindo-green-500 px-5 py-3 text-sm font-bold text-white hover:bg-zindo-green-600">
+        <Link href="/inscription?vendeur=marche" className="shrink-0 rounded-xl bg-zindo-green-500 px-5 py-3 text-sm font-bold text-white hover:bg-zindo-green-600">
           Vendre sur le Marché
         </Link>
       </section>
