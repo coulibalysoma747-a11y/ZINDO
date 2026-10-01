@@ -9,6 +9,7 @@ import { bulkMarketListingAction } from "@/lib/actions/market";
 import { MARKET_CATEGORIES } from "@/lib/market";
 import { PublishToMarket } from "../PublishToMarket";
 import { ListingPhotos } from "./ListingPhotos";
+import { ProductDeleteButton } from "@/components/products/ProductDeleteButton";
 
 export type ProductRow = {
   id: string;
@@ -123,6 +124,7 @@ export function ProductsTable({ rows, marketOnly = false }: { rows: ProductRow[]
                   Modifier
                 </Link>
               )}
+              {marketOnly && <ProductDeleteButton id={p.id} name={p.name} />}
               <PublishToMarket productId={p.id} salePrice={p.salePrice} initial={p.listing} hasPhoto={!!p.photoUrl?.trim()} compact />
             </div>
             {p.listing?.removedByAdmin && (

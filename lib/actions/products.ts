@@ -639,3 +639,32 @@ export async function deleteArchivedProductAction(id: string, force = false): Pr
   revalidatePath("/produits/corbeille");
   return { success: "Produit supprimé définitivement" };
 }
+
+/**
+ * Supprime un produit en une fois (liste du vendeur du Marché, qui n'a pas de corbeille) : archivé puis effacé.
+ * S'il a déjà servi (commandes, ventes…), la base refuse l'effacement : il est alors retiré pour toujours,
+ * son nom restant lisible dans les anciens documents.
+ */
+export async function deleteProductNowAction(id: string): Promise<{ success?: string; error?: string }> {
+  const user = await requirePermission(PERMISSIONS.PRODUCTS_MANAGE);
+  const { data: product } = await supabase.from("products").select("id, active").eq("id", id).eq("business_id", user.businessId).maybeSingle();
+  if (!product) return { error: "Produit introuvable" };
+  if (product.active) {
+    const { error: archiveError } = await supabase
+      .from("products")
+      .update({ active: false, updated_at: new Date().toISOString() })
+      .eq("id", id)
+      .eq("business_id", user.businessId);
+    if (archiveError) {
+      console.error("[deleteProductNowAction] Archivage impossible :", archiveError.message);
+      return { error: "Impossible de supprimer le produit" };
+    }
+  }
+  let result = await deleteProductForever(user.businessId, id);
+  if ("error" in result && result.blocked) result = await removeProductKeepingHistory(user.businessId, id);
+  if ("error" in result) return { error: result.error };
+  await logAction({ businessId: user.businessId, userId: user.id, action: "DELETE", entity: "Product", entityId: id });
+  revalidatePath("/produits");
+  revalidatePath("/mon-marche/produits");
+  return { success: "Produit supprimé" };
+}
