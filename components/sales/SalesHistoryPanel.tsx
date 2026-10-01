@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { Eye, Pencil } from "lucide-react";
+import { Eye, Pencil, ShoppingCart, Wallet, Ticket, PiggyBank } from "lucide-react";
+import { StatCard } from "@/components/ui/StatCard";
 import { hasPermission } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
 import { supabase } from "@/lib/supabase";
@@ -179,6 +180,13 @@ export async function SalesHistoryPanel({
         </p>
       )}
 
+      {pro ? (
+        <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+          {stats.map((st, i) => (
+            <StatCard key={st.label} label={st.label} value={st.value} icon={[ShoppingCart, Wallet, Ticket, PiggyBank][i] ?? Wallet} hint={st.hint} />
+          ))}
+        </div>
+      ) : (
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         {stats.map((s) => (
           <Card key={s.label} className="p-3">
@@ -188,6 +196,7 @@ export async function SalesHistoryPanel({
           </Card>
         ))}
       </div>
+      )}
 
       {showSellers && sellers.length > 0 && (
         <Card className="space-y-3 p-4">
