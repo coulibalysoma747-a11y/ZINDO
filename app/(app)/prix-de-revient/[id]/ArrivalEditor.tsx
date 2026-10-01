@@ -196,7 +196,9 @@ export function ArrivalEditor({ arrival, items, expenses, suppliers, purchases, 
         <p className="rounded-xl bg-zinc-100 p-3 text-sm text-zinc-700">
           {arrival.status === "EN_COURS"
             ? "L'application de cet arrivage a été interrompue. Cliquez sur « Appliquer » pour la reprendre : les lignes déjà faites ne seront pas refaites."
-            : "Cet arrivage est verrouillé pour garder une trace fiable. Vous pouvez le copier pour en refaire un semblable."}
+            : arrival.status === "RETABLI"
+              ? `Les anciens prix ont été remis${arrival.revertedAt ? ` le ${new Date(arrival.revertedAt).toLocaleDateString("fr-FR")}` : ""} ; le stock n'a pas été modifié. L'arrivage reste verrouillé : copiez-le pour en refaire un semblable.`
+              : "Cet arrivage est verrouillé pour garder une trace fiable. Vous pouvez le copier pour en refaire un semblable."}
         </p>
       )}
       {notice && (
@@ -584,7 +586,7 @@ export function ArrivalEditor({ arrival, items, expenses, suppliers, purchases, 
           <CardBody className="space-y-3">
             <p className="text-sm font-semibold text-zinc-900">Résultat, ligne par ligne</p>
             <div className="overflow-x-auto">
-              <table className="w-full min-w-[920px] text-sm">
+              <table className="w-full min-w-[980px] text-sm [&_td]:px-2 [&_th]:px-2">
                 <thead>
                   <tr className="text-left text-xs text-zinc-500">
                     <th className="pb-2 font-medium">Produit</th>
