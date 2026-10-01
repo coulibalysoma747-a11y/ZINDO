@@ -1,3 +1,4 @@
+import { MARKET_ONLY_ACTIVITY_KEY } from "@/lib/market";
 import { notFound } from "next/navigation";
 import { requirePermission } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
@@ -68,6 +69,7 @@ export default async function EditProductPage({
         customFieldDefs={activityConfig.customFields}
         showTrackUnits={user.business.activityKey === MOTO_ACTIVITY_KEY}
         showUnitsPerCarton={unitsPerCartonEnabled}
+        marketSeller={user.business.activityKey === MARKET_ONLY_ACTIVITY_KEY}
         initial={{
           name: product.name as string,
           reference: product.reference as string,

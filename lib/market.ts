@@ -16,6 +16,25 @@ export const MARKET_EXCLUDED_ACTIVITIES = ["ecole"];
 export const MARKET_ONLY_ACTIVITY_KEY = "vendeur_marche";
 export const MARKET_ONLY_FLAG = "vendeur_marche_seul";
 
+/** Entrées du menu visibles pour un « Vendeur du Marché » : rien d'autre. */
+export const MARKET_ONLY_NAV_HREFS = ["/mon-marche", "/produits", "/parametres", "/support"];
+
+/** Pages ouvertes à un « Vendeur du Marché » (les autres le renvoient vers Mon Marché, même en tapant l'adresse). */
+const MARKET_ONLY_PATH_PREFIXES = [
+  "/mon-marche",
+  "/produits",
+  "/categories",
+  "/marques",
+  "/photos-produits",
+  "/parametres",
+  "/profil",
+  "/support",
+];
+
+export function isMarketOnlyAllowedPath(pathname: string): boolean {
+  return MARKET_ONLY_PATH_PREFIXES.some((p) => pathname === p || pathname.startsWith(`${p}/`));
+}
+
 /** Catégories communes à tout le Marché, distinctes des catégories propres à chaque commerçant. */
 export const MARKET_CATEGORIES = [
   { key: "electronique", label: "Électronique" },

@@ -1,3 +1,4 @@
+import { MARKET_ONLY_ACTIVITY_KEY } from "@/lib/market";
 import { requirePermission } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
 import { supabase } from "@/lib/supabase";
@@ -40,6 +41,7 @@ export default async function NewProductPage() {
         showTrackUnits={user.business.activityKey === MOTO_ACTIVITY_KEY}
         packagingEnabled={packagingEnabled}
         showUnitsPerCarton={unitsPerCartonEnabled}
+        marketSeller={user.business.activityKey === MARKET_ONLY_ACTIVITY_KEY}
         submitLabel="Créer le produit"
         allowOffline
       />

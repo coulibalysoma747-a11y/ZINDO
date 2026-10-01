@@ -1,5 +1,5 @@
 import "server-only";
-import { MARKET_EXCLUDED_ACTIVITIES } from "@/lib/market";
+import { MARKET_EXCLUDED_ACTIVITIES, MARKET_ONLY_ACTIVITY_KEY, MARKET_ONLY_NAV_HREFS } from "@/lib/market";
 import { NAV_ITEMS, type NavItem } from "@/lib/nav";
 import { hasPermission } from "@/lib/auth";
 import { isFeatureEnabled } from "@/lib/feature-flags";
@@ -53,7 +53,8 @@ export async function getNavItemsAvailability(
         activityConfig.hiddenNavHrefs.includes(item.href) ||
         !matchesRequiredActivity(item, activityKey) ||
         // Activités exclues du Marché (école) : pas de « Mon Marché ».
-        (item.href === "/mon-marche" && !!activityKey && MARKET_EXCLUDED_ACTIVITIES.includes(activityKey));
+        (item.href === "/mon-marche" && !!activityKey && MARKET_EXCLUDED_ACTIVITIES.includes(activityKey)) ||
+        (activityKey === MARKET_ONLY_ACTIVITY_KEY && !MARKET_ONLY_NAV_HREFS.includes(item.href));
 
       let reason: ModuleUnavailableReason | null = null;
       if (!permissionOk) reason = "permission";
@@ -94,7 +95,9 @@ export async function getVisibleNavItems(
         activityConfig.hiddenNavHrefs.includes(item.href) ||
         !matchesRequiredActivity(item, activityKey) ||
         // Activités exclues du Marché (école) : pas de « Mon Marché ».
-        (item.href === "/mon-marche" && !!activityKey && MARKET_EXCLUDED_ACTIVITIES.includes(activityKey));
+        (item.href === "/mon-marche" && !!activityKey && MARKET_EXCLUDED_ACTIVITIES.includes(activityKey)) ||
+        // « Vendeur du Marché » : seulement ce qui le regarde.
+        (activityKey === MARKET_ONLY_ACTIVITY_KEY && !MARKET_ONLY_NAV_HREFS.includes(item.href));
       return { item, allowed: permissionOk && featureOk && planOk && moduleOk && !hiddenByActivity };
     })
   );

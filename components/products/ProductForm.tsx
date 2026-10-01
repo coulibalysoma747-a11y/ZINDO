@@ -29,6 +29,7 @@ export function ProductForm({
   showTrackUnits = false,
   packagingEnabled = false,
   showUnitsPerCarton = false,
+  marketSeller = false,
   initial,
   submitLabel,
   allowOffline = false,
@@ -46,6 +47,8 @@ export function ProductForm({
   packagingEnabled?: boolean;
   /** Réassort intelligent activé (module "bons-de-commande") : affiche le champ "Nombre par carton". */
   showUnitsPerCarton?: boolean;
+  /** « Vendeur du Marché » : sans notions de stock (prix d'achat, seuil, boutique du stock). */
+  marketSeller?: boolean;
   initial?: {
     name: string;
     reference: string;
@@ -153,18 +156,22 @@ export function ProductForm({
             newPlaceholder="Nouvelle marque..."
           />
         </Field>
-        <Field label="Prix d'achat" htmlFor="purchasePrice">
-          <Input
-            id="purchasePrice"
-            name="purchasePrice"
-            type="number" inputMode="decimal"
-            min={0}
-            step="any"
-            defaultValue={initial?.purchasePrice}
-            onChange={(e) => setPurchasePrice(e.target.value)}
-            required
-          />
-        </Field>
+        {marketSeller ? (
+          <input type="hidden" name="purchasePrice" value={initial?.purchasePrice ?? 0} />
+        ) : (
+          <Field label="Prix d'achat" htmlFor="purchasePrice">
+            <Input
+              id="purchasePrice"
+              name="purchasePrice"
+              type="number" inputMode="decimal"
+              min={0}
+              step="any"
+              defaultValue={initial?.purchasePrice}
+              onChange={(e) => setPurchasePrice(e.target.value)}
+              required
+            />
+          </Field>
+        )}
         <Field label="Prix de vente" htmlFor="salePrice">
           <Input
             id="salePrice"
@@ -177,32 +184,40 @@ export function ProductForm({
             required
           />
         </Field>
-        <MarginPreview purchasePrice={purchasePrice} salePrice={salePrice} />
+        {!marketSeller && <MarginPreview purchasePrice={purchasePrice} salePrice={salePrice} />}
         {!initial && (
           <>
-            <Field label="Quantité initiale" htmlFor="quantity">
+            <Field label={marketSeller ? "Quantité disponible" : "Quantité initiale"} htmlFor="quantity">
               <Input id="quantity" name="quantity" type="number" min={0} defaultValue={0} />
             </Field>
-            <Field label="Boutique du stock initial" htmlFor="locationId">
-              <Select id="locationId" name="locationId" defaultValue={defaultLocationId ?? ""}>
-                {locations.map((l) => (
-                  <option key={l.id} value={l.id}>
-                    {l.name}
-                  </option>
-                ))}
-              </Select>
-            </Field>
+            {marketSeller ? (
+              <input type="hidden" name="locationId" value={defaultLocationId ?? locations[0]?.id ?? ""} />
+            ) : (
+              <Field label="Boutique du stock initial" htmlFor="locationId">
+                <Select id="locationId" name="locationId" defaultValue={defaultLocationId ?? ""}>
+                  {locations.map((l) => (
+                    <option key={l.id} value={l.id}>
+                      {l.name}
+                    </option>
+                  ))}
+                </Select>
+              </Field>
+            )}
           </>
         )}
-        <Field label="Stock minimum (seuil d'alerte)" htmlFor="minStock">
-          <Input
-            id="minStock"
-            name="minStock"
-            type="number"
-            min={0}
-            defaultValue={initial?.minStock ?? 5}
-          />
-        </Field>
+        {marketSeller ? (
+          <input type="hidden" name="minStock" value={initial?.minStock ?? 5} />
+        ) : (
+          <Field label="Stock minimum (seuil d'alerte)" htmlFor="minStock">
+            <Input
+              id="minStock"
+              name="minStock"
+              type="number"
+              min={0}
+              defaultValue={initial?.minStock ?? 5}
+            />
+          </Field>
+        )}
         {showUnitsPerCarton && (
           <Field
             label="Nombre par carton (facultatif)"

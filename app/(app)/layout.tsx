@@ -23,6 +23,7 @@ import { ImpersonationBanner } from "@/components/layout/ImpersonationBanner";
 import { AnnouncementBanner } from "@/components/layout/AnnouncementBanner";
 import { HasPhysicalStoreBanner } from "@/components/layout/HasPhysicalStoreBanner";
 import { roleLabels, PERMISSIONS } from "@/lib/permissions";
+import { MARKET_ONLY_ACTIVITY_KEY, isMarketOnlyAllowedPath } from "@/lib/market";
 import { ensureDesktopOfflineFlagRegistered } from "@/lib/actions/desktop-offline";
 import { isBrowserOfflineEnabled } from "@/lib/actions/browser-offline";
 import { OfflineShell } from "@/components/layout/OfflineShell";
@@ -66,6 +67,11 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   // impayé) — sans quoi ce serait la seule page permettant de régler le
   // problème qui se retrouverait elle-même redirigée vers elle-même.
   if (!isImpersonating && !isBillingPage && subscriptionBlocked) redirect("/abonnement");
+
+  // « Vendeur du Marché » : ne voit que ce qui le regarde. Toute autre page
+  // (caisse, stock, achats…) le renvoie vers Mon Marché, même si l'adresse est tapée à la main.
+  const marketOnly = user.business.activityKey === MARKET_ONLY_ACTIVITY_KEY;
+  if (marketOnly && pathname && !isMarketOnlyAllowedPath(pathname)) redirect("/mon-marche");
 
   const [navItems, canSell, canManageProducts, canManageStock, canManagePurchases, offlineEnabled, globalSearchEnabled, menuSearchEnabled, salesHub, fourTabs, posPhone, selectOnFocus, interfacePro] = await Promise.all([
     getVisibleNavItems(user.businessId, user.role, user.id, user.business.activityKey, currentLocation?.id),
@@ -148,19 +154,19 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           <MobileTabBarFour
             navItems={navItems}
             menuItems={menuItems}
-            canSell={canSell}
+            canSell={canSell && !marketOnly}
             canManageProducts={canManageProducts}
-            canManageStock={canManageStock}
-            canManagePurchases={canManagePurchases}
+            canManageStock={canManageStock && !marketOnly}
+            canManagePurchases={canManagePurchases && !marketOnly}
             salesHub={salesHub}
           />
         ) : (
           <MobileTabBar
             navItems={navItems}
-            canSell={canSell}
+            canSell={canSell && !marketOnly}
             canManageProducts={canManageProducts}
-            canManageStock={canManageStock}
-            canManagePurchases={canManagePurchases}
+            canManageStock={canManageStock && !marketOnly}
+            canManagePurchases={canManagePurchases && !marketOnly}
             salesHub={salesHub}
           />
         )}
