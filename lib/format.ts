@@ -31,12 +31,15 @@ export function currencyLabel(currency: string): string {
   return CFA.has(currency) ? "FCFA" : SYMBOLS.get(currency) ?? currency;
 }
 
+/** Intl met une espace fine insécable (U+202F) entre les milliers, que beaucoup de polices affichent presque invisible (« 65830 ») : on la remplace par une espace insécable normale. */
+const readable = (n: string) => n.replaceAll(String.fromCharCode(0x202f), String.fromCharCode(0xa0));
+
 export function formatMoney(amount: number, currency = "XOF") {
-  if (CFA.has(currency)) return `${new Intl.NumberFormat("fr-FR").format(Math.round(amount))} FCFA`;
+  if (CFA.has(currency)) return `${readable(new Intl.NumberFormat("fr-FR").format(Math.round(amount)))} FCFA`;
   // Autres monnaies : décimales seulement si le montant en a (1 250 ₦, mais 12,50 €).
   const whole = Number.isInteger(Math.round(amount * 100) / 100);
   const number = new Intl.NumberFormat("fr-FR", whole ? { maximumFractionDigits: 0 } : { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(amount);
-  return `${number} ${currencyLabel(currency)}`;
+  return `${readable(number)} ${currencyLabel(currency)}`;
 }
 
 export function formatDate(date: Date | string) {

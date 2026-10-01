@@ -6,24 +6,6 @@ import { cn } from "@/lib/cn";
 import type { NavItem } from "@/lib/nav";
 import { NAV_ICONS } from "./nav-icons";
 
-// Menu en couleur (barre sombre, flag interface_pro) : chaque module a sa pastille,
-// couleur stable tirée de son adresse. Vert, or et rouge de ZINDO en premier.
-const TILE_COLORS = [
-  "group-data-[colored]/side:bg-[#10844a]",
-  "group-data-[colored]/side:bg-[#c98a0b]",
-  "group-data-[colored]/side:bg-[#c8322b]",
-  "group-data-[colored]/side:bg-[#0f7c86]",
-  "group-data-[colored]/side:bg-[#3b5bdb]",
-  "group-data-[colored]/side:bg-[#7c3aed]",
-  "group-data-[colored]/side:bg-[#b4531f]",
-  "group-data-[colored]/side:bg-[#0e7490]",
-];
-function tileColor(href: string) {
-  let h = 0;
-  for (const ch of href) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
-  return TILE_COLORS[h % TILE_COLORS.length];
-}
-
 export function SidebarLink({ item }: { item: NavItem }) {
   const pathname = usePathname();
   const bases = ([] as string[]).concat(item.activeMatch ?? item.href);
@@ -52,15 +34,10 @@ export function SidebarLink({ item }: { item: NavItem }) {
       )}
     >
       <div className="flex min-w-0 items-center gap-2.5">
-        <span
-          className={cn(
-            "flex shrink-0 items-center justify-center rounded-md group-data-[colored]/side:h-7 group-data-[colored]/side:w-7 group-data-[colored]/side:text-white",
-            tileColor(item.href)
-          )}
-        >
+        <span className="flex shrink-0 items-center justify-center">
           <Icon
             className={cn(
-              "h-[17px] w-[17px] shrink-0 group-data-[colored]/side:!h-[15px] group-data-[colored]/side:!w-[15px] group-data-[colored]/side:!text-white",
+              "h-[17px] w-[17px] shrink-0",
               active ? "text-zindo-green-600 dark:text-zindo-green-400" : "text-zinc-400 group-hover:text-zinc-600 dark:text-slate-500"
             )}
           />
