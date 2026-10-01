@@ -2,6 +2,8 @@ import { redirect } from "next/navigation";
 import { requireUserAllowingActivitySetup, requirePermission } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
 import { ZindoLogo } from "@/components/auth/ZindoLogo";
+import { isFeatureEnabled, registerFeatureFlag } from "@/lib/feature-flags";
+import { MARKET_ONLY_ACTIVITY_KEY, MARKET_ONLY_FLAG } from "@/lib/market";
 import { ActivityPicker } from "./ActivityPicker";
 
 export default async function ChooseActivityPage({
@@ -13,16 +15,30 @@ export default async function ChooseActivityPage({
 
   let mode: "onboarding" | "change" = "onboarding";
   let currentActivityKey: string | null = null;
+  let businessId: string;
 
   if (change === "1") {
     const user = await requirePermission(PERMISSIONS.SETTINGS_MANAGE);
     if (!user.business.activityKey) redirect("/choisir-activite");
     mode = "change";
     currentActivityKey = user.business.activityKey;
+    businessId = user.businessId;
   } else {
     const user = await requireUserAllowingActivitySetup();
     if (user.business.activityKey) redirect("/dashboard");
+    businessId = user.businessId;
   }
+
+  // « Vendeur du Marché » : caché tant que le flag n'est pas actif pour ce commerce.
+  await registerFeatureFlag(
+    MARKET_ONLY_FLAG,
+    "Vendeur du Marché (gratuit)",
+    "Activité « Vendeur du Marché » : vend seulement sur le Marché, sans caisse ni stock, sans abonnement."
+  );
+  const hiddenKeys =
+    currentActivityKey === MARKET_ONLY_ACTIVITY_KEY || (await isFeatureEnabled(MARKET_ONLY_FLAG, businessId))
+      ? []
+      : [MARKET_ONLY_ACTIVITY_KEY];
 
   return (
     <div className="theme-locked relative min-h-screen overflow-x-hidden bg-zindo-cream">
@@ -44,7 +60,7 @@ export default async function ChooseActivityPage({
           </p>
         </div>
 
-        <ActivityPicker mode={mode} currentActivityKey={currentActivityKey} />
+        <ActivityPicker mode={mode} currentActivityKey={currentActivityKey} hiddenKeys={hiddenKeys} />
       </div>
     </div>
   );

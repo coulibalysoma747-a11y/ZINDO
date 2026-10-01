@@ -33,6 +33,14 @@ export const ACTIVITY_CATEGORIES: ActivityCategory[] = [
 
 export const ACTIVITIES: Activity[] = [
   {
+    // Visible seulement quand le flag vendeur_marche_seul est actif (voir app/choisir-activite).
+    key: "vendeur_marche",
+    emoji: "🛒",
+    label: "Vendeur du Marché",
+    description: "Je vends seulement sur le Marché ZINDO, sans caisse ni stock. Gratuit.",
+    category: "commerce_general",
+  },
+  {
     key: "boutique_generale",
     emoji: "🏪",
     label: "Boutique générale",

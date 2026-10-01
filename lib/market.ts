@@ -8,6 +8,14 @@ export const MARKET_FLAG = "nouveau_marche";
 /** Le Marché n'a pas de sens pour ces activités (cahier des charges, §14). */
 export const MARKET_EXCLUDED_ACTIVITIES = ["ecole"];
 
+/**
+ * « Vendeur du Marché » (flag vendeur_marche_seul) : vend seulement sur le
+ * Marché, sans caisse ni stock, et ne paie jamais d'abonnement (seulement
+ * la mise en avant, par le portefeuille).
+ */
+export const MARKET_ONLY_ACTIVITY_KEY = "vendeur_marche";
+export const MARKET_ONLY_FLAG = "vendeur_marche_seul";
+
 /** Catégories communes à tout le Marché, distinctes des catégories propres à chaque commerçant. */
 export const MARKET_CATEGORIES = [
   { key: "electronique", label: "Électronique" },

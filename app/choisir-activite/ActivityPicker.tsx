@@ -11,9 +11,11 @@ import { setBusinessActivityAction, type ActionState } from "@/lib/actions/activ
 export function ActivityPicker({
   mode,
   currentActivityKey,
+  hiddenKeys = [],
 }: {
   mode: "onboarding" | "change";
   currentActivityKey: string | null;
+  hiddenKeys?: string[];
 }) {
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState<string>("all");
@@ -28,12 +30,13 @@ export function ActivityPicker({
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
     return ACTIVITIES.filter((a) => {
+      if (hiddenKeys.includes(a.key)) return false;
       const matchesCategory = category === "all" || a.category === category;
       const matchesSearch =
         !q || a.label.toLowerCase().includes(q) || a.description.toLowerCase().includes(q);
       return matchesCategory && matchesSearch;
     });
-  }, [search, category]);
+  }, [search, category, hiddenKeys]);
 
   const currentActivity = findActivity(currentActivityKey);
   const selectedActivity = findActivity(selectedKey);

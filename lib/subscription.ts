@@ -4,6 +4,8 @@ import { FEATURE_CATALOG } from "@/lib/subscription-features";
 import type { SubscriptionStatus, BillingCycle } from "@/lib/db-types";
 import { cache } from "react";
 import { getTrialDays } from "@/lib/platform-config";
+import { isFeatureEnabled } from "@/lib/feature-flags";
+import { MARKET_ONLY_ACTIVITY_KEY, MARKET_ONLY_FLAG } from "@/lib/market";
 
 export { FEATURE_CATALOG } from "@/lib/subscription-features";
 
@@ -196,7 +198,17 @@ export async function getSubscriptionState(businessId: string): Promise<Subscrip
 
 async function isSubscriptionBlockedUncached(businessId: string): Promise<boolean> {
   const state = await getSubscriptionState(businessId);
-  return state.blocked;
+  if (!state.blocked) return false;
+  // « Vendeur du Marché » ne paie jamais d'abonnement (flag vendeur_marche_seul).
+  const { data: business } = await supabase
+    .from("businesses")
+    .select("activityKey:activity_key")
+    .eq("id", businessId)
+    .maybeSingle();
+  if (business?.activityKey === MARKET_ONLY_ACTIVITY_KEY && (await isFeatureEnabled(MARKET_ONLY_FLAG, businessId))) {
+    return false;
+  }
+  return true;
 }
 
 /** Mémorisé le temps d'une requête : le layout et la page l'appellent tous les deux. */

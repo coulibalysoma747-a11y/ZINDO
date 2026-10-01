@@ -24,9 +24,9 @@ const NAV: Entry[] = [
     items: [
       { label: "Par métier", href: "/#metiers", text: "Quincaillerie, pièces, pharmacie, maquis…" },
       { label: "Pour les PME", href: "/fonctionnalites/logiciel-gestion-pme", text: "Plusieurs boutiques, dépôts et employés" },
-      { label: "Marché ZINDO", href: "/marche", text: "Vendez vos produits en ligne" },
     ],
   },
+  { label: "Marché", href: "/marche" },
   { label: "Tarifs", href: "/#tarifs" },
   { label: "Aide", href: "/#faq" },
 ];

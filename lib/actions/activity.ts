@@ -8,6 +8,8 @@ import { PERMISSIONS } from "@/lib/permissions";
 import { ACTIVITIES } from "@/lib/activities";
 import { getActivityConfig } from "@/lib/activity-config";
 import { logAction } from "@/lib/audit";
+import { isFeatureEnabled } from "@/lib/feature-flags";
+import { MARKET_ONLY_ACTIVITY_KEY, MARKET_ONLY_FLAG } from "@/lib/market";
 
 export type ActionState = { error?: string } | undefined;
 
@@ -25,6 +27,27 @@ export async function setBusinessActivityAction(
   if (isChange) {
     const allowed = await hasPermission(user.businessId, user.role, PERMISSIONS.SETTINGS_MANAGE, user.id);
     if (!allowed) return { error: "Seul un administrateur peut modifier l'activité du commerce" };
+  }
+
+  // « Vendeur du Marché » est gratuit : réservé au flag, et fermé aux commerces
+  // qui ont déjà vendu en caisse (sinon on passerait là pour ne plus payer).
+  if (activity.key === MARKET_ONLY_ACTIVITY_KEY && user.business.activityKey !== MARKET_ONLY_ACTIVITY_KEY) {
+    if (!(await isFeatureEnabled(MARKET_ONLY_FLAG, user.businessId))) {
+      return { error: "Choisissez une activité valide" };
+    }
+    const { data: sale, error: saleError } = await supabase
+      .from("sales")
+      .select("id")
+      .eq("business_id", user.businessId)
+      .limit(1)
+      .maybeSingle();
+    if (saleError) {
+      console.error("[setBusinessActivityAction] Vérification des ventes impossible :", saleError.message);
+      return { error: "Impossible de vérifier vos ventes. Réessayez." };
+    }
+    if (sale) {
+      return { error: "Ce commerce a déjà des ventes en caisse : il ne peut pas passer en Vendeur du Marché." };
+    }
   }
 
   const { error: updateError } = await supabase
