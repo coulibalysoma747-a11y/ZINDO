@@ -234,6 +234,14 @@ export function ProductForm({
             />
           </Field>
         )}
+        {marketSeller ? (
+          <>
+            <input type="hidden" name="unit" value={initial?.unit ?? "unité"} />
+            <input type="hidden" name="shelfLocation" value={initial?.shelfLocation ?? ""} />
+            <input type="hidden" name="supplierId" value={initial?.supplierId ?? ""} />
+          </>
+        ) : (
+          <>
         <Field label="Unité" htmlFor="unit">
           <Input id="unit" name="unit" defaultValue={initial?.unit ?? "unité"} />
         </Field>
@@ -255,6 +263,8 @@ export function ProductForm({
             ))}
           </Select>
         </Field>
+          </>
+        )}
         <Field label="Code-barres (facultatif)" htmlFor="barcode">
           <div className="flex gap-2">
             <Input

@@ -1,5 +1,7 @@
 import Link from "next/link";
 import { ExternalLink, Store } from "lucide-react";
+import { requireUser } from "@/lib/auth";
+import { MARKET_ONLY_ACTIVITY_KEY } from "@/lib/market";
 
 const TABS = [
   { href: "/mon-marche", label: "Tableau de bord" },
@@ -13,7 +15,7 @@ const TABS = [
 ];
 
 /** En-tête et onglets de l'espace vendeur « Mon Marché ». */
-export function MarketSellerNav({
+export async function MarketSellerNav({
   active,
   shop,
   newOrders,
@@ -24,6 +26,8 @@ export function MarketSellerNav({
   newOrders: number;
   unreadMessages?: number;
 }) {
+  const user = await requireUser();
+  const marketOnly = user.business.activityKey === MARKET_ONLY_ACTIVITY_KEY;
   return (
     <div className="space-y-3">
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -33,7 +37,7 @@ export function MarketSellerNav({
           </span>
           <div>
             <h1 className="text-xl font-bold text-zinc-900">Mon Marché</h1>
-            <p className="text-xs text-zinc-500">Votre boutique sur le Marché ZINDO, reliée à votre stock</p>
+            <p className="text-xs text-zinc-500">{marketOnly ? "Votre boutique sur le Marché ZINDO" : "Votre boutique sur le Marché ZINDO, reliée à votre stock"}</p>
           </div>
         </div>
         {shop?.published && !shop.suspended && (

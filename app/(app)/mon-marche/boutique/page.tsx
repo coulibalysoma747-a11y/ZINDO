@@ -1,7 +1,7 @@
 import { PERMISSIONS } from "@/lib/permissions";
 import { supabase } from "@/lib/supabase";
 import { getLocations } from "@/lib/location";
-import { slugifyShopName } from "@/lib/market";
+import { slugifyShopName, MARKET_ONLY_ACTIVITY_KEY } from "@/lib/market";
 import { countryCodeFromName, DEFAULT_COUNTRY_CODE } from "@/lib/countries";
 import { requireMarketSeller } from "@/lib/market-seller";
 import { Card, CardBody } from "@/components/ui/Card";
@@ -29,7 +29,7 @@ export default async function MyMarketShopPage() {
       <MarketSellerNav active="/mon-marche/boutique" shop={shopInfo} newOrders={newOrders} unreadMessages={unreadMessages} />
       {!shop && (
         <p className="rounded-xl bg-zindo-green-50 p-4 text-sm text-zindo-green-900 ring-1 ring-zindo-green-200">
-          Bienvenue ! Créez votre boutique en 1 minute : elle apparaîtra sur le Marché ZINDO et vous pourrez publier vos produits du stock.
+          Bienvenue ! Créez votre boutique en 1 minute : elle apparaîtra sur le Marché ZINDO et vous pourrez y publier vos produits{user.business.activityKey === MARKET_ONLY_ACTIVITY_KEY ? "" : " du stock"}.
         </p>
       )}
       <Card>

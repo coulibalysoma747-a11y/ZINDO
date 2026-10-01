@@ -133,7 +133,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           {platformConfig.announcementActive && platformConfig.announcementMessage && (
             <AnnouncementBanner message={platformConfig.announcementMessage} tone={platformConfig.announcementTone} />
           )}
-          {businessSettings.hasPhysicalStore === null && user.role === "ADMIN" && !storeBannerHidden && !isSchool && <HasPhysicalStoreBanner pro={interfacePro} />}
+          {businessSettings.hasPhysicalStore === null && user.role === "ADMIN" && !storeBannerHidden && !isSchool && !marketOnly && <HasPhysicalStoreBanner pro={interfacePro} />}
           <Topbar
             userName={`${user.firstName} ${user.lastName}`}
             role={roleLabels(user.business.activityKey)[user.role]}
