@@ -7,7 +7,7 @@ import { supabase } from "@/lib/supabase";
 import { requirePermission } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
 import { logAction } from "@/lib/audit";
-import { deleteProductForever } from "@/lib/product-trash";
+import { deleteProductForever, removeProductKeepingHistory } from "@/lib/product-trash";
 import { generateProductReference, generateProductBarcode } from "@/lib/reference";
 import { saveProductPhoto, deleteUploadedImage, uploadedImageUrl } from "@/lib/photo-upload";
 import { getActivityConfig } from "@/lib/activity-config";
@@ -616,11 +616,18 @@ export async function updateProductPhotoAction(productId: string, formData: Form
   return { url: result.url };
 }
 
-/** Efface définitivement un produit de la corbeille (refusé s'il a déjà servi dans une vente, un achat…). */
-export async function deleteArchivedProductAction(id: string): Promise<{ success?: string; error?: string }> {
+/**
+ * Supprime définitivement un produit de la corbeille. Sans historique : effacé. Avec un historique :
+ * la première demande renvoie `blocked` (le message explique la conséquence), et la même demande avec
+ * `force` le retire pour toujours en gardant le nom dans les anciennes ventes.
+ */
+export async function deleteArchivedProductAction(id: string, force = false): Promise<{ success?: string; error?: string; blocked?: boolean }> {
   const user = await requirePermission(PERMISSIONS.PRODUCTS_MANAGE);
-  const result = await deleteProductForever(user.businessId, id);
-  if ("error" in result) return { error: result.error };
+  let result = await deleteProductForever(user.businessId, id);
+  if ("error" in result && result.blocked && force) {
+    result = await removeProductKeepingHistory(user.businessId, id);
+  }
+  if ("error" in result) return { error: result.error, blocked: "blocked" in result ? result.blocked : undefined };
   await logAction({
     businessId: user.businessId,
     userId: user.id,
@@ -630,5 +637,5 @@ export async function deleteArchivedProductAction(id: string): Promise<{ success
   });
   revalidatePath("/produits");
   revalidatePath("/produits/corbeille");
-  return { success: "Produit effacé définitivement" };
+  return { success: "Produit supprimé définitivement" };
 }

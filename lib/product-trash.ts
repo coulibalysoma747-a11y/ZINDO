@@ -23,8 +23,11 @@ export const TRASH_RETENTION_DAYS = 30;
  */
 export const TRASH_PURGE_STARTS_AT = "2026-10-01T00:00:00.000Z";
 
+/** Préfixe de la référence d'un produit retiré pour toujours (invisible partout, historique conservé). */
+export const REMOVED_REFERENCE_PREFIX = "ZND-SUPPR-";
+
 export const TRASH_BLOCKED_MESSAGE =
-  "Ce produit apparaît dans des ventes, des achats ou d'autres documents : il reste dans la corbeille pour garder votre historique.";
+  "Ce produit a déjà servi dans des ventes, des achats ou d'autres documents. Vous pouvez le supprimer quand même : il disparaîtra de la liste, de la corbeille, de la caisse et du Marché, mais ses anciennes ventes garderont son nom dans les tickets et les rapports. Cette action est irréversible.";
 
 /**
  * Efface définitivement un produit archivé. La base refuse (code 23503) si le produit
@@ -74,4 +77,41 @@ export async function purgeExpiredTrash(): Promise<{ deleted: number; kept: numb
     else kept++;
   }
   return { deleted, kept };
+}
+
+/**
+ * Retire pour toujours un produit archivé qui a un historique : la base ne peut pas l'effacer
+ * sans toucher aux anciennes ventes. Il devient invisible partout ; sa référence redevient
+ * libre et son nom reste lisible dans les anciens tickets et rapports.
+ */
+export async function removeProductKeepingHistory(businessId: string, productId: string): Promise<{ ok: true } | { error: string }> {
+  const { data: product } = await supabase
+    .from("products")
+    .select("id, active, reference")
+    .eq("id", productId)
+    .eq("business_id", businessId)
+    .maybeSingle();
+  if (!product) return { error: "Produit introuvable" };
+  if (product.active) return { error: "Seul un produit de la corbeille peut être supprimé définitivement" };
+  if (product.reference === MISC_ITEM_REFERENCE) return { error: "Ce produit ne peut pas être supprimé" };
+
+  // Le Marché n'affiche déjà pas un produit archivé ; on retire aussi sa fiche, sans bloquer si elle n'existe pas.
+  await supabase.from("market_listings").delete().eq("product_id", productId);
+
+  const { error } = await supabase
+    .from("products")
+    .update({
+      reference: `${REMOVED_REFERENCE_PREFIX}${productId}`,
+      barcode: null,
+      faso_stock_id: null,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", productId)
+    .eq("business_id", businessId)
+    .eq("active", false);
+  if (error) {
+    console.error("[removeProductKeepingHistory] Échec :", error.message);
+    return { error: "Impossible de supprimer le produit" };
+  }
+  return { ok: true };
 }

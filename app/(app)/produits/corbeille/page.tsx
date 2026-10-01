@@ -15,7 +15,7 @@ import { Card } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/Empty";
 import { RestoreProductButton } from "./RestoreProductButton";
 import { PermanentDeleteButton } from "./PermanentDeleteButton";
-import { TRASH_RETENTION_DAYS } from "@/lib/product-trash";
+import { TRASH_RETENTION_DAYS, REMOVED_REFERENCE_PREFIX } from "@/lib/product-trash";
 
 /** Corbeille (flag corbeille_produits) : produits archivés, restaurables en un clic. */
 export default async function ProductTrashPage() {
@@ -30,6 +30,8 @@ export default async function ProductTrashPage() {
       .eq("active", false)
       // Fiche cachée de l'« Article divers » (toujours inactive) : ce n'est pas un produit supprimé.
       .neq("reference", MISC_ITEM_REFERENCE)
+      // Produits supprimés définitivement malgré leur historique : invisibles ici.
+      .not("reference", "like", `${REMOVED_REFERENCE_PREFIX}%`)
       .order("updated_at", { ascending: false })
       .limit(500),
     hasPermission(user.businessId, user.role, PERMISSIONS.PRODUCTS_MANAGE, user.id),
