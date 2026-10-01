@@ -84,3 +84,55 @@ export async function getSaspayCheckoutStatus(id: string): Promise<SaspayCheckou
     paid: data.status === "PAID",
   };
 }
+
+export type SaspaySoftpay = { id: string; status: string; checkoutUrl: string | null; needsRedirect: boolean };
+
+/**
+ * Encaissement direct : pousse la demande de paiement sur le téléphone du client, sur le réseau mobile money choisi
+ * (codes des réseaux : page « Liste des réseaux » de la documentation). Si `checkoutUrl` n'est pas vide (Orange Money,
+ * Wave, carte…), il FAUT y rediriger le client, sinon aucun paiement n'a lieu. Une clé d'idempotence par tentative est
+ * obligatoire ici : un nouvel essai réseau ne crée alors jamais un second paiement réel.
+ */
+export async function createSaspaySoftpay(input: {
+  amount: number;
+  currency?: string;
+  country: string;
+  network: string;
+  description?: string;
+  customer: { email: string; firstName: string; lastName: string; phone: string };
+  idempotencyKey: string;
+}): Promise<SaspaySoftpay> {
+  const res = await fetch(`${BASE_URL}/payments/softpay/`, {
+    method: "POST",
+    headers: { ...authHeaders(), "Idempotency-Key": input.idempotencyKey },
+    cache: "no-store",
+    body: JSON.stringify({
+      amount: input.amount.toFixed(2),
+      currency: input.currency ?? "XOF",
+      country: input.country,
+      network: input.network,
+      ...(input.description ? { description: input.description } : {}),
+      customer: { email: input.customer.email, first_name: input.customer.firstName, last_name: input.customer.lastName, phone: input.customer.phone },
+    }),
+  });
+  if (!res.ok) {
+    console.error("[saspay] Paiement direct refusé :", res.status, (await res.text()).slice(0, 300));
+    throw new Error("Le paiement n'a pas pu être lancé. Vérifiez le numéro et réessayez.");
+  }
+  const data = (await res.json()) as { id: string; status: string; checkout_url?: string | null };
+  const checkoutUrl = data.checkout_url ? data.checkout_url : null;
+  return { id: data.id, status: data.status, checkoutUrl, needsRedirect: checkoutUrl !== null };
+}
+
+export type SaspayPaymentStatus = { id: string; status: string; netAmount: string | null; currency: string | null; paid: boolean };
+
+/** Résultat d'un paiement direct, relu chez SasPay : jamais sur un simple délai ni sur le seul contenu d'une confirmation. */
+export async function verifySaspayPayment(id: string): Promise<SaspayPaymentStatus> {
+  const res = await fetch(`${BASE_URL}/payments/${encodeURIComponent(id)}/verify/`, { headers: authHeaders(), cache: "no-store" });
+  if (!res.ok) {
+    console.error("[saspay] Vérification refusée :", res.status);
+    throw new Error("Résultat du paiement indisponible");
+  }
+  const data = (await res.json()) as { id: string; status: string; net_amount?: string | null; currency?: string | null };
+  return { id: data.id, status: data.status, netAmount: data.net_amount ?? null, currency: data.currency ?? null, paid: data.status === "SUCCESS" };
+}
