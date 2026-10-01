@@ -77,6 +77,7 @@ export async function proxy(request: NextRequest) {
     pathname.startsWith("/api/public") ||
     pathname.startsWith("/api/auth/google") ||
     pathname.startsWith("/api/cinetpay") ||
+    pathname.startsWith("/api/saspay") ||
     // Connexion de l'application Windows (voir app/api/desktop/login/route.ts)
     // : appelée par un serveur local qui n'a pas encore de session — la route
     // vérifie elle-même le mot de passe, comme les routes API ci-dessus.
