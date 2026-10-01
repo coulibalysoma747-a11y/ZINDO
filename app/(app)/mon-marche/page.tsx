@@ -126,7 +126,7 @@ export default async function MyMarketDashboardPage({ searchParams }: { searchPa
     { icon: ShoppingBag, label: "Commandes", value: String(active.length), hint: newOrders > 0 ? `${newOrders} à confirmer` : "Aucune en attente" },
     { icon: Eye, label: "Visites", value: String(visits), hint: "Produits et boutique" },
     { icon: Users, label: "Clients", value: String(customers), hint: "Acheteurs distincts" },
-    { icon: Package, label: "Produits publiés", value: String(publishedIds.length), hint: outOfStock > 0 ? `${outOfStock} en rupture` : "Tous en stock" },
+    { icon: Package, label: "Produits publiés", value: String(publishedIds.length), hint: user.business.activityKey === "vendeur_marche" ? undefined : outOfStock > 0 ? `${outOfStock} en rupture` : "Tous en stock" },
     { icon: Star, label: "Note moyenne", value: avgRating != null ? `${avgRating.toLocaleString("fr-FR")} / 5` : "—", hint: `${ratings.length} avis` },
   ];
 

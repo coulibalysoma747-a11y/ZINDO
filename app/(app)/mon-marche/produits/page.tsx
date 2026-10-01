@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { Plus } from "lucide-react";
+import { MARKET_ONLY_ACTIVITY_KEY } from "@/lib/market";
 import { PERMISSIONS } from "@/lib/permissions";
 import { supabase } from "@/lib/supabase";
 import { formatMoney } from "@/lib/format";
@@ -22,6 +24,7 @@ export default async function MyMarketProductsPage({ searchParams }: { searchPar
   const { user, shop, newOrders, unreadMessages } = await requireMarketSeller(PERMISSIONS.PRODUCTS_MANAGE);
   const { q = "", filtre = "", page: pageParam } = await searchParams;
   const page = readPage(pageParam);
+  const marketOnly = user.business.activityKey === MARKET_ONLY_ACTIVITY_KEY;
 
   const { data: allListings } = await supabase
     .from("market_listings")
@@ -95,6 +98,13 @@ export default async function MyMarketProductsPage({ searchParams }: { searchPar
           : vos produits publiés y apparaîtront.
         </p>
       )}
+      {marketOnly && (
+        <div className="flex justify-end">
+          <Link href="/produits/nouveau" className="inline-flex items-center gap-1.5 rounded-xl bg-zindo-green-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-zindo-green-700">
+            <Plus className="h-4 w-4" /> Nouveau produit
+          </Link>
+        </div>
+      )}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex gap-1.5 overflow-x-auto text-sm">
           {FILTERS.map((f) => (
@@ -114,7 +124,7 @@ export default async function MyMarketProductsPage({ searchParams }: { searchPar
         </form>
       </div>
 
-      <ProductsTable rows={rows} />
+      <ProductsTable rows={rows} marketOnly={marketOnly} />
 
       <Pagination page={page} pageSize={PAGE_SIZE} total={total} href={(n) => hrefWith({ page: n })} noun="produits" />
     </div>

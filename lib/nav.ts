@@ -1,3 +1,4 @@
+import { MARKET_ONLY_ACTIVITY_KEY } from "@/lib/market";
 import { PERMISSIONS, type Permission } from "@/lib/permissions";
 import { MOTO_ACTIVITY_KEY } from "@/lib/activities";
 
@@ -122,7 +123,9 @@ export type NavItem = {
     | "custom-orders"
     | "warranty"
     | "appointments"
-    | "services";
+    | "services"
+    | "boost"
+    | "verified";
   permission?: Permission;
   featureFlag?: string;
   planFeature?: string;
@@ -143,6 +146,8 @@ export type NavItem = {
   requireActivity?: string | string[];
   /** Préfixe d'adresse qui allume l'entrée, quand il diffère de href (ex. « Vente » → /ventes/accueil, allumée sur toutes les pages /ventes). */
   activeMatch?: string | string[];
+  /** Adresses qui n'allument PAS l'entrée, même si elles commencent par son préfixe (ex. « Mon Marché » ne s'allume pas sur ses sous-pages qui ont leur propre entrée). */
+  activeExclude?: string | string[];
 };
 
 export const NAV_ITEMS: NavItem[] = [
@@ -407,6 +412,9 @@ export const NAV_ITEMS: NavItem[] = [
     planFeature: "boutique_en_ligne",
   },
   { label: "Mon Marché", href: "/mon-marche", icon: "market", permission: PERMISSIONS.PRODUCTS_MANAGE, featureFlag: "nouveau_marche" },
+  // Entrées réservées au « Vendeur du Marché » (les autres commerçants y accèdent par les onglets de Mon Marché).
+  { label: "Mettre en avant", href: "/mon-marche/visibilite", icon: "boost", permission: PERMISSIONS.PRODUCTS_MANAGE, featureFlag: "nouveau_marche", requireActivity: MARKET_ONLY_ACTIVITY_KEY },
+  { label: "Badge vérifié", href: "/verification", icon: "verified", permission: PERMISSIONS.PRODUCTS_MANAGE, featureFlag: "nouveau_marche", requireActivity: MARKET_ONLY_ACTIVITY_KEY },
   { label: "Utilisateurs", href: "/utilisateurs", icon: "users", permission: PERMISSIONS.USERS_MANAGE },
   { label: "Parrainage", href: "/parrainage", icon: "referral", permission: PERMISSIONS.SETTINGS_MANAGE, featureFlag: "parrainage" },
   { label: "Aide & support", href: "/support", icon: "support" },

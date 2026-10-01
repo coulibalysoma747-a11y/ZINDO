@@ -24,6 +24,7 @@ export function Topbar({
   currentLocationId,
   globalSearchCurrency,
   menuSearch = false,
+  hideLocation = false,
 }: {
   userName: string;
   role: string;
@@ -35,6 +36,8 @@ export function Topbar({
   globalSearchCurrency: string | null;
   /** Champ « Chercher un module » dans le menu mobile (flag « recherche_menu »). */
   menuSearch?: boolean;
+  /** Sans sélecteur de boutique (Vendeur du Marché). */
+  hideLocation?: boolean;
 }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
@@ -60,7 +63,7 @@ export function Topbar({
         <div className="hidden items-center gap-2 md:flex">
           {/* Visible seulement quand le menu latéral a été fermé (voir SidebarToggle). */}
           <SidebarOpenButton className="hidden group-data-[sidebar=closed]/app:inline-flex" />
-          <LocationSwitcher locations={locations} currentLocationId={currentLocationId} />
+          {!hideLocation && <LocationSwitcher locations={locations} currentLocationId={currentLocationId} />}
         </div>
         <div className="flex items-center gap-2">
           {globalSearchCurrency && <GlobalSearch currency={globalSearchCurrency} navItems={navItems} />}

@@ -9,7 +9,10 @@ import { NAV_ICONS } from "./nav-icons";
 export function SidebarLink({ item }: { item: NavItem }) {
   const pathname = usePathname();
   const bases = ([] as string[]).concat(item.activeMatch ?? item.href);
-  const active = bases.some((base) => pathname === base || pathname.startsWith(`${base}/`));
+  const excluded = ([] as string[]).concat(item.activeExclude ?? []);
+  const active =
+    bases.some((base) => pathname === base || pathname.startsWith(`${base}/`)) &&
+    !excluded.some((base) => pathname === base || pathname.startsWith(`${base}/`));
   const Icon = NAV_ICONS[item.icon];
   // Le lien Support transporte la page courante avec lui : c'est le seul
   // moyen pour /support de savoir sur quel écran l'utilisateur se trouvait

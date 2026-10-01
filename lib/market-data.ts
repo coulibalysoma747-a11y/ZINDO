@@ -5,7 +5,7 @@ import { memo } from "@/lib/memo";
 import { displayCity } from "@/lib/market-location";
 import { getCurrentUser } from "@/lib/auth";
 import { isFeatureEnabled, isFeatureEnabledGlobally, registerFeatureFlag } from "@/lib/feature-flags";
-import { MARKET_EXCLUDED_ACTIVITIES, MARKET_FLAG, type MarketProduct, type MarketShopSummary, type MarketSort } from "@/lib/market";
+import { MARKET_EXCLUDED_ACTIVITIES, MARKET_FLAG, MARKET_ONLY_ACTIVITY_KEY, MARKET_UNLIMITED_AVAILABLE, type MarketProduct, type MarketShopSummary, type MarketSort } from "@/lib/market";
 
 /**
  * Lectures du nouveau Marché ZINDO (flag nouveau_marche). Le prix vient de
@@ -46,6 +46,8 @@ export async function canViewMarket(): Promise<boolean> {
 
 export type MarketShop = MarketShopSummary & {
   id: string;
+  /** Vendeur du Marché : pas de suivi de stock, produits toujours disponibles. */
+  unlimitedStock: boolean;
   businessId: string;
   locationId: string | null;
   description: string | null;
@@ -63,9 +65,9 @@ export type MarketShop = MarketShopSummary & {
 
 const SHOP_COLUMNS =
   "id, businessId:business_id, locationId:location_id, slug, name, description, logoUrl:logo_url, coverUrl:cover_url, phone, whatsapp, city, countryCode:country_code, address, hours, " +
-  "deliveryEnabled:delivery_enabled, deliveryFee:delivery_fee, deliveryNote:delivery_note, pickupEnabled:pickup_enabled, createdAt:created_at, business:businesses!inner(suspended, currency)";
+  "deliveryEnabled:delivery_enabled, deliveryFee:delivery_fee, deliveryNote:delivery_note, pickupEnabled:pickup_enabled, createdAt:created_at, business:businesses!inner(suspended, currency, activityKey:activity_key)";
 
-type ShopRow = Omit<MarketShop, "verified" | "rating" | "reviewCount"> & { business: { suspended: boolean; currency: string } };
+type ShopRow = Omit<MarketShop, "verified" | "rating" | "reviewCount" | "unlimitedStock"> & { business: { suspended: boolean; currency: string; activityKey: string | null } };
 
 async function verifiedBusinessIds(businessIds: string[]): Promise<Set<string>> {
   if (businessIds.length === 0) return new Set();
@@ -108,7 +110,7 @@ async function toShops(rows: ShopRow[]): Promise<MarketShop[]> {
     const { business, ...shop } = r;
     const rating = ratings.get(shop.id);
     // Ville présentable partout (« NIANGOLOKO » → « Niangoloko »).
-    return { ...shop, currency: business.currency || "XOF", city: shop.city ? displayCity(shop.city) : null, verified: verified.has(shop.businessId), rating: rating?.rating ?? null, reviewCount: rating?.count ?? 0, boosted: boosts.shopIds.has(shop.id) };
+    return { ...shop, unlimitedStock: business.activityKey === MARKET_ONLY_ACTIVITY_KEY, currency: business.currency || "XOF", city: shop.city ? displayCity(shop.city) : null, verified: verified.has(shop.businessId), rating: rating?.rating ?? null, reviewCount: rating?.count ?? 0, boosted: boosts.shopIds.has(shop.id) };
   });
 }
 
@@ -254,7 +256,8 @@ export async function loadMarketProducts({
       category: r.category,
       price: r.product.salePrice,
       promoPrice: promo,
-      available: Math.max(0, available),
+      available: shop.unlimitedStock ? MARKET_UNLIMITED_AVAILABLE : Math.max(0, available),
+      unlimited: shop.unlimitedStock,
       publishedAt: r.publishedAt,
       viewCount: r.viewCount,
       rating: rating?.rating ?? null,

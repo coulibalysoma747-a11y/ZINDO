@@ -17,19 +17,13 @@ export const MARKET_ONLY_ACTIVITY_KEY = "vendeur_marche";
 export const MARKET_ONLY_FLAG = "vendeur_marche_seul";
 
 /** Entrées du menu visibles pour un « Vendeur du Marché » : rien d'autre. */
-export const MARKET_ONLY_NAV_HREFS = ["/mon-marche", "/produits", "/parametres", "/support"];
+export const MARKET_ONLY_NAV_HREFS = ["/mon-marche", "/produits", "/mon-marche/visibilite", "/verification", "/parametres", "/support"];
+
+/** Quantité affichée comme plafond de commande pour un vendeur sans suivi de stock (ses produits sont toujours disponibles). */
+export const MARKET_UNLIMITED_AVAILABLE = 999;
 
 /** Pages ouvertes à un « Vendeur du Marché » (les autres le renvoient vers Mon Marché, même en tapant l'adresse). */
-const MARKET_ONLY_PATH_PREFIXES = [
-  "/mon-marche",
-  "/produits",
-  "/categories",
-  "/marques",
-  "/photos-produits",
-  "/parametres",
-  "/profil",
-  "/support",
-];
+const MARKET_ONLY_PATH_PREFIXES = ["/mon-marche", "/produits", "/verification", "/parametres", "/profil", "/support"];
 
 export function isMarketOnlyAllowedPath(pathname: string): boolean {
   return MARKET_ONLY_PATH_PREFIXES.some((p) => pathname === p || pathname.startsWith(`${p}/`));
@@ -75,6 +69,8 @@ export type MarketProduct = {
   price: number;
   promoPrice: number | null;
   available: number;
+  /** Vendeur sans suivi de stock : toujours disponible (affiché « Disponible », sans quantité). */
+  unlimited: boolean;
   publishedAt: string;
   viewCount: number;
   /** Note moyenne des avis (1 à 5), null sans avis. */

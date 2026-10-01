@@ -1,4 +1,5 @@
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
+import { MARKET_ONLY_ACTIVITY_KEY } from "@/lib/market";
 import Link from "next/link";
 import { Pencil, ArrowLeft } from "lucide-react";
 import { requirePermission, hasPermission } from "@/lib/auth";
@@ -64,6 +65,7 @@ export default async function ProductDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const user = await requirePermission(PERMISSIONS.PRODUCTS_VIEW);
+  if (user.business.activityKey === MARKET_ONLY_ACTIVITY_KEY) redirect("/mon-marche/produits");
   const { id } = await params;
 
   const { data: productRow } = await supabase

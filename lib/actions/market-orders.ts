@@ -8,7 +8,7 @@ import { requirePermission } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
 import { getCurrentBuyer } from "@/lib/market-buyer";
 import { isMarketEnabledFor, loadMarketProducts, loadPublishedShops } from "@/lib/market-data";
-import { MARKET_ORDER_STEPS, marketOrderStatusLabel, normalizeBuyerPhone, type MarketOrderStatus } from "@/lib/market";
+import { MARKET_ONLY_ACTIVITY_KEY, MARKET_ORDER_STEPS, marketOrderStatusLabel, normalizeBuyerPhone, type MarketOrderStatus } from "@/lib/market";
 import { createSaleAction, recordStockMovements, type CartItemInput } from "@/lib/actions/sales";
 import { ensureMiscItemProduct } from "@/lib/misc-item";
 import { sendPushToBusiness } from "@/lib/push";
@@ -268,9 +268,23 @@ export async function updateMarketOrderStatusAction(orderId: string, status: Mar
         .select("productId:product_id, quantity")
         .eq("location_id", locationId)
         .in("product_id", items.map((i) => i.productId));
-      for (const item of order.items) {
-        const have = Number((stocks ?? []).find((s) => s.productId === item.productId)?.quantity ?? 0);
-        if (have < Number(item.quantity)) return { error: `Stock insuffisant pour ${item.name} (${have} disponible).` };
+      if (user.business.activityKey === MARKET_ONLY_ACTIVITY_KEY) {
+        // « Vendeur du Marché » : ses produits n'ont pas de quantité à suivre. Le manque est ajouté au stock au moment de
+        // confirmer, pour que la sortie de stock et la vente qui suit restent cohérentes (jamais de stock négatif).
+        const missing = order.items
+          .map((item) => ({
+            productId: item.productId,
+            quantity: Number(item.quantity) - Number((stocks ?? []).find((s) => s.productId === item.productId)?.quantity ?? 0),
+          }))
+          .filter((m) => m.quantity > 0);
+        if (missing.length > 0) {
+          await recordStockMovements(missing, { ...movementBase, locationId, direction: "IN", note: `Disponibilité permanente — commande Marché ${order.number}` });
+        }
+      } else {
+        for (const item of order.items) {
+          const have = Number((stocks ?? []).find((s) => s.productId === item.productId)?.quantity ?? 0);
+          if (have < Number(item.quantity)) return { error: `Stock insuffisant pour ${item.name} (${have} disponible).` };
+        }
       }
       await recordStockMovements(items, { ...movementBase, locationId, direction: "OUT", note: `Commande Marché ${order.number}` });
       stockLocationId = locationId;

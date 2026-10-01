@@ -13,6 +13,7 @@ export function Sidebar({
   userName,
   menuSearch = false,
   dark = false,
+  flat = false,
 }: {
   businessName: string;
   items: NavItem[];
@@ -21,12 +22,14 @@ export function Sidebar({
   menuSearch?: boolean;
   /** Barre sombre (flag « interface_pro ») : réutilise les styles du mode sombre, pour la barre seule. */
   dark?: boolean;
+  /** Menu court sans rubriques (Vendeur du Marché). */
+  flat?: boolean;
 }) {
   const footerHrefs = ["/support", "/parametres"];
   const footerItems = footerHrefs
     .map((href) => items.find((item) => item.href === href))
     .filter((item): item is NavItem => Boolean(item));
-  const groups = groupNavItems(items.filter((item) => !footerHrefs.includes(item.href)));
+  const groups = groupNavItems(items.filter((item) => !footerHrefs.includes(item.href)), flat);
 
   return (
     <aside data-colored={dark ? "" : undefined} className={`${dark ? "dark " : ""}group/side sticky top-0 hidden h-screen w-60 shrink-0 flex-col border-r border-zinc-200 bg-white md:flex dark:border-slate-800 dark:bg-slate-900 data-[colored]:!border-[#18382a] data-[colored]:!bg-[#0f1f17]`}>

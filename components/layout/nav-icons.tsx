@@ -1,5 +1,7 @@
 import type { NavItem } from "@/lib/nav";
 import {
+  Rocket,
+  BadgeCheck,
   LayoutDashboard,
   Gift,
   Bot,
@@ -189,6 +191,8 @@ export const NAV_ICONS: Record<NavItem["icon"], React.ComponentType<{ className?
   support: LifeBuoy,
   "online-store": ShoppingBasket,
   market: Store,
+  boost: Rocket,
+  verified: BadgeCheck,
   "vehicle-sales": Bike,
   quotes: FileSignature,
   "vehicle-registration": IdCard,
@@ -267,10 +271,12 @@ const NAV_SECTIONS: { title: string | null; icons: NavItem["icon"][] }[] = [
   { title: "Achats", icons: ["purchases", "purchase-orders", "suppliers", "expenses"] },
   { title: "Clients", icons: ["customers", "credits", "credit-reminders"] },
   { title: "Suivi", icons: ["reports", "history-global"] },
-  { title: "Administration", icons: ["locations", "online-store", "market", "users", "referral", "subscription"] },
+  { title: "Administration", icons: ["locations", "online-store", "market", "boost", "verified", "users", "referral", "subscription"] },
 ];
 
-export function groupNavItems(items: NavItem[]): { title: string | null; items: NavItem[] }[] {
+export function groupNavItems(items: NavItem[], flat = false): { title: string | null; items: NavItem[] }[] {
+  // Menu court (Vendeur du Marché) : une seule liste, sans rubriques.
+  if (flat) return items.length > 0 ? [{ title: null, items }] : [];
   const placed = new Set<NavItem>();
   const groups = NAV_SECTIONS.map((section) => {
     const sectionItems = items.filter((item) => !placed.has(item) && section.icons.includes(item.icon));

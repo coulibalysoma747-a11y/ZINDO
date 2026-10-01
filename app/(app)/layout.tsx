@@ -122,6 +122,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           items={menuItems}
           menuSearch={menuSearchEnabled}
           dark={interfacePro}
+          flat={marketOnly}
           userName={`${user.firstName} ${user.lastName}`}
         />
       </div>
@@ -141,7 +142,8 @@ export default async function AppLayout({ children }: { children: React.ReactNod
             businessName={user.business.name}
             locations={locations}
             currentLocationId={currentLocation?.id ?? ""}
-            globalSearchCurrency={globalSearchEnabled ? user.business.currency : null}
+            globalSearchCurrency={globalSearchEnabled && !marketOnly ? user.business.currency : null}
+            hideLocation={marketOnly}
             menuSearch={menuSearchEnabled}
           />
         </div>

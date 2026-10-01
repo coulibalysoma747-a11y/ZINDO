@@ -77,7 +77,7 @@ export default async function MarketProductPage({ params }: { params: Promise<{ 
             <span className="text-3xl font-extrabold text-zinc-900">{formatMoney(product.promoPrice ?? product.price, product.currency)}</span>
             {product.promoPrice != null && <span className="text-lg text-zinc-400 line-through">{formatMoney(product.price, product.currency)}</span>}
             <span className={inStock ? "rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700" : "rounded-full bg-red-50 px-2.5 py-1 text-xs font-semibold text-red-700"}>
-              {inStock ? `En stock · ${product.available} ${product.unit}` : "Rupture de stock"}
+              {inStock ? (product.unlimited ? "Disponible" : `En stock · ${product.available} ${product.unit}`) : "Rupture de stock"}
             </span>
           </div>
 

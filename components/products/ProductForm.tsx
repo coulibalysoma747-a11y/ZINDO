@@ -187,9 +187,13 @@ export function ProductForm({
         {!marketSeller && <MarginPreview purchasePrice={purchasePrice} salePrice={salePrice} />}
         {!initial && (
           <>
-            <Field label={marketSeller ? "Quantité disponible" : "Quantité initiale"} htmlFor="quantity">
-              <Input id="quantity" name="quantity" type="number" min={0} defaultValue={0} />
-            </Field>
+            {marketSeller ? (
+              <input type="hidden" name="quantity" value={0} />
+            ) : (
+              <Field label="Quantité initiale" htmlFor="quantity">
+                <Input id="quantity" name="quantity" type="number" min={0} defaultValue={0} />
+              </Field>
+            )}
             {marketSeller ? (
               <input type="hidden" name="locationId" value={defaultLocationId ?? locations[0]?.id ?? ""} />
             ) : (
@@ -218,7 +222,7 @@ export function ProductForm({
             />
           </Field>
         )}
-        {showUnitsPerCarton && (
+        {showUnitsPerCarton && !marketSeller && (
           <Field
             label="Nombre par carton (facultatif)"
             htmlFor="unitsPerCarton"

@@ -50,7 +50,8 @@ export async function getNavItemsAvailability(
       const planOk = item.planFeature ? planLimits.features.includes(item.planFeature) : true;
       const moduleOk = item.moduleToggle ? businessSettings.modulesEnabled[item.moduleToggle] : true;
       const hiddenByActivity =
-        activityConfig.hiddenNavHrefs.includes(item.href) ||
+        // Le « Vendeur du Marché » suit sa propre liste blanche (MARKET_ONLY_NAV_HREFS) : la liste de modules cachés de l'activité ne s'applique pas.
+        (activityKey !== MARKET_ONLY_ACTIVITY_KEY && activityConfig.hiddenNavHrefs.includes(item.href)) ||
         !matchesRequiredActivity(item, activityKey) ||
         // Activités exclues du Marché (école) : pas de « Mon Marché ».
         (item.href === "/mon-marche" && !!activityKey && MARKET_EXCLUDED_ACTIVITIES.includes(activityKey)) ||
@@ -92,7 +93,8 @@ export async function getVisibleNavItems(
       const planOk = item.planFeature ? planLimits.features.includes(item.planFeature) : true;
       const moduleOk = item.moduleToggle ? businessSettings.modulesEnabled[item.moduleToggle] : true;
       const hiddenByActivity =
-        activityConfig.hiddenNavHrefs.includes(item.href) ||
+        // Le « Vendeur du Marché » suit sa propre liste blanche (MARKET_ONLY_NAV_HREFS) : la liste de modules cachés de l'activité ne s'applique pas.
+        (activityKey !== MARKET_ONLY_ACTIVITY_KEY && activityConfig.hiddenNavHrefs.includes(item.href)) ||
         !matchesRequiredActivity(item, activityKey) ||
         // Activités exclues du Marché (école) : pas de « Mon Marché ».
         (item.href === "/mon-marche" && !!activityKey && MARKET_EXCLUDED_ACTIVITIES.includes(activityKey)) ||
@@ -102,11 +104,24 @@ export async function getVisibleNavItems(
     })
   );
 
-  return checked
+  const visible = checked
     .filter((c) => c.allowed)
     .map((c) => {
       const term = HREF_TO_TERM[c.item.href];
       if (!term) return c.item;
       return { ...c.item, label: resolveTerm(activityConfig, term) };
     });
+
+  // « Vendeur du Marché » : menu court dans un ordre fixe ; « Produits » ouvre la liste de ses produits du Marché.
+  if (activityKey === MARKET_ONLY_ACTIVITY_KEY) {
+    const order = ["/mon-marche", "/mon-marche/produits", "/mon-marche/visibilite", "/verification", "/parametres", "/support"];
+    return visible
+      .map((item): NavItem => {
+        if (item.href === "/produits") return { ...item, href: "/mon-marche/produits", activeMatch: ["/mon-marche/produits", "/produits"] };
+        if (item.href === "/mon-marche") return { ...item, activeExclude: ["/mon-marche/produits", "/mon-marche/visibilite"] };
+        return item;
+      })
+      .sort((a, b) => order.indexOf(a.href) - order.indexOf(b.href));
+  }
+  return visible;
 }

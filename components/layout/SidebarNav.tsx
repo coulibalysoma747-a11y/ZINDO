@@ -30,7 +30,8 @@ export function SidebarNav({
   const [query, setQuery] = useState("");
   const [toggled, setToggled] = useState<Record<string, boolean>>({});
   const isActive = (item: NavItem) =>
-    ([] as string[]).concat(item.activeMatch ?? item.href).some((base) => pathname === base || pathname.startsWith(`${base}/`));
+    ([] as string[]).concat(item.activeMatch ?? item.href).some((base) => pathname === base || pathname.startsWith(`${base}/`)) &&
+    !([] as string[]).concat(item.activeExclude ?? []).some((base) => pathname === base || pathname.startsWith(`${base}/`));
   const activeTitle = groups.find((g) => g.items.some(isActive))?.title ?? null;
   // Ouverte : la rubrique sans titre, celle de la page en cours, ou celle que l'utilisateur a ouverte ; tout s'ouvre pendant une recherche.
   const isOpen = (title: string | null) => !collapsible || title === null || query.trim() !== "" || (toggled[title] ?? title === activeTitle);

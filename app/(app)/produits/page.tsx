@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
+import { MARKET_ONLY_ACTIVITY_KEY } from "@/lib/market";
 import { Plus, FileUp, FileDown, QrCode, Trash2, Wrench, ChevronDown, Package, Boxes, AlertTriangle, PackageX } from "lucide-react";
 import { requirePermission, hasPermission } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
@@ -31,6 +33,8 @@ export default async function ProductsPage({
   searchParams: Promise<{ q?: string; categorie?: string; marque?: string; conditionnement?: string; filtre?: string; page?: string; vue?: string }>;
 }) {
   const user = await requirePermission(PERMISSIONS.PRODUCTS_VIEW);
+  // « Vendeur du Marché » : sa liste de produits est celle de Mon Marché (publication, photos), sans notions de stock.
+  if (user.business.activityKey === MARKET_ONLY_ACTIVITY_KEY) redirect("/mon-marche/produits");
   const { q, categorie, marque, conditionnement, filtre, page, vue } = await searchParams;
   const currentPage = Math.max(1, parseInt(page ?? "1", 10) || 1);
   const offset = (currentPage - 1) * PAGE_SIZE;

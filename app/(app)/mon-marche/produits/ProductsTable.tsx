@@ -23,7 +23,7 @@ export type ProductRow = {
 };
 
 /** Liste des produits du stock avec sélection multiple (publier / retirer plusieurs produits d'un coup). */
-export function ProductsTable({ rows }: { rows: ProductRow[] }) {
+export function ProductsTable({ rows, marketOnly = false }: { rows: ProductRow[]; marketOnly?: boolean }) {
   const router = useRouter();
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [category, setCategory] = useState("");
@@ -104,11 +104,12 @@ export function ProductsTable({ rows }: { rows: ProductRow[] }) {
                   </Link>
                 )}
                 <div className="min-w-0">
-                  <Link href={`/produits/${p.id}`} className="block truncate text-sm font-semibold text-zinc-900 hover:underline">
+                  <Link href={marketOnly ? `/produits/${p.id}/modifier` : `/produits/${p.id}`} className="block truncate text-sm font-semibold text-zinc-900 hover:underline">
                     {p.name}
                   </Link>
                   <p className="text-xs text-zinc-500">
-                    {p.reference} · {p.priceLabel} · {p.available > 0 ? `${p.available} en stock` : <span className="font-semibold text-red-600">Rupture</span>}
+                    {p.reference} · {p.priceLabel}
+                    {marketOnly ? null : <> · {p.available > 0 ? `${p.available} en stock` : <span className="font-semibold text-red-600">Rupture</span>}</>}
                   </p>
                   {p.listing?.published && (
                     <p className="flex items-center gap-1 text-xs text-zinc-500">
@@ -117,6 +118,11 @@ export function ProductsTable({ rows }: { rows: ProductRow[] }) {
                   )}
                 </div>
               </div>
+              {marketOnly && (
+                <Link href={`/produits/${p.id}/modifier`} className="inline-flex h-9 shrink-0 items-center rounded-lg border border-zinc-300 bg-white px-3 text-sm font-medium text-zinc-700 hover:bg-zinc-50">
+                  Modifier
+                </Link>
+              )}
               <PublishToMarket productId={p.id} salePrice={p.salePrice} initial={p.listing} hasPhoto={!!p.photoUrl?.trim()} compact />
             </div>
             {p.listing?.removedByAdmin && (
