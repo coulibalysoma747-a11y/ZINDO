@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { Search, X } from "lucide-react";
+import { usePathname, useRouter } from "next/navigation";
+import { ChevronDown, Search, X } from "lucide-react";
 import type { NavItem } from "@/lib/nav";
 import { SidebarLink } from "./SidebarLink";
 import { filterNavGroups } from "./nav-icons";
@@ -16,14 +16,24 @@ export function SidebarNav({
   groups,
   footerItems,
   searchable,
+  collapsible = false,
 }: {
   groups: { title: string | null; items: NavItem[] }[];
   /** Paramètres, Aide… : affichés en bas du menu, mais trouvables aussi par la recherche. */
   footerItems: NavItem[];
   searchable: boolean;
+  /** Rubriques repliables (flag interface_pro) : seule celle de la page en cours est ouverte au départ. */
+  collapsible?: boolean;
 }) {
   const router = useRouter();
+  const pathname = usePathname();
   const [query, setQuery] = useState("");
+  const [toggled, setToggled] = useState<Record<string, boolean>>({});
+  const isActive = (item: NavItem) =>
+    ([] as string[]).concat(item.activeMatch ?? item.href).some((base) => pathname === base || pathname.startsWith(`${base}/`));
+  const activeTitle = groups.find((g) => g.items.some(isActive))?.title ?? null;
+  // Ouverte : la rubrique sans titre, celle de la page en cours, ou celle que l'utilisateur a ouverte ; tout s'ouvre pendant une recherche.
+  const isOpen = (title: string | null) => !collapsible || title === null || query.trim() !== "" || (toggled[title] ?? title === activeTitle);
   const visible = filterNavGroups(query.trim() ? [...groups, { title: "Autres", items: footerItems }] : groups, query);
   const firstMatch = visible[0]?.items[0];
 
@@ -68,15 +78,28 @@ export function SidebarNav({
           <p className="px-2.5 py-4 text-sm text-zinc-500">Aucun module ne correspond.</p>
         ) : (
           visible.map((group, i) => (
-            <div key={group.title ?? i} className={i > 0 ? "mt-5" : undefined}>
-              {group.title && (
-                <p className="mb-1 px-2.5 text-[11px] font-semibold uppercase tracking-[0.08em] text-zinc-400">{group.title}</p>
-              )}
-              <div className="space-y-px">
-                {group.items.map((item) => (
-                  <SidebarLink key={item.href} item={item} />
+            <div key={group.title ?? i} className={i > 0 ? (collapsible ? "mt-3" : "mt-5") : undefined}>
+              {group.title &&
+                (collapsible ? (
+                  <button
+                    type="button"
+                    onClick={() => setToggled((t) => ({ ...t, [group.title as string]: !isOpen(group.title) }))}
+                    aria-expanded={isOpen(group.title)}
+                    className="mb-1 flex w-full items-center justify-between rounded-md px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-zinc-400 transition-colors hover:text-zinc-200"
+                  >
+                    {group.title}
+                    <ChevronDown className={`h-3.5 w-3.5 transition-transform ${isOpen(group.title) ? "" : "-rotate-90"}`} />
+                  </button>
+                ) : (
+                  <p className="mb-1 px-2.5 text-[11px] font-semibold uppercase tracking-[0.08em] text-zinc-400">{group.title}</p>
                 ))}
-              </div>
+              {isOpen(group.title) && (
+                <div className="space-y-px">
+                  {group.items.map((item) => (
+                    <SidebarLink key={item.href} item={item} />
+                  ))}
+                </div>
+              )}
             </div>
           ))
         )}

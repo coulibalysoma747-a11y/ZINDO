@@ -17,8 +17,6 @@ export function StatCard({
   tone?: "emerald" | "amber" | "red" | "blue";
   hint?: string;
   delta?: number | null;
-  /** Ancienne tuile de couleur : ignorée, toutes les cartes sont sobres (une seule couleur d'accent). */
-  solid?: "green" | "gold" | "red" | "teal" | "blue" | "violet" | "orange" | "slate";
 }) {
   return (
     <div className="rounded-xl border border-zinc-300/80 bg-white p-5 shadow-[0_1px_3px_rgb(16_24_20/0.08)] dark:border-slate-800 dark:bg-slate-900 dark:shadow-none">

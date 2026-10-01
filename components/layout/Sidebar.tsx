@@ -41,7 +41,7 @@ export function Sidebar({
         <SidebarCloseButton className="-mr-1.5 shrink-0 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700 dark:hover:bg-slate-800" />
       </div>
 
-      <SidebarNav groups={groups} footerItems={footerItems} searchable={menuSearch} />
+      <SidebarNav groups={groups} footerItems={footerItems} searchable={menuSearch} collapsible={dark} />
 
       {footerItems.length > 0 && (
         <div className="shrink-0 space-y-px border-t border-zinc-200 px-3 py-2 dark:border-slate-800">

@@ -15,6 +15,7 @@ import { ButtonLink } from "@/components/ui/Button";
 import { isFeatureEnabled, registerFeatureFlag } from "@/lib/feature-flags";
 import { HistoryFilters } from "@/components/history/HistoryFilters";
 import { RevenueTrendChart } from "@/components/dashboard/RevenueTrendChart";
+import { DashboardHero } from "@/components/dashboard/DashboardHero";
 import { PaymentBreakdownDetail } from "@/components/dashboard/PaymentBreakdownDetail";
 import { MobileHome } from "./MobileHome";
 import { FirstStepsCard } from "@/components/dashboard/FirstStepsCard";
@@ -191,10 +192,34 @@ export default async function DashboardPage({
         </div>
       )}
 
-      {canSell && (
+      {pro && canSell && (
+        <>
+          <DashboardHero
+            label="Chiffre d'affaires encaissé"
+            value={formatMoney(overview.current.cashedIn, currency)}
+            delta={overview.deltas.cashedIn}
+            hint={`${overview.current.salesCount} vente(s)${overview.current.creditRepayments > 0 ? ` · dont ${formatMoney(overview.current.creditRepayments, currency)} de crédits remboursés` : ""}`}
+            trend={data.salesLast7Days}
+            minis={[
+              { label: "Bénéfice net", value: formatMoney(overview.current.netProfit, currency), hint: overview.current.cashedIn > 0 ? `${((overview.current.netProfit / overview.current.cashedIn) * 100).toFixed(1)} % du CA` : undefined, negative: overview.current.netProfit < 0 },
+              { label: "Marge", value: formatMoney(overview.current.margin, currency), hint: overview.current.cashedIn > 0 ? `${((overview.current.margin / overview.current.cashedIn) * 100).toFixed(1)} % du CA` : undefined },
+              { label: "Dépenses", value: formatMoney(overview.current.expenses, currency) },
+              { label: "Ticket moyen", value: formatMoney(overview.current.avgTicket, currency), hint: `${overview.current.salesCount} vente(s)` },
+            ]}
+          />
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <StatCard label="Achats" value={formatMoney(overview.current.purchases, currency)} icon={Truck} delta={overview.deltas.purchases} />
+            <StatCard label="Articles vendus" value={String(overview.current.itemsSold)} icon={ShoppingCart} delta={overview.deltas.salesCount} />
+            {canViewStock && (
+              <StatCard label="Valeur du stock" value={formatMoney(overview.stockValue, currency)} icon={Boxes} hint={`${data.productCount} produit(s) en stock`} />
+            )}
+          </div>
+        </>
+      )}
+
+      {canSell && !pro && (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <StatCard
-            solid={pro ? "green" : undefined}
             label="CA encaissé"
             value={formatMoney(overview.current.cashedIn, currency)}
             icon={Wallet}
@@ -202,7 +227,6 @@ export default async function DashboardPage({
             delta={overview.deltas.cashedIn}
           />
           <StatCard
-            solid={pro ? "teal" : undefined}
             label="Marge"
             value={formatMoney(overview.current.margin, currency)}
             icon={Percent}
@@ -211,7 +235,6 @@ export default async function DashboardPage({
             delta={overview.deltas.margin}
           />
           <StatCard
-            solid={pro ? "red" : undefined}
             label="Dépenses"
             value={formatMoney(overview.current.expenses, currency)}
             icon={Receipt}
@@ -219,7 +242,6 @@ export default async function DashboardPage({
             delta={overview.deltas.expenses}
           />
           <StatCard
-            solid={pro ? (overview.current.netProfit >= 0 ? "gold" : "red") : undefined}
             label="Bénéfice net"
             value={formatMoney(overview.current.netProfit, currency)}
             icon={PiggyBank}
@@ -228,7 +250,6 @@ export default async function DashboardPage({
             delta={overview.deltas.netProfit}
           />
           <StatCard
-            solid={pro ? "blue" : undefined}
             label="Ventes"
             value={String(overview.current.salesCount)}
             icon={ShoppingCart}
@@ -236,7 +257,6 @@ export default async function DashboardPage({
             delta={overview.deltas.salesCount}
           />
           <StatCard
-            solid={pro ? "violet" : undefined}
             label="Ticket moyen"
             value={formatMoney(overview.current.avgTicket, currency)}
             icon={Ticket}
@@ -244,7 +264,6 @@ export default async function DashboardPage({
             delta={overview.deltas.avgTicket}
           />
           <StatCard
-            solid={pro ? "orange" : undefined}
             label="Achats"
             value={formatMoney(overview.current.purchases, currency)}
             icon={Truck}
@@ -253,7 +272,6 @@ export default async function DashboardPage({
           />
           {canViewStock && (
             <StatCard
-            solid={pro ? "slate" : undefined}
               label="Valeur du stock"
               value={formatMoney(overview.stockValue, currency)}
               icon={Boxes}
