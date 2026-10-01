@@ -7,6 +7,7 @@ import { supabase } from "@/lib/supabase";
 import { requirePermission } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
 import { logAction } from "@/lib/audit";
+import { deleteProductForever } from "@/lib/product-trash";
 import { generateProductReference, generateProductBarcode } from "@/lib/reference";
 import { saveProductPhoto, deleteUploadedImage, uploadedImageUrl } from "@/lib/photo-upload";
 import { getActivityConfig } from "@/lib/activity-config";
@@ -613,4 +614,21 @@ export async function updateProductPhotoAction(productId: string, formData: Form
   revalidatePath("/photos-produits");
   revalidatePath("/produits");
   return { url: result.url };
+}
+
+/** Efface définitivement un produit de la corbeille (refusé s'il a déjà servi dans une vente, un achat…). */
+export async function deleteArchivedProductAction(id: string): Promise<{ success?: string; error?: string }> {
+  const user = await requirePermission(PERMISSIONS.PRODUCTS_MANAGE);
+  const result = await deleteProductForever(user.businessId, id);
+  if ("error" in result) return { error: result.error };
+  await logAction({
+    businessId: user.businessId,
+    userId: user.id,
+    action: "DELETE",
+    entity: "Product",
+    entityId: id,
+  });
+  revalidatePath("/produits");
+  revalidatePath("/produits/corbeille");
+  return { success: "Produit effacé définitivement" };
 }

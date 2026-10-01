@@ -14,6 +14,8 @@ import { MISC_ITEM_REFERENCE } from "@/lib/misc-item";
 import { Card } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/Empty";
 import { RestoreProductButton } from "./RestoreProductButton";
+import { PermanentDeleteButton } from "./PermanentDeleteButton";
+import { TRASH_RETENTION_DAYS } from "@/lib/product-trash";
 
 /** Corbeille (flag corbeille_produits) : produits archivés, restaurables en un clic. */
 export default async function ProductTrashPage() {
@@ -58,7 +60,7 @@ export default async function ProductTrashPage() {
         <h1 className="text-xl font-bold text-zinc-900">Corbeille des produits</h1>
         <p className="text-sm text-zinc-500">
           Produits archivés : ils n&apos;apparaissent plus dans la liste ni à la caisse, mais leur historique est
-          conservé. « Restaurer » les remet en vente avec leur stock.
+          conservé. « Restaurer » les remet en vente avec leur stock. Après {TRASH_RETENTION_DAYS} jours, un produit qui n&apos;a jamais servi dans une vente ou un achat est effacé définitivement ; vous pouvez aussi l&apos;effacer tout de suite avec « Supprimer définitivement ».
         </p>
       </div>
 
@@ -99,7 +101,14 @@ export default async function ProductTrashPage() {
                   <TableCell className="text-zinc-600">{formatDateTime(p.updatedAt as string)}</TableCell>
                   <TableCell align="right" className="font-medium tabular-nums">{formatMoney(p.salePrice as number, currency)}</TableCell>
                   <TableCell align="right" className="tabular-nums text-zinc-700">{stockById.get(p.id as string) ?? 0}</TableCell>
-                  <TableCell align="right">{canRestore && <RestoreProductButton id={p.id as string} />}</TableCell>
+                  <TableCell align="right">
+                    {canRestore && (
+                      <div className="flex items-start justify-end gap-2">
+                        <RestoreProductButton id={p.id as string} />
+                        <PermanentDeleteButton id={p.id as string} name={p.name as string} />
+                      </div>
+                    )}
+                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>

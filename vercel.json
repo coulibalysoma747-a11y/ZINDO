@@ -4,6 +4,10 @@
     {
       "path": "/api/cron/faso-stock-sync",
       "schedule": "0 3 * * *"
+    },
+    {
+      "path": "/api/cron/purge-corbeille",
+      "schedule": "30 3 * * *"
     }
   ]
 }
