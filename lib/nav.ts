@@ -321,12 +321,12 @@ export const NAV_ITEMS: NavItem[] = [
   { label: "Historique des ventes", href: "/ventes/historique", icon: "history", permission: PERMISSIONS.SALES_VIEW },
   { label: "Sessions de caisse", href: "/ventes/sessions", icon: "cash-sessions", permission: PERMISSIONS.CASH_SESSIONS_MANAGE },
   { label: "Produits", href: "/produits", icon: "products", permission: PERMISSIONS.PRODUCTS_VIEW },
-  { label: "Prix de revient", href: "/prix-de-revient", icon: "cost-price", permission: PERMISSIONS.PRODUCTS_MANAGE, moduleToggle: "prixDeRevient" },
   { label: "Photos produits", href: "/photos-produits", icon: "product-photos", permission: PERMISSIONS.PRODUCTS_MANAGE, moduleToggle: "photosProduits" },
   { label: "Catégories", href: "/categories", icon: "categories", permission: PERMISSIONS.CATEGORIES_MANAGE },
   { label: "Marques", href: "/marques", icon: "brands", permission: PERMISSIONS.CATEGORIES_MANAGE },
   { label: "Stock", href: "/stock", icon: "stock", permission: PERMISSIONS.STOCK_VIEW },
   { label: "Réassort", href: "/reassort", icon: "restock", permission: PERMISSIONS.STOCK_VIEW, moduleToggle: "reassort" },
+  { label: "Prix de revient", href: "/prix-de-revient", icon: "cost-price", permission: PERMISSIONS.COST_PRICE_MANAGE, moduleToggle: "prixDeRevient" },
   {
     label: "Péremption (DLC)",
     href: "/peremption",

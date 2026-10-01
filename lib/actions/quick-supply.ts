@@ -104,9 +104,8 @@ export async function quickSupplyAction(formData: FormData): Promise<QuickSupply
       .eq("business_id", user.businessId)
       .maybeSingle();
     if (!product) return { error: "Produit introuvable" };
-    // Le prix de revient réel se recalcule via le module Prix de revient
-    // (historique des achats) — ici on ne met à jour que le prix d'achat
-    // affiché sur la fiche, avec le dernier prix payé.
+    // Ici on ne met à jour que le prix d'achat affiché sur la fiche, avec le dernier prix payé ;
+    // le vrai prix de revient (frais d'approche répartis) se calcule dans le module Prix de revient.
     await supabase.from("products").update({ purchase_price: data.unitPrice }).eq("id", productId);
   }
   if (!productId) return { error: "Produit introuvable" };

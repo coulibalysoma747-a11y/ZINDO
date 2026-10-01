@@ -44,7 +44,7 @@ const MODULES: {
     key: "prixDeRevient",
     icon: Calculator,
     title: "Prix de revient",
-    description: "Coût moyen réel (historique des achats) à comparer au prix d'achat renseigné.",
+    description: "Arrivages : répartit transport, douane et autres frais sur chaque article, calcule le vrai prix de revient et le prix de vente conseillé.",
     href: "/prix-de-revient",
     hrefLabel: "Ouvrir le prix de revient",
   },

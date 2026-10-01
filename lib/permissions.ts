@@ -29,6 +29,8 @@ export const PERMISSIONS = {
   PICKUPS_MANAGE: "enlevements.gerer",
   SHIPMENTS_MANAGE: "expeditions.gerer",
   QUICK_SUPPLY_MANAGE: "appro_rapide.gerer",
+  /** Prix de revient : arrivages, frais d'approche, application des prix au catalogue (propriétaire par défaut, accordable). */
+  COST_PRICE_MANAGE: "prix_revient.gerer",
   CONSULTATIONS_MANAGE: "consultations.gerer",
   EXPIRY_MANAGE: "peremption.gerer",
   REPAIRS_MANAGE: "reparations.gerer",
@@ -136,6 +138,7 @@ export const PERMISSION_LABELS: Record<string, string> = {
   [PERMISSIONS.PICKUPS_MANAGE]: "Gérer les enlèvements partenaires",
   [PERMISSIONS.SHIPMENTS_MANAGE]: "Gérer les expéditions",
   [PERMISSIONS.QUICK_SUPPLY_MANAGE]: "Utiliser l'approvisionnement rapide",
+  [PERMISSIONS.COST_PRICE_MANAGE]: "Gérer le prix de revient (arrivages et prix)",
   [PERMISSIONS.CONSULTATIONS_MANAGE]: "Gérer les consultations (cabinet médical)",
   [PERMISSIONS.EXPIRY_MANAGE]: "Gérer le suivi des dates de péremption (supermarché / pharmacie)",
   [PERMISSIONS.REPAIRS_MANAGE]: "Gérer les bons de réparation (atelier / pièces détachées)",
