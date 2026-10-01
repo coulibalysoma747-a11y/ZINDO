@@ -9,6 +9,8 @@ import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { EmptyState } from "@/components/ui/Empty";
 import { HistoryFilters } from "@/components/history/HistoryFilters";
+import { Table, TableHead, TableBody, TableRow, TableHeaderCell, TableCell } from "@/components/ui/Table";
+import { isFeatureEnabled } from "@/lib/feature-flags";
 import { CancelSaleButton } from "@/app/(app)/ventes/[id]/CancelSaleButton";
 import { UnclaimedToggle } from "@/app/(app)/ventes/historique/UnclaimedToggle";
 import { fetchAllPagesConcurrently } from "@/lib/supabase-paging";
@@ -88,13 +90,14 @@ export async function SalesHistoryPanel({
   query?: string;
 }) {
   const role = user.role as Parameters<typeof hasPermission>[1];
-  const [canSeeMargin, canEdit, canView, settings, searchEnabled] = await Promise.all([
+  const [canSeeMargin, canEdit, canView, settings, searchEnabled, pro] = await Promise.all([
     // La marge révèle les prix d'achat : réservée à qui peut consulter les rapports.
     hasPermission(user.businessId, role, PERMISSIONS.REPORTS_VIEW, user.id),
     hasPermission(user.businessId, role, PERMISSIONS.SALES_CREATE, user.id),
     hasPermission(user.businessId, role, PERMISSIONS.SALES_VIEW, user.id),
     getBusinessSettings(user.businessId),
     isSalesSearchEnabled(user.businessId),
+    isFeatureEnabled("interface_pro", user.businessId),
   ]);
   if (!canView) return null;
 
@@ -216,7 +219,62 @@ export async function SalesHistoryPanel({
             retrouver les autres.
           </p>
         )}
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
+        {pro && (
+          <Card className="hidden overflow-x-auto lg:block">
+            <Table className="min-w-[860px]">
+              <TableHead>
+                <TableRow interactive={false}>
+                  <TableHeaderCell>N° de vente</TableHeaderCell>
+                  <TableHeaderCell>Date et heure</TableHeaderCell>
+                  <TableHeaderCell>Client</TableHeaderCell>
+                  <TableHeaderCell>Paiement</TableHeaderCell>
+                  <TableHeaderCell align="right">Total</TableHeaderCell>
+                  <TableHeaderCell>Statut</TableHeaderCell>
+                  <TableHeaderCell align="right">Actions</TableHeaderCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {sales.slice(0, MAX_CARDS).map((s) => {
+                  const cancelled = s.status === "ANNULEE";
+                  const status = STATUS[s.status] ?? STATUS.PAYEE;
+                  const unclaimed = !!s.unclaimedAt && !s.claimedAt;
+                  return (
+                    <TableRow key={s.id}>
+                      <TableCell className="font-semibold text-zinc-900">
+                        <Link href={`/ventes/${s.id}`} className="hover:text-zindo-green-700">{s.number}</Link>
+                      </TableCell>
+                      <TableCell className="text-zinc-600">{formatDateTime(new Date(s.createdAt))}</TableCell>
+                      <TableCell>{s.customer?.name ?? "Client de passage"}</TableCell>
+                      <TableCell className="text-zinc-600">{s.paymentMethod ? PAYMENT_LABELS[s.paymentMethod] ?? s.paymentMethod : "—"}</TableCell>
+                      <TableCell align="right" className="font-semibold tabular-nums">{formatMoney(s.total, currency)}</TableCell>
+                      <TableCell>
+                        <div className="flex flex-wrap gap-1">
+                          <Badge tone={status.tone}>{status.label}</Badge>
+                          {unclaimed && <Badge tone="amber">À retirer</Badge>}
+                        </div>
+                      </TableCell>
+                      <TableCell align="right">
+                        <div className="flex flex-wrap items-center justify-end gap-2">
+                          <Link href={`/ventes/${s.id}`} className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 px-3 py-1.5 text-[12.5px] font-semibold text-zinc-700 hover:bg-zinc-50 dark:border-slate-700 dark:text-slate-200">
+                            <Eye className="h-3.5 w-3.5" /> Ticket
+                          </Link>
+                          {canEdit && !cancelled && (
+                            <Link href={`/ventes/${s.id}/modifier`} className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-200 px-3 py-1.5 text-[12.5px] font-semibold text-zinc-700 hover:bg-zinc-50 dark:border-slate-700 dark:text-slate-200">
+                              <Pencil className="h-3.5 w-3.5" /> Modifier
+                            </Link>
+                          )}
+                          {!cancelled && <CancelSaleButton saleId={s.id} />}
+                          {settings.trackUnclaimedGoods && !cancelled && <UnclaimedToggle saleId={s.id} unclaimed={unclaimed} />}
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </Card>
+        )}
+        <div className={`grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3 ${pro ? "lg:hidden" : ""}`}>
           {sales.slice(0, MAX_CARDS).map((s) => {
             const cancelled = s.status === "ANNULEE";
             const status = STATUS[s.status] ?? STATUS.PAYEE;

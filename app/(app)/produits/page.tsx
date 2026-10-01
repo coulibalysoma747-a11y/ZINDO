@@ -1,6 +1,6 @@
 import Link from "next/link";
-import { Plus, FileUp, FileDown, QrCode, Trash2, Wrench, ChevronDown } from "lucide-react";
-import { requirePermission } from "@/lib/auth";
+import { Plus, FileUp, FileDown, QrCode, Trash2, Wrench, ChevronDown, Package, Boxes, AlertTriangle, PackageX } from "lucide-react";
+import { requirePermission, hasPermission } from "@/lib/auth";
 import { PERMISSIONS } from "@/lib/permissions";
 import { supabase } from "@/lib/supabase";
 import { getCurrentLocation } from "@/lib/location";
@@ -15,6 +15,8 @@ import { CatalogTabs } from "@/components/products/CatalogTabs";
 import { ProductSearchBar } from "./ProductSearchBar";
 import { ProductThumbnail } from "@/components/products/ProductThumbnail";
 import { ProductRowMenu } from "@/components/products/ProductRowMenu";
+import { ProductArchiveButton } from "@/components/products/ProductArchiveButton";
+import { StatCard } from "@/components/ui/StatCard";
 import { QuickPackagingButton } from "@/components/products/QuickPackagingModal";
 import { isPackagingUnitsModuleEnabled } from "@/lib/actions/packaging-units";
 import { ensureCatalogImportFlagRegistered } from "@/lib/actions/catalog-import";
@@ -48,6 +50,7 @@ export default async function ProductsPage({
     isFeatureEnabled("interface_pro", user.businessId),
   ]);
   const cartes = pro && vue === "cartes";
+  const canManage = pro && (await hasPermission(user.businessId, user.role, PERMISSIONS.PRODUCTS_MANAGE, user.id));
   const productsLabel = resolveTerm(activityConfig, "products");
 
   // Le filtre par statut de stock ("rupture"/"stock-faible") se calcule après
@@ -158,17 +161,19 @@ export default async function ProductsPage({
         ? withStock.filter((p) => p.quantity <= 0)
         : withStock;
 
-  let compteurs: { faible: number; rupture: number; tous: number } | null = null;
+  let compteurs: { faible: number; rupture: number; tous: number; valeur: number } | null = null;
   if (pro) {
-    const { data: tous } = await supabase.from("products").select("id, minStock:min_stock").eq("business_id", user.businessId).eq("active", true);
+    const { data: tous } = await supabase.from("products").select("id, minStock:min_stock, purchasePrice:purchase_price").eq("business_id", user.businessId).eq("active", true);
     let faible = 0;
     let rupture = 0;
-    for (const t of (tous ?? []) as { id: string; minStock: number }[]) {
+    let valeur = 0;
+    for (const t of (tous ?? []) as { id: string; minStock: number; purchasePrice: number }[]) {
       const qte = stockByProduct.get(t.id) ?? 0;
+      if (qte > 0) valeur += qte * (Number(t.purchasePrice) || 0);
       if (qte <= 0) rupture++;
       else if (qte <= t.minStock) faible++;
     }
-    compteurs = { faible, rupture, tous: (tous ?? []).length };
+    compteurs = { faible, rupture, tous: (tous ?? []).length, valeur };
   }
 
   const totalCount = usesStockFilter ? stockFiltered.length : rawCount ?? 0;
@@ -293,6 +298,14 @@ export default async function ProductsPage({
 
       <CatalogTabs active="produits" />
 
+      {pro && compteurs && (
+        <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+          <StatCard label="Produits" value={String(compteurs.tous)} icon={Package} />
+          <StatCard label="Valeur du stock" value={formatMoney(compteurs.valeur, user.business.currency)} icon={Boxes} hint="au prix d'achat" />
+          <StatCard label="Stock faible" value={String(compteurs.faible)} icon={AlertTriangle} />
+          <StatCard label="En rupture" value={String(compteurs.rupture)} icon={PackageX} tone={compteurs.rupture > 0 ? "red" : "emerald"} />
+        </div>
+      )}
       <ProductSearchBar categories={categories ?? []} brands={brands ?? []} showPackagingFilter={packagingEnabled} compactOnMobile={mobileLayout} />
       {pro && compteurs && (
         <div className="flex flex-wrap items-center justify-between gap-3">
@@ -417,6 +430,17 @@ export default async function ProductsPage({
                             basePrice={p.salePrice as number}
                             currency={user.business.currency}
                           />
+                        )}
+                        {canManage && (
+                          <>
+                            <Link
+                              href={`/produits/${p.id}/modifier`}
+                              className="rounded-lg border border-zinc-200 px-3 py-1.5 text-[12.5px] font-semibold text-zinc-700 transition-colors hover:bg-zinc-50 dark:border-slate-700 dark:text-slate-200"
+                            >
+                              Modifier
+                            </Link>
+                            <ProductArchiveButton id={p.id as string} name={p.name as string} trash={trashEnabled} />
+                          </>
                         )}
                         <ProductRowMenu productId={p.id as string} />
                       </div>
