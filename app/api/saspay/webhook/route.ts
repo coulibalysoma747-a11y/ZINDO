@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verifySaspaySignature } from "@/lib/saspay-signature";
+import { reconcileSaspayPayments } from "@/lib/saspay-payments";
 
 /**
  * Confirmations (webhooks) SasPay. Adresse à déclarer dans SasPay : https://www.zindo.site/api/saspay/webhook
@@ -25,5 +26,12 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Corps invalide" }, { status: 400 });
   }
   console.log("[saspay/webhook] reçu :", event);
-  return NextResponse.json({ received: true });
+  // La confirmation sert de déclencheur : on relit chez SasPay chaque paiement en attente, puis on active ce qui est payé.
+  try {
+    const confirmed = await reconcileSaspayPayments();
+    return NextResponse.json({ received: true, confirmed });
+  } catch (e) {
+    console.error("[saspay/webhook] Traitement impossible :", e instanceof Error ? e.message : e);
+    return NextResponse.json({ error: "Traitement impossible" }, { status: 500 });
+  }
 }

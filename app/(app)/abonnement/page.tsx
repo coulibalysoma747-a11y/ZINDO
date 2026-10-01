@@ -11,6 +11,8 @@ import { ButtonLink } from "@/components/ui/Button";
 import { FormulaChoice, MONTHLY_PRICE, ANNUAL_PRICE } from "./FormulaChoice";
 import { PaymentProofForm } from "./PaymentProofForm";
 import { PaymentMethodModules } from "./PaymentMethodModules";
+import { SaspayPayButton } from "./SaspayPayButton";
+import { isSaspayPaymentEnabled, reconcileSaspayPayments } from "@/lib/saspay-payments";
 
 const CYCLE_LABELS = { MONTHLY: "mensuel", ANNUAL: "annuel" } as const;
 const INVOICE_STATUS_TONE = { EN_ATTENTE: "amber", PAYEE: "emerald", ANNULEE: "zinc" } as const;
@@ -31,6 +33,9 @@ export default async function SubscriptionPage() {
   const trialDays = await getTrialDays();
   const user = await requireUserForBilling();
   const currency = user.business.currency;
+  // Retour de la page de paiement : on relit d'abord les paiements en attente pour afficher l'abonnement déjà activé.
+  await reconcileSaspayPayments(user.businessId);
+  const saspayEnabled = await isSaspayPaymentEnabled(user.businessId);
 
   const [state, { data: pendingInvoiceData }, { data: invoiceHistoryData }] = await Promise.all([
     getSubscriptionState(user.businessId),
@@ -155,6 +160,7 @@ export default async function SubscriptionPage() {
               {pendingInvoice.number} — {pendingInvoice.planLabel} ({CYCLE_LABELS[pendingInvoice.billingCycle]}) —{" "}
               <span className="font-semibold">{formatMoney(pendingInvoice.amount, currency)}</span>
             </p>
+            {saspayEnabled && <SaspayPayButton invoiceId={pendingInvoice.id} amountLabel={formatMoney(pendingInvoice.amount, currency)} />}
             <div className="space-y-3 rounded-lg bg-white p-3">
               <p className="text-sm text-zinc-600">
                 Envoyez <span className="font-semibold text-zinc-900">{formatMoney(pendingInvoice.amount, currency)}</span> à
