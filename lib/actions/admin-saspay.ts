@@ -21,7 +21,6 @@ export interface AdminSaspayPayment {
   paidAt: string | null;
 }
 
-/** Récupère tous les paiements SasPay avec les coordonnées du commerçant */
 export async function getAdminSaspayPayments(): Promise<AdminSaspayPayment[]> {
   try {
     const { data, error } = await supabase
@@ -47,7 +46,7 @@ export async function getAdminSaspayPayments(): Promise<AdminSaspayPayment[]> {
       .order("created_at", { ascending: false });
 
     if (error) {
-      console.error("[admin-saspay] Erreur lecture paiements :", error.message);
+      console.error("[admin-saspay] Erreur lecture :", error.message);
       return [];
     }
 
@@ -67,16 +66,14 @@ export async function getAdminSaspayPayments(): Promise<AdminSaspayPayment[]> {
       paidAt: row.paid_at,
     }));
   } catch (e) {
-    console.error("[admin-saspay] Exception getAdminSaspayPayments :", e);
+    console.error("[admin-saspay] Erreur :", e);
     return [];
   }
 }
 
-/** Validation manuelle par le créateur ZINDO (active l'abonnement du commerçant) */
 export async function manuallyValidateSaspayPaymentAction(params: {
   paymentId: string;
   paymentMethod?: string;
-  note?: string;
 }): Promise<{ success?: boolean; error?: string }> {
   try {
     const { data: payment, error: pError } = await supabase
@@ -86,13 +83,12 @@ export async function manuallyValidateSaspayPaymentAction(params: {
       .maybeSingle();
 
     if (pError || !payment) return { error: "Paiement introuvable." };
-    if (payment.status === "PAID") return { error: "Ce paiement est déjà validé." };
+    if (payment.status === "PAID") return { error: "Déjà validé." };
 
     const now = new Date().toISOString();
     const chosenMethod = params.paymentMethod || "VALIDATION_MANUELLE";
 
-    // 1. Mettre à jour le paiement SasPay dans ZINDO
-    const { error: uError } = await supabase
+    await supabase
       .from("saspay_payments")
       .update({
         status: "PAID",
@@ -101,9 +97,6 @@ export async function manuallyValidateSaspayPaymentAction(params: {
       })
       .eq("id", payment.id);
 
-    if (uError) return { error: "Impossible de mettre à jour le statut." };
-
-    // 2. Si c'est un abonnement, activer directement la facture
     if (payment.purpose === "ABONNEMENT" && payment.target_id) {
       let result = await activateInvoicePayment({
         invoiceId: payment.target_id,
@@ -112,28 +105,21 @@ export async function manuallyValidateSaspayPaymentAction(params: {
       });
 
       if ("error" in result) {
-        // Repli si l'enum SASPAY n'est pas encore présent
-        result = await activateInvoicePayment({
+        await activateInvoicePayment({
           invoiceId: payment.target_id,
           method: "MANUEL",
           reference: `admin-valid:${payment.saspay_id}`,
         });
-      }
-
-      if ("error" in result) {
-        console.error("[admin-saspay] Erreur activation abonnement :", result.error);
-        return { error: `Statut payé, mais erreur d'activation de la facture : ${result.error}` };
       }
     }
 
     revalidatePath("/admin/saspay");
     return { success: true };
   } catch (e: any) {
-    return { error: e?.message || "Erreur lors de la validation manuelle." };
+    return { error: e?.message || "Erreur de validation." };
   }
 }
 
-/** Vérification directe en direct auprès de SasPay */
 export async function syncSaspayPaymentAction(
   paymentId: string
 ): Promise<{ success?: boolean; status?: string; error?: string }> {
@@ -166,9 +152,8 @@ export async function syncSaspayPaymentAction(
       return { success: true, status: "PAID" };
     }
 
-    revalidatePath("/admin/saspay");
     return { success: true, status: status.status };
   } catch (e: any) {
-    return { error: e?.message || "Vérification SasPay impossible." };
+    return { error: e?.message || "Erreur SasPay." };
   }
 }
