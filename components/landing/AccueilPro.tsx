@@ -85,7 +85,7 @@ export function AccueilPro({ trialDays, faqs }: { trialDays: number; faqs: Faq[]
                 </Link>
               </div>
               <p className="mt-5 text-sm text-zinc-500">
-                {trialDays} jours gratuits · Sans carte bancaire · Ensuite 7 500 FCFA par mois
+                {trialDays} jours gratuits · Sans carte bancaire · Ensuite 2500 FCFA par mois
               </p>
             </Reveal>
           </div>
@@ -288,8 +288,8 @@ export function AccueilPro({ trialDays, faqs }: { trialDays: number; faqs: Faq[]
         <section id="tarifs" className="mx-auto max-w-6xl scroll-mt-20 px-4 py-20 sm:px-6 lg:py-28">
           <SectionTitle eyebrow="Tarifs" title="Un prix simple, tout compris" text={`Essayez tout pendant ${trialDays} jours. Vous ne payez que si vous continuez.`} />
           <Reveal className="mx-auto mt-12 grid max-w-3xl gap-5 sm:grid-cols-2">
-            <PriceCard name="Mensuel" price="7 500" period="FCFA / mois" note="Sans engagement, arrêtez quand vous voulez." />
-            <PriceCard highlighted name="Annuel" price="75 000" period="FCFA / an" note="Soit 2 mois offerts (15 000 FCFA d'économie)." />
+            <PriceCard name="Mensuel" price="2 500" period="FCFA / mois" note="Sans engagement, arrêtez quand vous voulez." />
+            <PriceCard highlighted name="Annuel" price="25 000" period="FCFA / an" note="Soit 2 mois offerts (15 000 FCFA d'économie)." />
           </Reveal>
           <p className="mt-6 text-center text-sm text-zinc-500">
             Toutes les fonctionnalités, plusieurs boutiques et utilisateurs, mises à jour incluses.{" "}
