@@ -161,7 +161,7 @@ export default async function SubscriptionPage() {
             {saspayEnabled ? (
               <SaspayPayButton invoiceId={pendingInvoice.id} amountLabel={formatMoney(pendingInvoice.amount, currency)} />
             ) : (
-              <p className="text-sm text-zinc-600">Le paiement en ligne avec SasPay est momentanément indisponible. Réessayez dans quelques instants.</p>
+              <p className="text-sm text-zinc-600">Le paiement en ligne est momentanément indisponible. Réessayez dans quelques instants.</p>
             )}
             {pendingInvoice.paymentReference && (
               <p className="text-sm text-emerald-700">

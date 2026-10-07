@@ -71,7 +71,7 @@ export async function submitVerificationAction(_prev: VerificationState, formDat
     .order("paid_at", { ascending: true })
     .limit(1)
     .maybeSingle();
-  if (!credit) return { error: `Payez d'abord les ${PACK_PRICE.toLocaleString("fr-FR")} FCFA avec SasPay.` };
+  if (!credit) return { error: `Payez d'abord les ${PACK_PRICE.toLocaleString("fr-FR")} FCFA en ligne.` };
   const paymentReference = `saspay:${credit.saspayId as string}`;
 
   // Chaque photo arrive soit déjà envoyée directement (chemin), soit en fichier (repli).

@@ -54,7 +54,7 @@ export default async function VerificationPage() {
       </h1>
       <p className="mt-2 text-sm text-zinc-600">
         <strong>{PRICE_LABEL} / mois</strong> : badge <strong>Vérifié</strong> sur le Marché ZINDO et vos produits{" "}
-        <strong>à la une</strong>, affichés en premier. Ce pack est séparé de l&apos;abonnement ZINDO. Le paiement se fait en ligne avec SasPay.
+        <strong>à la une</strong>, affichés en premier. Ce pack est séparé de l&apos;abonnement ZINDO. Le paiement se fait en ligne, de façon sécurisée.
       </p>
 
       <div className="mt-6">
@@ -103,8 +103,8 @@ export default async function VerificationPage() {
               </>
             ) : (
               <div className="space-y-2">
-                <p className="text-sm font-semibold text-zindo-ink-900">1. Payez {PRICE_LABEL} avec SasPay :</p>
-                <PackPayButton label={`Payer ${PRICE_LABEL} avec SasPay`} />
+                <p className="text-sm font-semibold text-zindo-ink-900">1. Payez {PRICE_LABEL} en ligne :</p>
+                <PackPayButton label={`Payer ${PRICE_LABEL}`} />
                 <p className="text-xs text-zinc-500">Ensuite, vous enverrez les photos de votre pièce et de vous.</p>
               </div>
             )}

@@ -71,7 +71,7 @@ export default async function MyMarketVisibilityPage() {
           {saspayEnabled ? (
             <SaspayTopupForm />
           ) : (
-            <p className="text-sm text-zinc-600">Le paiement en ligne avec SasPay est momentanément indisponible. Réessayez dans quelques instants.</p>
+            <p className="text-sm text-zinc-600">Le paiement en ligne est momentanément indisponible. Réessayez dans quelques instants.</p>
           )}
         </section>
       </div>
@@ -132,7 +132,7 @@ export default async function MyMarketVisibilityPage() {
                     </span>
                   </div>
                   <p className="text-xs text-zinc-500">
-                    {t.operator === "SASPAY" ? "SasPay" : t.operator === "ORANGE" ? "Orange Money" : "Moov Money"} · réf. {t.reference} · {formatDateTime(t.submittedAt)}
+                    {t.operator === "SASPAY" ? "Paiement en ligne" : t.operator === "ORANGE" ? "Orange Money" : "Moov Money"} · réf. {t.reference} · {formatDateTime(t.submittedAt)}
                   </p>
                   {t.rejectReason && <p className="text-xs text-red-600">Motif : {t.rejectReason}</p>}
                 </li>

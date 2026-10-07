@@ -54,7 +54,7 @@ export default async function CguPage() {
         <p>
           ZINDO propose {trialDays} jours d&apos;essai gratuit, sans engagement, à la création du compte. À l&apos;issue de
           cette période, l&apos;utilisation de ZINDO nécessite un abonnement payant : 7 500 FCFA par mois ou
-          75 000 FCFA par an. Le paiement s&apos;effectue en ligne avec SasPay, depuis la page « Abonnement » ; l&apos;abonnement
+          75 000 FCFA par an. Le paiement s&apos;effectue en ligne, de façon sécurisée, depuis la page « Abonnement » ; l&apos;abonnement
           s&apos;active dès que le paiement est confirmé. Toute
           modification substantielle des tarifs vous serait communiquée avant application à votre compte.
         </p>

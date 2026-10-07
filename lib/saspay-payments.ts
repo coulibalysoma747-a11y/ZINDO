@@ -44,7 +44,7 @@ async function startSaspayPayment(params: {
   } catch (e) {
     return { error: e instanceof Error ? e.message : "Le paiement n'a pas pu être créé." };
   }
-  if (!checkout.checkoutUrl) return { error: "SasPay n'a pas renvoyé de page de paiement. Réessayez." };
+  if (!checkout.checkoutUrl) return { error: "La page de paiement n'a pas pu être créée. Réessayez." };
 
   const { error } = await supabase
     .from("saspay_payments")

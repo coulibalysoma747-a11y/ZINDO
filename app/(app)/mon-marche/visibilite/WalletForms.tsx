@@ -28,14 +28,14 @@ export function SaspayTopupForm() {
         });
       }}
     >
-      <p className="text-sm text-zinc-600">Payez en ligne avec SasPay. Votre solde est crédité tout seul dès que le paiement est confirmé.</p>
+      <p className="text-sm text-zinc-600">Payez en ligne, de façon sécurisée. Votre solde est crédité tout seul dès que le paiement est confirmé. Minimum : 200 FCFA.</p>
       <label className="block text-xs font-medium text-zinc-600">
-        Montant à recharger (FCFA)
+        Montant à recharger (FCFA, minimum 200)
         <input value={amount} onChange={(e) => setAmount(e.target.value)} inputMode="numeric" required placeholder="5 000" className={`mt-1 max-w-xs ${input}`} />
       </label>
       {error && <p className="text-sm text-red-600">{error}</p>}
       <button disabled={pending || !amount.trim()} className="h-10 rounded-xl bg-zindo-green-600 px-5 text-sm font-semibold text-white hover:bg-zindo-green-700 disabled:opacity-50">
-        {pending ? "Redirection…" : "Payer avec SasPay"}
+        {pending ? "Redirection…" : "Recharger mon portefeuille"}
       </button>
     </form>
   );

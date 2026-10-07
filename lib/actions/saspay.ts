@@ -20,7 +20,7 @@ export async function payInvoiceWithSaspayAction(invoiceId: string): Promise<{ e
 /** Recharge du portefeuille du Marché par SasPay : renvoie la page de paiement ; le solde est crédité à la confirmation. */
 export async function topupWithSaspayAction(amount: number): Promise<{ error?: string; url?: string }> {
   const { user } = await requireMarketSeller(PERMISSIONS.SETTINGS_MANAGE);
-  if (!Number.isInteger(amount) || amount < 100) return { error: "Montant en FCFA, 100 FCFA minimum, sans centimes." };
+  if (!Number.isInteger(amount) || amount < 200) return { error: "Montant en FCFA, 200 FCFA minimum, sans centimes." };
   if (amount > 10_000_000) return { error: "Montant trop élevé." };
   if (!(await isSaspayPaymentEnabled(user.businessId))) return { error: "Le paiement en ligne n'est pas encore disponible." };
   const result = await startSaspayTopupPayment({

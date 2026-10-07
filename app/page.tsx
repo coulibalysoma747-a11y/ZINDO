@@ -597,8 +597,7 @@ export default async function RootPage({ searchParams }: { searchParams: Promise
         </p>
         {fullLanding && (
           <div className="mt-3 flex flex-wrap items-center justify-center gap-2">
-            <span>Paiement de l&apos;abonnement, 100 % en ligne et sécurisé avec</span>
-            <span className="rounded-md bg-zindo-green-600 px-2 py-0.5 font-bold text-white">SasPay</span>
+            <span>Paiement de l&apos;abonnement 100 % en ligne et sécurisé</span>
           </div>
         )}
         <div className="mt-3 flex items-center justify-center gap-4">
