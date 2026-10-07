@@ -7,15 +7,15 @@ import { requireUser } from "@/lib/auth";
 import { requireSuperAdmin } from "@/lib/superadmin-auth";
 import { logAction } from "@/lib/audit";
 import { logAdminAction } from "@/lib/admin-audit";
+import { PACK_DAYS, PACK_PRICE, extendPack } from "@/lib/market-pack";
 
 /**
  * Pack Vérifié du Marché ZINDO (tables : migrations 2026-09-23_market_*.sql).
- * 1 000 FCFA / mois, séparé de l'abonnement ZINDO : badge « Vérifié » + mise
+ * 1 000 FCFA / mois payés par SasPay, séparé de l'abonnement ZINDO : badge « Vérifié » + mise
  * « À la une » tant que pack_paid_until est dans le futur. Les pièces
  * d'identité vont dans le bucket PRIVÉ "verifications" : jamais d'URL publique.
  */
 const BUCKET = "verifications";
-const PACK_DAYS = 30;
 const DIRECT_TYPES: Record<string, string> = { "image/jpeg": "jpg", "image/png": "png", "image/webp": "webp" };
 const PHOTO_LABELS = { idFront: "recto", idBack: "verso", selfie: "selfie" } as const;
 
@@ -45,16 +45,6 @@ function directPhotoPath(formData: FormData, field: keyof typeof PHOTO_LABELS, b
   return pattern.test(value) ? value : null;
 }
 
-function extendPack(currentEnd: string | null): string {
-  const base = Math.max(Date.now(), currentEnd ? new Date(currentEnd).getTime() : 0);
-  return new Date(base + PACK_DAYS * 24 * 60 * 60 * 1000).toISOString();
-}
-
-function readReference(formData: FormData): string | null {
-  const ref = String(formData.get("paymentReference") ?? "").trim();
-  return ref.length >= 4 ? ref : null;
-}
-
 export type VerificationState = { error?: string; success?: string } | undefined;
 
 async function uploadPrivate(businessId: string, file: File, label: string): Promise<string> {
@@ -70,8 +60,19 @@ async function uploadPrivate(businessId: string, file: File, label: string): Pro
 export async function submitVerificationAction(_prev: VerificationState, formData: FormData): Promise<VerificationState> {
   const user = await requireUser();
   if (user.role !== "ADMIN") return { error: "Seul le propriétaire du compte peut demander la vérification." };
-  const paymentReference = readReference(formData);
-  if (!paymentReference) return { error: "Indiquez la référence de votre paiement de 1 000 FCFA." };
+  // Le paiement SasPay de 1 000 FCFA, confirmé et pas encore utilisé, accompagne la demande.
+  const { data: credit } = await supabase
+    .from("saspay_payments")
+    .select("id, saspayId:saspay_id")
+    .eq("business_id", user.businessId)
+    .eq("purpose", "PACK")
+    .eq("status", "PAID")
+    .is("used_at", null)
+    .order("paid_at", { ascending: true })
+    .limit(1)
+    .maybeSingle();
+  if (!credit) return { error: `Payez d'abord les ${PACK_PRICE.toLocaleString("fr-FR")} FCFA avec SasPay.` };
+  const paymentReference = `saspay:${credit.saspayId as string}`;
 
   // Chaque photo arrive soit déjà envoyée directement (chemin), soit en fichier (repli).
   const fields = ["idFront", "idBack", "selfie"] as const;
@@ -122,6 +123,8 @@ export async function submitVerificationAction(_prev: VerificationState, formDat
     return { error: "Impossible d'enregistrer la demande. Réessayez." };
   }
 
+  await supabase.from("saspay_payments").update({ used_at: new Date().toISOString() }).eq("id", credit.id as string).is("used_at", null);
+
   // Anciennes photos d'une demande refusée : supprimées, on ne garde que la dernière.
   if (existing) {
     await supabase.storage.from(BUCKET).remove([existing.idFront, existing.idBack, existing.selfie] as string[]);
@@ -130,31 +133,6 @@ export async function submitVerificationAction(_prev: VerificationState, formDat
   await logAction({ businessId: user.businessId, userId: user.id, action: "CREATE", entity: "MarketVerification" });
   revalidatePath("/verification");
   return { success: "Demande envoyée. Notre équipe vous répond sous 48 h." };
-}
-
-/** Renouvellement mensuel : le commerçant déjà vérifié envoie seulement la référence du nouveau paiement. */
-export async function submitRenewalAction(_prev: VerificationState, formData: FormData): Promise<VerificationState> {
-  const user = await requireUser();
-  if (user.role !== "ADMIN") return { error: "Seul le propriétaire du compte peut renouveler le pack." };
-  const reference = readReference(formData);
-  if (!reference) return { error: "Indiquez la référence de votre paiement de 1 000 FCFA." };
-
-  const { data: row } = await supabase
-    .from("market_verifications")
-    .select("status, renewalReference:renewal_reference")
-    .eq("business_id", user.businessId)
-    .maybeSingle();
-  if (row?.status !== "VALIDEE") return { error: "Votre compte doit d'abord être vérifié." };
-  if (row.renewalReference) return { error: "Un paiement est déjà en attente de confirmation." };
-
-  const { error } = await supabase
-    .from("market_verifications")
-    .update({ renewal_reference: reference, renewal_submitted_at: new Date().toISOString() })
-    .eq("business_id", user.businessId);
-  if (error) return { error: "Impossible d'enregistrer le paiement. Réessayez." };
-
-  revalidatePath("/verification");
-  return { success: "Paiement envoyé. Votre pack sera prolongé dès confirmation." };
 }
 
 /** Première demande : valide (pièces + paiement → pack de 30 jours) ou refuse. */
@@ -192,7 +170,7 @@ export async function reviewVerificationAction(businessId: string, approve: bool
   return { success: approve ? "Commerce vérifié" : "Demande refusée" };
 }
 
-/** Renouvellement : confirme le paiement (+30 jours) ou le rejette (référence introuvable…). */
+/** Anciens renouvellements déclarés à la main avant SasPay : confirme le paiement (+30 jours) ou le rejette. Les nouveaux sont automatiques. */
 export async function reviewRenewalAction(businessId: string, approve: boolean) {
   const admin = await requireSuperAdmin();
   const { data: row } = await supabase

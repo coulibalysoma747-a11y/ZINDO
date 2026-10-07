@@ -1,22 +1,37 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState, useState, useTransition } from "react";
 import { Camera, IdCard, UserRound } from "lucide-react";
-import { createVerificationUploadAction, submitRenewalAction, submitVerificationAction } from "@/lib/actions/market-verification";
+import { createVerificationUploadAction, submitVerificationAction } from "@/lib/actions/market-verification";
+import { payPackWithSaspayAction } from "@/lib/actions/saspay";
 import { useKeepValuesOnError } from "@/lib/keep-form-values";
 
-const refInput =
-  "w-full rounded-xl border border-zinc-200 bg-white px-3 py-3 text-sm outline-none focus:border-zindo-green-500";
-
-function ReferenceField() {
+/** Paiement du Pack Vérifié (1 000 FCFA / mois) par SasPay. */
+export function PackPayButton({ label }: { label: string }) {
+  const [error, setError] = useState<string | null>(null);
+  const [pending, startTransition] = useTransition();
   return (
-    <input
-      name="paymentReference"
-      required
-      minLength={4}
-      placeholder="Référence du paiement de 1 000 FCFA (ex. PP240923.1234.A12345)"
-      className={refInput}
-    />
+    <div className="space-y-2">
+      <button
+        type="button"
+        disabled={pending}
+        onClick={() =>
+          startTransition(async () => {
+            setError(null);
+            const result = await payPackWithSaspayAction();
+            if (result.error || !result.url) {
+              setError(result.error ?? "Paiement indisponible");
+              return;
+            }
+            window.location.href = result.url;
+          })
+        }
+        className="w-full rounded-xl bg-zindo-green-500 py-3.5 text-sm font-bold text-white hover:bg-zindo-green-600 disabled:opacity-60"
+      >
+        {pending ? "Redirection…" : label}
+      </button>
+      {error && <p className="text-sm text-red-600">{error}</p>}
+    </div>
   );
 }
 
@@ -121,39 +136,17 @@ export function VerificationForm() {
       <PhotoField name="idFront" label="Pièce d'identité : recto" hint="Face avec votre photo, bien lisible" capture="environment" icon={IdCard} />
       <PhotoField name="idBack" label="Pièce d'identité : verso" hint="L'arrière de la même pièce" capture="environment" icon={IdCard} />
       <PhotoField name="selfie" label="Votre photo (selfie)" hint="Votre visage, bien éclairé, sans lunettes" capture="user" icon={UserRound} />
-      <ReferenceField />
       {state?.error && <p className="text-sm text-red-600">{state.error}</p>}
       <button
         type="submit"
         disabled={pending}
         className="w-full rounded-xl bg-zindo-green-500 py-3.5 text-sm font-bold text-white hover:bg-zindo-green-600 disabled:opacity-60"
       >
-        {pending ? "Envoi des photos…" : "Envoyer ma demande (photos + paiement)"}
+        {pending ? "Envoi des photos…" : "Envoyer ma demande"}
       </button>
       <p className="text-center text-xs text-zinc-500">
         Vos documents restent privés : seule l&apos;équipe ZINDO peut les voir, uniquement pour vous vérifier.
       </p>
-    </form>
-  );
-}
-
-export function RenewalForm() {
-  const [state, action, pending] = useActionState(submitRenewalAction, undefined);
-  const keep = useKeepValuesOnError(state);
-  if (state?.success) {
-    return <p className="rounded-2xl bg-zindo-green-100 p-4 text-sm font-semibold text-zindo-green-700">{state.success}</p>;
-  }
-  return (
-    <form onSubmit={keep} action={action} className="space-y-3">
-      <ReferenceField />
-      {state?.error && <p className="text-sm text-red-600">{state.error}</p>}
-      <button
-        type="submit"
-        disabled={pending}
-        className="w-full rounded-xl bg-zindo-green-500 py-3.5 text-sm font-bold text-white hover:bg-zindo-green-600 disabled:opacity-60"
-      >
-        {pending ? "Envoi…" : "Renouveler mon pack (1 mois)"}
-      </button>
     </form>
   );
 }

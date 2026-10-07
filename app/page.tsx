@@ -597,10 +597,8 @@ export default async function RootPage({ searchParams }: { searchParams: Promise
         </p>
         {fullLanding && (
           <div className="mt-3 flex flex-wrap items-center justify-center gap-2">
-            <span>Paiement de l&apos;abonnement :</span>
-            <span className="rounded-md bg-[#FF7900] px-2 py-0.5 font-bold text-white">Orange Money</span>
-            <span className="rounded-md bg-[#004990] px-2 py-0.5 font-bold text-white">Moov Money</span>
-            <span className="rounded-md bg-[#1DC1EE] px-2 py-0.5 font-bold text-zindo-ink-900">Wave</span>
+            <span>Paiement de l&apos;abonnement, 100 % en ligne et sécurisé avec</span>
+            <span className="rounded-md bg-zindo-green-600 px-2 py-0.5 font-bold text-white">SasPay</span>
           </div>
         )}
         <div className="mt-3 flex items-center justify-center gap-4">

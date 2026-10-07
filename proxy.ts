@@ -76,7 +76,6 @@ export async function proxy(request: NextRequest) {
     PUBLIC_PATHS.some((p) => pathname === p || pathname.startsWith(`${p}/`)) ||
     pathname.startsWith("/api/public") ||
     pathname.startsWith("/api/auth/google") ||
-    pathname.startsWith("/api/cinetpay") ||
     pathname.startsWith("/api/saspay") ||
     // Connexion de l'application Windows (voir app/api/desktop/login/route.ts)
     // : appelée par un serveur local qui n'a pas encore de session — la route

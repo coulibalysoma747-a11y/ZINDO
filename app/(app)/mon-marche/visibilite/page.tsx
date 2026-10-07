@@ -3,9 +3,9 @@ import { PERMISSIONS } from "@/lib/permissions";
 import { supabase } from "@/lib/supabase";
 import { formatDateTime, formatMoney } from "@/lib/format";
 import { requireMarketSeller } from "@/lib/market-seller";
-import { PaymentMethodModules } from "../../abonnement/PaymentMethodModules";
 import { MarketSellerNav } from "../MarketSellerNav";
-import { BoostForm, TopupForm } from "./WalletForms";
+import { isSaspayPaymentEnabled, reconcileSaspayPayments } from "@/lib/saspay-payments";
+import { BoostForm, SaspayTopupForm } from "./WalletForms";
 
 const TX_LABELS: Record<string, string> = {
   RECHARGE: "Recharge",
@@ -18,6 +18,9 @@ const TX_LABELS: Record<string, string> = {
 export default async function MyMarketVisibilityPage() {
   const { user, shop, newOrders, unreadMessages } = await requireMarketSeller(PERMISSIONS.SETTINGS_MANAGE);
   const now = new Date().toISOString();
+  // Retour de la page de paiement : on relit d'abord les paiements en attente pour afficher le solde déjà crédité.
+  await reconcileSaspayPayments(user.businessId);
+  const saspayEnabled = await isSaspayPaymentEnabled(user.businessId);
 
   const [{ data: wallet }, { data: topupData }, { data: txData }, { data: priceData }, { data: listingData }, { data: boostData }] = await Promise.all([
     supabase.from("market_wallets").select("balance").eq("business_id", user.businessId).maybeSingle(),
@@ -65,10 +68,11 @@ export default async function MyMarketVisibilityPage() {
         </section>
         <section className="space-y-3 rounded-2xl bg-white p-5 ring-1 ring-zinc-200">
           <h2 className="font-semibold text-zinc-900">Recharger</h2>
-          <p className="text-sm text-zinc-600">1. Envoyez le montant de votre choix sur un de ces numéros ZINDO :</p>
-          <PaymentMethodModules />
-          <p className="text-sm text-zinc-600">2. Déclarez votre transfert ci-dessous. Votre solde est crédité dès la vérification par ZINDO.</p>
-          <TopupForm />
+          {saspayEnabled ? (
+            <SaspayTopupForm />
+          ) : (
+            <p className="text-sm text-zinc-600">Le paiement en ligne avec SasPay est momentanément indisponible. Réessayez dans quelques instants.</p>
+          )}
         </section>
       </div>
 
@@ -128,7 +132,7 @@ export default async function MyMarketVisibilityPage() {
                     </span>
                   </div>
                   <p className="text-xs text-zinc-500">
-                    {t.operator === "ORANGE" ? "Orange Money" : "Moov Money"} · réf. {t.reference} · {formatDateTime(t.submittedAt)}
+                    {t.operator === "SASPAY" ? "SasPay" : t.operator === "ORANGE" ? "Orange Money" : "Moov Money"} · réf. {t.reference} · {formatDateTime(t.submittedAt)}
                   </p>
                   {t.rejectReason && <p className="text-xs text-red-600">Motif : {t.rejectReason}</p>}
                 </li>

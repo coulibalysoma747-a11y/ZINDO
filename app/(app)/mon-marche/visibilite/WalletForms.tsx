@@ -1,39 +1,41 @@
 "use client";
 
-import { useActionState, useState, useTransition } from "react";
-import { buyBoostAction, submitTopupAction, type WalletState } from "@/lib/actions/market-wallet";
+import { useState, useTransition } from "react";
+import { buyBoostAction } from "@/lib/actions/market-wallet";
+import { topupWithSaspayAction } from "@/lib/actions/saspay";
 
 const input = "h-10 w-full rounded-lg border border-zinc-300 bg-white px-3 text-sm";
 
-/** Déclaration d'une recharge du portefeuille (transfert Mobile Money déjà fait vers ZINDO). */
-export function TopupForm() {
-  const [state, action, pending] = useActionState<WalletState, FormData>(submitTopupAction, undefined);
+/** Recharge du portefeuille en ligne par SasPay : crédit automatique à la confirmation. */
+export function SaspayTopupForm() {
+  const [amount, setAmount] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [pending, startTransition] = useTransition();
+
   return (
-    <form action={action} className="space-y-3">
-      <div className="grid gap-3 sm:grid-cols-3">
-        <label className="text-xs font-medium text-zinc-600">
-          Montant envoyé (FCFA)
-          <input name="amount" inputMode="numeric" required placeholder="5 000" className={`mt-1 ${input}`} />
-        </label>
-        <label className="text-xs font-medium text-zinc-600">
-          Opérateur
-          <select name="operator" required defaultValue="" className={`mt-1 ${input}`}>
-            <option value="" disabled>
-              Choisir…
-            </option>
-            <option value="ORANGE">Orange Money</option>
-            <option value="MOOV">Moov Money</option>
-          </select>
-        </label>
-        <label className="text-xs font-medium text-zinc-600">
-          Référence du transfert
-          <input name="reference" required minLength={4} placeholder="PP240923.1234.A12345" className={`mt-1 ${input}`} />
-        </label>
-      </div>
-      {state?.error && <p className="text-sm text-red-600">{state.error}</p>}
-      {state?.success && <p className="text-sm text-emerald-700">{state.success}</p>}
-      <button disabled={pending} className="h-10 rounded-xl bg-zindo-green-600 px-5 text-sm font-semibold text-white hover:bg-zindo-green-700 disabled:opacity-50">
-        {pending ? "Envoi…" : "Déclarer ma recharge"}
+    <form
+      className="space-y-3"
+      onSubmit={(e) => {
+        e.preventDefault();
+        startTransition(async () => {
+          setError(null);
+          const result = await topupWithSaspayAction(Number(amount.replace(/\s/g, "")));
+          if (result.error || !result.url) {
+            setError(result.error ?? "Paiement indisponible");
+            return;
+          }
+          window.location.href = result.url;
+        });
+      }}
+    >
+      <p className="text-sm text-zinc-600">Payez en ligne avec SasPay. Votre solde est crédité tout seul dès que le paiement est confirmé.</p>
+      <label className="block text-xs font-medium text-zinc-600">
+        Montant à recharger (FCFA)
+        <input value={amount} onChange={(e) => setAmount(e.target.value)} inputMode="numeric" required placeholder="5 000" className={`mt-1 max-w-xs ${input}`} />
+      </label>
+      {error && <p className="text-sm text-red-600">{error}</p>}
+      <button disabled={pending || !amount.trim()} className="h-10 rounded-xl bg-zindo-green-600 px-5 text-sm font-semibold text-white hover:bg-zindo-green-700 disabled:opacity-50">
+        {pending ? "Redirection…" : "Payer avec SasPay"}
       </button>
     </form>
   );

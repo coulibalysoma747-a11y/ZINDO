@@ -74,52 +74,6 @@ export async function createSubscriptionInvoiceAction(billingCycle: "MONTHLY" | 
   return { success: true, invoiceId: invoice.id as string };
 }
 
-const proofSchema = z.object({
-  invoiceId: z.string().min(1),
-  reference: z.string().min(2, "Indiquez la référence du paiement"),
-  note: z.string().optional(),
-});
-
-export async function submitPaymentProofAction(_prevState: ActionState, formData: FormData): Promise<ActionState> {
-  const user = await requireUserForBilling();
-  const parsed = proofSchema.safeParse({
-    invoiceId: formData.get("invoiceId"),
-    reference: formData.get("reference"),
-    note: formData.get("note") || undefined,
-  });
-  if (!parsed.success) return { error: parsed.error.issues[0]?.message };
-
-  const { data: invoice } = await supabase
-    .from("subscription_invoices")
-    .select("id, status")
-    .eq("id", parsed.data.invoiceId)
-    .eq("business_id", user.businessId)
-    .maybeSingle();
-  if (!invoice) return { error: "Facture introuvable" };
-  if (invoice.status !== "EN_ATTENTE") return { error: "Cette facture a déjà été traitée" };
-
-  const { error } = await supabase
-    .from("subscription_invoices")
-    .update({ payment_method: "MANUEL", payment_reference: parsed.data.reference, proof_note: parsed.data.note ?? null })
-    .eq("id", invoice.id);
-  if (error) {
-    console.error("[submitPaymentProofAction] Échec de la mise à jour :", error.message);
-    return { error: "Impossible d'enregistrer la référence de paiement" };
-  }
-
-  await logAction({
-    businessId: user.businessId,
-    userId: user.id,
-    action: "UPDATE",
-    entity: "SubscriptionInvoice",
-    entityId: invoice.id as string,
-    details: "Référence de paiement soumise",
-  });
-
-  revalidatePath("/abonnement");
-  return { success: "Référence envoyée — un administrateur va confirmer votre paiement sous peu." };
-}
-
 export async function cancelPendingInvoiceAction(invoiceId: string) {
   const user = await requireUserForBilling();
   const { data: invoice } = await supabase

@@ -9,8 +9,6 @@ import { Card, CardBody, CardHeader } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { ButtonLink } from "@/components/ui/Button";
 import { FormulaChoice, MONTHLY_PRICE, ANNUAL_PRICE } from "./FormulaChoice";
-import { PaymentProofForm } from "./PaymentProofForm";
-import { PaymentMethodModules } from "./PaymentMethodModules";
 import { SaspayPayButton } from "./SaspayPayButton";
 import { isSaspayPaymentEnabled, reconcileSaspayPayments } from "@/lib/saspay-payments";
 
@@ -160,22 +158,16 @@ export default async function SubscriptionPage() {
               {pendingInvoice.number} — {pendingInvoice.planLabel} ({CYCLE_LABELS[pendingInvoice.billingCycle]}) —{" "}
               <span className="font-semibold">{formatMoney(pendingInvoice.amount, currency)}</span>
             </p>
-            {saspayEnabled && <SaspayPayButton invoiceId={pendingInvoice.id} amountLabel={formatMoney(pendingInvoice.amount, currency)} />}
-            <div className="space-y-3 rounded-lg bg-white p-3">
-              <p className="text-sm text-zinc-600">
-                Envoyez <span className="font-semibold text-zinc-900">{formatMoney(pendingInvoice.amount, currency)}</span> à
-                Coulibaly Soma, puis indiquez la référence de la transaction ci-dessous. Un administrateur
-                confirmera votre paiement sous peu.
-              </p>
-              <PaymentMethodModules />
-            </div>
-            {pendingInvoice.paymentReference ? (
+            {saspayEnabled ? (
+              <SaspayPayButton invoiceId={pendingInvoice.id} amountLabel={formatMoney(pendingInvoice.amount, currency)} />
+            ) : (
+              <p className="text-sm text-zinc-600">Le paiement en ligne avec SasPay est momentanément indisponible. Réessayez dans quelques instants.</p>
+            )}
+            {pendingInvoice.paymentReference && (
               <p className="text-sm text-emerald-700">
                 Référence déjà envoyée : <span className="font-mono">{pendingInvoice.paymentReference}</span> — en
                 attente de confirmation par l&apos;administrateur.
               </p>
-            ) : (
-              <PaymentProofForm invoiceId={pendingInvoice.id} />
             )}
           </CardBody>
         </Card>

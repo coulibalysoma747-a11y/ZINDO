@@ -1,7 +1,7 @@
 import "server-only";
 
 /**
- * Client SasPay (https://docs.saspay.me/) : encaissement par page de paiement hébergée (Orange Money, Moov Money, carte).
+ * Client SasPay (https://docs.saspay.me/) : encaissement par page de paiement hébergée (Orange Money, Moov Money et carte, côté SasPay).
  * Clés dans les variables d'environnement Vercel, jamais dans le code :
  *  - SASPAY_SECRET_KEY : clé secrète (sk_test_… pour essayer, sk_live_… en vrai) ;
  *  - SASPAY_WEBHOOK_SECRET : secret de signature des confirmations (voir app/api/saspay/webhook).

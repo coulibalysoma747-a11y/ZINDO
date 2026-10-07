@@ -28,7 +28,7 @@ const EXTRA_KNOWLEDGE = `
 - Profil > Notifications push : active des alertes sur l'appareil (nouvelle vente, stock bas/rupture, échéance de crédit dépassée) même quand ZINDO n'est pas ouvert.
 - ZINDO fonctionne hors ligne pour l'écran de vente : les ventes s'enregistrent sur l'appareil et se synchronisent au retour de la connexion.
 - ZINDO s'installe comme une application (PWA) directement depuis le navigateur, sur téléphone (Android/iOS) et sur ordinateur, sans passer par un store.
-- Tarifs (voir aussi la page /tarifs) : 7 500 FCFA par mois sans engagement, ou 75 000 FCFA par an (soit 2 mois offerts, 15 000 FCFA d'économie). Toutes les fonctionnalités, plusieurs boutiques et plusieurs utilisateurs sont inclus, ainsi que les mises à jour. L'abonnement se paie par Orange Money, Moov Money ou Wave (page Abonnement une fois connecté).
+- Tarifs (voir aussi la page /tarifs) : 7 500 FCFA par mois sans engagement, ou 75 000 FCFA par an (soit 2 mois offerts, 15 000 FCFA d'économie). Toutes les fonctionnalités, plusieurs boutiques et plusieurs utilisateurs sont inclus, ainsi que les mises à jour. L'abonnement se paie en ligne avec SasPay (page Abonnement une fois connecté) ; il s'active dès que le paiement est confirmé.
 - Essai gratuit à l'inscription, sans carte bancaire : accès à tout pendant la durée d'essai ; on ne paie que si l'on décide de continuer.
 - L'équipe ZINDO répond sur WhatsApp au +226 04 05 99 29 et aide à démarrer (réglages, saisie des produits, formation des employés).
 `.trim();

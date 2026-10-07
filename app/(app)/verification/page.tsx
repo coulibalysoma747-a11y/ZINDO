@@ -1,11 +1,12 @@
 import { notFound } from "next/navigation";
-import { BadgeCheck, Clock, XCircle } from "lucide-react";
+import { BadgeCheck, CheckCircle2, Clock, XCircle } from "lucide-react";
 import { requireUser } from "@/lib/auth";
 import { supabase } from "@/lib/supabase";
 import { isFeatureEnabledGlobally } from "@/lib/feature-flags";
 import { formatDate } from "@/lib/format";
-import { PaymentMethodModules } from "../abonnement/PaymentMethodModules";
-import { RenewalForm, VerificationForm } from "./VerificationForm";
+import { PACK_PRICE } from "@/lib/market-pack";
+import { reconcileSaspayPayments } from "@/lib/saspay-payments";
+import { PackPayButton, VerificationForm } from "./VerificationForm";
 
 type Row = {
   status: "EN_ATTENTE" | "VALIDEE" | "REFUSEE";
@@ -18,29 +19,33 @@ function isActive(until: string | null) {
   return !!until && new Date(until).getTime() > Date.now();
 }
 
-function PayBlock() {
-  return (
-    <div className="mb-4 space-y-2 rounded-2xl border border-zinc-200 bg-white p-4">
-      <p className="text-sm font-semibold text-zindo-ink-900">
-        1. Payez <strong>1 000 FCFA</strong> sur ce numéro, puis notez la référence de la transaction :
-      </p>
-      <PaymentMethodModules />
-    </div>
-  );
-}
+const PRICE_LABEL = `${PACK_PRICE.toLocaleString("fr-FR")} FCFA`;
 
 export default async function VerificationPage() {
   const user = await requireUser();
   if (!(await isFeatureEnabledGlobally("marche_zindo"))) notFound();
 
-  const { data } = await supabase
-    .from("market_verifications")
-    .select("status, rejectionReason:rejection_reason, packPaidUntil:pack_paid_until, renewalReference:renewal_reference")
-    .eq("business_id", user.businessId)
-    .maybeSingle();
+  // Retour de la page de paiement : on relit d'abord les paiements en attente pour afficher le pack déjà prolongé.
+  await reconcileSaspayPayments(user.businessId);
+
+  const [{ data }, { count: paidCredits }] = await Promise.all([
+    supabase
+      .from("market_verifications")
+      .select("status, rejectionReason:rejection_reason, packPaidUntil:pack_paid_until, renewalReference:renewal_reference")
+      .eq("business_id", user.businessId)
+      .maybeSingle(),
+    supabase
+      .from("saspay_payments")
+      .select("id", { count: "exact", head: true })
+      .eq("business_id", user.businessId)
+      .eq("purpose", "PACK")
+      .eq("status", "PAID")
+      .is("used_at", null),
+  ]);
   const request = data as Row | null;
   const active = isActive(request?.packPaidUntil ?? null);
   const isOwner = user.role === "ADMIN";
+  const hasPaid = (paidCredits ?? 0) > 0;
 
   return (
     <div className="mx-auto max-w-xl px-4 py-6">
@@ -48,8 +53,8 @@ export default async function VerificationPage() {
         <BadgeCheck className="h-7 w-7 text-sky-600" /> Pack Vérifié
       </h1>
       <p className="mt-2 text-sm text-zinc-600">
-        <strong>1 000 FCFA / mois</strong> : badge <strong>Vérifié</strong> sur le Marché ZINDO et vos produits{" "}
-        <strong>à la une</strong>, affichés en premier. Ce pack est séparé de l&apos;abonnement ZINDO.
+        <strong>{PRICE_LABEL} / mois</strong> : badge <strong>Vérifié</strong> sur le Marché ZINDO et vos produits{" "}
+        <strong>à la une</strong>, affichés en premier. Ce pack est séparé de l&apos;abonnement ZINDO. Le paiement se fait en ligne avec SasPay.
       </p>
 
       <div className="mt-6">
@@ -72,14 +77,10 @@ export default async function VerificationPage() {
             )}
             {request.renewalReference ? (
               <p className="flex items-center gap-2 rounded-2xl bg-amber-50 p-4 text-sm font-semibold text-amber-700">
-                <Clock className="h-5 w-5" /> Paiement de renouvellement en attente de confirmation.
+                <Clock className="h-5 w-5" /> Ancien paiement de renouvellement en attente de confirmation.
               </p>
             ) : (
-              <>
-                <PayBlock />
-                <p className="text-sm font-semibold text-zindo-ink-900">2. Envoyez la référence :</p>
-                <RenewalForm />
-              </>
+              <PackPayButton label={`Renouveler mon pack (1 mois) · ${PRICE_LABEL}`} />
             )}
           </div>
         ) : (
@@ -92,11 +93,21 @@ export default async function VerificationPage() {
                 </span>
               </p>
             )}
-            <PayBlock />
-            <p className="mb-2 text-sm font-semibold text-zindo-ink-900">
-              2. Prenez les photos de votre pièce et de vous, puis envoyez la référence :
-            </p>
-            <VerificationForm />
+            {hasPaid ? (
+              <>
+                <p className="mb-4 flex items-center gap-2 rounded-2xl bg-emerald-50 p-4 text-sm font-semibold text-emerald-700">
+                  <CheckCircle2 className="h-5 w-5" /> Paiement de {PRICE_LABEL} reçu.
+                </p>
+                <p className="mb-2 text-sm font-semibold text-zindo-ink-900">2. Prenez les photos de votre pièce et de vous :</p>
+                <VerificationForm />
+              </>
+            ) : (
+              <div className="space-y-2">
+                <p className="text-sm font-semibold text-zindo-ink-900">1. Payez {PRICE_LABEL} avec SasPay :</p>
+                <PackPayButton label={`Payer ${PRICE_LABEL} avec SasPay`} />
+                <p className="text-xs text-zinc-500">Ensuite, vous enverrez les photos de votre pièce et de vous.</p>
+              </div>
+            )}
           </>
         )}
       </div>
