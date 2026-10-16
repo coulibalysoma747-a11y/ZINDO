@@ -1,0 +1,8 @@
+# Hébergement de secours sur Netlify (le déploiement Vercel est suspendu).
+[build]
+  command = "npm run build"
+
+[build.environment]
+  NODE_VERSION = "24"
+[[plugins]]
+  package = "@netlify/plugin-nextjs"

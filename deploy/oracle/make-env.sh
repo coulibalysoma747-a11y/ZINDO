@@ -14,7 +14,11 @@ for src in "$root/.env.production" "$root/.env.local" "$root/deploy/oracle/.env.
   while IFS= read -r line || [ -n "$line" ]; do
     key="${line%%=*}"
     [[ "$line" =~ ^[A-Z0-9_]+= ]] || continue
-    case "$key" in VERCEL*|TURBO*|NX_DAEMON) continue ;; esac
+    # SUPABASE_ACCESS_TOKEN : jeton révoqué et inutile au site, donc inutile de le confier à l'hébergeur
+    case "$key" in VERCEL*|TURBO*|NX_DAEMON|SUPABASE_ACCESS_TOKEN) continue ;; esac
+    [[ "$line" =~ ^[A-Z0-9_]+=(\"\")?$ ]] && continue
+    # Vercel remplace ses variables sensibles par « [SENSITIVE] » : ce n'est pas une vraie valeur
+    case "$line" in *'[SENSITIVE]'*) continue ;; esac
     # Une clé déjà présente n'est remplacée que par le fichier « extra »
     if grep -q "^$key=" "$out"; then
       [ "$src" = "$root/deploy/oracle/.env.extra" ] || continue
@@ -24,7 +28,17 @@ for src in "$root/.env.production" "$root/.env.local" "$root/deploy/oracle/.env.
   done < "$src"
 done
 
+# Le secret de session de développement est devinable : on le remplace par un secret aléatoire
+# (les utilisateurs devront simplement se reconnecter une fois).
+if grep -q '^SESSION_SECRET=.*dev-secret' "$out" || ! grep -q '^SESSION_SECRET=' "$out"; then
+  grep -v '^SESSION_SECRET=' "$out" > "$out.tmp" && mv "$out.tmp" "$out"
+  printf 'SESSION_SECRET="%s"\n' "$(node -p 'require("crypto").randomBytes(32).toString("hex")')" >> "$out"
+fi
+
+# Le secret des tâches planifiées peut être recréé : c'est nous qui appelons les routes
+grep -q '^CRON_SECRET=' "$out" || printf 'CRON_SECRET="%s"\n' "$(node -p 'require("crypto").randomBytes(24).toString("hex")')" >> "$out"
+
 printf 'Variables écrites : %s\n' "$(grep -c '' "$out")"
-for needed in DATABASE_URL SESSION_SECRET CRON_SECRET SUPABASE_SERVICE_ROLE_KEY; do
+for needed in DATABASE_URL SESSION_SECRET SUPABASE_SERVICE_ROLE_KEY RESEND_API_KEY EMAIL_FROM; do
   grep -q "^$needed=" "$out" || echo "ATTENTION : $needed manquant"
 done

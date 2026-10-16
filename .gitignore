@@ -55,3 +55,6 @@ next-env.d.ts
 /dist-electron/
 /dist-desktop*/
 electron/env.generated.ts
+
+# Local Netlify folder
+.netlify
