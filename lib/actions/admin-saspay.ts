@@ -1,7 +1,7 @@
 "use server";
 
 import { supabase } from "@/lib/supabase";
-import { getSaspayCheckoutStatus } from "@/lib/saspay";
+import { getYiriwapayPaymentStatus } from "@/lib/yiriwapay";
 import { activateInvoicePayment } from "@/lib/subscription-fulfillment";
 import { revalidatePath } from "next/cache";
 
@@ -132,7 +132,7 @@ export async function syncSaspayPaymentAction(
 
     if (!payment) return { error: "Paiement introuvable." };
 
-    const status = await getSaspayCheckoutStatus(payment.saspay_id);
+    const status = await getYiriwapayPaymentStatus(payment.saspay_id);
 
     if (status.paid) {
       await supabase

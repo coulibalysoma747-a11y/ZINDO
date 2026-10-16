@@ -6,7 +6,7 @@ import { createVerificationUploadAction, submitVerificationAction } from "@/lib/
 import { payPackWithSaspayAction } from "@/lib/actions/saspay";
 import { useKeepValuesOnError } from "@/lib/keep-form-values";
 
-/** Paiement du Pack Vérifié (1 000 FCFA / mois) par SasPay. */
+/** Paiement du Pack Vérifié (1 000 FCFA / mois), paiement en ligne (YiriwaPay). */
 export function PackPayButton({ label }: { label: string }) {
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();

@@ -4,7 +4,7 @@ import { useState, useTransition } from "react";
 import { Button } from "@/components/ui/Button";
 import { payInvoiceWithSaspayAction } from "@/lib/actions/saspay";
 
-/** Paiement en ligne de la facture d'abonnement par SasPay. */
+/** Paiement en ligne de la facture d'abonnement (YiriwaPay, Mobile Money). */
 export function SaspayPayButton({ invoiceId, amountLabel }: { invoiceId: string; amountLabel: string }) {
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();

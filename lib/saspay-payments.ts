@@ -1,6 +1,7 @@
 import "server-only";
 import { supabase } from "@/lib/supabase";
-import { createSaspayCheckout, getSaspayCheckoutStatus } from "@/lib/saspay";
+import { randomUUID } from "node:crypto";
+import { createYiriwapayCheckout, getYiriwapayPaymentStatus } from "@/lib/yiriwapay";
 import { activateInvoicePayment } from "@/lib/subscription-fulfillment";
 import { isFeatureEnabled, registerFeatureFlag } from "@/lib/feature-flags";
 import { PACK_PRICE, extendPack } from "@/lib/market-pack";
@@ -9,16 +10,21 @@ export const SASPAY_FLAG = "paiement_saspay";
 const SITE_URL = process.env.NEXT_PUBLIC_APP_URL || "https://www.zindo.site";
 const FAILED_STATUSES = new Set(["FAILED", "CANCELLED", "CANCELED", "EXPIRED"]);
 
-/** Bouton « Payer avec SasPay » : seulement si la clé est configurée ET l'interrupteur activé (désactivé par défaut). */
+/**
+ * Les paiements en ligne passent par YiriwaPay (lib/yiriwapay.ts). Les noms « saspay » (interrupteur, tables, colonnes,
+ * fonctions) viennent de l'ancien fournisseur et sont conservés pour ne rien migrer : saspay_id contient l'identifiant YiriwaPay.
+ */
+
+/** Bouton de paiement en ligne : seulement si la clé est configurée ET l'interrupteur activé (désactivé par défaut). */
 export async function isSaspayPaymentEnabled(businessId: string): Promise<boolean> {
-  if (!process.env.SASPAY_SECRET_KEY) return false;
-  await registerFeatureFlag(SASPAY_FLAG, "Paiement par SasPay", "Paiement en ligne par SasPay : facture d'abonnement, recharge du portefeuille du Marché et Pack Vérifié.");
+  if (!process.env.YIRIWAPAY_SECRET_KEY) return false;
+  await registerFeatureFlag(SASPAY_FLAG, "Paiement en ligne", "Paiement en ligne par Mobile Money (YiriwaPay) : facture d'abonnement, recharge du portefeuille du Marché et Pack Vérifié.");
   return isFeatureEnabled(SASPAY_FLAG, businessId);
 }
 
 type Customer = { name: string; email: string | null; phone: string | null };
 
-/** Crée la session de paiement chez SasPay, la mémorise (en attente) et renvoie l'adresse où envoyer le client. */
+/** Crée le paiement chez YiriwaPay, le mémorise (en attente) et renvoie l'adresse où envoyer le client. */
 async function startSaspayPayment(params: {
   businessId: string;
   purpose: "ABONNEMENT" | "RECHARGE" | "PACK";
@@ -27,15 +33,14 @@ async function startSaspayPayment(params: {
   description: string;
   returnPath: string;
   customer: Customer;
-  fallbackEmailPrefix: string;
 }): Promise<{ url: string } | { error: string }> {
   let checkout;
   try {
-    checkout = await createSaspayCheckout({
+    checkout = await createYiriwapayCheckout({
       amount: params.amount,
-      currency: "XOF",
+      reference: `ZINDO-${params.purpose}-${randomUUID()}`,
       customerName: params.customer.name,
-      customerEmail: params.customer.email || `${params.fallbackEmailPrefix}-${params.businessId.slice(0, 8)}@zindo.site`,
+      customerEmail: params.customer.email ?? undefined,
       customerPhone: params.customer.phone ?? undefined,
       description: params.description,
       returnUrl: `${SITE_URL}${params.returnPath}`,
@@ -79,7 +84,6 @@ export async function startSaspayInvoicePayment(params: {
     description: `Abonnement ZINDO — ${invoice.planLabel} (${invoice.number})`,
     returnPath: "/abonnement",
     customer: params.customer,
-    fallbackEmailPrefix: "abonne",
   });
 }
 
@@ -97,7 +101,6 @@ export async function startSaspayTopupPayment(params: {
     description: "Recharge du portefeuille ZINDO Marché",
     returnPath: "/mon-marche/visibilite",
     customer: params.customer,
-    fallbackEmailPrefix: "marche",
   });
 }
 
@@ -111,7 +114,6 @@ export async function startSaspayPackPayment(params: { businessId: string; custo
     description: "Pack Vérifié ZINDO Marché (1 mois)",
     returnPath: "/verification",
     customer: params.customer,
-    fallbackEmailPrefix: "pack",
   });
 }
 
@@ -194,11 +196,16 @@ export async function reconcileSaspayPayments(businessId?: string): Promise<numb
   for (const p of (data ?? []) as { id: string; purpose: string; businessId: string; targetId: string; saspayId: string; amount: number }[]) {
     let status;
     try {
-      status = await getSaspayCheckoutStatus(p.saspayId);
+      status = await getYiriwapayPaymentStatus(p.saspayId);
     } catch {
       continue;
     }
     if (status.paid) {
+      // Le montant payé doit être celui de la commande : sinon on ne crédite rien et on laisse le paiement en attente.
+      if (status.amount !== null && status.amount !== Math.round(Number(p.amount))) {
+        console.error("[yiriwapay] Montant payé différent de la commande :", p.saspayId, status.amount, p.amount);
+        continue;
+      }
       // Verrou : une seule confirmation par paiement, même si la page et la confirmation arrivent ensemble.
       const { data: claimed } = await supabase
         .from("saspay_payments")

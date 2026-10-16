@@ -6,7 +6,7 @@ import { topupWithSaspayAction } from "@/lib/actions/saspay";
 
 const input = "h-10 w-full rounded-lg border border-zinc-300 bg-white px-3 text-sm";
 
-/** Recharge du portefeuille en ligne par SasPay : crédit automatique à la confirmation. */
+/** Recharge du portefeuille en ligne (YiriwaPay) : crédit automatique à la confirmation. */
 export function SaspayTopupForm() {
   const [amount, setAmount] = useState("");
   const [error, setError] = useState<string | null>(null);
