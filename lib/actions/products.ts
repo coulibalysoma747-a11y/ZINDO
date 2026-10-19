@@ -295,6 +295,9 @@ async function createProductCore(
   }
 
   const limit = await checkLimit(user.businessId, "products");
+  if (limit.unavailable) {
+    return { success: false, error: "Impossible de vérifier la limite de produits pour le moment. Réessayez." };
+  }
   if (!limit.ok) {
     return {
       success: false,

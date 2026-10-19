@@ -36,6 +36,7 @@ export async function createUserAction(
   if (!parsed.success) return { error: parsed.error.issues[0]?.message };
 
   const limit = await checkLimit(admin.businessId, "users");
+  if (limit.unavailable) return { error: "Impossible de vérifier la limite d’utilisateurs pour le moment. Réessayez." };
   if (!limit.ok) {
     return {
       error: `Limite de votre abonnement atteinte (${limit.current}/${limit.limit} utilisateurs) — passez à un palier supérieur pour en ajouter davantage.`,

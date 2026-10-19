@@ -3,8 +3,9 @@ import { isFeatureEnabled } from "@/lib/feature-flags";
 import { redirect } from "next/navigation";
 import { requireUserForBilling, hasPermission } from "@/lib/auth";
 import { getVisibleNavItems } from "@/lib/nav-server";
+import { NAV_ITEMS } from "@/lib/nav";
 import { getLocations, getCurrentLocation } from "@/lib/location";
-import { isSubscriptionBlocked } from "@/lib/subscription";
+import { getBusinessLimits, isSubscriptionBlocked } from "@/lib/subscription";
 import { getAdminSession } from "@/lib/adminSession";
 import { getPlatformConfig } from "@/lib/platform-config";
 import { getBusinessSettings } from "@/lib/business-settings";
@@ -67,6 +68,18 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   // impayé) — sans quoi ce serait la seule page permettant de régler le
   // problème qui se retrouverait elle-même redirigée vers elle-même.
   if (!isImpersonating && !isBillingPage && subscriptionBlocked) redirect("/abonnement");
+
+  // A feature hidden from the menu must also stay unavailable through a
+  // manually entered URL. Server actions repeat the relevant checks.
+  if (!isImpersonating && !isBillingPage && pathname) {
+    const gatedItem = NAV_ITEMS
+      .filter((item) => item.planFeature && (pathname === item.href || pathname.startsWith(`${item.href}/`)))
+      .sort((a, b) => b.href.length - a.href.length)[0];
+    if (gatedItem?.planFeature) {
+      const limits = await getBusinessLimits(user.businessId);
+      if (!limits.features.includes(gatedItem.planFeature)) redirect("/abonnement?formule=starter");
+    }
+  }
 
   // « Vendeur du Marché » : ne voit que ce qui le regarde. Toute autre page
   // (caisse, stock, achats…) le renvoie vers Mon Marché, même si l'adresse est tapée à la main.

@@ -35,6 +35,7 @@ export async function createLocationAction(
   if (!parsed.success) return { error: parsed.error.issues[0]?.message };
 
   const limit = await checkLimit(user.businessId, "locations");
+  if (limit.unavailable) return { error: "Impossible de vérifier la limite de boutiques pour le moment. Réessayez." };
   if (!limit.ok) {
     return {
       error: `Limite de votre abonnement atteinte (${limit.current}/${limit.limit} boutiques) — passez à un palier supérieur pour en ajouter davantage.`,

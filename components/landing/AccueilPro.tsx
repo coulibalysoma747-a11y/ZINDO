@@ -85,7 +85,7 @@ export function AccueilPro({ trialDays, faqs }: { trialDays: number; faqs: Faq[]
                 </Link>
               </div>
               <p className="mt-5 text-sm text-zinc-500">
-                {trialDays} jours gratuits · Sans carte bancaire · Ensuite 2500 FCFA par mois
+                {trialDays} jours pour essayer toutes les fonctions, puis choisissez Free, Starter ou Entreprise.
               </p>
             </Reveal>
           </div>
@@ -288,11 +288,12 @@ export function AccueilPro({ trialDays, faqs }: { trialDays: number; faqs: Faq[]
         <section id="tarifs" className="mx-auto max-w-6xl scroll-mt-20 px-4 py-20 sm:px-6 lg:py-28">
           <SectionTitle eyebrow="Tarifs" title="Un prix simple, tout compris" text={`Essayez tout pendant ${trialDays} jours. Vous ne payez que si vous continuez.`} />
           <Reveal className="mx-auto mt-12 grid max-w-3xl gap-5 sm:grid-cols-2">
-            <PriceCard name="Mensuel" price="2 500" period="FCFA / mois" note="Sans engagement, arrêtez quand vous voulez." />
-            <PriceCard highlighted name="Annuel" price="25 000" period="FCFA / an" note="Soit 2 mois offerts (15 000 FCFA d'économie)." />
+            <PriceCard name="Free" price="0" period="FCFA / toujours" note="50 produits · 1 utilisateur · 1 boutique." />
+            <PriceCard name="Starter" price="5 000" period="FCFA / mois" note="500 produits · 3 utilisateurs · 1 boutique." />
+            <PriceCard highlighted name="Entreprise" price="7 500" period="FCFA / mois" note="Ou 75 000 FCFA/an · 15 000 FCFA d'économie." />
           </Reveal>
           <p className="mt-6 text-center text-sm text-zinc-500">
-            Toutes les fonctionnalités, plusieurs boutiques et utilisateurs, mises à jour incluses.{" "}
+            Essai de {trialDays} jours avec les fonctions Entreprise. Après l'essai, votre compte passe à Free.{" "}
             <Link href="/tarifs" className="font-semibold text-zindo-green-700 hover:underline">
               Détail des tarifs
             </Link>

@@ -222,6 +222,9 @@ export async function importCatalogProductsAction(
   const rows = parsed.data;
 
   const limit = await checkLimit(user.businessId, "products");
+  if (limit.unavailable) {
+    return { success: false, error: "Impossible de vérifier la limite de produits pour le moment. Réessayez." };
+  }
   const capacity = limit.limit === null ? rows.length : Math.max(0, limit.limit - limit.current);
   const toCreate = rows.slice(0, capacity);
   const overflow = rows.slice(capacity);

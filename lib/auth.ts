@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { cache } from "react";
 import { supabase } from "@/lib/supabase";
 import { getSession } from "@/lib/session";
-import { isSubscriptionBlocked } from "@/lib/subscription";
+import { hasPlanFeature, isSubscriptionBlocked } from "@/lib/subscription";
 import {
   DEFAULT_ROLE_PERMISSIONS,
   type Permission,
@@ -241,6 +241,14 @@ async function resolvePermissionOffline(userId: string | undefined, role: Role, 
 /** À utiliser dans une page/action pour vérifier un droit précis. */
 export async function requirePermission(permission: Permission) {
   const user = await requireUser();
+  const planFeatureByPermission: Partial<Record<Permission, string>> = {
+    [PERMISSIONS.ASSISTANT_USE]: "assistant_ia",
+    [PERMISSIONS.TRANSFERS_MANAGE]: "advanced_stock",
+    [PERMISSIONS.INVENTORY_MANAGE]: "inventory",
+    [PERMISSIONS.EXPENSES_MANAGE]: "expenses",
+  };
+  const planFeature = planFeatureByPermission[permission];
+  if (planFeature && !(await hasPlanFeature(user.businessId, planFeature))) redirect("/abonnement?formule=starter");
   const allowed = await hasPermission(user.businessId, user.role, permission, user.id);
   if (!allowed) redirect("/dashboard?erreur=acces-refuse");
   return user;

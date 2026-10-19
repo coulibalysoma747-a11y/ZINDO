@@ -10,43 +10,43 @@ export const revalidate = 3600;
 
 const PLANS = [
   {
-    key: "trial",
+    key: "free",
     badge: "GRATUIT",
     badgeClass: "bg-zindo-green-500/15 text-zindo-green-400",
     icon: Gift,
-    title: "Essai gratuit",
-    price: "",
-    priceSuffix: null,
-    features: ["Accès complet", "Aucune carte requise", "Support inclus"],
-    cta: "Commencer l'essai gratuit",
+    title: "Free",
+    price: "0",
+    priceSuffix: "FCFA / toujours",
+    features: ["50 produits", "1 utilisateur et 1 boutique", "Caisse, stock, clients et tickets"],
+    cta: "Créer mon compte gratuit",
     ctaClass: "border border-zindo-green-500 text-zindo-green-400 hover:bg-zindo-green-500/10",
     highlighted: false,
   },
   {
-    key: "annual",
-    badge: "POPULAIRE",
-    badgeClass: "bg-zindo-gold-500/15 text-zindo-gold-400",
-    icon: Calendar,
-    title: "Annuel",
-    price: "75 000",
-    priceSuffix: "FCFA / an",
-    features: ["Tout le plan mensuel", "Économisez 15 000 FCFA", "Facturation unique"],
-    cta: "Choisir le plan annuel",
-    ctaClass: "bg-zindo-gold-500 text-zindo-ink-900 hover:bg-zindo-gold-400",
-    highlighted: true,
-  },
-  {
-    key: "monthly",
-    badge: "FLEXIBLE",
+    key: "starter",
+    badge: "ESSENTIEL",
     badgeClass: "bg-white/10 text-slate-300",
     icon: CreditCard,
-    title: "Mensuel",
-    price: "7 500",
+    title: "Starter",
+    price: "5 000",
     priceSuffix: "FCFA / mois",
-    features: ["Toutes les fonctionnalités", "Multi-boutiques & utilisateurs", "Support prioritaire", "Mises à jour incluses"],
-    cta: "Choisir le plan mensuel",
+    features: ["Jusqu’à 500 produits", "3 utilisateurs et 1 boutique", "Crédits, dépenses, inventaire et rapports"],
+    cta: "Essayer gratuitement",
     ctaClass: "border border-white/20 text-white hover:bg-white/10",
     highlighted: false,
+  },
+  {
+    key: "enterprise",
+    badge: "COMPLET",
+    badgeClass: "bg-zindo-gold-500/15 text-zindo-gold-400",
+    icon: Calendar,
+    title: "Entreprise",
+    price: "7 500",
+    priceSuffix: "FCFA / mois ou 75 000 FCFA / an",
+    features: ["Produits illimités", "10 utilisateurs et jusqu’à 5 boutiques", "Tous les modules et support prioritaire", "15 000 FCFA d’économie avec le paiement annuel"],
+    cta: "Essayer gratuitement",
+    ctaClass: "bg-zindo-gold-500 text-zindo-ink-900 hover:bg-zindo-gold-400",
+    highlighted: true,
   },
 ];
 
@@ -93,7 +93,7 @@ export default async function TarifsPage() {
             Choisissez la formule qui correspond à <span className="text-zindo-green-400">votre commerce</span>
           </h1>
           <p className="mx-auto mt-3 max-w-xl text-sm text-slate-400 sm:text-base">
-            Simple et transparent. Commencez gratuitement, puis continuez selon vos besoins.
+            Essayez toutes les fonctions pendant {trialDays} jours. Ensuite, choisissez Free, Starter ou Entreprise.
           </p>
         </div>
 
@@ -121,7 +121,7 @@ export default async function TarifsPage() {
                 </span>
               )}
               <p className={`font-bold text-white ${plan.highlighted ? "mt-6" : "mt-3"}`}>{plan.title}</p>
-              <p className="mt-2 text-3xl font-extrabold text-white">{plan.key === "trial" ? `${trialDays} jours` : plan.price}</p>
+              <p className="mt-2 text-3xl font-extrabold text-white">{plan.price}</p>
               {plan.priceSuffix && <p className="text-sm font-medium text-slate-400">{plan.priceSuffix}</p>}
 
               <ul className="mt-5 space-y-2.5">
@@ -139,7 +139,7 @@ export default async function TarifsPage() {
               >
                 {plan.cta} <ArrowRight className="h-4 w-4" />
               </Link>
-              {plan.key === "trial" && (
+              {plan.key === "free" && (
                 <a
                   href="/api/auth/google"
                   className="mt-2.5 flex items-center justify-center gap-2 rounded-xl border border-white/15 bg-white/5 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-white/10"

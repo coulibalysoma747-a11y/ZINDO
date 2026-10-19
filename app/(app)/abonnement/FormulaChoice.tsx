@@ -9,20 +9,9 @@ export const MONTHLY_PRICE = 7_500;
 export const ANNUAL_PRICE = 75_000;
 
 const OPTIONS = [
-  {
-    cycle: "MONTHLY" as const,
-    title: "Pro (mensuel)",
-    period: "par mois",
-    price: MONTHLY_PRICE,
-    feature: "Toutes les fonctionnalités incluses",
-  },
-  {
-    cycle: "ANNUAL" as const,
-    title: "Pro (annuel)",
-    period: `par an · soit ${Math.round(ANNUAL_PRICE / 12).toLocaleString("fr-FR")} FCFA/mois`,
-    price: ANNUAL_PRICE,
-    feature: `Économisez ${(MONTHLY_PRICE * 12 - ANNUAL_PRICE).toLocaleString("fr-FR")} FCFA`,
-  },
+  { planKey: "starter" as const, cycle: "MONTHLY" as const, title: "Starter", period: "par mois", price: 5_000, feature: "500 produits · 3 utilisateurs · 1 boutique" },
+  { planKey: "pro" as const, cycle: "MONTHLY" as const, title: "Entreprise", period: "par mois", price: MONTHLY_PRICE, feature: "Tous les modules · 10 utilisateurs · 5 boutiques" },
+  { planKey: "pro" as const, cycle: "ANNUAL" as const, title: "Entreprise annuel", period: "par an · soit 6 250 FCFA/mois", price: ANNUAL_PRICE, feature: "Économisez 15 000 FCFA" },
 ];
 
 export function FormulaChoice({ disabled }: { disabled?: boolean }) {
@@ -30,10 +19,10 @@ export function FormulaChoice({ disabled }: { disabled?: boolean }) {
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
 
-  function choose(cycle: "MONTHLY" | "ANNUAL") {
+  function choose(planKey: "starter" | "pro", cycle: "MONTHLY" | "ANNUAL") {
     setError(null);
     startTransition(async () => {
-      const result = await createSubscriptionInvoiceAction(cycle);
+      const result = await createSubscriptionInvoiceAction(planKey, cycle);
       if (!result.success) {
         setError(result.error);
         return;
@@ -47,10 +36,10 @@ export function FormulaChoice({ disabled }: { disabled?: boolean }) {
       {error && <p className="text-sm text-red-600">{error}</p>}
       {OPTIONS.map((opt) => (
         <button
-          key={opt.cycle}
+          key={`${opt.planKey}:${opt.cycle}`}
           type="button"
           disabled={pending || disabled}
-          onClick={() => choose(opt.cycle)}
+          onClick={() => choose(opt.planKey, opt.cycle)}
           className="flex w-full items-center justify-between gap-3 rounded-xl border border-zinc-200 bg-white p-4 text-left transition hover:border-zindo-green-400 hover:bg-zindo-green-50/30 disabled:cursor-not-allowed disabled:opacity-60"
         >
           <div>

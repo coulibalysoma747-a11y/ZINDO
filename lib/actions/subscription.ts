@@ -6,39 +6,37 @@ import { supabase } from "@/lib/supabase";
 import { requireUserForBilling } from "@/lib/auth";
 import { logAction } from "@/lib/audit";
 import { generateSubscriptionInvoiceNumber } from "@/lib/reference";
-import { ACTIVE_PLAN_KEY } from "@/lib/subscription";
+import type { BillingPlanKey } from "@/lib/plans";
 
 export type ActionState = { error?: string; success?: string } | undefined;
 
-const cycleSchema = z.object({ billingCycle: z.enum(["MONTHLY", "ANNUAL"]) });
+const invoiceSchema = z.object({ planKey: z.enum(["starter", "pro"]), billingCycle: z.enum(["MONTHLY", "ANNUAL"]) });
 
 export type CreateInvoiceResult = { success: true; invoiceId: string } | { success: false; error: string };
 
 /** Crée une facture d'abonnement "pro" en attente de paiement manuel. */
-export async function createSubscriptionInvoiceAction(billingCycle: "MONTHLY" | "ANNUAL"): Promise<CreateInvoiceResult> {
+export async function createSubscriptionInvoiceAction(planKey: BillingPlanKey, billingCycle: "MONTHLY" | "ANNUAL"): Promise<CreateInvoiceResult> {
   const user = await requireUserForBilling();
-  const parsed = cycleSchema.safeParse({ billingCycle });
-  if (!parsed.success) return { success: false, error: "Cycle de facturation invalide" };
+  const parsed = invoiceSchema.safeParse({ planKey, billingCycle });
+  if (!parsed.success) return { success: false, error: "Formule ou cycle de facturation invalide" };
+  if (parsed.data.planKey === "starter" && parsed.data.billingCycle === "ANNUAL") return { success: false, error: "La formule Starter est factur?e au mois" };
 
   const { data: plan } = await supabase
     .from("subscription_plans")
     .select("id, key, label, monthlyPrice:monthly_price, annualPrice:annual_price")
-    .eq("key", ACTIVE_PLAN_KEY)
+    .eq("key", parsed.data.planKey)
     .maybeSingle();
   if (!plan) return { success: false, error: "Palier d'abonnement introuvable — contactez le support" };
 
   const { data: existingPending } = await supabase
     .from("subscription_invoices")
-    .select("id, planKey:plan_key, paymentReference:payment_reference")
+    .select("id, planKey:plan_key, billingCycle:billing_cycle, paymentReference:payment_reference")
     .eq("business_id", user.businessId)
     .eq("status", "EN_ATTENTE")
     .maybeSingle();
   if (existingPending) {
-    // Une ancienne facture (palier retiré, ancien prix) sans paiement déclaré est
-    // annulée et remplacée par une facture Pro ; si un paiement a déjà été
-    // déclaré, on la garde pour que l'admin puisse la confirmer.
-    const isLegacy = existingPending.planKey !== plan.key;
-    if (!isLegacy || existingPending.paymentReference) return { success: true, invoiceId: existingPending.id as string };
+    const sameChoice = existingPending.planKey === plan.key && existingPending.billingCycle === parsed.data.billingCycle;
+    if (sameChoice || existingPending.paymentReference) return { success: true, invoiceId: existingPending.id as string };
     await supabase.from("subscription_invoices").update({ status: "ANNULEE" }).eq("id", existingPending.id).eq("status", "EN_ATTENTE");
   }
 

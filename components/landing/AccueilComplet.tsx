@@ -161,28 +161,28 @@ export function TarifsSection({ trialDays }: { trialDays: number }) {
     {
       icon: Gift,
       badge: "GRATUIT",
-      title: "Essai gratuit",
-      price: `${trialDays} jours`,
-      suffix: "sans engagement",
-      features: ["Accès à tout", "Aucune carte demandée", "Accompagnement inclus"],
+      title: "Free",
+      price: "0 FCFA",
+      suffix: "pour toujours",
+      features: ["50 produits", "1 utilisateur et 1 boutique", "Caisse, stock, clients et tickets"],
       highlighted: false,
     },
     {
       icon: Calendar,
-      badge: "RECOMMANDÉ",
-      title: "Annuel",
-      price: "75 000",
-      suffix: "FCFA / an",
-      features: ["Tout le plan mensuel", "15 000 FCFA d'économie", "Un seul paiement"],
+      badge: "POPULAIRE",
+      title: "Starter",
+      price: "5 000 FCFA",
+      suffix: "par mois",
+      features: ["500 produits", "3 utilisateurs et 1 boutique", "Cr?dits, d?penses, inventaire et rapports"],
       highlighted: true,
     },
     {
       icon: CreditCard,
-      badge: "SOUPLE",
-      title: "Mensuel",
-      price: "7 500",
-      suffix: "FCFA / mois",
-      features: ["Toutes les fonctionnalités", "Plusieurs boutiques et utilisateurs", "Mises à jour incluses"],
+      badge: "COMPLET",
+      title: "Entreprise",
+      price: "7 500 FCFA",
+      suffix: "par mois ou 75 000 FCFA par an",
+      features: ["Produits illimit?s", "10 utilisateurs et jusqu'? 5 boutiques", "Tous les modules et support prioritaire"],
       highlighted: false,
     },
   ];
@@ -193,7 +193,7 @@ export function TarifsSection({ trialDays }: { trialDays: number }) {
         kicker="Tarifs"
         title="Des prix simples,"
         accent="pensés pour les commerces d'ici"
-        text="Commencez gratuitement. Payez ensuite par Orange Money, Moov Money ou Wave."
+        text={`Essai de ${trialDays} jours avec les fonctions Entreprise, puis votre compte passe ? Free. Paiement par Orange Money, Moov Money ou Wave.`}
       />
       <div className="mx-auto mt-10 grid max-w-4xl grid-cols-1 gap-5 sm:grid-cols-3">
         {plans.map((p) => (
@@ -230,7 +230,7 @@ export function TarifsSection({ trialDays }: { trialDays: number }) {
           href="/inscription"
           className="inline-flex items-center gap-2 rounded-2xl bg-zindo-green-500 px-7 py-3.5 text-base font-bold text-white shadow-lg shadow-zindo-green-500/30 hover:bg-zindo-green-600"
         >
-          Commencer mes {trialDays} jours gratuits <ArrowRight className="h-4 w-4" />
+          Essayer ZINDO gratuitement <ArrowRight className="h-4 w-4" />
         </Link>
       </div>
     </section>

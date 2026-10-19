@@ -6,6 +6,7 @@ import { cache } from "react";
 import { getTrialDays } from "@/lib/platform-config";
 import { isFeatureEnabled } from "@/lib/feature-flags";
 import { MARKET_ONLY_ACTIVITY_KEY, MARKET_ONLY_FLAG } from "@/lib/market";
+import { getPlanFeatures, isPlanKey, PLAN_DEFINITIONS } from "@/lib/plans";
 
 export { FEATURE_CATALOG } from "@/lib/subscription-features";
 
@@ -41,8 +42,29 @@ const UNRESTRICTED: BusinessLimits = {
  * l'application des limites se ferait ici en restaurant la lecture du plan
  * ci-dessous.
  */
-async function getBusinessLimitsUncached(_businessId: string): Promise<BusinessLimits> {
-  return UNRESTRICTED;
+async function getBusinessLimitsUncached(businessId: string): Promise<BusinessLimits> {
+  const row = await ensureSubscriptionRow(businessId);
+  const plan = row?.plan;
+  if (!plan) return UNRESTRICTED;
+  const knownPlan = isPlanKey(plan.key);
+  const definition = knownPlan ? PLAN_DEFINITIONS[plan.key] : undefined;
+  let features = getPlanFeatures(plan.key);
+  if (knownPlan) {
+    try {
+      const parsed = JSON.parse(plan.features ?? "[]") as unknown;
+      if (Array.isArray(parsed) && parsed.every((feature) => typeof feature === "string")) features = parsed;
+    } catch {
+      // Use the checked in offer definition if the stored feature list is invalid.
+    }
+  }
+  return {
+    planKey: plan.key,
+    planLabel: plan.label,
+    maxProducts: plan.maxProducts ?? definition?.maxProducts ?? null,
+    maxUsers: plan.maxUsers ?? definition?.maxUsers ?? null,
+    maxLocations: plan.maxLocations ?? definition?.maxLocations ?? null,
+    features,
+  };
 }
 
 export async function hasPlanFeature(businessId: string, featureKey: string): Promise<boolean> {
@@ -51,10 +73,19 @@ export async function hasPlanFeature(businessId: string, featureKey: string): Pr
 }
 
 export async function checkLimit(
-  _businessId: string,
-  _kind: "products" | "users" | "locations"
-): Promise<{ ok: boolean; limit: number | null; current: number }> {
-  return { ok: true, limit: null, current: 0 };
+  businessId: string,
+  kind: "products" | "users" | "locations"
+): Promise<{ ok: boolean; limit: number | null; current: number; unavailable?: boolean }> {
+  const limits = await getBusinessLimits(businessId);
+  const limit = kind === "products" ? limits.maxProducts : kind === "users" ? limits.maxUsers : limits.maxLocations;
+  if (limit === null) return { ok: true, limit: null, current: 0 };
+  const table = kind === "products" ? "products" : kind === "users" ? "users" : "locations";
+  const { count, error } = await supabase.from(table).select("id", { count: "exact", head: true }).eq("business_id", businessId);
+  if (error || count === null) {
+    console.error(`[checkLimit] Could not count ${kind}:`, error?.message ?? "count unavailable");
+    return { ok: false, limit, current: 0, unavailable: true };
+  }
+  return { ok: count < limit, limit, current: count };
 }
 
 // ---------------------------------------------------------------------------
@@ -82,14 +113,14 @@ type SubscriptionRow = {
   billingCycle: BillingCycle;
   trialEndsAt: string | null;
   currentPeriodEnd: string | null;
-  plan: { key: string; label: string } | null;
+  plan: { key: string; label: string; maxProducts: number | null; maxUsers: number | null; maxLocations: number | null; features: string } | null;
 };
 
 async function loadSubscriptionRow(businessId: string): Promise<SubscriptionRow | null> {
   const { data } = await supabase
     .from("business_subscriptions")
     .select(
-      "status, billingCycle:billing_cycle, trialEndsAt:trial_ends_at, currentPeriodEnd:current_period_end, plan:subscription_plans(key, label)"
+      "status, billingCycle:billing_cycle, trialEndsAt:trial_ends_at, currentPeriodEnd:current_period_end, plan:subscription_plans(key, label, maxProducts:max_products, maxUsers:max_users, maxLocations:max_locations, features)"
     )
     .eq("business_id", businessId)
     .maybeSingle();
@@ -109,7 +140,7 @@ async function ensureSubscriptionRow(businessId: string): Promise<SubscriptionRo
 
   const { data: plan } = await supabase
     .from("subscription_plans")
-    .select("id, key, label")
+    .select("id, key, label, maxProducts:max_products, maxUsers:max_users, maxLocations:max_locations, features")
     .eq("key", ACTIVE_PLAN_KEY)
     .maybeSingle();
   if (!plan) return null; // Palier pas encore configuré en base : pas de blocage tant que ce n'est pas prêt.
@@ -132,7 +163,14 @@ async function ensureSubscriptionRow(businessId: string): Promise<SubscriptionRo
     billingCycle: "MONTHLY",
     trialEndsAt,
     currentPeriodEnd: null,
-    plan: { key: plan.key as string, label: plan.label as string },
+    plan: {
+      key: plan.key as string,
+      label: plan.label as string,
+      maxProducts: plan.maxProducts as number | null,
+      maxUsers: plan.maxUsers as number | null,
+      maxLocations: plan.maxLocations as number | null,
+      features: plan.features as string,
+    },
   };
 }
 
@@ -173,6 +211,24 @@ export async function getSubscriptionState(businessId: string): Promise<Subscrip
   let status: SubscriptionStatus = row.status;
   if (status === "TRIAL" && row.trialEndsAt && new Date(row.trialEndsAt).getTime() <= now) status = "EXPIRED";
   if (status === "ACTIVE" && row.currentPeriodEnd && new Date(row.currentPeriodEnd).getTime() <= now) status = "PAST_DUE";
+
+  if (status === "EXPIRED" || status === "PAST_DUE") {
+    const { data: freePlan } = await supabase.from("subscription_plans").select("id, key, label").eq("key", "free").maybeSingle();
+    if (freePlan) {
+      const { error } = await supabase.from("business_subscriptions").upsert(
+        { business_id: businessId, plan_id: freePlan.id, billing_cycle: "MONTHLY", status: "ACTIVE", trial_ends_at: null, current_period_end: null },
+        { onConflict: "business_id", ignoreDuplicates: false }
+      );
+      if (!error) {
+        return {
+          status: "ACTIVE", planKey: freePlan.key as string, planLabel: freePlan.label as string,
+          billingCycle: "MONTHLY", trialEndsAt: null, currentPeriodEnd: null,
+          trialDaysLeft: null, periodDaysLeft: null, blocked: false,
+        };
+      }
+      console.error("[getSubscriptionState] Could not switch expired account to Free:", error.message);
+    }
+  }
 
   const trialDaysLeft =
     row.status === "TRIAL" && row.trialEndsAt
