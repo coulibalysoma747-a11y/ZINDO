@@ -3,7 +3,6 @@ import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { getCurrentSuperAdmin } from "@/lib/superadmin-auth";
 import { supabase } from "@/lib/supabase";
-import { ACTIVE_PLAN_KEY } from "@/lib/subscription";
 import { formatDateTime, formatMoney } from "@/lib/format";
 import { Card, CardBody, CardHeader } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
@@ -86,7 +85,7 @@ export default async function AdminBusinessDetailPage({
       .select("billingCycle:billing_cycle, plan:subscription_plans(key)")
       .eq("business_id", id)
       .maybeSingle(),
-    supabase.from("subscription_plans").select("key, label").eq("key", ACTIVE_PLAN_KEY),
+    supabase.from("subscription_plans").select("key, label, annualPrice:annual_price").in("key", ["free", "starter", "pro"]).order("order", { ascending: true }),
     supabase
       .from("cash_sessions")
       .select("id, openedAt:opened_at, location:locations(name), user:users(firstName:first_name, lastName:last_name)")

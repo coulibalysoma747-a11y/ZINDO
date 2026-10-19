@@ -1,7 +1,6 @@
 import "server-only";
 import { supabase } from "@/lib/supabase";
 import type { InvoicePaymentMethod } from "@/lib/db-types";
-import { ACTIVE_PLAN_KEY } from "@/lib/subscription";
 import { rewardReferrerOnFirstPayment } from "@/lib/referral";
 
 function addPeriod(billingCycle: "MONTHLY" | "ANNUAL", from: Date) {
@@ -26,12 +25,11 @@ export async function activateInvoicePayment(params: {
   if (invoice.status === "PAYEE") return { success: true, alreadyProcessed: true };
   if (invoice.status === "ANNULEE") return { error: "Cette facture a été annulée" };
 
-  // Toujours le palier vendu (Pro), même pour une ancienne facture "standard"
-  // encore en attente : confirmer son paiement ne doit pas réactiver un ancien palier.
+  // Activate exactly the plan named on the paid invoice.
   const { data: plan } = await supabase
     .from("subscription_plans")
     .select("id")
-    .eq("key", ACTIVE_PLAN_KEY)
+    .eq("key", invoice.planKey)
     .maybeSingle();
   if (!plan) return { error: "Palier introuvable" };
 

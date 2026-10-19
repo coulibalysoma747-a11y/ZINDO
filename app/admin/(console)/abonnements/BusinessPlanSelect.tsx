@@ -15,7 +15,7 @@ export function BusinessPlanSelect({
   businessId: string;
   planKey: string | null;
   billingCycle: BillingCycle | null;
-  plans: { key: string; label: string }[];
+  plans: { key: string; label: string; annualPrice: number }[];
 }) {
   const [pending, startTransition] = useTransition();
   const router = useRouter();
@@ -47,7 +47,7 @@ export function BusinessPlanSelect({
       {plans.map((p) => (
         <optgroup key={p.key} label={p.label}>
           <option value={`${p.key}:MONTHLY`}>{p.label} — Mensuel</option>
-          <option value={`${p.key}:ANNUAL`}>{p.label} — Annuel</option>
+          {p.annualPrice > 0 && <option value={`${p.key}:ANNUAL`}>{p.label} — Annuel</option>}
         </optgroup>
       ))}
     </Select>

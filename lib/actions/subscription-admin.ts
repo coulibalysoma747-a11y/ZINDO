@@ -143,11 +143,21 @@ export async function assignBusinessPlanAction(
   billingCycle: "MONTHLY" | "ANNUAL"
 ) {
   const admin = await requireSuperAdmin();
-  const { data: plan } = await supabase.from("subscription_plans").select("id, label").eq("key", planKey).maybeSingle();
+  const { data: plan } = await supabase.from("subscription_plans").select("id, label, monthlyPrice:monthly_price, annualPrice:annual_price").eq("key", planKey).maybeSingle();
   if (!plan) return { error: "Palier introuvable" };
+  if (billingCycle === "ANNUAL" && Number(plan.annualPrice) <= 0) return { error: "Ce palier ne propose pas de paiement annuel" };
+
+  const periodEnd = Number(plan.monthlyPrice) === 0
+    ? null
+    : (() => {
+      const date = new Date();
+      if (billingCycle === "ANNUAL") date.setFullYear(date.getFullYear() + 1);
+      else date.setMonth(date.getMonth() + 1);
+      return date.toISOString();
+    })();
 
   const { error } = await supabase.from("business_subscriptions").upsert(
-    { business_id: businessId, plan_id: plan.id, billing_cycle: billingCycle, status: "ACTIVE" },
+    { business_id: businessId, plan_id: plan.id, billing_cycle: billingCycle, status: "ACTIVE", trial_ends_at: null, current_period_end: periodEnd },
     { onConflict: "business_id", ignoreDuplicates: false }
   );
   if (error) {
@@ -228,5 +238,8 @@ export async function updateSubscriptionPlanAction(
 
   revalidatePath("/admin/abonnements");
   revalidatePath("/admin/abonnements/plans");
+  revalidatePath("/tarifs");
+  revalidatePath("/");
+  revalidatePath("/en");
   return { success: "Palier mis à jour" };
 }

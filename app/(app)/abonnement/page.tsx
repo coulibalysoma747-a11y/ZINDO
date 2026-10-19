@@ -8,7 +8,8 @@ import { formatMoney, formatLongDate } from "@/lib/format";
 import { Card, CardBody, CardHeader } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { ButtonLink } from "@/components/ui/Button";
-import { FormulaChoice, MONTHLY_PRICE, ANNUAL_PRICE } from "./FormulaChoice";
+import { FormulaChoice } from "./FormulaChoice";
+import { getPlanOffers } from "@/lib/plan-catalog";
 import { SaspayPayButton } from "./SaspayPayButton";
 import { isSaspayPaymentEnabled, reconcileSaspayPayments } from "@/lib/saspay-payments";
 
@@ -35,8 +36,9 @@ export default async function SubscriptionPage() {
   await reconcileSaspayPayments(user.businessId);
   const saspayEnabled = await isSaspayPaymentEnabled(user.businessId);
 
-  const [state, { data: pendingInvoiceData }, { data: invoiceHistoryData }] = await Promise.all([
+  const [state, planOffers, { data: pendingInvoiceData }, { data: invoiceHistoryData }] = await Promise.all([
     getSubscriptionState(user.businessId),
+    getPlanOffers(),
     supabase
       .from("subscription_invoices")
       .select(
@@ -58,6 +60,8 @@ export default async function SubscriptionPage() {
 
   const pendingInvoice = ((pendingInvoiceData ?? []) as unknown as InvoiceRow[])[0] ?? null;
   const invoiceHistory = (invoiceHistoryData ?? []) as unknown as InvoiceRow[];
+  const activePlan = planOffers.find((plan) => plan.key === state.planKey);
+  const activePrice = state.billingCycle === "ANNUAL" ? activePlan?.annualPrice : activePlan?.monthlyPrice;
 
   return (
     <div className="max-w-2xl space-y-6">
@@ -92,14 +96,14 @@ export default async function SubscriptionPage() {
               <div>
                 <p className="font-bold text-zinc-900">
                   {state.status === "ACTIVE"
-                    ? `${state.planLabel} (${CYCLE_LABELS[state.billingCycle ?? "MONTHLY"]})`
+                    ? state.planKey === "free" ? state.planLabel : `${state.planLabel} (${CYCLE_LABELS[state.billingCycle ?? "MONTHLY"]})`
                     : state.status === "TRIAL"
                       ? "Essai gratuit"
                       : "Aucun abonnement actif"}
                 </p>
                 <p className="text-sm text-zinc-500">
                   {state.status === "ACTIVE"
-                    ? `${formatMoney(state.billingCycle === "ANNUAL" ? ANNUAL_PRICE : MONTHLY_PRICE, currency)} / ${state.billingCycle === "ANNUAL" ? "an" : "mois"}`
+                    ? state.planKey === "free" ? `${formatMoney(0, currency)} / toujours` : `${formatMoney(activePrice ?? 0, currency)} / ${state.billingCycle === "ANNUAL" ? "an" : "mois"}`
                     : state.status === "TRIAL"
                       ? `0 FCFA pendant ${trialDays} jours`
                       : "Accès bloqué jusqu'au paiement"}
@@ -178,7 +182,7 @@ export default async function SubscriptionPage() {
           <h2 className="font-semibold text-zinc-900">Nos formules</h2>
         </CardHeader>
         <CardBody>
-          <FormulaChoice disabled={!!pendingInvoice} />
+          <FormulaChoice disabled={!!pendingInvoice} plans={planOffers} />
         </CardBody>
       </Card>
 

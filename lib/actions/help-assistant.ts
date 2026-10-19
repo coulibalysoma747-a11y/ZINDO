@@ -1,6 +1,7 @@
 "use server";
 
 import { getTrialDays } from "@/lib/platform-config";
+import { getPlanOffers } from "@/lib/plan-catalog";
 import crypto from "crypto";
 import { headers } from "next/headers";
 import { requireUser } from "@/lib/auth";
@@ -28,8 +29,7 @@ const EXTRA_KNOWLEDGE = `
 - Profil > Notifications push : active des alertes sur l'appareil (nouvelle vente, stock bas/rupture, échéance de crédit dépassée) même quand ZINDO n'est pas ouvert.
 - ZINDO fonctionne hors ligne pour l'écran de vente : les ventes s'enregistrent sur l'appareil et se synchronisent au retour de la connexion.
 - ZINDO s'installe comme une application (PWA) directement depuis le navigateur, sur téléphone (Android/iOS) et sur ordinateur, sans passer par un store.
-- Tarifs (voir aussi la page /tarifs) : 7 500 FCFA par mois sans engagement, ou 75 000 FCFA par an (soit 2 mois offerts, 15 000 FCFA d'économie). Toutes les fonctionnalités, plusieurs boutiques et plusieurs utilisateurs sont inclus, ainsi que les mises à jour. L'abonnement se paie en ligne, de façon sécurisée (page Abonnement une fois connecté) ; il s'active dès que le paiement est confirmé.
-- Essai gratuit à l'inscription, sans carte bancaire : accès à tout pendant la durée d'essai ; on ne paie que si l'on décide de continuer.
+- Tarifs : forfait Free permanent et formules payantes Starter et Entreprise. L'essai donne accès aux fonctions Entreprise, puis le compte passe automatiquement au forfait Free. Les prix à jour sont fournis ci-dessous et affichés sur /tarifs. Le client peut choisir un forfait payant à tout moment.
 - L'équipe ZINDO répond sur WhatsApp au +226 04 05 99 29 et aide à démarrer (réglages, saisie des produits, formation des employés).
 `.trim();
 
@@ -41,7 +41,7 @@ function buildKnowledgeBase(): string {
   return `${modules}\n\n${EXTRA_KNOWLEDGE}`;
 }
 
-function buildSystemPrompt(publicVisitor: boolean, trialDays: number): string {
+function buildSystemPrompt(publicVisitor: boolean, trialDays: number, currentPrices: string): string {
   const audienceNote = publicVisitor
     ? `Tu réponds ici à un visiteur du site public qui n'a pas forcément encore de compte — reste accueillant, et si sa question montre qu'il n'est pas encore inscrit, tu peux mentionner l'essai gratuit de ${trialDays} jours.`
     : "Tu réponds ici à un utilisateur déjà connecté à son compte ZINDO.";
@@ -55,6 +55,7 @@ Règles :
 - Base-toi UNIQUEMENT sur la liste de modules et notes ci-dessous. N'invente jamais une fonctionnalité, un bouton ou un module qui n'y figure pas.
 - Si la question porte sur les DONNÉES réelles d'un commerce (chiffre d'affaires, stock actuel, clients qui doivent de l'argent...), réponds que ce n'est pas ton rôle et renvoie vers l'Assistant IA de l'application (page /assistant, réservée aux comptes connectés), qui lui a accès à ces données.
 - Si la question sort complètement du cadre de ZINDO, dis poliment que tu es limité à l'aide sur l'application.
+- Prix actuels des formules : ${currentPrices}. Ces prix viennent du catalogue de facturation ; ne les remplace jamais par d'anciens montants.
 
 Modules et fonctionnalités de ZINDO :
 ${buildKnowledgeBase()}`;
@@ -77,7 +78,9 @@ async function runHelpAssistant(history: ChatMessage[], question: string, public
   const boundedHistory = history.slice(-8);
 
   const messages: DeepSeekMessage[] = [
-    { role: "system", content: buildSystemPrompt(publicVisitor, await getTrialDays()) },
+    { role: "system", content: buildSystemPrompt(publicVisitor, await getTrialDays(), (await getPlanOffers())
+      .map((plan) => `${plan.label}: ${plan.monthlyPrice.toLocaleString("fr-FR")} FCFA/mois${plan.annualPrice > 0 ? `, ${plan.annualPrice.toLocaleString("fr-FR")} FCFA/an` : ""}`)
+      .join("; ")) },
     ...boundedHistory.map((m): DeepSeekMessage => ({ role: m.role, content: m.content })),
     { role: "user", content: question },
   ];

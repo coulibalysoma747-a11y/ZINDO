@@ -33,15 +33,7 @@ const UNRESTRICTED: BusinessLimits = {
   features: FEATURE_CATALOG.map((f) => f.key),
 };
 
-/**
- * Paywall désactivé : ZINDO est entièrement gratuit et illimité pour tous
- * les commerces, quel que soit le palier auquel ils sont rattachés en base
- * — décision explicite du propriétaire de la plateforme. Les tables
- * subscription_plans/business_subscriptions et la page /abonnement restent
- * en place (facturation, historique) mais ne bloquent plus rien ; réactiver
- * l'application des limites se ferait ici en restaurant la lecture du plan
- * ci-dessous.
- */
+/** Resolve the active plan's limits and enabled features. */
 async function getBusinessLimitsUncached(businessId: string): Promise<BusinessLimits> {
   const row = await ensureSubscriptionRow(businessId);
   const plan = row?.plan;
@@ -89,10 +81,8 @@ export async function checkLimit(
 }
 
 // ---------------------------------------------------------------------------
-// Essai gratuit (durée réglable, voir getTrialDays) puis abonnement payant obligatoire (7 500
-// FCFA/mois ou 75 000 FCFA/an, sans palier gratuit) — indépendant des
-// limites par fonctionnalité ci-dessus (désactivées) : ici on ne contrôle que
-// l'ACCÈS à l'application, pas le nombre de produits/utilisateurs/boutiques.
+// Essai gratuit réglable, suivi du forfait Free permanent ; les forfaits payants
+// sont facultatifs et peuvent être souscrits à tout moment.
 // ---------------------------------------------------------------------------
 
 export type SubscriptionState = {
@@ -130,7 +120,7 @@ async function loadSubscriptionRow(businessId: string): Promise<SubscriptionRow 
 /**
  * Filet de sécurité : un commerce sans ligne business_subscriptions (créé
  * avant cette fonctionnalité, migration de rattrapage pas encore exécutée,
- * ou palier "standard" pas encore configuré en base) démarre son essai de 7
+ * ou palier "pro" pas encore configuré en base) démarre son essai de 7
  * jours à la première visite au lieu d'être bloqué par erreur — même logique
  * défensive que le fallback colonne-manquante d'insertSaleItems.
  */

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import type { PlanOffer } from "@/lib/plan-catalog";
 import {
   NotebookPen,
   Receipt,
@@ -156,74 +157,53 @@ export function AccompagnementSection({ whatsappHref }: { whatsappHref: string }
   );
 }
 
-export function TarifsSection({ trialDays }: { trialDays: number }) {
-  const plans = [
-    {
-      icon: Gift,
-      badge: "GRATUIT",
-      title: "Free",
-      price: "0 FCFA",
-      suffix: "pour toujours",
-      features: ["50 produits", "1 utilisateur et 1 boutique", "Caisse, stock, clients et tickets"],
-      highlighted: false,
-    },
-    {
-      icon: Calendar,
-      badge: "POPULAIRE",
-      title: "Starter",
-      price: "5 000 FCFA",
-      suffix: "par mois",
-      features: ["500 produits", "3 utilisateurs et 1 boutique", "Cr?dits, d?penses, inventaire et rapports"],
-      highlighted: true,
-    },
-    {
-      icon: CreditCard,
-      badge: "COMPLET",
-      title: "Entreprise",
-      price: "7 500 FCFA",
-      suffix: "par mois ou 75 000 FCFA par an",
-      features: ["Produits illimit?s", "10 utilisateurs et jusqu'? 5 boutiques", "Tous les modules et support prioritaire"],
-      highlighted: false,
-    },
-  ];
-
+export function TarifsSection({ trialDays, plans }: { trialDays: number; plans: PlanOffer[] }) {
   return (
     <section id="tarifs" className="mt-24">
       <SectionTitle
         kicker="Tarifs"
         title="Des prix simples,"
         accent="pensés pour les commerces d'ici"
-        text={`Essai de ${trialDays} jours avec les fonctions Entreprise, puis votre compte passe ? Free. Paiement par Orange Money, Moov Money ou Wave.`}
+        text={`Essai gratuit de ${trialDays} jours avec les fonctions Entreprise. À la fin, le compte passe automatiquement à Free ; vous pouvez choisir un forfait payant à tout moment.`}
       />
       <div className="mx-auto mt-10 grid max-w-4xl grid-cols-1 gap-5 sm:grid-cols-3">
-        {plans.map((p) => (
+        {plans.map((plan) => {
+          const price = plan.monthlyPrice.toLocaleString("fr-FR");
+          const limits = [
+            plan.maxProducts === null ? "Produits illimités" : `${plan.maxProducts} produits`,
+            plan.maxUsers === null ? "Utilisateurs illimités" : `${plan.maxUsers} utilisateurs`,
+            plan.maxLocations === null ? "Boutiques illimitées" : `${plan.maxLocations} boutique(s)`,
+          ];
+          const annual = plan.annualPrice > 0 ? ` ou ${plan.annualPrice.toLocaleString("fr-FR")} FCFA/an` : "";
+          return (
           <div
-            key={p.title}
+            key={plan.key}
             className={`relative flex flex-col rounded-3xl border bg-white p-6 shadow-sm ${
-              p.highlighted ? "border-zindo-gold-500 shadow-lg" : "border-zinc-200"
+              plan.key === "starter" ? "border-zindo-gold-500 shadow-lg" : "border-zinc-200"
             }`}
           >
             <span
               className={`w-fit rounded-full px-2.5 py-0.5 text-[11px] font-bold ${
-                p.highlighted ? "bg-zindo-gold-100 text-zindo-ink-900" : "bg-zindo-green-50 text-zindo-green-700"
+                plan.key === "starter" ? "bg-zindo-gold-100 text-zindo-ink-900" : "bg-zindo-green-50 text-zindo-green-700"
               }`}
             >
-              {p.badge}
+              {plan.key === "free" ? "GRATUIT" : plan.key === "pro" ? "COMPLET" : "ESSENTIEL"}
             </span>
             <p className="mt-3 flex items-center gap-2 font-bold text-zindo-ink-900">
-              <p.icon className="h-4 w-4 text-zindo-green-600" /> {p.title}
+              {plan.key === "free" ? <Gift className="h-4 w-4 text-zindo-green-600" /> : plan.key === "pro" ? <CreditCard className="h-4 w-4 text-zindo-green-600" /> : <Calendar className="h-4 w-4 text-zindo-green-600" />} {plan.label}
             </p>
-            <p className="mt-2 text-3xl font-extrabold text-zindo-ink-900">{p.price}</p>
-            <p className="text-sm text-zinc-500">{p.suffix}</p>
+            <p className="mt-2 text-3xl font-extrabold text-zindo-ink-900">{price} FCFA</p>
+            <p className="text-sm text-zinc-500">{plan.monthlyPrice === 0 ? "pour toujours" : `par mois${annual}`}</p>
             <ul className="mt-4 space-y-2 text-sm text-zinc-600">
-              {p.features.map((f) => (
+              {limits.map((f) => (
                 <li key={f} className="flex items-start gap-2">
                   <Check className="mt-0.5 h-4 w-4 shrink-0 text-zindo-green-600" /> {f}
                 </li>
               ))}
             </ul>
           </div>
-        ))}
+          );
+        })}
       </div>
       <div className="mt-8 text-center">
         <Link
@@ -242,7 +222,7 @@ export const EXTRA_FAQS = [
   {
     question: "Puis-je essayer ZINDO avant de payer ?",
     answer:
-      "Oui. Vous avez {trialDays} jours d'essai gratuit avec accès à tout, sans carte bancaire. Vous ne payez que si vous décidez de continuer.",
+      "Oui. Vous avez {trialDays} jours d'essai gratuit avec les fonctions Entreprise, sans carte bancaire. Après l'essai, votre compte passe automatiquement au forfait Free ; vous pouvez choisir un forfait payant à tout moment.",
   },
   {
     question: "Comment payer mon abonnement ?",

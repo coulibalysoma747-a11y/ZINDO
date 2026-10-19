@@ -986,15 +986,12 @@ model ActivityConfig {
 
 // ---------------------------------------------------------------------------
 // Abonnements & revenus — paliers de prix, abonnement par commerce, factures.
-// Un commerce SANS ligne BusinessSubscription n'est soumis à AUCUNE limite
-// (comportement identique à avant l'introduction de cette fonctionnalité) —
-// seuls les commerces explicitement rattachés à un palier sont contraints.
-// Les nouveaux commerces sont rattachés au palier "gratuit" dès l'inscription.
+// Un commerce sans abonnement hérite d'un essai Entreprise puis du palier Free.
 // ---------------------------------------------------------------------------
 
 model SubscriptionPlan {
   id           String   @id @default(cuid())
-  key          String   @unique // "gratuit" | "standard" | "premium" | "pro"
+  key          String   @unique // "free" | "starter" | "pro"
   label        String
   monthlyPrice Int // FCFA
   annualPrice  Int // FCFA

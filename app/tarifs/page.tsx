@@ -1,4 +1,5 @@
 import { getTrialDays } from "@/lib/platform-config";
+import { getPlanOffers } from "@/lib/plan-catalog";
 import Link from "next/link";
 import { Check, Gift, Calendar, CreditCard, ShieldCheck, Lock, Headphones, RefreshCw, ArrowRight } from "lucide-react";
 import { ZindoLogo } from "@/components/auth/ZindoLogo";
@@ -7,48 +8,6 @@ import { GoogleIcon } from "@/components/icons/GoogleIcon";
 // Durée de l'essai réglable depuis la console admin (qui revalide aussi
 // cette page à l'enregistrement) : relecture au plus toutes les heures.
 export const revalidate = 3600;
-
-const PLANS = [
-  {
-    key: "free",
-    badge: "GRATUIT",
-    badgeClass: "bg-zindo-green-500/15 text-zindo-green-400",
-    icon: Gift,
-    title: "Free",
-    price: "0",
-    priceSuffix: "FCFA / toujours",
-    features: ["50 produits", "1 utilisateur et 1 boutique", "Caisse, stock, clients et tickets"],
-    cta: "Créer mon compte gratuit",
-    ctaClass: "border border-zindo-green-500 text-zindo-green-400 hover:bg-zindo-green-500/10",
-    highlighted: false,
-  },
-  {
-    key: "starter",
-    badge: "ESSENTIEL",
-    badgeClass: "bg-white/10 text-slate-300",
-    icon: CreditCard,
-    title: "Starter",
-    price: "5 000",
-    priceSuffix: "FCFA / mois",
-    features: ["Jusqu’à 500 produits", "3 utilisateurs et 1 boutique", "Crédits, dépenses, inventaire et rapports"],
-    cta: "Essayer gratuitement",
-    ctaClass: "border border-white/20 text-white hover:bg-white/10",
-    highlighted: false,
-  },
-  {
-    key: "enterprise",
-    badge: "COMPLET",
-    badgeClass: "bg-zindo-gold-500/15 text-zindo-gold-400",
-    icon: Calendar,
-    title: "Entreprise",
-    price: "7 500",
-    priceSuffix: "FCFA / mois ou 75 000 FCFA / an",
-    features: ["Produits illimités", "10 utilisateurs et jusqu’à 5 boutiques", "Tous les modules et support prioritaire", "15 000 FCFA d’économie avec le paiement annuel"],
-    cta: "Essayer gratuitement",
-    ctaClass: "bg-zindo-gold-500 text-zindo-ink-900 hover:bg-zindo-gold-400",
-    highlighted: true,
-  },
-];
 
 const TRUST_BADGES = [
   { icon: ShieldCheck, title: "Sans engagement", text: "Résiliez à tout moment" },
@@ -59,6 +18,33 @@ const TRUST_BADGES = [
 
 export default async function TarifsPage() {
   const trialDays = await getTrialDays();
+  const planOffers = await getPlanOffers();
+  const plans = planOffers.map((plan) => {
+    const annualSaving = Math.max(0, plan.monthlyPrice * 12 - plan.annualPrice);
+    const limitText = [
+      plan.maxProducts === null ? "Produits illimités" : `${plan.maxProducts} produits maximum`,
+      plan.maxUsers === null ? "Utilisateurs illimités" : `${plan.maxUsers} utilisateur(s)`,
+      plan.maxLocations === null ? "Boutiques illimitées" : `${plan.maxLocations} boutique(s)`,
+    ];
+    const features = plan.key === "free"
+      ? [...limitText, "Caisse, stock, clients et tickets"]
+      : plan.key === "starter"
+        ? [...limitText, "Crédits, dépenses, inventaire et rapports"]
+        : [...limitText, "Tous les modules et support prioritaire", ...(annualSaving > 0 ? [`${annualSaving.toLocaleString("fr-FR")} FCFA d’économie avec le paiement annuel`] : [])];
+    return {
+      key: plan.key,
+      badge: plan.key === "free" ? "GRATUIT" : plan.key === "starter" ? "ESSENTIEL" : "COMPLET",
+      badgeClass: plan.key === "free" ? "bg-zindo-green-500/15 text-zindo-green-400" : plan.key === "pro" ? "bg-zindo-gold-500/15 text-zindo-gold-400" : "bg-white/10 text-slate-300",
+      icon: plan.key === "free" ? Gift : plan.key === "pro" ? Calendar : CreditCard,
+      title: plan.label,
+      price: plan.monthlyPrice.toLocaleString("fr-FR"),
+      priceSuffix: plan.monthlyPrice === 0 ? "FCFA / toujours" : `FCFA / mois${plan.annualPrice > 0 ? ` ou ${plan.annualPrice.toLocaleString("fr-FR")} FCFA / an` : ""}`,
+      features,
+      cta: plan.key === "free" ? "Créer mon compte gratuit" : "Essayer gratuitement",
+      ctaClass: plan.key === "free" ? "border border-zindo-green-500 text-zindo-green-400 hover:bg-zindo-green-500/10" : plan.key === "pro" ? "bg-zindo-gold-500 text-zindo-ink-900 hover:bg-zindo-gold-400" : "border border-white/20 text-white hover:bg-white/10",
+      highlighted: plan.key === "pro",
+    };
+  });
   return (
     <div className="theme-locked min-h-screen bg-zindo-ink-900">
       <div aria-hidden className="zindo-flag-stripe h-1 w-full" />
@@ -93,12 +79,12 @@ export default async function TarifsPage() {
             Choisissez la formule qui correspond à <span className="text-zindo-green-400">votre commerce</span>
           </h1>
           <p className="mx-auto mt-3 max-w-xl text-sm text-slate-400 sm:text-base">
-            Essayez toutes les fonctions pendant {trialDays} jours. Ensuite, choisissez Free, Starter ou Entreprise.
+            Essayez les fonctions Entreprise gratuitement pendant {trialDays} jours. Ensuite, votre compte passe au forfait Free ; vous pouvez passer à une formule payante à tout moment.
           </p>
         </div>
 
         <div className="mt-10 grid grid-cols-1 gap-5 sm:grid-cols-3">
-          {PLANS.map((plan) => (
+          {plans.map((plan) => (
             <div
               key={plan.key}
               className={`relative flex flex-col rounded-2xl border p-6 ${

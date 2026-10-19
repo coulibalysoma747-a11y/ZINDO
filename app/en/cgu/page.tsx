@@ -51,10 +51,9 @@ export default async function EnglishCguPage() {
 
       <LegalSection title="4. Pricing">
         <p>
-          ZINDO offers a {trialDays}-day free trial, no commitment, when you create your account. After this period, using
-          ZINDO requires a paid subscription: 10,000 FCFA per month or 100,000 FCFA per year. Payment is made online
-          securely, from the &ldquo;Subscription&rdquo; page; the subscription is activated as soon as the payment is
-          confirmed. Any substantial change to pricing would be communicated to you
+          ZINDO offers a {trialDays}-day free trial with Enterprise features. After the trial, your account moves to
+          the permanent Free plan. Paid Starter and Enterprise plans are optional and can be selected at any time from
+          the &ldquo;Subscription&rdquo; page. Current prices and limits are shown in the Pricing section on the English home page. Any substantial change to pricing would be communicated to you
           before it applies to your account.
         </p>
       </LegalSection>

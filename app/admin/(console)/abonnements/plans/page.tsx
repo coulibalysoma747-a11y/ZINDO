@@ -2,7 +2,7 @@ import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { requireSuperAdmin } from "@/lib/superadmin-auth";
 import { supabase } from "@/lib/supabase";
-import { ACTIVE_PLAN_KEY, FEATURE_CATALOG } from "@/lib/subscription";
+import { FEATURE_CATALOG } from "@/lib/subscription";
 import { PlanEditForm } from "./PlanEditForm";
 
 type PlanRow = {
@@ -23,7 +23,8 @@ export default async function AdminPlansPage() {
   const { data } = await supabase
     .from("subscription_plans")
     .select("id, key, label, monthlyPrice:monthly_price, annualPrice:annual_price, maxProducts:max_products, maxUsers:max_users, maxLocations:max_locations, features")
-    .eq("key", ACTIVE_PLAN_KEY);
+    .in("key", ["free", "starter", "pro"])
+    .order("order", { ascending: true });
   const plans = (data ?? []) as unknown as PlanRow[];
 
   return (

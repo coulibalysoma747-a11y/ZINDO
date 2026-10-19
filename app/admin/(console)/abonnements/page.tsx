@@ -2,7 +2,6 @@ import Link from "next/link";
 import { Wallet, TrendingUp, Users, Receipt, Settings2, Clock, ShieldAlert } from "lucide-react";
 import { requireSuperAdmin } from "@/lib/superadmin-auth";
 import { supabase } from "@/lib/supabase";
-import { ACTIVE_PLAN_KEY } from "@/lib/subscription";
 import { formatMoney, formatDateTime } from "@/lib/format";
 import { Card, CardBody, CardHeader } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
@@ -62,8 +61,7 @@ export default async function AdminSubscriptionsPage() {
     { count: totalBusinesses },
     { count: subscribedBusinesses },
   ] = await Promise.all([
-    // Seul le palier vendu (Pro) est proposé : les anciens paliers restent en base pour l'historique.
-    supabase.from("subscription_plans").select("id, key, label, monthlyPrice:monthly_price, annualPrice:annual_price").eq("key", ACTIVE_PLAN_KEY),
+    supabase.from("subscription_plans").select("id, key, label, monthlyPrice:monthly_price, annualPrice:annual_price").in("key", ["free", "starter", "pro"]).order("order", { ascending: true }),
     supabase
       .from("business_subscriptions")
       .select(
@@ -126,9 +124,7 @@ export default async function AdminSubscriptionsPage() {
         <div>
           <h1 className="text-xl font-bold text-zinc-900">Abonnements &amp; revenus</h1>
           <p className="max-w-2xl text-sm text-zinc-500">
-            Chaque commerce démarre avec {trialDays} jours d&apos;essai gratuit, puis doit régler son abonnement (7 500
-            FCFA/mois ou 75 000 FCFA/an) pour continuer à utiliser ZINDO — l&apos;accès est bloqué automatiquement
-            à l&apos;expiration de l&apos;essai ou de la période payée.
+            Chaque commerce profite de {trialDays} jours d&apos;essai avec les fonctions Entreprise, puis passe automatiquement au forfait Free. Il peut choisir Starter ou Entreprise à tout moment.
           </p>
         </div>
         <ButtonLink href="/admin/abonnements/plans" variant="outline">

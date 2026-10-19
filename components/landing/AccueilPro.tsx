@@ -34,6 +34,7 @@ import { SOLUTION_PAGES } from "@/lib/seo-pages";
 import { AccueilProHeader } from "@/components/landing/AccueilProHeader";
 import { CaisseAnimee, CreditsAnimes, StockAnime } from "@/components/landing/AccueilProEcrans";
 import { ApercuCookie, Reveal } from "@/components/landing/AccueilProAnime";
+import type { PlanOffer } from "@/lib/plan-catalog";
 
 type Faq = { question: string; answer: string };
 
@@ -45,7 +46,7 @@ const WHATSAPP = "https://wa.me/22604059929";
  * page) et une seule couleur, le vert ZINDO. Les écrans du logiciel montrés sont
  * des maquettes avec des données d'exemple.
  */
-export function AccueilPro({ trialDays, faqs }: { trialDays: number; faqs: Faq[] }) {
+export function AccueilPro({ trialDays, faqs, plans }: { trialDays: number; faqs: Faq[]; plans: PlanOffer[] }) {
   return (
     <div className="theme-locked min-h-screen overflow-x-hidden bg-white text-zinc-950">
       <AccueilProHeader variant="light" />
@@ -85,7 +86,7 @@ export function AccueilPro({ trialDays, faqs }: { trialDays: number; faqs: Faq[]
                 </Link>
               </div>
               <p className="mt-5 text-sm text-zinc-500">
-                {trialDays} jours pour essayer toutes les fonctions, puis choisissez Free, Starter ou Entreprise.
+                {trialDays} jours avec les fonctions Entreprise, puis votre compte passe automatiquement à Free. Vous pouvez souscrire Starter ou Entreprise à tout moment.
               </p>
             </Reveal>
           </div>
@@ -288,12 +289,18 @@ export function AccueilPro({ trialDays, faqs }: { trialDays: number; faqs: Faq[]
         <section id="tarifs" className="mx-auto max-w-6xl scroll-mt-20 px-4 py-20 sm:px-6 lg:py-28">
           <SectionTitle eyebrow="Tarifs" title="Un prix simple, tout compris" text={`Essayez tout pendant ${trialDays} jours. Vous ne payez que si vous continuez.`} />
           <Reveal className="mx-auto mt-12 grid max-w-3xl gap-5 sm:grid-cols-2">
-            <PriceCard name="Free" price="0" period="FCFA / toujours" note="50 produits · 1 utilisateur · 1 boutique." />
-            <PriceCard name="Starter" price="5 000" period="FCFA / mois" note="500 produits · 3 utilisateurs · 1 boutique." />
-            <PriceCard highlighted name="Entreprise" price="7 500" period="FCFA / mois" note="Ou 75 000 FCFA/an · 15 000 FCFA d'économie." />
+            {plans.map((plan) => {
+              const price = plan.monthlyPrice.toLocaleString("fr-FR");
+              const products = plan.maxProducts === null ? "Produits illimités" : `${plan.maxProducts} produits`;
+              const users = plan.maxUsers === null ? "utilisateurs illimités" : `${plan.maxUsers} utilisateurs`;
+              const locations = plan.maxLocations === null ? "boutiques illimitées" : `${plan.maxLocations} boutique(s)`;
+              const annual = plan.annualPrice > 0 ? ` · ${plan.annualPrice.toLocaleString("fr-FR")} FCFA/an` : "";
+              const savings = plan.annualPrice > 0 ? ` · ${Math.max(0, plan.monthlyPrice * 12 - plan.annualPrice).toLocaleString("fr-FR")} FCFA d'économie` : "";
+              return <PriceCard key={plan.key} name={plan.label} price={price} period={plan.monthlyPrice === 0 ? "FCFA / toujours" : `FCFA / mois${annual}`} note={`${products} · ${users} · ${locations}${savings}.`} highlighted={plan.key === "pro"} />;
+            })}
           </Reveal>
           <p className="mt-6 text-center text-sm text-zinc-500">
-            Essai de {trialDays} jours avec les fonctions Entreprise. Après l'essai, votre compte passe à Free.{" "}
+            Essai de {trialDays} jours avec les fonctions Entreprise. Après l'essai, votre compte passe automatiquement à Free.{" "}
             <Link href="/tarifs" className="font-semibold text-zindo-green-700 hover:underline">
               Détail des tarifs
             </Link>

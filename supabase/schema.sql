@@ -1707,7 +1707,7 @@ returns table (user_id text, business_id text, role text) as $$
 declare
   v_business_id text;
   v_user_id text;
-  v_standard_plan_id text;
+  v_pro_plan_id text;
 begin
   insert into businesses (name, city, country) values (p_business_name, p_city, coalesce(p_country, 'Burkina Faso'))
     returning id into v_business_id;
@@ -1727,12 +1727,11 @@ begin
   insert into locations (business_id, name, type, city, is_default)
     values (v_business_id, 'Boutique principale', 'BOUTIQUE', p_city, true);
 
-  -- Essai gratuit de 7 jours puis abonnement payant obligatoire (10 000
-  -- FCFA/mois ou 100 000 FCFA/an) — voir lib/subscription.ts.
-  select id into v_standard_plan_id from subscription_plans where key = 'standard';
-  if v_standard_plan_id is not null then
+  -- Essai gratuit puis passage au forfait Free ; le forfait Entreprise sert de base à l'essai.
+  select id into v_pro_plan_id from subscription_plans where key = 'pro';
+  if v_pro_plan_id is not null then
     insert into business_subscriptions (business_id, plan_id, billing_cycle, status, trial_ends_at)
-      values (v_business_id, v_standard_plan_id, 'MONTHLY', 'TRIAL', now() + interval '7 days');
+      values (v_business_id, v_pro_plan_id, 'MONTHLY', 'TRIAL', now() + interval '7 days');
   end if;
 
   return query select v_user_id, v_business_id, 'ADMIN'::text;

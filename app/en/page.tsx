@@ -1,4 +1,5 @@
 import { getTrialDays } from "@/lib/platform-config";
+import { getPlanOffers } from "@/lib/plan-catalog";
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import Link from "next/link";
@@ -114,7 +115,7 @@ const FAQS = [
   {
     question: "How much does ZINDO cost?",
     answer:
-      "ZINDO offers a {trialDays}-day free trial, no commitment. Afterwards, the subscription costs 10,000 FCFA per month, or 100,000 FCFA per year (a 20,000 FCFA saving compared to paying monthly).",
+      "ZINDO has a permanent Free plan and optional paid Starter and Enterprise plans. The trial includes Enterprise features, then your account moves to Free. Current prices and limits are shown in the Pricing section below.",
   },
   {
     question: "Can I use ZINDO without an internet connection?",
@@ -184,6 +185,7 @@ const STRUCTURED_DATA = [
 
 export default async function EnglishRootPage() {
   const trialDays = await getTrialDays();
+  const planOffers = await getPlanOffers();
   const user = await getCurrentUser();
   if (user) redirect("/dashboard");
 
@@ -322,6 +324,27 @@ export default async function EnglishRootPage() {
                 </div>
               );
             })}
+          </div>
+        </section>
+
+        <section id="pricing" className="mt-24 scroll-mt-20">
+          <div className="mx-auto max-w-2xl text-center">
+            <h2 className="text-2xl font-extrabold text-zindo-ink-900 sm:text-3xl">Pricing</h2>
+            <p className="mt-2 text-zinc-600">Try Enterprise features for {trialDays} days. Your account then moves to Free; you can upgrade at any time.</p>
+          </div>
+          <div className="mt-8 grid gap-5 sm:grid-cols-3">
+            {planOffers.map((plan) => (
+              <div key={plan.key} className={`rounded-2xl border bg-white p-6 ${plan.key === "pro" ? "border-zindo-gold-500 shadow-lg" : "border-zinc-200"}`}>
+                <h3 className="font-bold text-zindo-ink-900">{plan.label}</h3>
+                <p className="mt-3 text-3xl font-extrabold text-zindo-ink-900">{plan.monthlyPrice.toLocaleString("en-US")} FCFA</p>
+                <p className="text-sm text-zinc-500">{plan.monthlyPrice === 0 ? "forever" : `per month${plan.annualPrice > 0 ? ` or ${plan.annualPrice.toLocaleString("en-US")} FCFA per year` : ""}`}</p>
+                <ul className="mt-5 space-y-2 text-sm text-zinc-600">
+                  <li>{plan.maxProducts === null ? "Unlimited products" : `Up to ${plan.maxProducts} products`}</li>
+                  <li>{plan.maxUsers === null ? "Unlimited users" : `${plan.maxUsers} user(s)`}</li>
+                  <li>{plan.maxLocations === null ? "Unlimited locations" : `${plan.maxLocations} shop(s)`}</li>
+                </ul>
+              </div>
+            ))}
           </div>
         </section>
 

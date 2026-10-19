@@ -1,4 +1,5 @@
 import { getTrialDays } from "@/lib/platform-config";
+import { getPlanOffers } from "@/lib/plan-catalog";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
@@ -140,7 +141,7 @@ const FAQS = [
   {
     question: "Combien coûte ZINDO ?",
     answer:
-      "ZINDO propose {trialDays} jours d'essai gratuit, sans engagement. Ensuite, l'abonnement coûte 7 500 FCFA par mois, ou 75 000 FCFA par an (soit 15 000 FCFA d'économie par rapport au paiement mensuel).",
+      "ZINDO propose le forfait Free et des forfaits payants Starter et Entreprise. L'essai donne accès aux fonctions Entreprise, puis le compte passe automatiquement au forfait Free. Consultez la page Tarifs pour les prix et les limites à jour.",
   },
   {
     question: "Est-ce que je peux utiliser ZINDO sans connexion Internet ?",
@@ -221,6 +222,8 @@ const STRUCTURED_DATA = [
 
 export default async function RootPage({ searchParams }: { searchParams: Promise<{ apercu?: string }> }) {
   const trialDays = await getTrialDays();
+  const planOffers = await getPlanOffers();
+  const minimumPaidPrice = Math.min(...planOffers.filter((plan) => plan.monthlyPrice > 0).map((plan) => plan.monthlyPrice));
   const user = await getCurrentUser();
   if (user) redirect("/dashboard");
   await registerFeatureFlag(
@@ -252,7 +255,7 @@ export default async function RootPage({ searchParams }: { searchParams: Promise
     return (
       <>
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(STRUCTURED_DATA).replaceAll("{trialDays}", String(trialDays)) }} />
-        <AccueilPro trialDays={trialDays} faqs={[...FAQS, ...EXTRA_FAQS]} />
+        <AccueilPro trialDays={trialDays} plans={planOffers} faqs={[...FAQS, ...EXTRA_FAQS]} />
         <AssistantFloat />
         <WhatsAppFloat compact href="https://wa.me/22604059929" />
       </>
@@ -347,7 +350,7 @@ export default async function RootPage({ searchParams }: { searchParams: Promise
           </div>
           {fullLanding && (
             <p className="mt-4 text-sm text-zinc-200">
-              Ensuite 7 500 FCFA par mois, sans engagement ·{" "}
+              Free à vie · formules payantes dès {minimumPaidPrice.toLocaleString("fr-FR")} FCFA/mois ·{" "}
               <a href="#tarifs" className="font-semibold text-zindo-green-400 underline-offset-2 hover:underline">
                 Voir les tarifs
               </a>
@@ -527,7 +530,7 @@ export default async function RootPage({ searchParams }: { searchParams: Promise
           </div>
         </section>
 
-        {fullLanding && <TarifsSection trialDays={trialDays} />}
+        {fullLanding && <TarifsSection trialDays={trialDays} plans={planOffers} />}
 
         {/* Questions fréquentes */}
         <section id="faq" className="mt-24">
