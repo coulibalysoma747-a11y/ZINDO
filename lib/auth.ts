@@ -6,6 +6,7 @@ import { getSession } from "@/lib/session";
 import { hasPlanFeature, isSubscriptionBlocked } from "@/lib/subscription";
 import {
   DEFAULT_ROLE_PERMISSIONS,
+  PERMISSIONS,
   type Permission,
 } from "@/lib/permissions";
 import type { Role } from "@/lib/db-types";

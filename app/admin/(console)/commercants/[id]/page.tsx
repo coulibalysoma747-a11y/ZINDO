@@ -96,7 +96,7 @@ export default async function AdminBusinessDetailPage({
   const users = (usersData ?? []) as unknown as UserRow[];
   const totalRevenue = ((salesForRevenue ?? []) as Array<{ total: number }>).reduce((s, sale) => s + sale.total, 0);
   const subscription = subscriptionData as unknown as { billingCycle: "MONTHLY" | "ANNUAL"; plan: { key: string } } | null;
-  const plans = (plansData ?? []) as unknown as Array<{ key: string; label: string }>;
+  const plans = (plansData ?? []) as unknown as Array<{ key: string; label: string; annualPrice: number }>;
   const openSessions = (openSessionsData ?? []) as unknown as OpenSessionRow[];
 
   return (

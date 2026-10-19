@@ -29,7 +29,7 @@ export async function getPlanOffers(): Promise<PlanOffer[]> {
   if (error || !data) return fallback;
 
   const base = PLAN_DEFINITIONS.pro;
-  let features = [...base.features];
+  let features: string[] = [...base.features];
   if (typeof data.features === "string") {
     try {
       const parsed: unknown = JSON.parse(data.features);

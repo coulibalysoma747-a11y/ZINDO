@@ -6,7 +6,7 @@ import { cache } from "react";
 import { getTrialDays } from "@/lib/platform-config";
 import { isFeatureEnabled } from "@/lib/feature-flags";
 import { MARKET_ONLY_ACTIVITY_KEY, MARKET_ONLY_FLAG } from "@/lib/market";
-import { getPlanFeatures, isPlanKey, PLAN_DEFINITIONS } from "@/lib/plans";
+import { getPlanFeatures, isPlanKey, PLAN_DEFINITIONS, type PlanKey } from "@/lib/plans";
 
 export { FEATURE_CATALOG } from "@/lib/subscription-features";
 
@@ -39,7 +39,7 @@ async function getBusinessLimitsUncached(businessId: string): Promise<BusinessLi
   const plan = row?.plan;
   if (!plan) return UNRESTRICTED;
   const knownPlan = isPlanKey(plan.key);
-  const definition = knownPlan ? PLAN_DEFINITIONS[plan.key] : undefined;
+  const definition = knownPlan ? PLAN_DEFINITIONS[plan.key as PlanKey] : undefined;
   let features = getPlanFeatures(plan.key);
   if (knownPlan) {
     try {
