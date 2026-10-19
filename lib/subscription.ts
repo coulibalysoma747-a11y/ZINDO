@@ -203,7 +203,10 @@ export async function getSubscriptionState(businessId: string): Promise<Subscrip
   if (status === "ACTIVE" && row.currentPeriodEnd && new Date(row.currentPeriodEnd).getTime() <= now) status = "PAST_DUE";
 
   if (status === "EXPIRED" || status === "PAST_DUE") {
-    const { data: freePlan } = await supabase.from("subscription_plans").select("id, key, label").eq("key", "free").maybeSingle();
+    const { data: currentFreePlan } = await supabase.from("subscription_plans").select("id, key, label").eq("key", "free").maybeSingle();
+    const { data: freePlan } = currentFreePlan
+      ? { data: currentFreePlan }
+      : await supabase.from("subscription_plans").select("id, key, label").eq("key", "gratuit").maybeSingle();
     if (freePlan) {
       const { error } = await supabase.from("business_subscriptions").upsert(
         { business_id: businessId, plan_id: freePlan.id, billing_cycle: "MONTHLY", status: "ACTIVE", trial_ends_at: null, current_period_end: null },

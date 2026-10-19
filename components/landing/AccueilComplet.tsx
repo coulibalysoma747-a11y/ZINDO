@@ -12,10 +12,6 @@ import {
   PackagePlus,
   GraduationCap,
   MessageCircle,
-  Gift,
-  Calendar,
-  CreditCard,
-  Check,
   ArrowRight,
 } from "lucide-react";
 
@@ -158,52 +154,30 @@ export function AccompagnementSection({ whatsappHref }: { whatsappHref: string }
 }
 
 export function TarifsSection({ trialDays, plans }: { trialDays: number; plans: PlanOffer[] }) {
+  const plan = plans.find((offer) => offer.key === "pro");
+  if (!plan) return null;
+  const annualSaving = Math.max(0, plan.monthlyPrice * 12 - plan.annualPrice);
   return (
     <section id="tarifs" className="mt-24">
       <SectionTitle
         kicker="Tarifs"
-        title="Des prix simples,"
-        accent="pensés pour les commerces d'ici"
-        text={`Essai gratuit de ${trialDays} jours avec les fonctions Entreprise. À la fin, le compte passe automatiquement à Free ; vous pouvez choisir un forfait payant à tout moment.`}
+        title="Un prix simple,"
+        accent="tout compris"
+        text={`Essayez tout pendant ${trialDays} jours. Vous ne payez que si vous continuez.`}
       />
-      <div className="mx-auto mt-10 grid max-w-4xl grid-cols-1 gap-5 sm:grid-cols-3">
-        {plans.map((plan) => {
-          const price = plan.monthlyPrice.toLocaleString("fr-FR");
-          const limits = [
-            plan.maxProducts === null ? "Produits illimités" : `${plan.maxProducts} produits`,
-            plan.maxUsers === null ? "Utilisateurs illimités" : `${plan.maxUsers} utilisateurs`,
-            plan.maxLocations === null ? "Boutiques illimitées" : `${plan.maxLocations} boutique(s)`,
-          ];
-          const annual = plan.annualPrice > 0 ? ` ou ${plan.annualPrice.toLocaleString("fr-FR")} FCFA/an` : "";
-          return (
-          <div
-            key={plan.key}
-            className={`relative flex flex-col rounded-3xl border bg-white p-6 shadow-sm ${
-              plan.key === "starter" ? "border-zindo-gold-500 shadow-lg" : "border-zinc-200"
-            }`}
-          >
-            <span
-              className={`w-fit rounded-full px-2.5 py-0.5 text-[11px] font-bold ${
-                plan.key === "starter" ? "bg-zindo-gold-100 text-zindo-ink-900" : "bg-zindo-green-50 text-zindo-green-700"
-              }`}
-            >
-              {plan.key === "free" ? "GRATUIT" : plan.key === "pro" ? "COMPLET" : "ESSENTIEL"}
-            </span>
-            <p className="mt-3 flex items-center gap-2 font-bold text-zindo-ink-900">
-              {plan.key === "free" ? <Gift className="h-4 w-4 text-zindo-green-600" /> : plan.key === "pro" ? <CreditCard className="h-4 w-4 text-zindo-green-600" /> : <Calendar className="h-4 w-4 text-zindo-green-600" />} {plan.label}
-            </p>
-            <p className="mt-2 text-3xl font-extrabold text-zindo-ink-900">{price} FCFA</p>
-            <p className="text-sm text-zinc-500">{plan.monthlyPrice === 0 ? "pour toujours" : `par mois${annual}`}</p>
-            <ul className="mt-4 space-y-2 text-sm text-zinc-600">
-              {limits.map((f) => (
-                <li key={f} className="flex items-start gap-2">
-                  <Check className="mt-0.5 h-4 w-4 shrink-0 text-zindo-green-600" /> {f}
-                </li>
-              ))}
-            </ul>
+      <div className="mx-auto mt-10 grid max-w-3xl grid-cols-1 gap-5 sm:grid-cols-2">
+        {[
+          { key: "monthly", name: "Mensuel", price: plan.monthlyPrice, period: "FCFA / mois", note: "Sans engagement, arrêtez quand vous voulez." },
+          { key: "annual", name: "Annuel", price: plan.annualPrice, period: "FCFA / an", note: `Soit 2 mois offerts (${annualSaving.toLocaleString("fr-FR")} FCFA d'économie).` },
+        ].map((offer) => (
+          <div key={offer.key} className={`relative rounded-3xl border bg-white p-6 shadow-sm ${offer.key === "annual" ? "border-zindo-gold-500 shadow-lg" : "border-zinc-200"}`}>
+            {offer.key === "annual" && <span className="rounded-full bg-zindo-gold-100 px-2.5 py-1 text-[11px] font-bold text-zindo-ink-900">Le plus avantageux</span>}
+            <p className="mt-3 font-bold text-zindo-ink-900">{offer.name}</p>
+            <p className="mt-2 text-3xl font-extrabold text-zindo-ink-900">{offer.price.toLocaleString("fr-FR")}</p>
+            <p className="text-sm text-zinc-500">{offer.period}</p>
+            <p className="mt-4 text-sm text-zinc-600">{offer.note}</p>
           </div>
-          );
-        })}
+        ))}
       </div>
       <div className="mt-8 text-center">
         <Link
@@ -222,7 +196,7 @@ export const EXTRA_FAQS = [
   {
     question: "Puis-je essayer ZINDO avant de payer ?",
     answer:
-      "Oui. Vous avez {trialDays} jours d'essai gratuit avec les fonctions Entreprise, sans carte bancaire. Après l'essai, votre compte passe automatiquement au forfait Free ; vous pouvez choisir un forfait payant à tout moment.",
+      "Oui. Vous avez {trialDays} jours d'essai gratuit avec toutes les fonctionnalités, sans carte bancaire. L'abonnement complet coûte 2 500 FCFA par mois ou 25 000 FCFA par an ; vous choisissez ensuite si vous continuez.",
   },
   {
     question: "Comment payer mon abonnement ?",

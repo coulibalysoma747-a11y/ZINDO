@@ -141,7 +141,7 @@ const FAQS = [
   {
     question: "Combien coûte ZINDO ?",
     answer:
-      "ZINDO propose le forfait Free et des forfaits payants Starter et Entreprise. L'essai donne accès aux fonctions Entreprise, puis le compte passe automatiquement au forfait Free. Consultez la page Tarifs pour les prix et les limites à jour.",
+      "ZINDO propose un abonnement tout compris à 2 500 FCFA par mois ou 25 000 FCFA par an, avec un essai gratuit. Aucun paiement n'est prélevé sans souscription.",
   },
   {
     question: "Est-ce que je peux utiliser ZINDO sans connexion Internet ?",

@@ -286,14 +286,14 @@ export default async function DashboardPage({
         <div className="rounded-xl border border-zinc-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
           <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
             <span className="flex items-center gap-2 font-medium text-zinc-800 dark:text-slate-200">
-              <span className="h-2.5 w-2.5 rounded-full bg-[#10844a]" /> Ventes de la période {formatMoney(overview.current.cashedIn - overview.current.creditRepayments, currency)}
+              <span className="h-2.5 w-2.5 rounded-full bg-zindo-green-600" /> Ventes de la période {formatMoney(overview.current.cashedIn - overview.current.creditRepayments, currency)}
             </span>
             <span className="flex items-center gap-2 font-medium text-zinc-800 dark:text-slate-200">
               <span className="h-2.5 w-2.5 rounded-full bg-[#d99a12]" /> Crédits remboursés {formatMoney(overview.current.creditRepayments, currency)}
             </span>
           </div>
           <div className="mt-3 flex h-2.5 overflow-hidden rounded-full bg-zinc-100 dark:bg-slate-800">
-            <span className="bg-[#10844a]" style={{ width: `${Math.max(0, ((overview.current.cashedIn - overview.current.creditRepayments) / overview.current.cashedIn) * 100)}%` }} />
+            <span className="bg-zindo-green-600" style={{ width: `${Math.max(0, ((overview.current.cashedIn - overview.current.creditRepayments) / overview.current.cashedIn) * 100)}%` }} />
             <span className="bg-[#d99a12]" style={{ width: `${Math.min(100, (overview.current.creditRepayments / overview.current.cashedIn) * 100)}%` }} />
           </div>
           <p className="mt-2 text-xs text-zinc-500">

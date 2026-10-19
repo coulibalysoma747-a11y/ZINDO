@@ -52,10 +52,9 @@ export default async function CguPage() {
 
       <LegalSection title="4. Tarifs">
         <p>
-          ZINDO propose {trialDays} jours d&apos;essai gratuit avec les fonctions Entreprise. À l&apos;issue de cette période,
-          le compte passe automatiquement au forfait Free, qui reste gratuit. Les forfaits payants Starter et Entreprise
-          sont facultatifs et peuvent être souscrits à tout moment depuis la page « Abonnement ». Leurs prix à jour sont
-          indiqués sur la page « Tarifs ». Toute
+          ZINDO propose {trialDays} jours d&apos;essai gratuit avec toutes les fonctionnalités. L&apos;abonnement complet
+          coûte 2 500 FCFA par mois ou 25 000 FCFA par an. Aucun paiement n&apos;est prélevé pendant l&apos;essai ; vous
+          choisissez ensuite si vous souhaitez continuer. Toute
           modification substantielle des tarifs vous serait communiquée avant application à votre compte.
         </p>
       </LegalSection>

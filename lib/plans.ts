@@ -27,8 +27,8 @@ export const PLAN_DEFINITIONS = {
   pro: {
     key: "pro",
     label: "Entreprise",
-    monthlyPrice: 7_500,
-    annualPrice: 75_000,
+    monthlyPrice: 2_500,
+    annualPrice: 25_000,
     maxProducts: null,
     maxUsers: 10,
     maxLocations: 5,

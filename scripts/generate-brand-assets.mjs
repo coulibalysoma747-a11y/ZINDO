@@ -6,7 +6,7 @@ import { writeFileSync, mkdirSync } from "fs";
 import path from "path";
 
 const ROOT = path.resolve(import.meta.dirname, "..");
-const EMBLEM = path.join(ROOT, "public/brand/zindo-emblem.png");
+const EMBLEM = path.join(ROOT, "public/brand/zindo-emblem.svg");
 const ICONS_DIR = path.join(ROOT, "public/icons");
 
 mkdirSync(ICONS_DIR, { recursive: true });
@@ -16,10 +16,10 @@ async function square(size, out, { maskablePadding = 0 } = {}) {
     ? Math.round(size * (1 - maskablePadding * 2))
     : size;
   const resized = await sharp(EMBLEM)
-    .resize(content, content, { fit: "contain", background: { r: 255, g: 255, b: 255, alpha: 1 } })
+    .resize(content, content, { fit: "contain", background: { r: 11, g: 18, b: 32, alpha: 1 } })
     .toBuffer();
   await sharp({
-    create: { width: size, height: size, channels: 4, background: { r: 255, g: 255, b: 255, alpha: 1 } },
+    create: { width: size, height: size, channels: 4, background: { r: 11, g: 18, b: 32, alpha: 1 } },
   })
     .composite([{ input: resized, gravity: "center" }])
     .png()
@@ -40,7 +40,7 @@ const faviconSizes = [16, 32, 48];
 const pngBuffers = await Promise.all(
   faviconSizes.map((size) =>
     sharp(EMBLEM)
-      .resize(size, size, { fit: "contain", background: { r: 255, g: 255, b: 255, alpha: 1 } })
+      .resize(size, size, { fit: "contain", background: { r: 11, g: 18, b: 32, alpha: 1 } })
       .ensureAlpha() // requis : Next.js refuse un PNG non-RGBA dans un .ico au build
       .png()
       .toBuffer()

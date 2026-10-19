@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/Badge";
 import { ButtonLink } from "@/components/ui/Button";
 import { FormulaChoice } from "./FormulaChoice";
 import { getPlanOffers } from "@/lib/plan-catalog";
+import { PLAN_DEFINITIONS } from "@/lib/plans";
 import { SaspayPayButton } from "./SaspayPayButton";
 import { isSaspayPaymentEnabled, reconcileSaspayPayments } from "@/lib/saspay-payments";
 
@@ -60,7 +61,9 @@ export default async function SubscriptionPage() {
 
   const pendingInvoice = ((pendingInvoiceData ?? []) as unknown as InvoiceRow[])[0] ?? null;
   const invoiceHistory = (invoiceHistoryData ?? []) as unknown as InvoiceRow[];
-  const activePlan = planOffers.find((plan) => plan.key === state.planKey);
+  const activePlan = planOffers.find((plan) => plan.key === state.planKey) ?? (state.planKey && Object.hasOwn(PLAN_DEFINITIONS, state.planKey)
+    ? PLAN_DEFINITIONS[state.planKey as keyof typeof PLAN_DEFINITIONS]
+    : undefined);
   const activePrice = state.billingCycle === "ANNUAL" ? activePlan?.annualPrice : activePlan?.monthlyPrice;
 
   return (

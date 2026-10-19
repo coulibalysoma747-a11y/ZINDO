@@ -86,7 +86,7 @@ export function AccueilPro({ trialDays, faqs, plans }: { trialDays: number; faqs
                 </Link>
               </div>
               <p className="mt-5 text-sm text-zinc-500">
-                {trialDays} jours avec les fonctions Entreprise, puis votre compte passe automatiquement à Free. Vous pouvez souscrire Starter ou Entreprise à tout moment.
+                  {trialDays} jours d'essai complet, puis choisissez si vous souhaitez continuer avec ZINDO.
               </p>
             </Reveal>
           </div>
@@ -289,18 +289,16 @@ export function AccueilPro({ trialDays, faqs, plans }: { trialDays: number; faqs
         <section id="tarifs" className="mx-auto max-w-6xl scroll-mt-20 px-4 py-20 sm:px-6 lg:py-28">
           <SectionTitle eyebrow="Tarifs" title="Un prix simple, tout compris" text={`Essayez tout pendant ${trialDays} jours. Vous ne payez que si vous continuez.`} />
           <Reveal className="mx-auto mt-12 grid max-w-3xl gap-5 sm:grid-cols-2">
-            {plans.map((plan) => {
-              const price = plan.monthlyPrice.toLocaleString("fr-FR");
-              const products = plan.maxProducts === null ? "Produits illimités" : `${plan.maxProducts} produits`;
-              const users = plan.maxUsers === null ? "utilisateurs illimités" : `${plan.maxUsers} utilisateurs`;
-              const locations = plan.maxLocations === null ? "boutiques illimitées" : `${plan.maxLocations} boutique(s)`;
-              const annual = plan.annualPrice > 0 ? ` · ${plan.annualPrice.toLocaleString("fr-FR")} FCFA/an` : "";
-              const savings = plan.annualPrice > 0 ? ` · ${Math.max(0, plan.monthlyPrice * 12 - plan.annualPrice).toLocaleString("fr-FR")} FCFA d'économie` : "";
-              return <PriceCard key={plan.key} name={plan.label} price={price} period={plan.monthlyPrice === 0 ? "FCFA / toujours" : `FCFA / mois${annual}`} note={`${products} · ${users} · ${locations}${savings}.`} highlighted={plan.key === "pro"} />;
+            {plans.filter((plan) => plan.key === "pro").flatMap((plan) => {
+              const saving = Math.max(0, plan.monthlyPrice * 12 - plan.annualPrice);
+              return [
+                <PriceCard key="monthly" name="Mensuel" price={plan.monthlyPrice.toLocaleString("fr-FR")} period="FCFA / mois" note="Sans engagement, arrêtez quand vous voulez." />,
+                <PriceCard key="annual" name="Annuel" price={plan.annualPrice.toLocaleString("fr-FR")} period="FCFA / an" note={`Soit 2 mois offerts (${saving.toLocaleString("fr-FR")} FCFA d'économie).`} highlighted />,
+              ];
             })}
           </Reveal>
           <p className="mt-6 text-center text-sm text-zinc-500">
-            Essai de {trialDays} jours avec les fonctions Entreprise. Après l'essai, votre compte passe automatiquement à Free.{" "}
+            Essai gratuit de {trialDays} jours, sans paiement pendant l'essai.{" "}
             <Link href="/tarifs" className="font-semibold text-zindo-green-700 hover:underline">
               Détail des tarifs
             </Link>

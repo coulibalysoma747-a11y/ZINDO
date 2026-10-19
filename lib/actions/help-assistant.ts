@@ -29,7 +29,7 @@ const EXTRA_KNOWLEDGE = `
 - Profil > Notifications push : active des alertes sur l'appareil (nouvelle vente, stock bas/rupture, échéance de crédit dépassée) même quand ZINDO n'est pas ouvert.
 - ZINDO fonctionne hors ligne pour l'écran de vente : les ventes s'enregistrent sur l'appareil et se synchronisent au retour de la connexion.
 - ZINDO s'installe comme une application (PWA) directement depuis le navigateur, sur téléphone (Android/iOS) et sur ordinateur, sans passer par un store.
-- Tarifs : forfait Free permanent et formules payantes Starter et Entreprise. L'essai donne accès aux fonctions Entreprise, puis le compte passe automatiquement au forfait Free. Les prix à jour sont fournis ci-dessous et affichés sur /tarifs. Le client peut choisir un forfait payant à tout moment.
+- Tarifs : un abonnement tout compris à 2 500 FCFA par mois ou 25 000 FCFA par an, avec un essai gratuit. Aucun paiement pendant l'essai ; le client choisit ensuite s'il continue.
 - L'équipe ZINDO répond sur WhatsApp au +226 04 05 99 29 et aide à démarrer (réglages, saisie des produits, formation des employés).
 `.trim();
 

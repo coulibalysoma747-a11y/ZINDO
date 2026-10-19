@@ -10,7 +10,7 @@ import type { BillingPlanKey } from "@/lib/plans";
 
 export type ActionState = { error?: string; success?: string } | undefined;
 
-const invoiceSchema = z.object({ planKey: z.enum(["starter", "pro"]), billingCycle: z.enum(["MONTHLY", "ANNUAL"]) });
+const invoiceSchema = z.object({ planKey: z.enum(["pro"]), billingCycle: z.enum(["MONTHLY", "ANNUAL"]) });
 
 export type CreateInvoiceResult = { success: true; invoiceId: string } | { success: false; error: string };
 
@@ -19,8 +19,6 @@ export async function createSubscriptionInvoiceAction(planKey: BillingPlanKey, b
   const user = await requireUserForBilling();
   const parsed = invoiceSchema.safeParse({ planKey, billingCycle });
   if (!parsed.success) return { success: false, error: "Formule ou cycle de facturation invalide" };
-  if (parsed.data.planKey === "starter" && parsed.data.billingCycle === "ANNUAL") return { success: false, error: "La formule Starter est factur?e au mois" };
-
   const { data: plan } = await supabase
     .from("subscription_plans")
     .select("id, key, label, monthlyPrice:monthly_price, annualPrice:annual_price")

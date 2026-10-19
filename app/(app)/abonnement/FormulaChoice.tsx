@@ -10,26 +10,21 @@ export function FormulaChoice({ disabled, plans }: { disabled?: boolean; plans: 
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
-  const options = plans.filter((plan) => plan.key !== "free").flatMap((plan) => {
-    const planKey = plan.key as "starter" | "pro";
-    const limits = [
-      plan.maxProducts === null ? "produits illimités" : `${plan.maxProducts} produits`,
-      plan.maxUsers === null ? "utilisateurs illimités" : `${plan.maxUsers} utilisateurs`,
-      plan.maxLocations === null ? "boutiques illimitées" : `${plan.maxLocations} boutique(s)`,
-    ].join(" · ");
-    const monthly = [{ planKey, cycle: "MONTHLY" as const, title: plan.label, period: "par mois", price: plan.monthlyPrice, feature: limits }];
+  const options = plans.filter((plan) => plan.key === "pro").flatMap((plan) => {
+    const planKey = "pro" as const;
+    const monthly = [{ planKey, cycle: "MONTHLY" as const, title: "Mensuel", period: "sans engagement", price: plan.monthlyPrice, feature: "Toutes les fonctionnalités" }];
     if (plan.annualPrice <= 0) return monthly;
     return [...monthly, {
       planKey,
       cycle: "ANNUAL" as const,
-      title: `${plan.label} annuel`,
-      period: `par an · soit ${Math.round(plan.annualPrice / 12).toLocaleString("fr-FR")} FCFA/mois`,
+      title: "Annuel",
+      period: "2 mois offerts",
       price: plan.annualPrice,
-      feature: `Économisez ${Math.max(0, plan.monthlyPrice * 12 - plan.annualPrice).toLocaleString("fr-FR")} FCFA`,
+      feature: `Toutes les fonctionnalités · ${Math.max(0, plan.monthlyPrice * 12 - plan.annualPrice).toLocaleString("fr-FR")} FCFA économisés`,
     }];
   });
 
-  function choose(planKey: "starter" | "pro", cycle: "MONTHLY" | "ANNUAL") {
+  function choose(planKey: "pro", cycle: "MONTHLY" | "ANNUAL") {
     setError(null);
     startTransition(async () => {
       const result = await createSubscriptionInvoiceAction(planKey, cycle);
