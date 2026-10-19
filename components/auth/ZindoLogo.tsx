@@ -1,10 +1,15 @@
 import Image from "next/image";
 
-/** Symbole ZINDO. Les icônes PWA sont dérivées de public/brand/zindo-emblem.svg. */
+/**
+ * Marque ZINDO — logo fourni par l'utilisateur (public/brand/zindo-emblem.png,
+ * recadré depuis public/brand/zindo-logo-full.jpeg). Régénérer les icônes
+ * dérivées (favicon, PWA...) via `node scripts/generate-brand-assets.mjs`
+ * si ce fichier change.
+ */
 export function ZindoLogo({ size = 60, className }: { size?: number; className?: string }) {
   return (
     <Image
-      src="/brand/zindo-emblem.svg"
+      src="/brand/zindo-emblem.png"
       alt="Logo ZINDO"
       width={size}
       height={size}

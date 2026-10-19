@@ -124,7 +124,7 @@ export default async function AdminSubscriptionsPage() {
         <div>
           <h1 className="text-xl font-bold text-zinc-900">Abonnements &amp; revenus</h1>
           <p className="max-w-2xl text-sm text-zinc-500">
-            Chaque commerce profite de {trialDays} jours d&apos;essai complet, puis retrouve le forfait gratuit. L&apos;offre payante tout compris coûte 2 500 FCFA par mois ou 25 000 FCFA par an.
+            Chaque commerce profite de {trialDays} jours d&apos;essai complet, puis retrouve le forfait gratuit. L&apos;offre payante tout compris coûte 7 500 FCFA par mois ou 75 000 FCFA par an.
           </p>
         </div>
         <ButtonLink href="/admin/abonnements/plans" variant="outline">

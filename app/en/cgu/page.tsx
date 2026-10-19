@@ -51,8 +51,8 @@ export default async function EnglishCguPage() {
 
       <LegalSection title="4. Pricing">
         <p>
-          ZINDO offers a {trialDays}-day free trial with all features. The full subscription costs 2,500 FCFA per
-          month or 25,000 FCFA per year. No payment is collected during the trial; you decide whether to continue.
+          ZINDO offers a {trialDays}-day free trial with all features. The full subscription costs 7,500 FCFA per
+          month or 75,000 FCFA per year. No payment is collected during the trial; you decide whether to continue.
           Any substantial change to pricing would be communicated to you
           before it applies to your account.
         </p>

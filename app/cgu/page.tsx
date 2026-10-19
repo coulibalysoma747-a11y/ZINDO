@@ -53,7 +53,7 @@ export default async function CguPage() {
       <LegalSection title="4. Tarifs">
         <p>
           ZINDO propose {trialDays} jours d&apos;essai gratuit avec toutes les fonctionnalités. L&apos;abonnement complet
-          coûte 2 500 FCFA par mois ou 25 000 FCFA par an. Aucun paiement n&apos;est prélevé pendant l&apos;essai ; vous
+          coûte 7 500 FCFA par mois ou 75 000 FCFA par an. Aucun paiement n&apos;est prélevé pendant l&apos;essai ; vous
           choisissez ensuite si vous souhaitez continuer. Toute
           modification substantielle des tarifs vous serait communiquée avant application à votre compte.
         </p>

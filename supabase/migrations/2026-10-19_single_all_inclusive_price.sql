@@ -4,8 +4,8 @@ begin;
 -- The public product has one complete offer with monthly or annual billing.
 update subscription_plans
 set label = 'ZINDO',
-    monthly_price = 2500,
-    annual_price = 25000,
+    monthly_price = 7500,
+    annual_price = 75000,
     updated_at = now()
 where key = 'pro';
 

@@ -115,7 +115,7 @@ const FAQS = [
   {
     question: "How much does ZINDO cost?",
     answer:
-      "ZINDO offers a full subscription for 2,500 FCFA per month or 25,000 FCFA per year, with a free trial. No payment is collected unless you subscribe.",
+      "ZINDO offers a full subscription for 7,500 FCFA per month or 75,000 FCFA per year, with a free trial. No payment is collected unless you subscribe.",
   },
   {
     question: "Can I use ZINDO without an internet connection?",

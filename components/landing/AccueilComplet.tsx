@@ -196,7 +196,7 @@ export const EXTRA_FAQS = [
   {
     question: "Puis-je essayer ZINDO avant de payer ?",
     answer:
-      "Oui. Vous avez {trialDays} jours d'essai gratuit avec toutes les fonctionnalités, sans carte bancaire. L'abonnement complet coûte 2 500 FCFA par mois ou 25 000 FCFA par an ; vous choisissez ensuite si vous continuez.",
+      "Oui. Vous avez {trialDays} jours d'essai gratuit avec toutes les fonctionnalités, sans carte bancaire. L'abonnement complet coûte 7 500 FCFA par mois ou 75 000 FCFA par an ; vous choisissez ensuite si vous continuez.",
   },
   {
     question: "Comment payer mon abonnement ?",

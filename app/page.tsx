@@ -141,7 +141,7 @@ const FAQS = [
   {
     question: "Combien coûte ZINDO ?",
     answer:
-      "ZINDO propose un abonnement tout compris à 2 500 FCFA par mois ou 25 000 FCFA par an, avec un essai gratuit. Aucun paiement n'est prélevé sans souscription.",
+      "ZINDO propose un abonnement tout compris à 7 500 FCFA par mois ou 75 000 FCFA par an, avec un essai gratuit. Aucun paiement n'est prélevé sans souscription.",
   },
   {
     question: "Est-ce que je peux utiliser ZINDO sans connexion Internet ?",
