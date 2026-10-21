@@ -36,6 +36,7 @@ import { DemoVideo } from "@/components/landing/DemoVideo";
 import { WhatsAppFloat } from "@/components/landing/WhatsAppFloat";
 import { PiedDePageComplet } from "@/components/landing/PiedDePageComplet";
 import { AccueilPro } from "@/components/landing/AccueilPro";
+import { StitchHomepage } from "@/components/landing/StitchHomepage";
 import { AssistantFloat } from "@/components/landing/AssistantFloat";
 import { PublicNavLinks, PublicNavMenu } from "@/components/landing/PublicNav";
 import {
@@ -248,7 +249,18 @@ export default async function RootPage({ searchParams }: { searchParams: Promise
     "Nouvelle page d'accueil",
     "Page d'accueil publique refondue : message clair, maquettes du logiciel, trois fonctions détaillées, métiers, tarifs, accompagnement, questions fréquentes. Aperçu sans activation : /?apercu=pro. À activer globalement."
   );
-  if ((await searchParams).apercu === "pro" || (await isFeatureEnabledGlobally("accueil_pro"))) {
+  const preview = (await searchParams).apercu;
+  if (preview !== "ancien" && preview !== "pro") {
+    return (
+      <>
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(STRUCTURED_DATA).replaceAll("{trialDays}", String(trialDays)) }} />
+        <StitchHomepage trialDays={trialDays} plans={planOffers} faqs={[...FAQS, ...EXTRA_FAQS]} />
+        <AssistantFloat />
+        <WhatsAppFloat compact href="https://wa.me/22604059929" />
+      </>
+    );
+  }
+  if (preview === "pro") {
     return (
       <>
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(STRUCTURED_DATA).replaceAll("{trialDays}", String(trialDays)) }} />
