@@ -76,7 +76,7 @@ export function InstallAppButton({
         title={label}
         className={
           className ??
-          "flex items-center gap-2 rounded-lg bg-zindo-green-500 px-4 py-2 text-sm font-semibold text-white hover:bg-zindo-green-600"
+          "flex items-center gap-2 rounded-lg bg-zindo-blue-500 px-4 py-2 text-sm font-semibold text-white hover:bg-zindo-blue-600"
         }
       >
         <Download className="h-4 w-4 shrink-0" />
@@ -103,7 +103,7 @@ export function InstallAppButton({
                   setShowHelp(false);
                   handleClick();
                 }}
-                className="mt-3 flex w-full items-center justify-center gap-2 rounded-lg bg-zindo-green-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-zindo-green-700"
+                className="mt-3 flex w-full items-center justify-center gap-2 rounded-lg bg-zindo-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-zindo-blue-700"
               >
                 <Download className="h-4 w-4" />
                 Installer maintenant

@@ -44,11 +44,11 @@ export function FavoriteButton({
         disabled={pending}
         className={
           favorite
-            ? "inline-flex h-10 items-center gap-2 rounded-xl border border-zindo-green-600 bg-zindo-green-50 px-4 text-sm font-semibold text-zindo-green-800"
+            ? "inline-flex h-10 items-center gap-2 rounded-xl border border-zindo-blue-600 bg-zindo-blue-50 px-4 text-sm font-semibold text-zindo-blue-800"
             : "inline-flex h-10 items-center gap-2 rounded-xl border border-zinc-300 bg-white px-4 text-sm font-semibold text-zinc-800 hover:bg-zinc-50"
         }
       >
-        <Heart className={`h-4 w-4 ${favorite ? "fill-zindo-green-600 text-zindo-green-600" : ""}`} />
+        <Heart className={`h-4 w-4 ${favorite ? "fill-zindo-blue-600 text-zindo-blue-600" : ""}`} />
         {favorite ? "Boutique suivie" : "Suivre"}
       </button>
     );

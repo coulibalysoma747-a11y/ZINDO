@@ -35,7 +35,7 @@ export function CatalogTabs({ active, pro = false }: { active: "produits" | "cat
           href={tab.href}
           className={cn(
             "rounded-md px-3 py-1.5 text-sm font-medium transition-colors",
-            tab.key === active ? "bg-zindo-green-600 text-white" : "text-zinc-600 hover:bg-zinc-100"
+            tab.key === active ? "bg-zindo-blue-600 text-white" : "text-zinc-600 hover:bg-zinc-100"
           )}
         >
           {tab.label}

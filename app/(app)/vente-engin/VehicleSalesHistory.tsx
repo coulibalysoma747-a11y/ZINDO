@@ -24,13 +24,13 @@ export function VehicleSalesHistory({ sales, currency }: { sales: VehicleSaleLis
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-2">
-        <Bike className="h-5 w-5 text-zindo-green-600" />
+        <Bike className="h-5 w-5 text-zindo-blue-600" />
         <h1 className="text-xl font-bold text-zinc-900">Vente Engins</h1>
       </div>
 
       <Link href="/vente-engin/nouveau">
-        <Card className="flex items-center gap-3 border-zindo-green-200 p-4 transition hover:border-zindo-green-400 hover:bg-zindo-green-50/40">
-          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-zindo-green-100 text-zindo-green-700">
+        <Card className="flex items-center gap-3 border-zindo-blue-200 p-4 transition hover:border-zindo-blue-400 hover:bg-zindo-blue-50/40">
+          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-zindo-blue-100 text-zindo-blue-700">
             <FileText className="h-5 w-5" />
           </div>
           <div>

@@ -69,7 +69,7 @@ export default async function MarketOrderDetailPage({ params }: { params: Promis
         <div className="space-y-1 rounded-2xl bg-white p-5 text-sm ring-1 ring-zinc-200">
           <p className="font-semibold text-zinc-900">Client</p>
           <p>{order.customerName}</p>
-          <a href={`tel:${order.customerPhone}`} className="text-zindo-green-700 underline">
+          <a href={`tel:${order.customerPhone}`} className="text-zindo-blue-700 underline">
             {order.customerPhone}
           </a>
           <p className="pt-2 text-zinc-600">
@@ -88,7 +88,7 @@ export default async function MarketOrderDetailPage({ params }: { params: Promis
             </p>
           )}
           {order.saleId && (
-            <Link href={`/ventes/${order.saleId}`} className="block pt-2 font-semibold text-zindo-green-700 underline">
+            <Link href={`/ventes/${order.saleId}`} className="block pt-2 font-semibold text-zindo-blue-700 underline">
               Voir la vente enregistrée
             </Link>
           )}

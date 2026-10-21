@@ -45,7 +45,7 @@ export function FormulaChoice({ disabled, plans }: { disabled?: boolean; plans: 
           type="button"
           disabled={pending || disabled}
           onClick={() => choose(opt.planKey, opt.cycle)}
-          className="flex w-full items-center justify-between gap-3 rounded-xl border border-zinc-200 bg-white p-4 text-left transition hover:border-zindo-green-400 hover:bg-zindo-green-50/30 disabled:cursor-not-allowed disabled:opacity-60"
+          className="flex w-full items-center justify-between gap-3 rounded-xl border border-zinc-200 bg-white p-4 text-left transition hover:border-zindo-blue-400 hover:bg-zindo-blue-50/30 disabled:cursor-not-allowed disabled:opacity-60"
         >
           <div>
             <p className="font-semibold text-zinc-900">{opt.title}</p>
@@ -54,7 +54,7 @@ export function FormulaChoice({ disabled, plans }: { disabled?: boolean; plans: 
               <Check className="h-3.5 w-3.5" /> {opt.feature}
             </p>
           </div>
-          <p className="shrink-0 text-lg font-bold text-zindo-green-600">{opt.price.toLocaleString("fr-FR")} FCFA</p>
+          <p className="shrink-0 text-lg font-bold text-zindo-blue-600">{opt.price.toLocaleString("fr-FR")} FCFA</p>
         </button>
       ))}
     </div>

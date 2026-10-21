@@ -105,7 +105,7 @@ export function CatalogImportWizard({ currency }: { currency: string }) {
     return (
       <div className="space-y-4 rounded-2xl border border-zinc-200 bg-white p-6">
         <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-zindo-green-50 text-zindo-green-600">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-zindo-blue-50 text-zindo-blue-600">
             <Check className="h-5 w-5" />
           </div>
           <div>
@@ -172,14 +172,14 @@ export function CatalogImportWizard({ currency }: { currency: string }) {
                   type="checkbox"
                   checked={row.included}
                   onChange={(e) => updateRow(row.key, { included: e.target.checked })}
-                  className="h-5 w-5 shrink-0 rounded accent-zindo-green-500"
+                  className="h-5 w-5 shrink-0 rounded accent-zindo-blue-500"
                 />
 
                 <div className="relative shrink-0">
                   <button
                     type="button"
                     onClick={() => setOpenPicker(openPicker === row.key ? null : row.key)}
-                    className="flex h-14 w-14 items-center justify-center overflow-hidden rounded-xl border border-zinc-200 bg-zinc-50 hover:border-zindo-green-300"
+                    className="flex h-14 w-14 items-center justify-center overflow-hidden rounded-xl border border-zinc-200 bg-zinc-50 hover:border-zindo-blue-300"
                     title="Choisir une photo"
                   >
                     {row.imageIndex != null && images[row.imageIndex] ? (
@@ -212,7 +212,7 @@ export function CatalogImportWizard({ currency }: { currency: string }) {
                               updateRow(row.key, { imageIndex: img.index });
                               setOpenPicker(null);
                             }}
-                            className="h-12 w-12 overflow-hidden rounded-lg border border-zinc-200 hover:border-zindo-green-400"
+                            className="h-12 w-12 overflow-hidden rounded-lg border border-zinc-200 hover:border-zindo-blue-400"
                           >
                             {/* eslint-disable-next-line @next/next/no-img-element */}
                             <img src={img.dataUrl} alt="" className="h-full w-full object-cover" />
@@ -332,7 +332,7 @@ export function CatalogImportWizard({ currency }: { currency: string }) {
       <div>
         <label
           htmlFor="pdf-input"
-          className="cursor-pointer font-medium text-zindo-green-600 hover:text-zindo-green-700"
+          className="cursor-pointer font-medium text-zindo-blue-600 hover:text-zindo-blue-700"
         >
           Choisir un fichier PDF
         </label>

@@ -71,7 +71,7 @@ export default async function EnglishCguPage() {
         <p>
           The data you enter into ZINDO (product catalog, sales, customers, suppliers...) belongs to you. You can
           request its export or deletion as described in our{" "}
-          <Link href="/en/confidentialite" className="font-medium text-zindo-green-600 hover:underline">
+          <Link href="/en/confidentialite" className="font-medium text-zindo-blue-600 hover:underline">
             Privacy Policy
           </Link>
           .
@@ -108,7 +108,7 @@ export default async function EnglishCguPage() {
             href="https://wa.me/22604059929"
             target="_blank"
             rel="noopener noreferrer"
-            className="font-medium text-zindo-green-600 hover:underline"
+            className="font-medium text-zindo-blue-600 hover:underline"
           >
             +226 04 05 99 29
           </a>

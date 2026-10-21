@@ -7,7 +7,7 @@ type Size = "sm" | "md" | "lg";
 
 const variantClasses: Record<Variant, string> = {
   primary:
-    "bg-zindo-green-600 text-white shadow-sm shadow-zindo-green-900/10 hover:bg-zindo-green-700 active:bg-zindo-green-800 disabled:bg-zindo-green-600/40 disabled:shadow-none",
+    "bg-zindo-blue-600 text-white shadow-sm shadow-zindo-blue-900/10 hover:bg-zindo-blue-700 active:bg-zindo-blue-800 disabled:bg-zindo-blue-600/40 disabled:shadow-none",
   secondary:
     "bg-zinc-100 text-zinc-800 hover:bg-zinc-200 active:bg-zinc-300 disabled:text-zinc-400 dark:bg-slate-800 dark:text-slate-100 dark:hover:bg-slate-700",
   danger:
@@ -24,7 +24,7 @@ const sizeClasses: Record<Size, string> = {
 };
 
 const BASE_CLASSES =
-  "inline-flex shrink-0 items-center justify-center gap-2 rounded-lg font-semibold transition-colors duration-100 disabled:pointer-events-none disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zindo-green-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-900";
+  "inline-flex shrink-0 items-center justify-center gap-2 rounded-lg font-semibold transition-colors duration-100 disabled:pointer-events-none disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zindo-blue-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-900";
 
 export function Button({
   variant = "primary",

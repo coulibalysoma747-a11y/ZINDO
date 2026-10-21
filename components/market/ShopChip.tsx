@@ -11,7 +11,7 @@ export function ShopLogo({ shop, size = 40 }: { shop: Pick<MarketShopSummary, "n
   ) : (
     <span
       style={{ width: size, height: size, fontSize: size * 0.4 }}
-      className="flex shrink-0 items-center justify-center rounded-full bg-zindo-green-100 font-bold text-zindo-green-700 ring-1 ring-zindo-green-200"
+      className="flex shrink-0 items-center justify-center rounded-full bg-zindo-blue-100 font-bold text-zindo-blue-700 ring-1 ring-zindo-blue-200"
     >
       {shop.name.charAt(0).toUpperCase()}
     </span>
@@ -46,7 +46,7 @@ export function ShopChip({ shop }: { shop: MarketShopSummary }) {
 export function ShopCard({ shop }: { shop: MarketShopSummary & { coverUrl: string | null; description: string | null } }) {
   return (
     <Link href={`/marche/boutique/${shop.slug}`} className="group overflow-hidden rounded-2xl bg-white ring-1 ring-zinc-200 transition hover:shadow-lg">
-      <div className="relative h-24 bg-gradient-to-br from-zindo-green-600 to-zindo-green-900">
+      <div className="relative h-24 bg-gradient-to-br from-zindo-blue-600 to-zindo-blue-900">
         {shop.coverUrl && (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={vignette(shop.coverUrl, 300)} alt="" loading="lazy" decoding="async" className="h-full w-full object-cover transition duration-300 group-hover:scale-105" />

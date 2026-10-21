@@ -77,7 +77,7 @@ export function MobileTabBar({
                 onClick={() => setSheetOpen(false)}
                 className="flex flex-col items-start gap-2.5 rounded-xl border border-zinc-200 p-3.5 text-sm font-medium text-zinc-800 active:bg-zinc-50 dark:border-slate-800"
               >
-                <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-zindo-green-50 text-zindo-green-700">
+                <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-zindo-blue-50 text-zindo-blue-700">
                   <a.icon className="h-5 w-5" />
                 </span>
                 {a.label}
@@ -99,7 +99,7 @@ export function MobileTabBar({
               type="button"
               onClick={() => (quickActions.length > 0 ? setSheetOpen(true) : undefined)}
               aria-label="Action rapide"
-              className="flex h-12 w-12 -translate-y-2 items-center justify-center rounded-full bg-zindo-green-600 text-white shadow-md shadow-zindo-green-900/20 ring-4 ring-white active:bg-zindo-green-700 dark:ring-slate-900"
+              className="flex h-12 w-12 -translate-y-2 items-center justify-center rounded-full bg-zindo-blue-600 text-white shadow-md shadow-zindo-blue-900/20 ring-4 ring-white active:bg-zindo-blue-700 dark:ring-slate-900"
             >
               <Plus className="h-6 w-6" />
             </button>
@@ -137,12 +137,12 @@ function TabLink({
       <span
         className={cn(
           "flex h-7 w-12 items-center justify-center rounded-full transition-colors",
-          active ? "bg-zindo-green-100 text-zindo-green-700 dark:bg-zindo-green-500/15 dark:text-zindo-green-300" : "text-zinc-400"
+          active ? "bg-zindo-blue-100 text-zindo-blue-700 dark:bg-zindo-blue-500/15 dark:text-zindo-blue-300" : "text-zinc-400"
         )}
       >
         <Icon className="h-5 w-5" />
       </span>
-      <span className={cn("text-[10.5px]", active ? "font-semibold text-zindo-green-700 dark:text-zindo-green-300" : "font-medium text-zinc-500")}>{label}</span>
+      <span className={cn("text-[10.5px]", active ? "font-semibold text-zindo-blue-700 dark:text-zindo-blue-300" : "font-medium text-zinc-500")}>{label}</span>
     </Link>
   );
 }

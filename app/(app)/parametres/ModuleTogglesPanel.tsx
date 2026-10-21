@@ -131,7 +131,7 @@ export function ModuleTogglesPanel({
         <div key={m.key} className="rounded-xl border border-zinc-200 p-4">
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-start gap-2.5">
-              <m.icon className="mt-0.5 h-5 w-5 shrink-0 text-zindo-green-600" />
+              <m.icon className="mt-0.5 h-5 w-5 shrink-0 text-zindo-blue-600" />
               <div>
                 <p className="font-medium text-zinc-900">{m.title}</p>
                 <p className="mt-0.5 text-xs text-zinc-500">{m.description}</p>
@@ -142,13 +142,13 @@ export function ModuleTogglesPanel({
               checked={enabled[m.key]}
               disabled={pending}
               onChange={(e) => toggle(m.key, e.target.checked)}
-              className="h-5 w-5 shrink-0 rounded accent-zindo-green-500"
+              className="h-5 w-5 shrink-0 rounded accent-zindo-blue-500"
             />
           </div>
           {enabled[m.key] && (
             <Link
               href={m.href}
-              className="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-zindo-green-600 hover:underline"
+              className="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-zindo-blue-600 hover:underline"
             >
               {m.hrefLabel} <ChevronRight className="h-3 w-3" />
             </Link>

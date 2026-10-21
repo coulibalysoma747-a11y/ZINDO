@@ -90,7 +90,7 @@ export default async function CustomersPage({ searchParams }: { searchParams: Pr
               name="q"
               defaultValue={q}
               placeholder="Rechercher par nom ou téléphone…"
-              className="h-10 w-full rounded-lg border border-zinc-300 bg-white pl-9 pr-3 text-sm outline-none focus:border-zindo-green-500 focus:ring-4 focus:ring-zindo-green-500/15 dark:border-slate-700 dark:bg-slate-900"
+              className="h-10 w-full rounded-lg border border-zinc-300 bg-white pl-9 pr-3 text-sm outline-none focus:border-zindo-blue-500 focus:ring-4 focus:ring-zindo-blue-500/15 dark:border-slate-700 dark:bg-slate-900"
             />
           </form>
           <div className="flex gap-2">
@@ -125,11 +125,11 @@ export default async function CustomersPage({ searchParams }: { searchParams: Pr
                     <TableRow key={c.id}>
                       <TableCell>
                         <div className="flex items-center gap-3">
-                          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-zindo-green-50 text-sm font-semibold text-zindo-green-800 dark:bg-zindo-green-500/15 dark:text-zindo-green-300">
+                          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-zindo-blue-50 text-sm font-semibold text-zindo-blue-800 dark:bg-zindo-blue-500/15 dark:text-zindo-blue-300">
                             {c.name.trim().slice(0, 1).toUpperCase()}
                           </span>
                           <div className="min-w-0">
-                            <Link href={`/clients/${c.id}`} className="font-medium text-zinc-900 hover:text-zindo-green-700 dark:text-slate-100">
+                            <Link href={`/clients/${c.id}`} className="font-medium text-zinc-900 hover:text-zindo-blue-700 dark:text-slate-100">
                               {c.name}
                             </Link>
                             <p className="text-xs text-zinc-500">{c.phone ?? "Pas de téléphone"}</p>

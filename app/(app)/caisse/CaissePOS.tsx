@@ -199,7 +199,7 @@ export function CaissePOS({
           <CardHeader>
             <h2 className="font-semibold tracking-tight text-zinc-900">File d&apos;attente</h2>
             {!!carts?.length && (
-              <span className="rounded-full bg-zindo-green-50 px-2.5 py-0.5 text-xs font-semibold text-zindo-green-700 dark:bg-emerald-500/10 dark:text-emerald-400">
+              <span className="rounded-full bg-zindo-blue-50 px-2.5 py-0.5 text-xs font-semibold text-zindo-blue-700 dark:bg-emerald-500/10 dark:text-emerald-400">
                 {carts.length} panier{carts.length > 1 ? "s" : ""}
               </span>
             )}
@@ -216,7 +216,7 @@ export function CaissePOS({
             {carts?.map((cart) => (
               <div
                 key={cart.id}
-                className="flex items-center justify-between gap-3 rounded-xl border border-zinc-200 p-3.5 transition-colors hover:border-zindo-green-300 hover:bg-zindo-green-50/40 dark:border-slate-700 dark:hover:border-emerald-800 dark:hover:bg-emerald-500/5"
+                className="flex items-center justify-between gap-3 rounded-xl border border-zinc-200 p-3.5 transition-colors hover:border-zindo-blue-300 hover:bg-zindo-blue-50/40 dark:border-slate-700 dark:hover:border-emerald-800 dark:hover:bg-emerald-500/5"
               >
                 <div className="min-w-0">
                   <p className="truncate text-sm font-medium text-zinc-900">
@@ -388,7 +388,7 @@ export function CaissePOS({
           <h2 className="font-semibold tracking-tight text-zinc-900">
             Panier — {claimed.customerName ?? "Client anonyme"}
           </h2>
-          <span className="rounded-full bg-zindo-green-50 px-2.5 py-0.5 text-xs font-semibold text-zindo-green-700 dark:bg-emerald-500/10 dark:text-emerald-400">
+          <span className="rounded-full bg-zindo-blue-50 px-2.5 py-0.5 text-xs font-semibold text-zindo-blue-700 dark:bg-emerald-500/10 dark:text-emerald-400">
             {claimed.items.length} article{claimed.items.length > 1 ? "s" : ""}
           </span>
         </CardHeader>

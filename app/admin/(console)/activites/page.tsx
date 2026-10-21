@@ -55,7 +55,7 @@ export default async function AdminActivitiesPage() {
                 const configured = isConfigured(activity.key);
                 return (
                   <Link key={activity.key} href={`/admin/activites/${activity.key}`}>
-                    <Card className="transition hover:border-zindo-green-300 hover:shadow-sm">
+                    <Card className="transition hover:border-zindo-blue-300 hover:shadow-sm">
                       <CardBody className="flex items-center justify-between gap-3">
                         <div className="flex items-center gap-3">
                           <span className="text-2xl">{activity.emoji}</span>
@@ -66,7 +66,7 @@ export default async function AdminActivitiesPage() {
                         </div>
                         <div className="flex items-center gap-2">
                           {configured && (
-                            <span className="flex items-center gap-1 rounded-full bg-zindo-green-50 px-2 py-0.5 text-[11px] font-medium text-zindo-green-700">
+                            <span className="flex items-center gap-1 rounded-full bg-zindo-blue-50 px-2 py-0.5 text-[11px] font-medium text-zindo-blue-700">
                               <Settings2 className="h-3 w-3" /> Configuré
                             </span>
                           )}

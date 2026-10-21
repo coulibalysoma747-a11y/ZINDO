@@ -1,15 +1,13 @@
 import Image from "next/image";
 
 /**
- * Marque ZINDO — logo fourni par l'utilisateur (public/brand/zindo-emblem.png,
- * recadré depuis public/brand/zindo-logo-full.jpeg). Régénérer les icônes
- * dérivées (favicon, PWA...) via `node scripts/generate-brand-assets.mjs`
- * si ce fichier change.
+ * Emblème ZINDO : initiale Z en ivoire sur bleu nuit, avec une progression
+ * cuivre. La source vectorielle sert aussi aux icônes et au favicon.
  */
 export function ZindoLogo({ size = 60, className }: { size?: number; className?: string }) {
   return (
     <Image
-      src="/brand/zindo-emblem.png"
+      src="/brand/zindo-emblem.svg"
       alt="Logo ZINDO"
       width={size}
       height={size}

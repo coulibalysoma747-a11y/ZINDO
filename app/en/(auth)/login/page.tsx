@@ -30,12 +30,12 @@ export default async function EnglishLoginPage({
       <AuthCard>
         <div className="mb-6 text-center sm:text-left">
           <h2 className="text-xl font-bold text-zindo-ink-900 sm:text-2xl">
-            Welcome to <span className="text-zindo-green-600">ZINDO</span>
+            Welcome to <span className="text-zindo-blue-600">ZINDO</span>
           </h2>
           <p className="mt-1 text-sm text-zinc-500">Sign in to your account</p>
         </div>
         {reinitialisation === "ok" && (
-          <p className="animate-zindo-fade-in mb-4 flex items-center gap-2 rounded-xl bg-zindo-green-50 px-3.5 py-2.5 text-sm text-zindo-green-700">
+          <p className="animate-zindo-fade-in mb-4 flex items-center gap-2 rounded-xl bg-zindo-blue-50 px-3.5 py-2.5 text-sm text-zindo-blue-700">
             <CheckCircle2 className="h-4 w-4 shrink-0" /> Password reset — please sign in.
           </p>
         )}
@@ -44,7 +44,7 @@ export default async function EnglishLoginPage({
 
       <p className="text-center text-sm text-zinc-500">
         Don&apos;t have an account yet?{" "}
-        <Link href="/en/inscription" className="font-semibold text-zindo-green-600 hover:text-zindo-green-700 hover:underline">
+        <Link href="/en/inscription" className="font-semibold text-zindo-blue-600 hover:text-zindo-blue-700 hover:underline">
           Create an account
         </Link>
       </p>

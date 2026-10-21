@@ -22,7 +22,7 @@ const BOTTOM_NAV = [
   { href: "/marche/compte", label: "Compte", icon: User },
 ];
 
-const iconLink = "relative flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-zinc-700 hover:bg-zinc-100 hover:text-zindo-green-700";
+const iconLink = "relative flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-zinc-700 hover:bg-zinc-100 hover:text-zindo-blue-700";
 
 /** Habillage public du nouveau Marché (flag nouveau_marche). */
 export default async function MarketLayout({ children }: { children: React.ReactNode }) {
@@ -55,7 +55,7 @@ export default async function MarketLayout({ children }: { children: React.React
           {/* Ligne 1 : logo, recherche (ordinateur), liens et icônes. */}
           <div className="flex h-14 items-center gap-3 md:h-16 md:gap-6">
             <Link href="/marche" className="flex shrink-0 items-baseline gap-1.5">
-              <span className="text-xl font-extrabold tracking-tight text-zindo-green-700">ZINDO</span>
+              <span className="text-xl font-extrabold tracking-tight text-zindo-blue-700">ZINDO</span>
               <span className="text-sm font-semibold text-zinc-500">Marché</span>
             </Link>
             <div className="hidden min-w-0 max-w-2xl flex-1 md:block">{search}</div>

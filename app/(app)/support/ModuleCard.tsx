@@ -54,7 +54,7 @@ export function ModuleCard({
         <span
           className={cn(
             "flex h-9 w-9 shrink-0 items-center justify-center rounded-lg",
-            available ? "bg-zindo-green-50 text-zindo-green-600" : "bg-zinc-200 text-zinc-400"
+            available ? "bg-zindo-blue-50 text-zindo-blue-600" : "bg-zinc-200 text-zinc-400"
           )}
         >
           {icon}
@@ -75,7 +75,7 @@ export function ModuleCard({
           {available ? (
             <Link
               href={href}
-              className="inline-flex items-center gap-1.5 text-sm font-medium text-zindo-green-600 hover:text-zindo-green-700"
+              className="inline-flex items-center gap-1.5 text-sm font-medium text-zindo-blue-600 hover:text-zindo-blue-700"
             >
               Aller dans {label} <ArrowRight className="h-3.5 w-3.5" />
             </Link>

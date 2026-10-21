@@ -36,7 +36,7 @@ export default async function MarketShopsPage({ searchParams }: { searchParams: 
         <input name="q" defaultValue={params.q ?? ""} placeholder="Nom de la boutique…" aria-label="Nom de la boutique" className="h-10 rounded-lg border border-zinc-300 px-3 text-sm" />
         <LocationFilter options={locations} country={country} city={cityKey} />
         <div className="flex gap-2">
-          <button className="h-10 flex-1 rounded-lg bg-zindo-green-600 px-4 text-sm font-semibold text-white hover:bg-zindo-green-700">Filtrer</button>
+          <button className="h-10 flex-1 rounded-lg bg-zindo-blue-600 px-4 text-sm font-semibold text-white hover:bg-zindo-blue-700">Filtrer</button>
           {filtering && (
             <Link href="/marche/boutiques" className="flex h-10 items-center rounded-lg border border-zinc-300 px-3 text-sm text-zinc-700">
               Effacer

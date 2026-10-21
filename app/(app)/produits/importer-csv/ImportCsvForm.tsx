@@ -38,7 +38,7 @@ export function ImportCsvForm({ quantitiesEnabled }: { quantitiesEnabled: boolea
           </p>
           <Link
             href="/produits/export"
-            className="inline-flex items-center gap-1.5 text-sm font-medium text-zindo-green-600 hover:underline"
+            className="inline-flex items-center gap-1.5 text-sm font-medium text-zindo-blue-600 hover:underline"
           >
             <Download className="h-3.5 w-3.5" /> Exporter mon catalogue actuel pour voir le format
           </Link>
@@ -46,7 +46,7 @@ export function ImportCsvForm({ quantitiesEnabled }: { quantitiesEnabled: boolea
       </Card>
 
       <form onSubmit={keep} action={formAction} className="space-y-4">
-        <label className="flex cursor-pointer flex-col items-center gap-2 rounded-xl border-2 border-dashed border-zinc-300 p-8 text-center hover:border-zindo-green-400">
+        <label className="flex cursor-pointer flex-col items-center gap-2 rounded-xl border-2 border-dashed border-zinc-300 p-8 text-center hover:border-zindo-blue-400">
           <UploadCloud className="h-8 w-8 text-zinc-400" />
           <span className="text-sm font-medium text-zinc-700">Choisir un fichier CSV</span>
           <input type="file" name="file" accept=".csv,text/csv" required className="hidden" />

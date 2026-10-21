@@ -60,12 +60,12 @@ export function PiedDePageComplet() {
         {/* Newsletter */}
         <div className="flex flex-col gap-5 rounded-2xl border border-white/10 bg-white/5 p-6 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-start gap-3">
-            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-zindo-green-500/20 text-zindo-green-400">
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-zindo-blue-500/20 text-zindo-blue-400">
               <Mail className="h-5 w-5" />
             </span>
             <div>
               <p className="text-lg font-extrabold text-white">
-                Restez <span className="text-zindo-green-400">informé</span>
+                Restez <span className="text-zindo-blue-400">informé</span>
               </p>
               <p className="mt-0.5">Nouveautés de ZINDO et conseils de gestion pour votre commerce.</p>
             </div>
@@ -78,7 +78,10 @@ export function PiedDePageComplet() {
           <div className="col-span-2">
             <div className="flex items-center gap-2.5">
               <ZindoLogo size={36} />
-              <span className="text-lg font-extrabold text-white">ZINDO</span>
+              <span className="flex flex-col leading-none">
+                <span className="text-lg font-extrabold tracking-[0.12em] text-white">ZINDO</span>
+                <span className="mt-1 text-[8px] font-semibold uppercase tracking-[0.18em] text-zindo-copper-300">Gestion commerciale</span>
+              </span>
             </div>
             <p className="mt-3 leading-relaxed">
               Le logiciel de gestion de stock, de caisse et de facturation conçu au Burkina Faso, pour les boutiques
@@ -86,7 +89,7 @@ export function PiedDePageComplet() {
             </p>
             <p className="mt-3">
               Support WhatsApp :{" "}
-              <a href={WHATSAPP_HREF} target="_blank" rel="noopener noreferrer" className="font-semibold text-white hover:text-zindo-green-400">
+              <a href={WHATSAPP_HREF} target="_blank" rel="noopener noreferrer" className="font-semibold text-white hover:text-zindo-blue-400">
                 +226 04 05 99 29
               </a>
             </p>
@@ -98,7 +101,7 @@ export function PiedDePageComplet() {
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label={social.label}
-                  className="flex h-9 w-9 items-center justify-center rounded-full bg-white/10 text-white hover:bg-zindo-green-500"
+                  className="flex h-9 w-9 items-center justify-center rounded-full bg-white/10 text-white hover:bg-zindo-blue-500"
                 >
                   <social.icon className="h-4.5 w-4.5" />
                 </a>
@@ -107,7 +110,7 @@ export function PiedDePageComplet() {
           </div>
           {COLUMNS.map((col) => (
             <div key={col.title}>
-              <p className="font-bold text-zindo-gold-400">{col.title}</p>
+              <p className="font-bold text-zindo-copper-400">{col.title}</p>
               <ul className="mt-3 space-y-2">
                 {col.links.map((link) => (
                   <li key={link.href}>
@@ -123,10 +126,10 @@ export function PiedDePageComplet() {
 
         {/* Nos solutions */}
         <div className="mt-10 rounded-2xl border border-white/10 bg-white/5 p-5">
-          <p className="font-bold text-zindo-gold-400">Nos solutions</p>
+          <p className="font-bold text-zindo-copper-400">Nos solutions</p>
           <div className="mt-3 flex flex-wrap gap-x-5 gap-y-2">
             {SOLUTION_PAGES.map((p) => (
-              <Link key={p.slug} href={`/fonctionnalites/${p.slug}`} className="text-white/90 hover:text-zindo-green-400">
+              <Link key={p.slug} href={`/fonctionnalites/${p.slug}`} className="text-white/90 hover:text-zindo-blue-400">
                 {p.label}
               </Link>
             ))}

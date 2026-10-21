@@ -90,7 +90,7 @@ export function ProductSearchBar({
         >
           <SlidersHorizontal className="h-4 w-4" /> Filtres
           {activeFilters > 0 && (
-            <span className="rounded-full bg-zindo-green-600 px-1.5 text-xs font-bold text-white">{activeFilters}</span>
+            <span className="rounded-full bg-zindo-blue-600 px-1.5 text-xs font-bold text-white">{activeFilters}</span>
           )}
         </button>
       )}

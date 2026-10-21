@@ -127,7 +127,7 @@ export function RegisterForm({
 
       {/* En-tête : étape et progression. */}
       <div className="space-y-3">
-        <div className="flex items-center justify-between text-xs font-semibold uppercase tracking-wide text-zindo-green-700">
+        <div className="flex items-center justify-between text-xs font-semibold uppercase tracking-wide text-zindo-blue-700">
           <span>
             {t.step} {current} {t.of} 2
           </span>
@@ -138,8 +138,8 @@ export function RegisterForm({
           )}
         </div>
         <div className="grid grid-cols-2 gap-1.5" aria-hidden>
-          <span className="h-1.5 rounded-full bg-zindo-green-500" />
-          <span className={`h-1.5 rounded-full transition-colors ${current === 2 ? "bg-zindo-green-500" : "bg-zinc-200"}`} />
+          <span className="h-1.5 rounded-full bg-zindo-blue-500" />
+          <span className={`h-1.5 rounded-full transition-colors ${current === 2 ? "bg-zindo-blue-500" : "bg-zinc-200"}`} />
         </div>
         <div>
           <h2 className="text-xl font-bold tracking-tight text-zinc-900">{current === 1 ? t.step1Title : t.step2Title}</h2>
@@ -213,14 +213,14 @@ export function RegisterForm({
           </Field>
         )}
         <label className="flex items-start gap-2.5 text-sm text-zinc-600">
-          <input type="checkbox" name="acceptTerms" required={current === 2} className="mt-0.5 h-4 w-4 shrink-0 rounded accent-zindo-green-500" />
+          <input type="checkbox" name="acceptTerms" required={current === 2} className="mt-0.5 h-4 w-4 shrink-0 rounded accent-zindo-blue-500" />
           <span>
             {t.acceptPrefix}{" "}
-            <Link href={t.cguHref} target="_blank" className="font-medium text-zindo-green-700 hover:underline">
+            <Link href={t.cguHref} target="_blank" className="font-medium text-zindo-blue-700 hover:underline">
               {t.terms}
             </Link>{" "}
             {t.and}{" "}
-            <Link href={t.confidentialiteHref} target="_blank" className="font-medium text-zindo-green-700 hover:underline">
+            <Link href={t.confidentialiteHref} target="_blank" className="font-medium text-zindo-blue-700 hover:underline">
               {t.privacy}
             </Link>
             .
@@ -236,7 +236,7 @@ export function RegisterForm({
       <ul className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1 border-t border-zinc-100 pt-4 text-xs text-zinc-500">
         {(marketSeller ? t.marketReassurance : t.reassurance(trialDays)).map((item, i) => (
           <li key={item} className="inline-flex items-center gap-1.5">
-            {i === 0 ? <Check className="h-3.5 w-3.5 text-zindo-green-600" /> : i === 1 ? <Lock className="h-3.5 w-3.5 text-zindo-green-600" /> : <ShieldCheck className="h-3.5 w-3.5 text-zindo-green-600" />}
+            {i === 0 ? <Check className="h-3.5 w-3.5 text-zindo-blue-600" /> : i === 1 ? <Lock className="h-3.5 w-3.5 text-zindo-blue-600" /> : <ShieldCheck className="h-3.5 w-3.5 text-zindo-blue-600" />}
             {item}
           </li>
         ))}

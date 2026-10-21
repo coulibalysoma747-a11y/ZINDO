@@ -16,7 +16,7 @@ const STAMP = {
 const EXACT = "print:[-webkit-print-color-adjust:exact] print:[print-color-adjust:exact]";
 
 function Caption({ children }: { children: React.ReactNode }) {
-  return <p className="mb-2 text-[10px] font-bold uppercase tracking-[0.18em] text-zindo-green-600">{children}</p>;
+  return <p className="mb-2 text-[10px] font-bold uppercase tracking-[0.18em] text-zindo-blue-600">{children}</p>;
 }
 
 export function FactureInvoiceView({
@@ -67,7 +67,7 @@ export function FactureInvoiceView({
       </div>
 
       <article className="relative overflow-hidden bg-white text-zinc-800 shadow-[0_1px_3px_rgba(0,0,0,0.08),0_8px_24px_rgba(0,0,0,0.06)] print:shadow-none">
-        <div className={`h-2 bg-zindo-green-600 ${EXACT}`} />
+        <div className={`h-2 bg-zindo-blue-600 ${EXACT}`} />
 
         <div className="px-6 py-10 sm:px-12">
           {/* En-tête */}
@@ -99,7 +99,7 @@ export function FactureInvoiceView({
                 {periodEnd && (
                   <>
                     <dt className="text-zinc-400">Fin d&apos;abonnement</dt>
-                    <dd className="font-semibold text-zindo-green-600">{formatLongDate(periodEnd.toISOString())}</dd>
+                    <dd className="font-semibold text-zindo-blue-600">{formatLongDate(periodEnd.toISOString())}</dd>
                   </>
                 )}
               </dl>
@@ -144,7 +144,7 @@ export function FactureInvoiceView({
                     Formule {cycleLabel === "Annuel" ? "annuelle" : "mensuelle"} — accès complet pendant {duration}
                   </p>
                   {invoice.paidAt && periodEnd && (
-                    <p className={`mt-2 inline-block rounded bg-zindo-green-50 px-2 py-1 text-xs font-medium text-zindo-green-700 ${EXACT}`}>
+                    <p className={`mt-2 inline-block rounded bg-zindo-blue-50 px-2 py-1 text-xs font-medium text-zindo-blue-700 ${EXACT}`}>
                       Période : du {formatLongDate(invoice.paidAt)} au {formatLongDate(periodEnd.toISOString())}
                     </p>
                   )}
@@ -168,7 +168,7 @@ export function FactureInvoiceView({
                 <dt>Sous-total</dt>
                 <dd>{money(invoice.amount)}</dd>
               </div>
-              <div className={`mt-2 flex items-center justify-between bg-zindo-green-600 px-4 py-3 text-white ${EXACT}`}>
+              <div className={`mt-2 flex items-center justify-between bg-zindo-blue-600 px-4 py-3 text-white ${EXACT}`}>
                 <dt className="text-xs font-bold uppercase tracking-[0.15em]">Total</dt>
                 <dd className="text-xl font-bold">{money(invoice.amount)}</dd>
               </div>
@@ -185,7 +185,7 @@ export function FactureInvoiceView({
           {(invoice.paymentMethod || invoice.paymentReference) && (
             <section className="mt-12">
               <Caption>Informations de règlement</Caption>
-              <div className="grid gap-4 border-l-2 border-zindo-green-600 pl-4 text-sm sm:grid-cols-2">
+              <div className="grid gap-4 border-l-2 border-zindo-blue-600 pl-4 text-sm sm:grid-cols-2">
                 {invoice.paymentMethod && (
                   <p>
                     <span className="text-zinc-400">Mode : </span>

@@ -63,13 +63,13 @@ export function ProductGrid({
       {products.map((product) => (
         <div
           key={product.id}
-          className="group relative flex flex-col rounded-xl border border-zinc-200 bg-white text-left transition-colors duration-100 hover:border-zindo-green-500 dark:border-slate-800 dark:bg-slate-900"
+          className="group relative flex flex-col rounded-xl border border-zinc-200 bg-white text-left transition-colors duration-100 hover:border-zindo-blue-500 dark:border-slate-800 dark:bg-slate-900"
         >
           <button
             type="button"
             onClick={() => onSelect(product)}
             aria-label={`Ajouter ${product.name} au panier`}
-            className="absolute inset-0 z-0 rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zindo-green-500 active:scale-[0.98]"
+            className="absolute inset-0 z-0 rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zindo-blue-500 active:scale-[0.98]"
           />
           <div className="pointer-events-none relative aspect-[4/3] w-full overflow-hidden rounded-t-xl bg-zinc-50 dark:bg-slate-800">
             {product.photoUrl ? (
@@ -94,7 +94,7 @@ export function ProductGrid({
               {product.quantity} {product.unit}
             </span>
             {/* Petit "+" qui apparaît au survol : rappelle qu’un clic ajoute au panier. */}
-            <span className="absolute bottom-1.5 right-1.5 flex h-7 w-7 items-center justify-center rounded-full bg-zindo-green-600 text-white opacity-0 shadow-sm transition-opacity duration-100 group-hover:opacity-100">
+            <span className="absolute bottom-1.5 right-1.5 flex h-7 w-7 items-center justify-center rounded-full bg-zindo-blue-600 text-white opacity-0 shadow-sm transition-opacity duration-100 group-hover:opacity-100">
               <Plus className="h-4 w-4" />
             </span>
           </div>
@@ -106,11 +106,11 @@ export function ProductGrid({
               {product.name}
             </p>
             <p className="truncate text-[11px] text-zinc-400">{product.reference}</p>
-            <p className="mt-auto pt-1.5 text-[15px] font-bold tabular-nums text-zindo-green-600 dark:text-zindo-green-400">
+            <p className="mt-auto pt-1.5 text-[15px] font-bold tabular-nums text-zindo-blue-600 dark:text-zindo-blue-400">
               {formatMoney(product.salePrice, currency)}
             </p>
             {product.priceTiers && product.priceTiers.length > 0 && (
-              <p className="text-[10px] font-medium text-zindo-green-700">
+              <p className="text-[10px] font-medium text-zindo-blue-700">
                 Dès {Math.min(...product.priceTiers.map((t) => t.minQuantity))} {product.unit} :{" "}
                 {formatMoney(Math.min(...product.priceTiers.map((t) => t.unitPrice)), currency)}
               </p>
@@ -131,7 +131,7 @@ export function ProductGrid({
                     key={pu.id}
                     type="button"
                     onClick={() => onSelect(product, pu)}
-                    className="rounded-md border border-zindo-green-200 bg-zindo-green-50 px-1.5 py-0.5 text-[10px] font-medium text-zindo-green-700 hover:bg-zindo-green-100"
+                    className="rounded-md border border-zindo-blue-200 bg-zindo-blue-50 px-1.5 py-0.5 text-[10px] font-medium text-zindo-blue-700 hover:bg-zindo-blue-100"
                   >
                     {pu.name}
                   </button>

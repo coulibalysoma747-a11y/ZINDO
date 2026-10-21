@@ -26,7 +26,7 @@ function situation(b: { suspended: boolean }, sub: SubscriptionRow | undefined, 
   if (sub.status === "ACTIVE") {
     const end = sub.currentPeriodEnd ? new Date(sub.currentPeriodEnd).getTime() : 0;
     if (end && end <= now) return { etat: "expire" as Etat, label: "Paiement en retard", tone: "bg-red-50 text-red-700", fin: sub.currentPeriodEnd, joursRestants: 0 };
-    return { etat: "payant" as Etat, label: sub.billingCycle === "ANNUAL" ? "Annuel" : "Mensuel", tone: "bg-zindo-green-50 text-zindo-green-800", fin: sub.currentPeriodEnd, joursRestants: null };
+    return { etat: "payant" as Etat, label: sub.billingCycle === "ANNUAL" ? "Annuel" : "Mensuel", tone: "bg-zindo-blue-50 text-zindo-blue-800", fin: sub.currentPeriodEnd, joursRestants: null };
   }
   return { etat: "expire" as Etat, label: sub.status === "CANCELLED" ? "Résilié" : "Expiré", tone: "bg-red-50 text-red-700", fin: sub.currentPeriodEnd ?? sub.trialEndsAt, joursRestants: 0 };
 }

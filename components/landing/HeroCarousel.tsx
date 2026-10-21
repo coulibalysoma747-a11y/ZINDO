@@ -2,13 +2,13 @@
 
 import { useEffect, useState } from "react";
 
-// Images du carrousel (public/hero/). Remplacez-les par de vraies photos si besoin.
-// Une photo absente est simplement retirée du défilement ; sans aucune photo,
-// le hero garde son fond vert foncé.
-const SLIDES = ["/hero/zindo-hero.jpg", "/hero/slide-1.svg", "/hero/slide-2.svg", "/hero/slide-3.svg", "/hero/slide-4.svg"];
+// Real merchant photography keeps the hero focused on the people using ZINDO.
+const SLIDES = [
+  "/photos/rue-commercante-ouagadougou.webp",
+  "/photos/commercante-boutique.webp",
+  "/photos/pharmacie-rayons.webp",
+];
 const INTERVAL_MS = 5000;
-// Visuels qui contiennent déjà du texte : floutés pour ne pas gêner le titre.
-const BLURRED = new Set(["/hero/zindo-hero.jpg"]);
 
 export function HeroCarousel({ children }: { children: React.ReactNode }) {
   const [missing, setMissing] = useState<Set<string>>(new Set());
@@ -34,11 +34,7 @@ export function HeroCarousel({ children }: { children: React.ReactNode }) {
             alt=""
             aria-hidden
             onError={() => setMissing((m) => new Set(m).add(src))}
-            className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-1000 ${
-              BLURRED.has(src) ? "scale-110 blur-md" : ""
-            } ${
-              slides[current] === src ? "opacity-100" : "opacity-0"
-            }`}
+            className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-1000 ${slides[current] === src ? "opacity-100" : "opacity-0"}`}
           />
         ),
       )}

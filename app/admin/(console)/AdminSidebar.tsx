@@ -39,7 +39,7 @@ export function AdminSidebar({ adminName, role }: { adminName: string; role: Sup
           <ZindoLogo size={38} />
           <div className="min-w-0">
             <p className="text-lg font-bold leading-tight tracking-tight text-white">ZINDO</p>
-            <p className="text-xs font-medium text-zindo-green-400">Administration</p>
+            <p className="text-xs font-medium text-zindo-blue-400">Administration</p>
           </div>
         </div>
 
@@ -53,11 +53,11 @@ export function AdminSidebar({ adminName, role }: { adminName: string; role: Sup
                 href={item.href}
                 className={`group flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm font-medium transition-all duration-200 ${
                   active
-                    ? "bg-zindo-green-500 text-white shadow-md shadow-zindo-green-500/25"
+                    ? "bg-zindo-blue-500 text-white shadow-md shadow-zindo-blue-500/25"
                     : "text-slate-400 hover:bg-slate-800/60 hover:text-slate-100"
                 }`}
               >
-                <Icon className={`h-4.5 w-4.5 ${active ? "text-white" : "text-slate-400 group-hover:text-zindo-green-400"}`} />
+                <Icon className={`h-4.5 w-4.5 ${active ? "text-white" : "text-slate-400 group-hover:text-zindo-blue-400"}`} />
                 <span>{item.label}</span>
               </Link>
             );

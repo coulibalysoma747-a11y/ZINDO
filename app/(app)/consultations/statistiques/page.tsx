@@ -115,7 +115,7 @@ export default async function ConsultationsStatsPage({
         </Card>
         <Card>
           <CardBody className="flex items-center gap-3">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-zindo-green-50 text-zindo-green-600">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-zindo-blue-50 text-zindo-blue-600">
               <TrendingUp className="h-5 w-5" />
             </div>
             <div>
@@ -142,7 +142,7 @@ export default async function ConsultationsStatsPage({
             </div>
             <div>
               <p className="text-xs text-zinc-500">Bilan</p>
-              <p className={`font-bold ${benefice >= 0 ? "text-zindo-green-600" : "text-red-600"}`}>{formatMoney(benefice, currency)}</p>
+              <p className={`font-bold ${benefice >= 0 ? "text-zindo-blue-600" : "text-red-600"}`}>{formatMoney(benefice, currency)}</p>
             </div>
           </CardBody>
         </Card>

@@ -36,7 +36,7 @@ export function PaymentBreakdownDetail({
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
-        className="flex w-full items-center justify-between gap-2 text-left text-sm font-medium text-zinc-700 hover:text-zindo-green-600"
+        className="flex w-full items-center justify-between gap-2 text-left text-sm font-medium text-zinc-700 hover:text-zindo-blue-600"
       >
         <span>Voir le détail par moyen de paiement</span>
         {open ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}

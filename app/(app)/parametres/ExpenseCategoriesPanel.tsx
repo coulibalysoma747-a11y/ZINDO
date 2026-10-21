@@ -31,7 +31,7 @@ export function ExpenseCategoriesPanel({ categories: initial }: { categories: st
   return (
     <div className="rounded-xl border border-zinc-200 p-4">
       <div className="flex items-start gap-2.5">
-        <Receipt className="mt-0.5 h-5 w-5 shrink-0 text-zindo-green-600" />
+        <Receipt className="mt-0.5 h-5 w-5 shrink-0 text-zindo-blue-600" />
         <div>
           <p className="font-bold text-zinc-900">Personnaliser mes dépenses</p>
           <p className="mt-1 text-sm text-zinc-500">

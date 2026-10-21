@@ -26,11 +26,11 @@ export async function sendPasswordResetEmail(to: string, resetUrl: string) {
     subject: "Réinitialisez votre mot de passe ZINDO",
     html: `
       <div style="font-family:Arial,Helvetica,sans-serif;max-width:480px;margin:0 auto;padding:24px;color:#18181b">
-        <h2 style="color:#176d30;margin-bottom:4px">ZINDO</h2>
+        <h2 style="color:#102638;margin-bottom:4px">ZINDO</h2>
         <p>Vous avez demandé la réinitialisation de votre mot de passe.</p>
         <p>
           <a href="${resetUrl}"
-             style="display:inline-block;background:#176d30;color:#fff;text-decoration:none;
+             style="display:inline-block;background:#102638;color:#fff;text-decoration:none;
                     padding:12px 24px;border-radius:12px;font-weight:bold;margin:16px 0">
             Réinitialiser mon mot de passe
           </a>
@@ -56,11 +56,11 @@ export async function sendVerificationCodeEmail(to: string, code: string, firstN
     subject: `${code} — Confirmez votre compte ZINDO`,
     html: `
       <div style="font-family:Arial,Helvetica,sans-serif;max-width:480px;margin:0 auto;padding:24px;color:#18181b">
-        <h2 style="color:#176d30;margin-bottom:4px">ZINDO</h2>
+        <h2 style="color:#102638;margin-bottom:4px">ZINDO</h2>
         <p>Bonjour ${firstName},</p>
         <p>Voici votre code de confirmation pour finaliser la création de votre compte :</p>
         <p style="font-size:32px;font-weight:bold;letter-spacing:8px;text-align:center;
-                  background:#f4f4f5;border-radius:12px;padding:16px;margin:16px 0;color:#176d30">
+                  background:#f4f4f5;border-radius:12px;padding:16px;margin:16px 0;color:#102638">
           ${code}
         </p>
         <p style="font-size:13px;color:#71717a">

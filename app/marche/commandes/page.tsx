@@ -65,7 +65,7 @@ export default async function MyMarketOrdersPage({ searchParams }: { searchParam
           <Link
             key={t.key}
             href={t.key ? `/marche/commandes?filtre=${t.key}` : "/marche/commandes"}
-            className={filtre === t.key ? "shrink-0 rounded-full bg-zindo-green-600 px-3 py-1.5 font-semibold text-white" : "shrink-0 rounded-full bg-white px-3 py-1.5 text-zinc-700 ring-1 ring-zinc-200"}
+            className={filtre === t.key ? "shrink-0 rounded-full bg-zindo-blue-600 px-3 py-1.5 font-semibold text-white" : "shrink-0 rounded-full bg-white px-3 py-1.5 text-zinc-700 ring-1 ring-zinc-200"}
           >
             {t.label}
           </Link>

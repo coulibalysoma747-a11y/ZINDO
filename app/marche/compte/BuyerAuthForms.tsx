@@ -34,7 +34,7 @@ export function BuyerAuthForms({ initialMode, suite }: { initialMode: "login" | 
             <input name="password" type="password" required autoComplete="current-password" className={inputClass} />
           </label>
           {loginState?.error && <p className="text-sm text-red-600">{loginState.error}</p>}
-          <button disabled={loginPending} className="h-11 w-full rounded-xl bg-zindo-green-600 font-semibold text-white disabled:opacity-50">
+          <button disabled={loginPending} className="h-11 w-full rounded-xl bg-zindo-blue-600 font-semibold text-white disabled:opacity-50">
             {loginPending ? "Connexion…" : "Se connecter"}
           </button>
         </form>
@@ -44,10 +44,10 @@ export function BuyerAuthForms({ initialMode, suite }: { initialMode: "login" | 
           <input type="hidden" name="kind" value={kind} />
           <p className="text-sm text-zinc-600">Gratuit : suivez vos commandes et commandez en quelques secondes.</p>
           <div className="grid grid-cols-2 gap-2 text-sm">
-            <button type="button" onClick={() => setKind("PARTICULIER")} className={kind === "PARTICULIER" ? "rounded-xl border-2 border-zindo-green-600 bg-zindo-green-50 py-2 font-semibold" : "rounded-xl border border-zinc-300 py-2"}>
+            <button type="button" onClick={() => setKind("PARTICULIER")} className={kind === "PARTICULIER" ? "rounded-xl border-2 border-zindo-blue-600 bg-zindo-blue-50 py-2 font-semibold" : "rounded-xl border border-zinc-300 py-2"}>
               Particulier
             </button>
-            <button type="button" onClick={() => setKind("PRO")} className={kind === "PRO" ? "rounded-xl border-2 border-zindo-green-600 bg-zindo-green-50 py-2 font-semibold" : "rounded-xl border border-zinc-300 py-2"}>
+            <button type="button" onClick={() => setKind("PRO")} className={kind === "PRO" ? "rounded-xl border-2 border-zindo-blue-600 bg-zindo-blue-50 py-2 font-semibold" : "rounded-xl border border-zinc-300 py-2"}>
               Professionnel
             </button>
           </div>
@@ -71,7 +71,7 @@ export function BuyerAuthForms({ initialMode, suite }: { initialMode: "login" | 
             <input name="password" type="password" required minLength={6} autoComplete="new-password" className={inputClass} />
           </label>
           {signupState?.error && <p className="text-sm text-red-600">{signupState.error}</p>}
-          <button disabled={signupPending} className="h-11 w-full rounded-xl bg-zindo-green-600 font-semibold text-white disabled:opacity-50">
+          <button disabled={signupPending} className="h-11 w-full rounded-xl bg-zindo-blue-600 font-semibold text-white disabled:opacity-50">
             {signupPending ? "Création…" : "Créer mon compte"}
           </button>
         </form>

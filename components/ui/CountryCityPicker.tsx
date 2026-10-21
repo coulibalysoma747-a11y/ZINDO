@@ -9,7 +9,7 @@ import { COUNTRIES, DEFAULT_COUNTRY_CODE, getCountry, normalizeSearch, type Coun
 const FREQUENT = ["BF", "CI", "ML", "NE", "SN", "TG", "BJ", "GN", "GH"];
 
 const fieldClass =
-  "flex h-10 w-full items-center gap-2 rounded-lg border border-zinc-300 bg-white px-3 text-left text-sm text-zinc-900 shadow-[0_1px_2px_rgb(16_24_20/0.04)] transition-[border-color,box-shadow] duration-150 hover:border-zinc-400 focus-within:border-zindo-green-500 focus-within:ring-4 focus-within:ring-zindo-green-500/15 dark:border-slate-700 dark:bg-slate-900";
+  "flex h-10 w-full items-center gap-2 rounded-lg border border-zinc-300 bg-white px-3 text-left text-sm text-zinc-900 shadow-[0_1px_2px_rgb(16_24_20/0.04)] transition-[border-color,box-shadow] duration-150 hover:border-zinc-400 focus-within:border-zindo-blue-500 focus-within:ring-4 focus-within:ring-zindo-blue-500/15 dark:border-slate-700 dark:bg-slate-900";
 
 /**
  * Choix du pays puis de la ville, avec recherche : tous les pays du monde
@@ -158,7 +158,7 @@ function CountrySelect({ locale, label, name, value, onChange }: { locale: "fr" 
                 >
                   <span className="flex-1 truncate text-zinc-900">{c.name[locale]}</span>
                   <span className="shrink-0 text-xs text-zinc-400">{c.dialCode}</span>
-                  {c.code === value.code && <Check className="h-4 w-4 shrink-0 text-zindo-green-600" />}
+                  {c.code === value.code && <Check className="h-4 w-4 shrink-0 text-zindo-blue-600" />}
                 </button>
               </li>
             ))}

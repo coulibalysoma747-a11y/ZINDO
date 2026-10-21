@@ -92,7 +92,7 @@ export function CartView({ buyer }: { buyer: Buyer }) {
       <div className="space-y-3 py-10 text-center">
         <ShoppingCart className="mx-auto h-10 w-10 text-zinc-300" />
         <p className="font-semibold text-zinc-800">Votre panier est vide</p>
-        <Link href="/marche" className="inline-block rounded-xl bg-zindo-green-600 px-5 py-2.5 text-sm font-semibold text-white">
+        <Link href="/marche" className="inline-block rounded-xl bg-zindo-blue-600 px-5 py-2.5 text-sm font-semibold text-white">
           Découvrir le Marché
         </Link>
       </div>
@@ -122,7 +122,7 @@ export function CartView({ buyer }: { buyer: Buyer }) {
                   )}
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-medium text-zinc-900">{item.name}</p>
-                    <p className="text-sm font-bold text-zindo-green-700">{formatMoney(item.unitPrice, shop.currency)}</p>
+                    <p className="text-sm font-bold text-zindo-blue-700">{formatMoney(item.unitPrice, shop.currency)}</p>
                     {item.quantity > item.available && (
                       <p className="text-xs text-red-600">{item.available > 0 ? `Il n'en reste que ${item.available}` : "Rupture de stock"}</p>
                     )}
@@ -223,7 +223,7 @@ export function CartView({ buyer }: { buyer: Buyer }) {
                 <Row label="Livraison" value={formatMoney(delivery, currency)} />
                 <div className="flex justify-between border-t border-zinc-100 pt-2 text-base font-bold">
                   <span>Total</span>
-                  <span className="text-zindo-green-700">{formatMoney(subtotal + delivery, currency)}</span>
+                  <span className="text-zindo-blue-700">{formatMoney(subtotal + delivery, currency)}</span>
                 </div>
               </div>
             );
@@ -232,9 +232,9 @@ export function CartView({ buyer }: { buyer: Buyer }) {
         </div>
 
         {!buyer ? (
-          <div className="space-y-3 rounded-xl bg-zindo-green-50 p-4 text-center">
+          <div className="space-y-3 rounded-xl bg-zindo-blue-50 p-4 text-center">
             <p className="text-sm font-semibold text-zinc-900">Créez gratuitement votre compte ZINDO pour continuer.</p>
-            <Link href="/marche/compte?mode=inscription&suite=/marche/panier" className="block rounded-xl bg-zindo-green-600 py-2.5 text-sm font-semibold text-white">
+            <Link href="/marche/compte?mode=inscription&suite=/marche/panier" className="block rounded-xl bg-zindo-blue-600 py-2.5 text-sm font-semibold text-white">
               Créer un compte
             </Link>
             <Link href="/marche/compte?suite=/marche/panier" className="block rounded-xl border border-zinc-300 bg-white py-2.5 text-sm font-semibold text-zinc-800">
@@ -257,7 +257,7 @@ export function CartView({ buyer }: { buyer: Buyer }) {
               type="button"
               disabled={pending}
               onClick={submit}
-              className="h-12 w-full rounded-xl bg-zindo-green-600 font-semibold text-white hover:bg-zindo-green-700 disabled:opacity-50"
+              className="h-12 w-full rounded-xl bg-zindo-blue-600 font-semibold text-white hover:bg-zindo-blue-700 disabled:opacity-50"
             >
               {pending ? "Envoi…" : "Confirmer la commande"}
             </button>
@@ -273,7 +273,7 @@ function ChoiceButton({ active, onClick, children }: { active: boolean; onClick:
     <button
       type="button"
       onClick={onClick}
-      className={active ? "rounded-xl border-2 border-zindo-green-600 bg-zindo-green-50 px-3 py-1.5 font-semibold text-zindo-green-800" : "rounded-xl border border-zinc-300 bg-white px-3 py-1.5 text-zinc-700"}
+      className={active ? "rounded-xl border-2 border-zindo-blue-600 bg-zindo-blue-50 px-3 py-1.5 font-semibold text-zindo-blue-800" : "rounded-xl border border-zinc-300 bg-white px-3 py-1.5 text-zinc-700"}
     >
       {children}
     </button>

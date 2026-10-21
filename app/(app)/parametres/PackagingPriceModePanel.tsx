@@ -13,7 +13,7 @@ export function PackagingPriceModePanel({ settings }: { settings: BusinessSettin
   return (
     <div className="rounded-xl border border-zinc-200 p-4">
       <div className="flex items-start gap-2.5">
-        <Layers className="mt-0.5 h-5 w-5 shrink-0 text-zindo-green-600" />
+        <Layers className="mt-0.5 h-5 w-5 shrink-0 text-zindo-blue-600" />
         <div>
           <p className="font-bold text-zinc-900">Prix du conditionnement à la pièce</p>
           <p className="mt-1 text-sm text-zinc-500">
@@ -43,7 +43,7 @@ export function PackagingPriceModePanel({ settings }: { settings: BusinessSettin
               if (result.error) setError(result.error);
             });
           }}
-          className="h-5 w-5 shrink-0 rounded accent-zindo-green-500"
+          className="h-5 w-5 shrink-0 rounded accent-zindo-blue-500"
         />
       </div>
 

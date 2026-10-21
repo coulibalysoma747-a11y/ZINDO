@@ -328,7 +328,7 @@ export function ProductForm({
             name="trackUnits"
             checked={trackUnits}
             onChange={(e) => setTrackUnits(e.target.checked)}
-            className="mt-0.5 h-4 w-4 shrink-0 rounded accent-zindo-green-500"
+            className="mt-0.5 h-4 w-4 shrink-0 rounded accent-zindo-blue-500"
           />
           <span>
             <span className="block text-sm font-medium text-zinc-900">

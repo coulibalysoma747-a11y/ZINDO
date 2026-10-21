@@ -46,19 +46,16 @@ import {
   EXTRA_FAQS,
 } from "@/components/landing/AccueilComplet";
 
-// Cycle tricolore (vert/or/rouge, drapeau du Burkina Faso et logo ZINDO)
-// appliqué aux puces d'icônes de la page publique pour une identité visuelle
-// tricolore, sans jamais réutiliser ces teintes pour un état sémantique
-// (danger/attention) ailleurs dans l'application.
+// Navy and copper tones for public feature icons.
 const ICON_TONES = [
-  { bg: "bg-zindo-green-50", text: "text-zindo-green-600" },
-  { bg: "bg-zindo-gold-100", text: "text-zindo-gold-600" },
-  { bg: "bg-zindo-red-50", text: "text-zindo-red-600" },
+  { bg: "bg-zindo-blue-50", text: "text-zindo-blue-600" },
+  { bg: "bg-zindo-copper-100", text: "text-zindo-copper-600" },
+  { bg: "bg-zindo-copper-50", text: "text-zindo-copper-600" },
 ];
 const ICON_TONES_DARK = [
-  { bg: "bg-white/10", text: "text-zindo-green-400" },
-  { bg: "bg-white/10", text: "text-zindo-gold-400" },
-  { bg: "bg-white/10", text: "text-zindo-red-400" },
+  { bg: "bg-white/10", text: "text-zindo-blue-400" },
+  { bg: "bg-white/10", text: "text-zindo-copper-400" },
+  { bg: "bg-white/10", text: "text-zindo-copper-400" },
 ];
 
 const CHANGES = [
@@ -267,12 +264,12 @@ export default async function RootPage({ searchParams }: { searchParams: Promise
       {/* eslint-disable-next-line react/no-danger */}
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(STRUCTURED_DATA).replaceAll("{trialDays}", String(trialDays)) }} />
       <div aria-hidden className="pointer-events-none fixed inset-0 overflow-hidden">
-        <div className="absolute -right-24 -top-24 h-96 w-96 rounded-full bg-zindo-green-100/70 blur-3xl" />
-        <div className="absolute top-1/3 -left-16 h-72 w-72 rounded-full bg-zindo-gold-100/60 blur-3xl" />
-        <div className="absolute -bottom-32 -left-24 h-96 w-96 rounded-full bg-zindo-red-100/40 blur-3xl" />
+        <div className="absolute -right-24 -top-24 h-96 w-96 rounded-full bg-zindo-blue-100/70 blur-3xl" />
+        <div className="absolute top-1/3 -left-16 h-72 w-72 rounded-full bg-zindo-copper-100/60 blur-3xl" />
+        <div className="absolute -bottom-32 -left-24 h-96 w-96 rounded-full bg-zindo-blue-100/40 blur-3xl" />
       </div>
 
-      <div aria-hidden className="zindo-flag-stripe relative z-10 h-1 w-full" />
+      <div aria-hidden className="zindo-brand-stripe relative z-10 h-1 w-full" />
 
       {/* Barre supérieure — flex-wrap sur les deux niveaux : si le groupe
           d'actions ne tient pas à côté du logo sur un téléphone étroit, il
@@ -285,7 +282,10 @@ export default async function RootPage({ searchParams }: { searchParams: Promise
       <header className="relative z-30 mx-auto flex w-full max-w-6xl flex-wrap items-center justify-between gap-y-2 px-5 py-6 sm:px-8 lg:flex-nowrap lg:gap-4">
         <div className="flex items-center gap-3">
           <ZindoLogo size={40} />
-          <span className="text-lg font-extrabold tracking-tight text-zindo-ink-900">ZINDO</span>
+          <span className="flex flex-col leading-none">
+            <span className="text-lg font-extrabold tracking-[0.12em] text-zindo-ink-900">ZINDO</span>
+            <span className="mt-1 text-[8px] font-semibold uppercase tracking-[0.18em] text-zindo-blue-600">Gestion commerciale</span>
+          </span>
         </div>
         <PublicNavLinks />
         <div className="flex flex-wrap items-center justify-end gap-1.5 sm:gap-3">
@@ -296,13 +296,13 @@ export default async function RootPage({ searchParams }: { searchParams: Promise
           />
           <Link
             href="/login"
-            className="hidden whitespace-nowrap rounded-xl px-2 py-2 text-sm font-semibold text-zindo-ink-700 hover:text-zindo-green-600 sm:block sm:px-4"
+            className="hidden whitespace-nowrap rounded-xl px-2 py-2 text-sm font-semibold text-zindo-ink-700 hover:text-zindo-blue-600 sm:block sm:px-4"
           >
             Se connecter
           </Link>
           <Link
             href="/inscription"
-            className="whitespace-nowrap rounded-xl bg-zindo-green-500 px-2.5 py-2 text-sm font-bold text-white shadow-md shadow-zindo-green-500/25 transition hover:bg-zindo-green-600 sm:px-5"
+            className="whitespace-nowrap rounded-xl bg-zindo-blue-500 px-2.5 py-2 text-sm font-bold text-white shadow-md shadow-zindo-blue-500/25 transition hover:bg-zindo-blue-600 sm:px-5"
           >
             Essai gratuit
           </Link>
@@ -314,12 +314,12 @@ export default async function RootPage({ searchParams }: { searchParams: Promise
       <main className="relative z-10 mx-auto w-full max-w-6xl px-5 pb-24 pt-8 sm:px-8">
         <HeroCarousel>
         <div className="mx-auto max-w-3xl text-center">
-          <p className="inline-block rounded-full bg-zindo-gold-100 px-3 py-1 text-xs font-bold uppercase tracking-wider text-zindo-ink-900">
+          <p className="inline-block rounded-full bg-zindo-copper-100 px-3 py-1 text-xs font-bold uppercase tracking-wider text-zindo-ink-900">
             Gestion de stock et de ventes
           </p>
           <h1 className="mt-4 text-3xl font-extrabold leading-tight tracking-tight text-white sm:text-5xl">
             Remplacez vos cahiers et vos fichiers Excel par{" "}
-            <span className="text-zindo-green-400">ZINDO</span>
+            <span className="text-zindo-blue-400">ZINDO</span>
           </h1>
           <p className="mx-auto mt-4 max-w-xl text-base text-zinc-200 sm:text-lg">
             Suivez votre stock en temps réel, encaissez vos ventes et connaissez enfin vos bénéfices —
@@ -328,7 +328,7 @@ export default async function RootPage({ searchParams }: { searchParams: Promise
           <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
             <Link
               href="/inscription"
-              className="flex w-full items-center justify-center gap-2 rounded-2xl bg-zindo-green-500 px-6 py-3.5 text-base font-bold text-white shadow-lg shadow-zindo-green-500/30 transition hover:-translate-y-0.5 hover:bg-zindo-green-600 sm:w-auto"
+              className="flex w-full items-center justify-center gap-2 rounded-2xl bg-zindo-blue-500 px-6 py-3.5 text-base font-bold text-white shadow-lg shadow-zindo-blue-500/30 transition hover:-translate-y-0.5 hover:bg-zindo-blue-600 sm:w-auto"
             >
               Essai gratuit de {trialDays} jours <ArrowRight className="h-4 w-4" />
             </Link>
@@ -351,7 +351,7 @@ export default async function RootPage({ searchParams }: { searchParams: Promise
           {fullLanding && (
             <p className="mt-4 text-sm text-zinc-200">
               Free à vie · formules payantes dès {minimumPaidPrice.toLocaleString("fr-FR")} FCFA/mois ·{" "}
-              <a href="#tarifs" className="font-semibold text-zindo-green-400 underline-offset-2 hover:underline">
+              <a href="#tarifs" className="font-semibold text-zindo-blue-400 underline-offset-2 hover:underline">
                 Voir les tarifs
               </a>
             </p>
@@ -359,16 +359,71 @@ export default async function RootPage({ searchParams }: { searchParams: Promise
         </div>
         </HeroCarousel>
 
-        {/* Visuel ZINDO — affiché en entier, sans texte par-dessus */}
-        <section className="mt-10 overflow-hidden rounded-3xl shadow-xl">
-          <Image
-            src="/hero/zindo-hero.jpg"
-            alt="Commerçant utilisant ZINDO : gestion de stock, ventes, tickets et rapports"
-            width={1080}
-            height={720}
-            sizes="(min-width: 1152px) 1088px, 100vw"
-            className="h-auto w-full"
-          />
+        {/* Brand showcase: local merchant photography with a ZINDO dashboard preview. */}
+        <section className="mt-10 grid overflow-hidden rounded-[2rem] border border-zindo-blue-100 bg-white shadow-[0_28px_80px_-32px_rgb(13_31_45/0.35)] lg:grid-cols-[0.86fr_1.14fr]">
+          <div className="relative min-h-[300px] overflow-hidden bg-zindo-ink-900 sm:min-h-[380px]">
+            <Image
+              src="/photos/commercant-comptoir.webp"
+              alt="Commer&ccedil;ant dans sa boutique utilisant un ordinateur"
+              fill
+              sizes="(min-width: 1024px) 420px, 100vw"
+              className="object-cover object-[55%_center]"
+            />
+            <div aria-hidden className="absolute inset-0 bg-gradient-to-t from-zindo-ink-950/90 via-zindo-ink-950/15 to-transparent" />
+            <div className="absolute inset-x-0 bottom-0 p-6 text-white sm:p-8">
+              <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.14em] backdrop-blur-sm">
+                <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-zindo-copper-300" />
+                Con&ccedil;u pour le commerce
+              </span>
+              <p className="mt-4 max-w-sm text-2xl font-semibold leading-tight tracking-tight sm:text-3xl">
+                Les chiffres de votre boutique, enfin clairs.
+              </p>
+            </div>
+          </div>
+
+          <div className="p-5 sm:p-8 lg:p-10">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <p className="text-xs font-bold uppercase tracking-[0.16em] text-zindo-blue-700">Aper&ccedil;u du tableau de bord</p>
+                <h2 className="mt-2 text-2xl font-semibold tracking-tight text-zindo-ink-900 sm:text-3xl">Votre journ&eacute;e en un regard</h2>
+              </div>
+              <span className="shrink-0 rounded-lg border border-zindo-blue-100 bg-zindo-blue-50 px-2.5 py-1.5 text-xs font-bold uppercase tracking-wide text-zindo-blue-700">Exemple</span>
+            </div>
+
+            <div className="mt-6 grid gap-3 sm:grid-cols-2">
+              <div className="rounded-2xl bg-zindo-ink-900 p-4 text-white sm:col-span-2 sm:p-5">
+                <p className="text-xs font-medium text-white/70">Ventes du jour</p>
+                <div className="mt-2 flex items-end justify-between gap-3">
+                  <p className="text-3xl font-bold tracking-tight tabular-nums sm:text-4xl">125 000 <span className="text-base font-semibold text-white/70">FCFA</span></p>
+                  <span className="mb-1 rounded-full bg-white/10 px-2.5 py-1 text-xs font-semibold text-zindo-copper-300">+12 %</span>
+                </div>
+                <div aria-hidden className="mt-4 flex h-10 items-end gap-1.5">
+                  <span className="flex-1 rounded-t-sm bg-white/20" style={{ height: "28%" }} />
+                  <span className="flex-1 rounded-t-sm bg-white/20" style={{ height: "44%" }} />
+                  <span className="flex-1 rounded-t-sm bg-white/20" style={{ height: "32%" }} />
+                  <span className="flex-1 rounded-t-sm bg-white/20" style={{ height: "58%" }} />
+                  <span className="flex-1 rounded-t-sm bg-white/20" style={{ height: "42%" }} />
+                  <span className="flex-1 rounded-t-sm bg-white/20" style={{ height: "76%" }} />
+                  <span className="flex-1 rounded-t-sm bg-white/20" style={{ height: "55%" }} />
+                  <span className="flex-1 rounded-t-sm bg-white/20" style={{ height: "88%" }} />
+                  <span className="flex-1 rounded-t-sm bg-white/20" style={{ height: "64%" }} />
+                  <span className="flex-1 rounded-t-sm bg-white/20" style={{ height: "100%" }} />
+                  <span className="flex-1 rounded-t-sm bg-white/20" style={{ height: "72%" }} />
+                  <span className="flex-1 rounded-t-sm bg-white/20" style={{ height: "92%" }} />
+                </div>
+              </div>
+              <div className="rounded-2xl border border-zinc-200 bg-white p-4">
+                <p className="text-xs font-medium text-zinc-500">Articles vendus</p>
+                <p className="mt-2 text-2xl font-bold tabular-nums text-zindo-ink-900">24</p>
+                <p className="mt-1 text-xs text-zinc-500">depuis l'ouverture</p>
+              </div>
+              <div className="rounded-2xl border border-zindo-copper-100 bg-zindo-copper-50/60 p-4">
+                <p className="text-xs font-medium text-zindo-copper-700">Stock &agrave; surveiller</p>
+                <p className="mt-2 text-2xl font-bold tabular-nums text-zindo-ink-900">3 <span className="text-sm font-semibold">produits</span></p>
+                <p className="mt-1 text-xs text-zindo-copper-700">&agrave; r&eacute;approvisionner</p>
+              </div>
+            </div>
+          </div>
         </section>
 
         {fullLanding && <PertesSection />}
@@ -403,7 +458,7 @@ export default async function RootPage({ searchParams }: { searchParams: Promise
           <div className="mt-8 text-center">
             <Link
               href="/fonctionnalites"
-              className="inline-flex items-center gap-1.5 text-sm font-bold text-zindo-green-700 hover:text-zindo-green-600"
+              className="inline-flex items-center gap-1.5 text-sm font-bold text-zindo-blue-700 hover:text-zindo-blue-600"
             >
               Voir toutes les fonctionnalités <ArrowRight className="h-4 w-4" />
             </Link>
@@ -455,12 +510,12 @@ export default async function RootPage({ searchParams }: { searchParams: Promise
               />
             </div>
             <div className="p-6 sm:p-8">
-              <p className="text-xs font-bold uppercase tracking-wider text-zindo-green-600">Fondateur ZINDO</p>
+              <p className="text-xs font-bold uppercase tracking-wider text-zindo-blue-600">Fondateur ZINDO</p>
               <h3 className="mt-1 text-xl font-extrabold text-zindo-ink-900">Coulibaly Soma</h3>
               <p className="mt-2 text-sm leading-relaxed text-zinc-500">
                 Développeur d&apos;une solution complète pour gérer votre activité en toute simplicité.
               </p>
-              <p className="mt-3 flex items-center gap-2 text-sm font-semibold text-zindo-green-700">
+              <p className="mt-3 flex items-center gap-2 text-sm font-semibold text-zindo-blue-700">
                 <CheckCircle2 className="h-4 w-4 shrink-0" /> À vos côtés à chaque étape
               </p>
             </div>
@@ -469,7 +524,7 @@ export default async function RootPage({ searchParams }: { searchParams: Promise
           <div className="mx-auto mt-8 grid max-w-3xl grid-cols-1 gap-4 sm:grid-cols-3">
             {TRUST_BADGES.map((badge) => (
               <div key={badge.title} className="flex items-start gap-3 rounded-2xl border border-zinc-200 bg-white p-4">
-                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-zindo-green-50 text-zindo-green-600">
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-zindo-blue-50 text-zindo-blue-600">
                   <badge.icon className="h-4.5 w-4.5" />
                 </span>
                 <div>
@@ -480,12 +535,12 @@ export default async function RootPage({ searchParams }: { searchParams: Promise
             ))}
           </div>
 
-          <div className="mx-auto mt-6 flex max-w-3xl flex-col items-center justify-between gap-3 rounded-2xl bg-zindo-green-50 px-5 py-4 text-center sm:flex-row sm:text-left">
-            <p className="text-sm text-zindo-green-800">
+          <div className="mx-auto mt-6 flex max-w-3xl flex-col items-center justify-between gap-3 rounded-2xl bg-zindo-blue-50 px-5 py-4 text-center sm:flex-row sm:text-left">
+            <p className="text-sm text-zindo-blue-800">
               Installable directement depuis votre navigateur, sur téléphone comme sur ordinateur — sans passer par
               un store.
             </p>
-            <InstallAppButton className="inline-flex shrink-0 items-center gap-1.5 rounded-xl bg-zindo-green-600 px-4 py-2 text-sm font-semibold text-white hover:bg-zindo-green-700" />
+            <InstallAppButton className="inline-flex shrink-0 items-center gap-1.5 rounded-xl bg-zindo-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-zindo-blue-700" />
           </div>
         </section>
 
@@ -541,10 +596,10 @@ export default async function RootPage({ searchParams }: { searchParams: Promise
           </div>
           <div className="mx-auto mt-10 max-w-2xl divide-y divide-zinc-200 overflow-hidden rounded-2xl border border-zinc-200 bg-white">
             {faqs.map((faq) => (
-              <details key={faq.question} className="group px-5 py-4 open:bg-zindo-green-50/40">
+              <details key={faq.question} className="group px-5 py-4 open:bg-zindo-blue-50/40">
                 <summary className="flex cursor-pointer list-none items-center justify-between gap-3 font-semibold text-zindo-ink-900">
                   {faq.question}
-                  <span className="shrink-0 text-zindo-green-600 transition group-open:rotate-45">+</span>
+                  <span className="shrink-0 text-zindo-blue-600 transition group-open:rotate-45">+</span>
                 </summary>
                 <p className="mt-2 text-sm leading-relaxed text-zinc-500">{faq.answer.replaceAll("{trialDays}", String(trialDays))}</p>
               </details>
@@ -557,7 +612,7 @@ export default async function RootPage({ searchParams }: { searchParams: Promise
         </div>
 
         {/* CTA final */}
-        <section className="mt-24 rounded-3xl border border-zindo-green-100 bg-white px-6 py-14 text-center shadow-sm sm:px-12">
+        <section className="mt-24 rounded-3xl border border-zindo-blue-100 bg-white px-6 py-14 text-center shadow-sm sm:px-12">
           <h2 className="text-2xl font-extrabold tracking-tight text-zindo-ink-900 sm:text-3xl">
             Prêt à changer la façon dont vous gérez votre commerce ?
           </h2>
@@ -566,7 +621,7 @@ export default async function RootPage({ searchParams }: { searchParams: Promise
           </p>
           <Link
             href="/inscription"
-            className="mt-6 inline-flex items-center gap-2 rounded-2xl bg-zindo-green-500 px-7 py-3.5 text-base font-bold text-white shadow-lg shadow-zindo-green-500/30 transition hover:-translate-y-0.5 hover:bg-zindo-green-600"
+            className="mt-6 inline-flex items-center gap-2 rounded-2xl bg-zindo-blue-500 px-7 py-3.5 text-base font-bold text-white shadow-lg shadow-zindo-blue-500/30 transition hover:-translate-y-0.5 hover:bg-zindo-blue-600"
           >
             Créer mon compte ZINDO <ArrowRight className="h-4 w-4" />
           </Link>
@@ -577,15 +632,15 @@ export default async function RootPage({ searchParams }: { searchParams: Promise
       <footer className="relative z-10 border-t border-zinc-200 py-8 text-center text-xs text-zinc-400">
         <p>ZINDO — Logiciel de gestion de stock, de caisse et de facturation conçu au Burkina Faso.</p>
         <p className="mt-1">
-          <Link href="/fonctionnalites" className="hover:text-zindo-green-600">Fonctionnalités</Link>
+          <Link href="/fonctionnalites" className="hover:text-zindo-blue-600">Fonctionnalités</Link>
           {" · "}
-          <Link href="/fonctionnalites/logiciel-gestion-pme" className="hover:text-zindo-green-600">Pour les PME</Link>
+          <Link href="/fonctionnalites/logiciel-gestion-pme" className="hover:text-zindo-blue-600">Pour les PME</Link>
           {" · "}
-          <Link href="/fonctionnalites/credits-clients" className="hover:text-zindo-green-600">Crédits clients</Link>
+          <Link href="/fonctionnalites/credits-clients" className="hover:text-zindo-blue-600">Crédits clients</Link>
           {" · "}
-          <Link href="/fonctionnalites/facturation" className="hover:text-zindo-green-600">Factures et devis</Link>
+          <Link href="/fonctionnalites/facturation" className="hover:text-zindo-blue-600">Factures et devis</Link>
           {" · "}
-          <Link href="/tarifs" className="hover:text-zindo-green-600">Tarifs</Link>
+          <Link href="/tarifs" className="hover:text-zindo-blue-600">Tarifs</Link>
         </p>
         <p className="mt-1">
           Support WhatsApp :{" "}
@@ -593,7 +648,7 @@ export default async function RootPage({ searchParams }: { searchParams: Promise
             href="https://wa.me/22604059929"
             target="_blank"
             rel="noopener noreferrer"
-            className="font-medium text-zinc-500 hover:text-zindo-green-600"
+            className="font-medium text-zinc-500 hover:text-zindo-blue-600"
           >
             +226 04 05 99 29
           </a>
@@ -611,18 +666,18 @@ export default async function RootPage({ searchParams }: { searchParams: Promise
               target="_blank"
               rel="noopener noreferrer"
               aria-label={social.label}
-              className="text-zinc-400 hover:text-zindo-green-600"
+              className="text-zinc-400 hover:text-zindo-blue-600"
             >
               <social.icon className="h-5 w-5" />
             </a>
           ))}
         </div>
         <p className="mt-2">
-          <Link href="/cgu" className="hover:text-zindo-green-600">
+          <Link href="/cgu" className="hover:text-zindo-blue-600">
             Conditions générales d&apos;utilisation
           </Link>
           {" · "}
-          <Link href="/confidentialite" className="hover:text-zindo-green-600">
+          <Link href="/confidentialite" className="hover:text-zindo-blue-600">
             Politique de confidentialité
           </Link>
         </p>

@@ -6,7 +6,7 @@ import { writeFileSync, mkdirSync } from "fs";
 import path from "path";
 
 const ROOT = path.resolve(import.meta.dirname, "..");
-const EMBLEM = path.join(ROOT, "public/brand/zindo-emblem.png");
+const EMBLEM = path.join(ROOT, "public/brand/zindo-emblem.svg");
 const ICONS_DIR = path.join(ROOT, "public/icons");
 
 mkdirSync(ICONS_DIR, { recursive: true });

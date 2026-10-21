@@ -162,7 +162,7 @@ export function FasoStockPanel({
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <p className="flex items-center gap-1.5 text-sm font-medium text-zindo-green-600">
+        <p className="flex items-center gap-1.5 text-sm font-medium text-zindo-blue-600">
           <Check className="h-4 w-4" /> Connecté à FasoStock
         </p>
         <div className="flex gap-2">
@@ -215,7 +215,7 @@ export function FasoStockPanel({
             <>
               Dernière synchronisation : {formatDateTime(new Date(syncInfo.at))} —{" "}
               {syncInfo.status === "OK" ? (
-                <span className="text-zindo-green-600">réussie</span>
+                <span className="text-zindo-blue-600">réussie</span>
               ) : (
                 <span className="text-red-600">échouée ({syncInfo.error})</span>
               )}

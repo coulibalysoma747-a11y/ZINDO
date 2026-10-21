@@ -41,14 +41,12 @@ type Faq = { question: string; answer: string };
 const WHATSAPP = "https://wa.me/22604059929";
 
 /**
- * Page d'accueil publique, style sobre (flag accueil_pro) : fond blanc, grands
- * titres fins, vraies photos de commerces (licences libres, crédits en pied de
- * page) et une seule couleur, le vert ZINDO. Les écrans du logiciel montrés sont
- * des maquettes avec des données d'exemple.
+ * Public landing page with an ivory canvas, confident navy typography, local
+ * merchant photography and clear product previews.
  */
 export function AccueilPro({ trialDays, faqs, plans }: { trialDays: number; faqs: Faq[]; plans: PlanOffer[] }) {
   return (
-    <div className="theme-locked min-h-screen overflow-x-hidden bg-white text-zinc-950">
+    <div className="theme-locked min-h-screen overflow-x-hidden bg-zindo-cream text-zinc-950">
       <AccueilProHeader variant="light" />
       <ApercuCookie />
 
@@ -57,11 +55,18 @@ export function AccueilPro({ trialDays, faqs, plans }: { trialDays: number; faqs
         <section className="mx-auto grid max-w-6xl grid-cols-1 items-center gap-12 px-4 pb-20 pt-28 sm:px-6 lg:grid-cols-[1.05fr_1fr] lg:gap-16 lg:pb-28 lg:pt-36">
           <div>
             <Reveal>
-              <p className="text-sm font-semibold uppercase tracking-[0.14em] text-zindo-green-700">Logiciel de caisse et de stock</p>
+              <p className="inline-flex items-center gap-2 rounded-full border border-zindo-blue-100 bg-white px-3 py-1.5 text-xs font-bold uppercase tracking-[0.14em] text-zindo-blue-800 shadow-sm sm:text-sm">
+                <span aria-hidden className="h-2 w-2 rounded-full bg-zindo-copper-500" />
+                Logiciel de caisse et de stock
+              </p>
             </Reveal>
             <Reveal delay={80}>
-              <h1 className="mt-5 text-[2.6rem] font-medium leading-[1.04] tracking-[-0.035em] sm:text-6xl lg:text-[4.1rem]">
-                Votre stock et vos ventes, justes chaque jour.
+              <h1 className="mt-5 text-[2.6rem] font-medium leading-[1.04] tracking-[-0.04em] sm:text-6xl lg:text-[4.1rem]">
+                Votre stock et vos ventes,
+                <span className="relative mt-1 block text-zindo-blue-800">
+                  justes chaque jour.
+                  <span aria-hidden className="absolute -bottom-2 left-0 h-1 w-16 rounded-full bg-zindo-copper-500" />
+                </span>
               </h1>
             </Reveal>
             <Reveal delay={160}>
@@ -74,7 +79,7 @@ export function AccueilPro({ trialDays, faqs, plans }: { trialDays: number; faqs
               <div className="mt-9 flex flex-col gap-3 sm:flex-row">
                 <Link
                   href="/inscription"
-                  className="group inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-full bg-zindo-green-600 px-7 py-4 text-base font-semibold text-white transition hover:bg-zindo-green-700"
+                  className="group inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-full bg-zindo-blue-600 px-7 py-4 text-base font-semibold text-white transition hover:bg-zindo-blue-700"
                 >
                   Essayer gratuitement <ArrowRight className="h-4 w-4 transition group-hover:translate-x-0.5" />
                 </Link>
@@ -92,19 +97,21 @@ export function AccueilPro({ trialDays, faqs, plans }: { trialDays: number; faqs
           </div>
 
           <Reveal delay={200} className="relative">
-            <div className="relative aspect-[4/3] overflow-hidden rounded-[2rem] bg-zinc-100 lg:aspect-[4/4.4]">
-              <Image
-                src="/photos/commercant-comptoir.webp"
-                alt="Un commerçant souriant derrière son comptoir, dans sa boutique de vêtements"
-                fill
-                priority
-                sizes="(min-width: 1024px) 560px, 100vw"
-                className="object-cover object-[60%_center]"
-              />
+            <div className="relative aspect-[4/3] rounded-[2rem] bg-zindo-ink-900 p-2.5 shadow-[0_28px_70px_-26px_rgb(13_31_45/0.55)] lg:aspect-[4/4.4]">
+              <div className="relative h-full w-full overflow-hidden rounded-[1.45rem] bg-zinc-100">
+                <Image
+                  src="/photos/commercant-comptoir.webp"
+                  alt="Un commerçant souriant derrière son comptoir, dans sa boutique de vêtements"
+                  fill
+                  priority
+                  sizes="(min-width: 1024px) 560px, 100vw"
+                  className="object-cover object-[60%_center]"
+                />
+              </div>
             </div>
             {/* Une seule touche « logiciel » : la vente qui vient d'être enregistrée. */}
             <div className="absolute -bottom-6 left-4 right-4 flex items-center gap-3 rounded-2xl bg-white p-4 shadow-[0_20px_50px_-12px_rgb(0_0_0/0.25)] ring-1 ring-black/5 sm:left-auto sm:right-6 sm:w-80">
-              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-zindo-green-50 text-zindo-green-700">
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-zindo-blue-50 text-zindo-blue-700">
                 <Check className="h-5 w-5" />
               </span>
               <div className="min-w-0 flex-1">
@@ -117,7 +124,7 @@ export function AccueilPro({ trialDays, faqs, plans }: { trialDays: number; faqs
         </section>
 
         {/* Bande de confiance, sobre. */}
-        <section className="border-y border-zinc-200">
+        <section className="bg-zindo-ink-900 text-white">
           <div className="mx-auto grid max-w-6xl grid-cols-2 gap-6 px-4 py-8 sm:px-6 lg:grid-cols-4">
             {[
               [CloudOff, "Fonctionne sans Internet"],
@@ -127,8 +134,8 @@ export function AccueilPro({ trialDays, faqs, plans }: { trialDays: number; faqs
             ].map(([Icon, label]) => {
               const I = Icon as typeof Store;
               return (
-                <p key={label as string} className="flex items-center gap-3 text-sm font-medium text-zinc-700">
-                  <I className="h-5 w-5 shrink-0 text-zindo-green-600" /> {label as string}
+                <p key={label as string} className="flex items-center gap-3 text-sm font-medium text-white/90">
+                  <I className="h-5 w-5 shrink-0 text-zindo-copper-300" /> {label as string}
                 </p>
               );
             })}
@@ -159,7 +166,7 @@ export function AccueilPro({ trialDays, faqs, plans }: { trialDays: number; faqs
           <Reveal className="mt-12 flex flex-wrap gap-2">
             {METIERS.map(({ icon: Icon, label }) => (
               <span key={label} className="inline-flex items-center gap-2 rounded-full border border-zinc-200 px-4 py-2 text-sm text-zinc-700">
-                <Icon className="h-4 w-4 text-zindo-green-600" /> {label}
+                <Icon className="h-4 w-4 text-zindo-blue-600" /> {label}
               </span>
             ))}
           </Reveal>
@@ -221,7 +228,7 @@ export function AccueilPro({ trialDays, faqs, plans }: { trialDays: number; faqs
                   <th className="px-3 py-4 font-semibold text-zinc-500 sm:px-5" />
                   <th className="px-2 py-4 text-center font-semibold text-zinc-500 sm:px-4">Cahier</th>
                   <th className="px-2 py-4 text-center font-semibold text-zinc-500 sm:px-4">Excel</th>
-                  <th className="bg-zindo-green-50 px-2 py-4 text-center font-bold text-zindo-green-700 sm:px-4">ZINDO</th>
+                  <th className="bg-zindo-blue-50 px-2 py-4 text-center font-bold text-zindo-blue-700 sm:px-4">ZINDO</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-zinc-100">
@@ -230,7 +237,7 @@ export function AccueilPro({ trialDays, faqs, plans }: { trialDays: number; faqs
                     <td className="px-3 py-3.5 font-medium sm:px-5">{label}</td>
                     <td className="px-2 py-3.5 text-center sm:px-4"><Mark ok={cahier} /></td>
                     <td className="px-2 py-3.5 text-center sm:px-4"><Mark ok={excel} /></td>
-                    <td className="bg-zindo-green-50/60 px-2 py-3.5 text-center sm:px-4"><Mark ok /></td>
+                    <td className="bg-zindo-blue-50/60 px-2 py-3.5 text-center sm:px-4"><Mark ok /></td>
                   </tr>
                 ))}
               </tbody>
@@ -250,7 +257,7 @@ export function AccueilPro({ trialDays, faqs, plans }: { trialDays: number; faqs
           <div aria-hidden className="absolute inset-0 -z-10 bg-gradient-to-r from-black/80 via-black/60 to-black/20" />
           <div className="mx-auto max-w-6xl px-4 py-24 text-white sm:px-6 lg:py-32">
             <Reveal className="max-w-xl">
-              <p className="text-sm font-semibold uppercase tracking-[0.14em] text-zindo-green-300">Conçu au Burkina Faso</p>
+              <p className="text-sm font-semibold uppercase tracking-[0.14em] text-zindo-blue-300">Conçu au Burkina Faso</p>
               <h2 className="mt-4 text-3xl font-medium leading-tight tracking-[-0.03em] sm:text-5xl">Pensé pour la réalité des commerces d&apos;Afrique de l&apos;Ouest</h2>
               <ul className="mt-8 space-y-3 text-white/85">
                 {[
@@ -260,7 +267,7 @@ export function AccueilPro({ trialDays, faqs, plans }: { trialDays: number; faqs
                   "Une équipe joignable sur WhatsApp, en français",
                 ].map((t) => (
                   <li key={t} className="flex items-start gap-3">
-                    <Check className="mt-1 h-4 w-4 shrink-0 text-zindo-green-300" /> {t}
+                    <Check className="mt-1 h-4 w-4 shrink-0 text-zindo-blue-300" /> {t}
                   </li>
                 ))}
               </ul>
@@ -299,7 +306,7 @@ export function AccueilPro({ trialDays, faqs, plans }: { trialDays: number; faqs
           </Reveal>
           <p className="mt-6 text-center text-sm text-zinc-500">
             Essai gratuit de {trialDays} jours, sans paiement pendant l'essai.{" "}
-            <Link href="/tarifs" className="font-semibold text-zindo-green-700 hover:underline">
+            <Link href="/tarifs" className="font-semibold text-zindo-blue-700 hover:underline">
               Détail des tarifs
             </Link>
           </p>
@@ -312,7 +319,7 @@ export function AccueilPro({ trialDays, faqs, plans }: { trialDays: number; faqs
             <div className="mt-12 grid gap-px overflow-hidden rounded-2xl border border-zinc-200 bg-zinc-200 sm:grid-cols-2 lg:grid-cols-3">
               {SECURITY.map(({ icon: Icon, title, text }, i) => (
                 <Reveal key={title} delay={(i % 3) * 100} className="bg-white p-6">
-                  <Icon className="h-5 w-5 text-zindo-green-600" />
+                  <Icon className="h-5 w-5 text-zindo-blue-600" />
                   <h3 className="mt-4 font-semibold">{title}</h3>
                   <p className="mt-1.5 text-sm leading-relaxed text-zinc-600">{text}</p>
                 </Reveal>
@@ -328,7 +335,7 @@ export function AccueilPro({ trialDays, faqs, plans }: { trialDays: number; faqs
               <Image src="/brand/founder-coulibaly-soma.jpg" alt="Coulibaly Soma, fondateur de ZINDO" fill sizes="(min-width: 1024px) 380px, 100vw" className="object-cover object-top" />
             </Reveal>
             <Reveal delay={120}>
-              <p className="text-sm font-semibold uppercase tracking-[0.14em] text-zindo-green-700">Accompagnement</p>
+              <p className="text-sm font-semibold uppercase tracking-[0.14em] text-zindo-blue-700">Accompagnement</p>
               <h2 className="mt-4 text-3xl font-medium tracking-[-0.03em] sm:text-5xl">Vous n&apos;êtes pas seul pour démarrer</h2>
               <p className="mt-5 max-w-xl text-lg leading-relaxed text-zinc-600">
                 ZINDO est développé au Burkina Faso par Coulibaly Soma. L&apos;équipe vous aide à régler votre commerce, à saisir vos produits et
@@ -340,7 +347,7 @@ export function AccueilPro({ trialDays, faqs, plans }: { trialDays: number; faqs
                 rel="noopener noreferrer"
                 className="mt-8 inline-flex items-center gap-2 rounded-full border border-zinc-300 px-6 py-3.5 text-sm font-semibold transition hover:border-zinc-900"
               >
-                <MessageCircle className="h-4 w-4 text-zindo-green-600" /> Écrire sur WhatsApp : +226 04 05 99 29
+                <MessageCircle className="h-4 w-4 text-zindo-blue-600" /> Écrire sur WhatsApp : +226 04 05 99 29
               </a>
             </Reveal>
           </div>
@@ -374,7 +381,7 @@ export function AccueilPro({ trialDays, faqs, plans }: { trialDays: number; faqs
             </p>
             <Link
               href="/inscription"
-              className="mt-9 inline-flex items-center gap-2 rounded-full bg-zindo-green-500 px-7 py-4 text-base font-semibold text-white transition hover:bg-zindo-green-600"
+              className="mt-9 inline-flex items-center gap-2 rounded-full bg-zindo-blue-500 px-7 py-4 text-base font-semibold text-white transition hover:bg-zindo-blue-600"
             >
               Créer mon compte <ArrowRight className="h-4 w-4" />
             </Link>
@@ -437,7 +444,7 @@ const SECURITY = [
 
 function Mark({ ok }: { ok: boolean }) {
   return ok ? (
-    <Check className="mx-auto h-5 w-5 text-zindo-green-600" aria-label="Oui" />
+    <Check className="mx-auto h-5 w-5 text-zindo-blue-600" aria-label="Oui" />
   ) : (
     <X className="mx-auto h-5 w-5 text-zinc-300" aria-label="Non" />
   );
@@ -461,7 +468,7 @@ const METIERS = [
 function SectionTitle({ eyebrow, title, text }: { eyebrow: string; title: string; text?: string }) {
   return (
     <Reveal className="mx-auto max-w-2xl text-center">
-      <p className="text-xs font-semibold uppercase tracking-wider text-zindo-green-700">{eyebrow}</p>
+      <p className="text-xs font-semibold uppercase tracking-wider text-zindo-blue-700">{eyebrow}</p>
       <h2 className="mt-3 text-3xl font-medium tracking-[-0.03em] sm:text-5xl">{title}</h2>
       {text && <p className="mt-4 text-lg text-zinc-600">{text}</p>}
     </Reveal>
@@ -486,13 +493,13 @@ function Feature({
   return (
     <div className="grid items-center gap-10 lg:grid-cols-2 lg:gap-16">
       <Reveal className={reverse ? "lg:order-2" : ""}>
-        <p className="text-sm font-bold text-zindo-green-600">{eyebrow}</p>
+        <p className="text-sm font-bold text-zindo-blue-600">{eyebrow}</p>
         <h3 className="mt-2 text-2xl font-medium tracking-[-0.02em] sm:text-4xl">{title}</h3>
         <p className="mt-4 text-lg leading-relaxed text-zinc-600">{text}</p>
         <ul className="mt-6 space-y-3">
           {points.map((p) => (
             <li key={p} className="flex items-start gap-3 text-zindo-ink-700">
-              <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-zindo-green-100 text-zindo-green-700">
+              <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-zindo-blue-100 text-zindo-blue-700">
                 <Check className="h-3.5 w-3.5" />
               </span>
               {p}
@@ -501,7 +508,7 @@ function Feature({
         </ul>
       </Reveal>
       <Reveal delay={150} className={reverse ? "lg:order-1" : ""}>
-        <div className="rounded-[2rem] bg-gradient-to-br from-zindo-green-50 via-white to-zinc-100 p-5 ring-1 ring-zinc-200/70 sm:p-10">{visual}</div>
+        <div className="rounded-[2rem] bg-gradient-to-br from-zindo-blue-50 via-white to-zinc-100 p-5 ring-1 ring-zinc-200/70 sm:p-10">{visual}</div>
       </Reveal>
     </div>
   );
@@ -509,9 +516,9 @@ function Feature({
 
 function PriceCard({ name, price, period, note, highlighted = false }: { name: string; price: string; period: string; note: string; highlighted?: boolean }) {
   return (
-    <div className={`relative rounded-2xl border p-7 ${highlighted ? "border-zindo-green-500 ring-4 ring-zindo-green-500/10" : "border-zinc-200"}`}>
+    <div className={`relative rounded-2xl border p-7 ${highlighted ? "border-zindo-blue-500 ring-4 ring-zindo-blue-500/10" : "border-zinc-200"}`}>
       {highlighted && (
-        <span className="absolute -top-3 left-7 rounded-full bg-zindo-green-500 px-3 py-0.5 text-xs font-bold text-white">Le plus avantageux</span>
+        <span className="absolute -top-3 left-7 rounded-full bg-zindo-blue-500 px-3 py-0.5 text-xs font-bold text-white">Le plus avantageux</span>
       )}
       <p className="font-semibold text-zinc-600">{name}</p>
       <p className="mt-3 flex items-baseline gap-2">
@@ -522,7 +529,7 @@ function PriceCard({ name, price, period, note, highlighted = false }: { name: s
       <Link
         href="/inscription"
         className={`mt-6 flex items-center justify-center rounded-xl px-4 py-3 text-sm font-bold transition ${
-          highlighted ? "bg-zindo-green-500 text-white hover:bg-zindo-green-600" : "border border-zinc-300 text-zindo-ink-700 hover:border-zinc-400"
+          highlighted ? "bg-zindo-blue-500 text-white hover:bg-zindo-blue-600" : "border border-zinc-300 text-zindo-ink-700 hover:border-zinc-400"
         }`}
       >
         Commencer l&apos;essai gratuit
@@ -579,7 +586,7 @@ function FooterPro() {
             <p className="mt-4 max-w-xs text-sm leading-relaxed text-zinc-500">
               Logiciel de caisse, de stock et de facturation conçu au Burkina Faso, pour les boutiques comme pour les PME.
             </p>
-            <a href={WHATSAPP} target="_blank" rel="noopener noreferrer" className="mt-4 inline-block text-sm font-medium text-zindo-ink-700 hover:text-zindo-green-700">
+            <a href={WHATSAPP} target="_blank" rel="noopener noreferrer" className="mt-4 inline-block text-sm font-medium text-zindo-ink-700 hover:text-zindo-blue-700">
               WhatsApp : +226 04 05 99 29
             </a>
           </div>

@@ -74,14 +74,14 @@ export function BulkStockFillForm({ products, locationId }: { products: Product[
               <button
                 type="button"
                 onClick={() => setMode("add")}
-                className={`rounded-md px-3 py-1.5 text-xs font-medium ${mode === "add" ? "bg-zindo-green-500 text-white" : "text-zinc-600"}`}
+                className={`rounded-md px-3 py-1.5 text-xs font-medium ${mode === "add" ? "bg-zindo-blue-500 text-white" : "text-zinc-600"}`}
               >
                 Ajouter
               </button>
               <button
                 type="button"
                 onClick={() => setMode("set")}
-                className={`rounded-md px-3 py-1.5 text-xs font-medium ${mode === "set" ? "bg-zindo-green-500 text-white" : "text-zinc-600"}`}
+                className={`rounded-md px-3 py-1.5 text-xs font-medium ${mode === "set" ? "bg-zindo-blue-500 text-white" : "text-zinc-600"}`}
               >
                 Mettre le stock à
               </button>
@@ -126,7 +126,7 @@ export function BulkStockFillForm({ products, locationId }: { products: Product[
               type="checkbox"
               checked={!!checked[p.id]}
               onChange={(e) => setChecked((c) => ({ ...c, [p.id]: e.target.checked }))}
-              className="h-4 w-4 rounded accent-zindo-green-500"
+              className="h-4 w-4 rounded accent-zindo-blue-500"
             />
             <div className="min-w-0 flex-1">
               <p className="truncate text-sm font-medium text-zinc-900">{p.name}</p>

@@ -40,7 +40,7 @@ export function SalesBarChart({ points, currency }: { points: { label: string; v
               className="group relative flex h-full flex-1 items-end justify-center"
             >
               <span
-                className={`w-full max-w-10 rounded-t-[4px] transition-colors ${active === i ? "bg-zindo-green-700" : "bg-zindo-green-500"}`}
+                className={`w-full max-w-10 rounded-t-[4px] transition-colors ${active === i ? "bg-zindo-blue-700" : "bg-zindo-blue-500"}`}
                 style={{ height: p.value > 0 ? `max(${(p.value / max) * 100}%, 3px)` : 0 }}
               />
               {active === i && (

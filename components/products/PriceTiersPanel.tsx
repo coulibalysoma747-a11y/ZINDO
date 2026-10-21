@@ -112,7 +112,7 @@ export function PriceTiersPanel({
               <li key={t.id}>
                 <form
                   action={(fd) => handleUpdate(t.id, fd)}
-                  className="grid grid-cols-1 gap-3 rounded-xl border border-zindo-green-300 bg-zindo-green-50/40 p-3 sm:grid-cols-3"
+                  className="grid grid-cols-1 gap-3 rounded-xl border border-zindo-blue-300 bg-zindo-blue-50/40 p-3 sm:grid-cols-3"
                 >
                   <Input name="minQuantity" type="number" min={1} step={1} defaultValue={t.minQuantity} required />
                   <Input name="unitPrice" type="number" min={0} defaultValue={t.unitPrice} required />

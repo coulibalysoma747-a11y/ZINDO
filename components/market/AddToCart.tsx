@@ -32,7 +32,7 @@ export function AddToCart({ productId, available }: { productId: string; availab
             addToCart(productId, quantity);
             setAdded(true);
           }}
-          className="inline-flex h-12 flex-1 items-center justify-center gap-2 rounded-xl border-2 border-zindo-green-600 bg-white font-semibold text-zindo-green-700 hover:bg-zindo-green-50"
+          className="inline-flex h-12 flex-1 items-center justify-center gap-2 rounded-xl border-2 border-zindo-blue-600 bg-white font-semibold text-zindo-blue-700 hover:bg-zindo-blue-50"
         >
           <ShoppingCart className="h-5 w-5" /> Ajouter au panier
         </button>
@@ -42,7 +42,7 @@ export function AddToCart({ productId, available }: { productId: string; availab
             addToCart(productId, quantity);
             router.push("/marche/panier");
           }}
-          className="inline-flex h-12 flex-1 items-center justify-center rounded-xl bg-zindo-green-600 font-semibold text-white hover:bg-zindo-green-700"
+          className="inline-flex h-12 flex-1 items-center justify-center rounded-xl bg-zindo-blue-600 font-semibold text-white hover:bg-zindo-blue-700"
         >
           Commander maintenant
         </button>

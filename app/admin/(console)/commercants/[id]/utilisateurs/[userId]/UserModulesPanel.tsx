@@ -70,12 +70,12 @@ export function UserModulesPanel({
                         router.refresh();
                       })
                     }
-                    className="h-4 w-4 rounded accent-zindo-green-500 disabled:opacity-50"
+                    className="h-4 w-4 rounded accent-zindo-blue-500 disabled:opacity-50"
                   />
                 </td>
                 <td className="py-2 text-right">
                   {overridden && (
-                    <span className="rounded-full bg-zindo-green-50 px-2 py-0.5 text-[11px] font-medium text-zindo-green-600">
+                    <span className="rounded-full bg-zindo-blue-50 px-2 py-0.5 text-[11px] font-medium text-zindo-blue-600">
                       Personnalisé
                     </span>
                   )}

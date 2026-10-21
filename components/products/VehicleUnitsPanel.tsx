@@ -94,7 +94,7 @@ export function VehicleUnitsPanel({
             </Select>
           </Field>
           <label className="flex cursor-pointer items-center gap-2 text-sm text-zinc-700">
-            <input type="checkbox" name="cmcAvailable" className="h-4 w-4 rounded accent-zindo-green-500" />
+            <input type="checkbox" name="cmcAvailable" className="h-4 w-4 rounded accent-zindo-blue-500" />
             CMC (Certificat de Mise en Circulation) disponible
           </label>
           {error && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
@@ -184,7 +184,7 @@ function EditRow({ unit, onDone }: { unit: VehicleUnit; onDone: () => void }) {
               type="checkbox"
               name="cmcAvailable"
               defaultChecked={unit.cmcAvailable}
-              className="h-4 w-4 rounded accent-zindo-green-500"
+              className="h-4 w-4 rounded accent-zindo-blue-500"
             />
             CMC disponible
           </label>
@@ -195,7 +195,7 @@ function EditRow({ unit, onDone }: { unit: VehicleUnit; onDone: () => void }) {
             <button
               type="submit"
               disabled={pending}
-              className="rounded-lg p-1.5 text-zindo-green-600 hover:bg-zindo-green-50 disabled:opacity-50"
+              className="rounded-lg p-1.5 text-zindo-blue-600 hover:bg-zindo-blue-50 disabled:opacity-50"
             >
               <Check className="h-4 w-4" />
             </button>

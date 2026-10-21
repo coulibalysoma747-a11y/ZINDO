@@ -124,7 +124,7 @@ export function ImmatriculationOverview({
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-2">
-        <IdCard className="h-5 w-5 text-zindo-green-600" />
+        <IdCard className="h-5 w-5 text-zindo-blue-600" />
         <h1 className="text-xl font-bold text-zinc-900">Immatriculation Engins</h1>
       </div>
 
@@ -139,7 +139,7 @@ export function ImmatriculationOverview({
               type="button"
               onClick={() => setFilter(c.key)}
               className={`rounded-xl border p-3 text-left transition-colors ${
-                filter === c.key ? "border-zindo-green-400 bg-zindo-green-50" : "border-zinc-200 bg-white hover:border-zindo-green-300"
+                filter === c.key ? "border-zindo-blue-400 bg-zindo-blue-50" : "border-zinc-200 bg-white hover:border-zindo-blue-300"
               }`}
             >
               <c.icon className={`h-4 w-4 ${c.tone}`} />
@@ -160,7 +160,7 @@ export function ImmatriculationOverview({
           <button
             type="button"
             onClick={() => setFilter("total")}
-            className="mb-3 inline-flex items-center gap-1.5 rounded-full bg-zindo-green-100 px-3 py-1 text-xs font-medium text-zindo-green-800 hover:bg-zindo-green-200"
+            className="mb-3 inline-flex items-center gap-1.5 rounded-full bg-zindo-blue-100 px-3 py-1 text-xs font-medium text-zindo-blue-800 hover:bg-zindo-blue-200"
           >
             {filterLabel} <X className="h-3.5 w-3.5" />
           </button>
@@ -177,7 +177,7 @@ export function ImmatriculationOverview({
           <div className="space-y-2">
             {filtered.map((d) => (
               <button key={d.id} type="button" onClick={() => setOpenDossierId(d.id)} className="block w-full text-left">
-                <Card className="p-3 hover:border-zindo-green-300">
+                <Card className="p-3 hover:border-zindo-blue-300">
                   <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0">
                       <p className="font-mono text-xs text-emerald-600">{d.saleNumber}</p>

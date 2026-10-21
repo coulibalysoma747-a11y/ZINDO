@@ -51,7 +51,7 @@ export function PaymentReceiptView({
                 type="button"
                 onClick={() => setWidth(opt.value)}
                 className={`rounded-md px-2.5 py-1 text-xs font-medium transition-colors ${
-                  width === opt.value ? "bg-zindo-green-600 text-white" : "text-zinc-600 hover:bg-zinc-100"
+                  width === opt.value ? "bg-zindo-blue-600 text-white" : "text-zinc-600 hover:bg-zinc-100"
                 }`}
               >
                 {opt.label}

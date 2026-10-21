@@ -71,7 +71,7 @@ export default async function AdminVerificationsPage() {
                   <div>
                     <Link
                       href={`/admin/commercants/${r.businessId}`}
-                      className="inline-flex items-center gap-1 font-medium text-zindo-green-600 hover:underline"
+                      className="inline-flex items-center gap-1 font-medium text-zindo-blue-600 hover:underline"
                     >
                       {r.business.name} <ExternalLink className="h-3 w-3" />
                     </Link>

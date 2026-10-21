@@ -82,7 +82,7 @@ export default async function SubscriptionPage() {
               <div
                 className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${
                   state.status === "ACTIVE"
-                    ? "bg-zindo-green-50 text-zindo-green-600"
+                    ? "bg-zindo-blue-50 text-zindo-blue-600"
                     : state.status === "TRIAL"
                       ? "bg-blue-50 text-blue-600"
                       : "bg-red-50 text-red-600"
@@ -146,7 +146,7 @@ export default async function SubscriptionPage() {
           {!pendingInvoice && (
             <a
               href="#formules"
-              className="flex w-full items-center justify-center gap-2 rounded-xl bg-zindo-green-500 px-4 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-zindo-green-600"
+              className="flex w-full items-center justify-center gap-2 rounded-xl bg-zindo-blue-500 px-4 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-zindo-blue-600"
             >
               <RefreshCw className="h-4 w-4" /> Souscrire / Renouveler
             </a>
@@ -224,7 +224,7 @@ export default async function SubscriptionPage() {
 
       <p className="text-center text-xs text-zinc-400">
         Besoin d&apos;aide avec votre abonnement ?{" "}
-        <Link href="/support" className="font-medium text-zindo-green-600 hover:underline">
+        <Link href="/support" className="font-medium text-zindo-blue-600 hover:underline">
           Contactez le support
         </Link>
         .

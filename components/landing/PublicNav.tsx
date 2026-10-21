@@ -22,8 +22,8 @@ export function PublicNavLinks() {
           href={l.href}
           className={
             l.href === "/marche"
-              ? "rounded-xl px-3 py-2 text-sm font-bold text-zindo-green-700 hover:bg-zindo-green-100"
-              : "rounded-xl px-3 py-2 text-sm font-semibold text-zindo-ink-700 hover:text-zindo-green-600"
+              ? "rounded-xl px-3 py-2 text-sm font-bold text-zindo-blue-700 hover:bg-zindo-blue-100"
+              : "rounded-xl px-3 py-2 text-sm font-semibold text-zindo-ink-700 hover:text-zindo-blue-600"
           }
         >
           {l.label}
@@ -54,7 +54,7 @@ export function PublicNavMenu() {
         <Link href="/login" className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold text-zindo-ink-900 hover:bg-zinc-50">
           <span>🔐</span> Se connecter
         </Link>
-        <Link href="/inscription" className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-bold text-zindo-green-700 hover:bg-zindo-green-100">
+        <Link href="/inscription" className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-bold text-zindo-blue-700 hover:bg-zindo-blue-100">
           <span>🚀</span> Essai gratuit
         </Link>
         <a href={CONTACT_WHATSAPP} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold text-zindo-ink-900 hover:bg-zinc-50">

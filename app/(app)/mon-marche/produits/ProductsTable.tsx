@@ -75,7 +75,7 @@ export function ProductsTable({ rows, marketOnly = false }: { rows: ProductRow[]
                 </option>
               ))}
             </select>
-            <button type="button" disabled={pending} onClick={() => run(true)} className="h-9 rounded-lg bg-zindo-green-600 px-3 text-sm font-semibold text-white disabled:opacity-50">
+            <button type="button" disabled={pending} onClick={() => run(true)} className="h-9 rounded-lg bg-zindo-blue-600 px-3 text-sm font-semibold text-white disabled:opacity-50">
               Publier la sélection
             </button>
             <button type="button" disabled={pending} onClick={() => run(false)} className="h-9 rounded-lg border border-red-200 bg-white px-3 text-sm font-semibold text-red-600 disabled:opacity-50">
@@ -90,7 +90,7 @@ export function ProductsTable({ rows, marketOnly = false }: { rows: ProductRow[]
       <div className="divide-y divide-zinc-100">
         {rows.length === 0 && <p className="p-6 text-center text-sm text-zinc-500">Aucun produit.</p>}
         {rows.map((p) => (
-          <div key={p.id} className={`space-y-2 p-4 ${selected.has(p.id) ? "bg-zindo-green-50/50" : ""}`}>
+          <div key={p.id} className={`space-y-2 p-4 ${selected.has(p.id) ? "bg-zindo-blue-50/50" : ""}`}>
             <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
               <div className="flex min-w-0 flex-1 items-center gap-3">
                 <input type="checkbox" checked={selected.has(p.id)} onChange={() => toggle(p.id)} className="h-4 w-4 shrink-0" aria-label={`Sélectionner ${p.name}`} />

@@ -89,7 +89,7 @@ export default async function AdminSecurityPage() {
   const stats = [
     { label: "Connexions réussies (7j)", value: successCount7d ?? 0, icon: LogIn, tone: "text-emerald-600 bg-emerald-50" },
     { label: "Échecs de connexion (7j)", value: failCount7d ?? 0, icon: ShieldX, tone: "text-red-600 bg-red-50" },
-    { label: "Administrateurs", value: adminCount ?? 0, icon: ShieldCheck, tone: "text-zindo-green-600 bg-zindo-green-50" },
+    { label: "Administrateurs", value: adminCount ?? 0, icon: ShieldCheck, tone: "text-zindo-blue-600 bg-zindo-blue-50" },
     { label: "Actions enregistrées", value: auditLogs.length, icon: ListChecks, tone: "text-zindo-ink-700 bg-zindo-ink-50" },
   ];
 

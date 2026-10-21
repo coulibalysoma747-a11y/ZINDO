@@ -202,7 +202,7 @@ export function ArrivalEditor({ arrival, items, expenses, suppliers, purchases, 
         </p>
       )}
       {notice && (
-        <p className={`rounded-xl p-3 text-sm ${notice.tone === "ok" ? "bg-zindo-green-50 text-zindo-green-900" : "bg-red-50 text-red-800"}`}>{notice.text}</p>
+        <p className={`rounded-xl p-3 text-sm ${notice.tone === "ok" ? "bg-zindo-blue-50 text-zindo-blue-900" : "bg-red-50 text-red-800"}`}>{notice.text}</p>
       )}
 
       {draft && (
@@ -255,7 +255,7 @@ export function ArrivalEditor({ arrival, items, expenses, suppliers, purchases, 
                   disabled={pending}
                   onClick={() => arrival.stockMode !== value && saveSetting({ stockMode: value })}
                   className={`rounded-xl border p-3 text-left transition-colors ${
-                    arrival.stockMode === value ? "border-zindo-green-500 bg-zindo-green-50" : "border-zinc-200 bg-white hover:border-zinc-300"
+                    arrival.stockMode === value ? "border-zindo-blue-500 bg-zindo-blue-50" : "border-zinc-200 bg-white hover:border-zinc-300"
                   }`}
                 >
                   <span className="block text-sm font-semibold text-zinc-900">{title}</span>
@@ -546,7 +546,7 @@ export function ArrivalEditor({ arrival, items, expenses, suppliers, purchases, 
                 disabled={locked || pending}
                 onClick={() => arrival.averageWithOld !== value && saveSetting({ averageWithOld: value })}
                 className={`rounded-xl border p-3 text-left transition-colors ${
-                  arrival.averageWithOld === value ? "border-zindo-green-500 bg-zindo-green-50" : "border-zinc-200 bg-white hover:border-zinc-300"
+                  arrival.averageWithOld === value ? "border-zindo-blue-500 bg-zindo-blue-50" : "border-zinc-200 bg-white hover:border-zinc-300"
                 }`}
               >
                 <span className="block text-sm font-semibold text-zinc-900">{title}</span>

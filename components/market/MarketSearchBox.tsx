@@ -51,7 +51,7 @@ export function MarketSearchBox() {
 
   return (
     <div className="relative w-full">
-      <form onSubmit={submit} role="search" className="flex h-11 w-full items-center overflow-hidden rounded-xl border border-zinc-300 bg-white shadow-sm focus-within:border-zindo-green-600 focus-within:ring-2 focus-within:ring-zindo-green-600/20">
+      <form onSubmit={submit} role="search" className="flex h-11 w-full items-center overflow-hidden rounded-xl border border-zinc-300 bg-white shadow-sm focus-within:border-zindo-blue-600 focus-within:ring-2 focus-within:ring-zindo-blue-600/20">
         <Search className="ml-3 h-5 w-5 shrink-0 text-zinc-400" />
         <input
           value={q}
@@ -70,7 +70,7 @@ export function MarketSearchBox() {
             <X className="h-4 w-4" />
           </button>
         )}
-        <button type="submit" className="hidden h-full shrink-0 bg-zindo-green-600 px-5 text-sm font-semibold text-white hover:bg-zindo-green-700 sm:block">
+        <button type="submit" className="hidden h-full shrink-0 bg-zindo-blue-600 px-5 text-sm font-semibold text-white hover:bg-zindo-blue-700 sm:block">
           Rechercher
         </button>
       </form>

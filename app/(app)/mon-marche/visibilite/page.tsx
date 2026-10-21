@@ -86,7 +86,7 @@ export default async function MyMarketVisibilityPage() {
         </section>
         <section className="space-y-3 rounded-2xl bg-white p-5 ring-1 ring-zinc-200">
           <h2 className="flex items-center gap-2 font-semibold text-zinc-900">
-            <Store className="h-5 w-5 text-zindo-green-700" /> Mettre ma boutique en avant
+            <Store className="h-5 w-5 text-zindo-blue-700" /> Mettre ma boutique en avant
           </h2>
           <p className="text-sm text-zinc-500">Elle apparaît dans « Boutiques mises en avant » et en tête de la liste des boutiques.</p>
           <BoostForm

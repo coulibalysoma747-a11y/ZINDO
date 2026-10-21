@@ -194,7 +194,7 @@ export default async function MyMarketDashboardPage({ searchParams }: { searchPa
       <section className="overflow-hidden rounded-2xl bg-white ring-1 ring-zinc-200">
         <div className="flex items-center justify-between p-5 pb-3">
           <h2 className="font-semibold text-zinc-900">Commandes récentes</h2>
-          <Link href="/mon-marche/commandes" className="inline-flex items-center text-sm font-semibold text-zindo-green-700 hover:underline">
+          <Link href="/mon-marche/commandes" className="inline-flex items-center text-sm font-semibold text-zindo-blue-700 hover:underline">
             Toutes les commandes <ChevronRight className="h-4 w-4" />
           </Link>
         </div>
@@ -215,7 +215,7 @@ export default async function MyMarketDashboardPage({ searchParams }: { searchPa
               {allOrders.slice(0, 6).map((o) => (
                 <tr key={o.id} className="hover:bg-zinc-50">
                   <td className="px-5 py-3">
-                    <Link href={`/mon-marche/commandes/${o.id}`} className="font-semibold text-zindo-green-700 hover:underline">
+                    <Link href={`/mon-marche/commandes/${o.id}`} className="font-semibold text-zindo-blue-700 hover:underline">
                       {o.number}
                     </Link>
                     <p className="text-xs text-zinc-500">{formatDateTime(o.createdAt)}</p>

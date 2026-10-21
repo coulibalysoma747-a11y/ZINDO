@@ -57,12 +57,12 @@ export function OnlineStoreForm({
             <Input id="slug" name="slug" defaultValue={store?.slug ?? ""} placeholder="ma-boutique" required />
           </div>
         </Field>
-        <label className="flex items-start gap-2 rounded-lg border border-zinc-200 bg-zindo-green-50/40 p-3">
+        <label className="flex items-start gap-2 rounded-lg border border-zinc-200 bg-zindo-blue-50/40 p-3">
           <input
             type="checkbox"
             name="published"
             defaultChecked={store?.published ?? false}
-            className="mt-0.5 h-4 w-4 rounded accent-zindo-green-500"
+            className="mt-0.5 h-4 w-4 rounded accent-zindo-blue-500"
           />
           <span>
             <span className="block text-sm font-medium text-zinc-900">Mettre ma boutique en ligne</span>
@@ -135,7 +135,7 @@ export function OnlineStoreForm({
               name="deliveryEnabled"
               defaultChecked={store?.deliveryEnabled ?? false}
               onChange={(e) => setDeliveryEnabled(e.target.checked)}
-              className="h-4 w-4 rounded accent-zindo-green-500"
+              className="h-4 w-4 rounded accent-zindo-blue-500"
             />
             Je livre
           </label>
@@ -172,7 +172,7 @@ export function OnlineStoreForm({
             type="checkbox"
             name="pickupEnabled"
             defaultChecked={store?.pickupEnabled ?? false}
-            className="mt-0.5 h-4 w-4 rounded accent-zindo-green-500"
+            className="mt-0.5 h-4 w-4 rounded accent-zindo-blue-500"
           />
           <span>
             <span className="block text-sm font-medium text-zinc-900">Retrait en boutique</span>
@@ -185,7 +185,7 @@ export function OnlineStoreForm({
             type="checkbox"
             name="payOnDeliveryEnabled"
             defaultChecked={store?.payOnDeliveryEnabled ?? true}
-            className="h-4 w-4 rounded accent-zindo-green-500"
+            className="h-4 w-4 rounded accent-zindo-blue-500"
           />
           Paiement à la livraison / sur place
         </label>
@@ -197,7 +197,7 @@ export function OnlineStoreForm({
               name="mobileMoneyEnabled"
               defaultChecked={store?.mobileMoneyEnabled ?? false}
               onChange={(e) => setMobileMoneyEnabled(e.target.checked)}
-              className="h-4 w-4 rounded accent-zindo-green-500"
+              className="h-4 w-4 rounded accent-zindo-blue-500"
             />
             Mobile Money
           </label>
@@ -225,7 +225,7 @@ export function OnlineStoreForm({
             type="checkbox"
             name="showOutOfStock"
             defaultChecked={store?.showOutOfStock ?? false}
-            className="mt-0.5 h-4 w-4 rounded accent-zindo-green-500"
+            className="mt-0.5 h-4 w-4 rounded accent-zindo-blue-500"
           />
           <span>
             <span className="block text-sm font-medium text-zinc-900">Afficher aussi les articles en rupture</span>

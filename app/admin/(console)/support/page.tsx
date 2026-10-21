@@ -77,7 +77,7 @@ export default async function AdminSupportPage() {
                     <p className="text-xs text-zinc-400">
                       <Link
                         href={`/admin/commercants/${t.businessId}`}
-                        className="inline-flex items-center gap-1 font-medium text-zindo-green-600 hover:underline"
+                        className="inline-flex items-center gap-1 font-medium text-zindo-blue-600 hover:underline"
                       >
                         {t.business.name} <ExternalLink className="h-3 w-3" />
                       </Link>{" "}

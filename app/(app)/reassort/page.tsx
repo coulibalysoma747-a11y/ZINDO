@@ -84,7 +84,7 @@ async function LegacyRestock() {
                 </div>
                 <div className="text-right">
                   <p className="text-xs text-zinc-400">À commander</p>
-                  <p className="font-bold text-zindo-green-600">{r.suggestedQty}</p>
+                  <p className="font-bold text-zindo-blue-600">{r.suggestedQty}</p>
                 </div>
               </div>
             </CardBody>

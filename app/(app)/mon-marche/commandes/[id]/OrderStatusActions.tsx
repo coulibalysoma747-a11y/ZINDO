@@ -41,7 +41,7 @@ export function OrderStatusActions({ orderId, status, deliveryMode }: { orderId:
             type="button"
             disabled={pending}
             onClick={() => run(next.status)}
-            className="h-12 w-full rounded-xl bg-zindo-green-600 font-semibold text-white hover:bg-zindo-green-700 disabled:opacity-50"
+            className="h-12 w-full rounded-xl bg-zindo-blue-600 font-semibold text-white hover:bg-zindo-blue-700 disabled:opacity-50"
           >
             {pending ? "Enregistrement…" : next.label}
           </button>

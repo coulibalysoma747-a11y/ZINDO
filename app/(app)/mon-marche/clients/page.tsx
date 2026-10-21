@@ -57,7 +57,7 @@ export default async function MyMarketCustomersPage() {
                 <tr key={c.phone}>
                   <td className="px-4 py-3">
                     <p className="font-medium text-zinc-900">{c.name}</p>
-                    <a href={`tel:${c.phone}`} className="text-xs text-zindo-green-700">
+                    <a href={`tel:${c.phone}`} className="text-xs text-zindo-blue-700">
                       {c.phone}
                     </a>
                     {c.pro && <p className="text-xs text-zinc-500">Pro · {c.pro}</p>}

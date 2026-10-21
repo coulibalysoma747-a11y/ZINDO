@@ -25,7 +25,7 @@ export function Verify2FAForm() {
             placeholder="123456"
             required
             aria-invalid={state?.error ? true : undefined}
-            className="h-12 w-full rounded-2xl border border-zinc-200 bg-white pl-11 pr-4 text-center text-lg tracking-widest text-zindo-ink-900 placeholder:text-zinc-400 outline-none transition focus:border-zindo-green-500 focus:ring-4 focus:ring-zindo-green-100"
+            className="h-12 w-full rounded-2xl border border-zinc-200 bg-white pl-11 pr-4 text-center text-lg tracking-widest text-zindo-ink-900 placeholder:text-zinc-400 outline-none transition focus:border-zindo-blue-500 focus:ring-4 focus:ring-zindo-blue-100"
           />
         </div>
       </div>
@@ -39,7 +39,7 @@ export function Verify2FAForm() {
       <button
         type="submit"
         disabled={pending}
-        className="group flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-zindo-green-500 text-[15px] font-bold tracking-wide text-white uppercase shadow-lg shadow-zindo-green-500/30 transition hover:bg-zindo-green-600 hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-70 disabled:hover:translate-y-0 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zindo-green-600"
+        className="group flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-zindo-blue-500 text-[15px] font-bold tracking-wide text-white uppercase shadow-lg shadow-zindo-blue-500/30 transition hover:bg-zindo-blue-600 hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-70 disabled:hover:translate-y-0 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zindo-blue-600"
       >
         {pending ? (
           <>

@@ -99,7 +99,7 @@ export default async function MarketSearchPage({ searchParams }: { searchParams:
         </label>
       </Fieldset>
       <div className="flex gap-2">
-        <button className="h-10 flex-1 rounded-lg bg-zindo-green-600 font-semibold text-white hover:bg-zindo-green-700">Appliquer</button>
+        <button className="h-10 flex-1 rounded-lg bg-zindo-blue-600 font-semibold text-white hover:bg-zindo-blue-700">Appliquer</button>
         <Link href={q ? `/marche/recherche?q=${encodeURIComponent(q)}` : "/marche/recherche"} className="flex h-10 items-center rounded-lg border border-zinc-300 px-3 text-zinc-700">
           Effacer
         </Link>
@@ -145,7 +145,7 @@ export default async function MarketSearchPage({ searchParams }: { searchParams:
         {activeFilters.length > 0 && (
           <div className="flex flex-wrap gap-2">
             {activeFilters.map((f) => (
-              <Link key={f.label} href={f.href} className="inline-flex items-center gap-1 rounded-full bg-zindo-green-50 px-3 py-1 text-xs font-semibold text-zindo-green-800 ring-1 ring-zindo-green-200">
+              <Link key={f.label} href={f.href} className="inline-flex items-center gap-1 rounded-full bg-zindo-blue-50 px-3 py-1 text-xs font-semibold text-zindo-blue-800 ring-1 ring-zindo-blue-200">
                 {f.label} <X className="h-3 w-3" />
               </Link>
             ))}

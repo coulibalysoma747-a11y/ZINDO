@@ -8,7 +8,7 @@ const toneClasses: Record<Tone, string> = {
   amber: "bg-amber-50 text-amber-700 ring-amber-600/20 dark:bg-amber-500/10 dark:text-amber-400 dark:ring-amber-400/20",
   zinc: "bg-zinc-100 text-zinc-700 ring-zinc-500/20 dark:bg-slate-800 dark:text-slate-300 dark:ring-slate-600/40",
   blue: "bg-blue-50 text-blue-700 ring-blue-600/20 dark:bg-blue-500/10 dark:text-blue-400 dark:ring-blue-400/20",
-  gold: "bg-zindo-gold-50 text-zindo-gold-700 ring-zindo-gold-600/20 dark:bg-zindo-gold-500/10 dark:text-zindo-gold-400 dark:ring-zindo-gold-400/20",
+  gold: "bg-zindo-copper-50 text-zindo-copper-700 ring-zindo-copper-600/20 dark:bg-zindo-copper-500/10 dark:text-zindo-copper-400 dark:ring-zindo-copper-400/20",
 };
 
 export function Badge({

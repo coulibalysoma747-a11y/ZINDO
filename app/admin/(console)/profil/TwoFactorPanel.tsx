@@ -103,7 +103,7 @@ export function TwoFactorPanel({ enabled }: { enabled: boolean }) {
   if (isEnabled && !disableState?.success) {
     return (
       <div className="space-y-3">
-        <p className="flex items-center gap-2 text-sm text-zindo-green-700">
+        <p className="flex items-center gap-2 text-sm text-zindo-blue-700">
           <ShieldCheck className="h-4 w-4" /> La double authentification est activée sur ce compte.
         </p>
         <form onSubmit={keep} action={disableAction} className="space-y-3">

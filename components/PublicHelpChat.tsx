@@ -47,8 +47,8 @@ export function PublicHelpChat({ onClose }: { onClose?: () => void } = {}) {
       <div className="flex-1 space-y-4 overflow-y-auto p-4">
         {messages.length === 0 && (
           <div className="flex h-full flex-col items-center justify-center gap-4 text-center">
-            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-zindo-green-50">
-              <HelpCircle className="h-6 w-6 text-zindo-green-600" />
+            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-zindo-blue-50">
+              <HelpCircle className="h-6 w-6 text-zindo-blue-600" />
             </div>
             <div>
               <p className="font-medium text-zindo-ink-900">Une question sur ZINDO ?</p>
@@ -59,7 +59,7 @@ export function PublicHelpChat({ onClose }: { onClose?: () => void } = {}) {
                 <button
                   key={s}
                   onClick={() => send(s)}
-                  className="rounded-full border border-zinc-200 px-3 py-1.5 text-xs text-zinc-600 hover:border-zindo-green-300 hover:bg-zindo-green-50 hover:text-zindo-green-700"
+                  className="rounded-full border border-zinc-200 px-3 py-1.5 text-xs text-zinc-600 hover:border-zindo-blue-300 hover:bg-zindo-blue-50 hover:text-zindo-blue-700"
                 >
                   {s}
                 </button>
@@ -71,14 +71,14 @@ export function PublicHelpChat({ onClose }: { onClose?: () => void } = {}) {
         {messages.map((m, i) => (
           <div key={i} className={`flex gap-2 ${m.role === "user" ? "justify-end" : "justify-start"}`}>
             {m.role === "assistant" && (
-              <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-zindo-green-100">
-                <HelpCircle className="h-3.5 w-3.5 text-zindo-green-700" />
+              <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-zindo-blue-100">
+                <HelpCircle className="h-3.5 w-3.5 text-zindo-blue-700" />
               </div>
             )}
             <div
               className={`max-w-[80%] whitespace-pre-wrap rounded-2xl px-3.5 py-2 text-sm ${
                 m.role === "user"
-                  ? "rounded-br-sm bg-zindo-green-600 text-white"
+                  ? "rounded-br-sm bg-zindo-blue-600 text-white"
                   : "rounded-bl-sm bg-zinc-100 text-zinc-800"
               }`}
             >
@@ -94,8 +94,8 @@ export function PublicHelpChat({ onClose }: { onClose?: () => void } = {}) {
 
         {pending && (
           <div className="flex items-center gap-2 text-sm text-zinc-400">
-            <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-zindo-green-100">
-              <HelpCircle className="h-3.5 w-3.5 animate-pulse text-zindo-green-700" />
+            <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-zindo-blue-100">
+              <HelpCircle className="h-3.5 w-3.5 animate-pulse text-zindo-blue-700" />
             </div>
             L&apos;assistant réfléchit...
           </div>
@@ -148,7 +148,7 @@ function ChatWidget({
 }) {
   return (
     <div className="flex h-[min(580px,calc(100dvh-7rem))] flex-col overflow-hidden rounded-3xl bg-white shadow-[0_30px_80px_-20px_rgb(0_0_0/0.35)] ring-1 ring-black/5">
-      <div className="flex items-center gap-3 bg-gradient-to-br from-zindo-green-600 to-zindo-green-800 px-5 py-4 text-white">
+      <div className="flex items-center gap-3 bg-gradient-to-br from-zindo-blue-600 to-zindo-blue-800 px-5 py-4 text-white">
         <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/15 ring-1 ring-white/25">
           <Bot className="h-5 w-5" />
         </span>
@@ -175,7 +175,7 @@ function ChatWidget({
                 key={q}
                 type="button"
                 onClick={() => send(q)}
-                className="rounded-full border border-zindo-green-200 bg-white px-3.5 py-2 text-left text-[13px] font-medium text-zindo-green-800 transition hover:border-zindo-green-500 hover:bg-zindo-green-50"
+                className="rounded-full border border-zindo-blue-200 bg-white px-3.5 py-2 text-left text-[13px] font-medium text-zindo-blue-800 transition hover:border-zindo-blue-500 hover:bg-zindo-blue-50"
               >
                 {q}
               </button>
@@ -188,14 +188,14 @@ function ChatWidget({
             <AssistantBubble key={i}>{withBold(m.content)}</AssistantBubble>
           ) : (
             <div key={i} className="flex justify-end">
-              <p className="max-w-[82%] whitespace-pre-wrap rounded-2xl rounded-br-md bg-zindo-green-600 px-3.5 py-2.5 text-sm text-white">{m.content}</p>
+              <p className="max-w-[82%] whitespace-pre-wrap rounded-2xl rounded-br-md bg-zindo-blue-600 px-3.5 py-2.5 text-sm text-white">{m.content}</p>
             </div>
           )
         )}
 
         {pending && (
           <div className="flex items-end gap-2">
-            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-zindo-green-100 text-zindo-green-700">
+            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-zindo-blue-100 text-zindo-blue-700">
               <Bot className="h-3.5 w-3.5" />
             </span>
             <span className="flex gap-1 rounded-2xl rounded-bl-md bg-white px-4 py-3 ring-1 ring-zinc-200" aria-label="L'assistant écrit">
@@ -217,7 +217,7 @@ function ChatWidget({
         }}
         className="border-t border-zinc-100 bg-white p-3"
       >
-        <div className="flex items-center gap-2 rounded-full border border-zinc-200 bg-zinc-50 py-1 pl-4 pr-1 focus-within:border-zindo-green-500 focus-within:bg-white">
+        <div className="flex items-center gap-2 rounded-full border border-zinc-200 bg-zinc-50 py-1 pl-4 pr-1 focus-within:border-zindo-blue-500 focus-within:bg-white">
           <input
             value={input}
             onChange={(e) => setInput(e.target.value)}
@@ -230,7 +230,7 @@ function ChatWidget({
             type="submit"
             disabled={pending || !input.trim()}
             aria-label="Envoyer"
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-zindo-green-600 text-white transition hover:bg-zindo-green-700 disabled:bg-zinc-300"
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-zindo-blue-600 text-white transition hover:bg-zindo-blue-700 disabled:bg-zinc-300"
           >
             <Send className="h-4 w-4" />
           </button>
@@ -244,7 +244,7 @@ function ChatWidget({
 function AssistantBubble({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex items-end gap-2">
-      <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-zindo-green-100 text-zindo-green-700">
+      <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-zindo-blue-100 text-zindo-blue-700">
         <Bot className="h-3.5 w-3.5" />
       </span>
       <p className="max-w-[82%] whitespace-pre-wrap rounded-2xl rounded-bl-md bg-white px-3.5 py-2.5 text-sm leading-relaxed text-zinc-800 ring-1 ring-zinc-200">{children}</p>

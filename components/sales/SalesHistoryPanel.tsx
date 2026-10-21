@@ -211,7 +211,7 @@ export async function SalesHistoryPanel({
                 {v.count} vente{v.count > 1 ? "s" : ""} · {total > 0 ? Math.round((v.total / total) * 100) : 0} % du total
               </p>
               <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-zinc-100">
-                <div className="h-full rounded-full bg-zindo-green-500" style={{ width: `${total > 0 ? (v.total / total) * 100 : 0}%` }} />
+                <div className="h-full rounded-full bg-zindo-blue-500" style={{ width: `${total > 0 ? (v.total / total) * 100 : 0}%` }} />
               </div>
             </div>
           ))}
@@ -250,7 +250,7 @@ export async function SalesHistoryPanel({
                   return (
                     <TableRow key={s.id}>
                       <TableCell className="font-semibold text-zinc-900">
-                        <Link href={`/ventes/${s.id}`} className="hover:text-zindo-green-700">{s.number}</Link>
+                        <Link href={`/ventes/${s.id}`} className="hover:text-zindo-blue-700">{s.number}</Link>
                       </TableCell>
                       <TableCell className="text-zinc-600">{formatDateTime(new Date(s.createdAt))}</TableCell>
                       <TableCell>{s.customer?.name ?? "Client de passage"}</TableCell>
@@ -293,7 +293,7 @@ export async function SalesHistoryPanel({
             return (
               <Card key={s.id} className={`flex flex-col gap-2 p-4 ${cancelled ? "opacity-70" : ""}`}>
                 <div className="flex items-start justify-between gap-2">
-                  <Link href={`/ventes/${s.id}`} className="font-bold text-zinc-900 hover:text-zindo-green-700 dark:text-slate-100">
+                  <Link href={`/ventes/${s.id}`} className="font-bold text-zinc-900 hover:text-zindo-blue-700 dark:text-slate-100">
                     {s.number}
                   </Link>
                   <div className="flex flex-wrap justify-end gap-1">

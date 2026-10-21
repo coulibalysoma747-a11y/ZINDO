@@ -48,7 +48,7 @@ export function DebtExemptionToggle({ customerId, initialExempt }: { customerId:
           disabled={pending}
           onClick={toggle}
           className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors disabled:opacity-60 ${
-            exempt ? "bg-zindo-green-600" : "bg-zinc-300 dark:bg-slate-700"
+            exempt ? "bg-zindo-blue-600" : "bg-zinc-300 dark:bg-slate-700"
           }`}
         >
           <span

@@ -72,7 +72,7 @@ export default async function CguPage() {
         <p>
           Les données que vous saisissez dans ZINDO (catalogue produits, ventes, clients, fournisseurs...) vous
           appartiennent. Vous pouvez en demander l&apos;export ou la suppression selon les modalités décrites dans notre{" "}
-          <Link href="/confidentialite" className="font-medium text-zindo-green-600 hover:underline">
+          <Link href="/confidentialite" className="font-medium text-zindo-blue-600 hover:underline">
             Politique de confidentialité
           </Link>
           .
@@ -111,7 +111,7 @@ export default async function CguPage() {
             href="https://wa.me/22604059929"
             target="_blank"
             rel="noopener noreferrer"
-            className="font-medium text-zindo-green-600 hover:underline"
+            className="font-medium text-zindo-blue-600 hover:underline"
           >
             +226 04 05 99 29
           </a>

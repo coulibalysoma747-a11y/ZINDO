@@ -51,7 +51,7 @@ export function QuickCashNotes({
         <button
           type="button"
           onClick={giveExact}
-          className="h-11 rounded-lg border border-zindo-green-600 bg-zindo-green-50 text-sm font-bold text-zindo-green-700 transition-colors hover:bg-zindo-green-100 active:scale-95 dark:bg-zindo-green-500/10 dark:text-emerald-400"
+          className="h-11 rounded-lg border border-zindo-blue-600 bg-zindo-blue-50 text-sm font-bold text-zindo-blue-700 transition-colors hover:bg-zindo-blue-100 active:scale-95 dark:bg-zindo-blue-500/10 dark:text-emerald-400"
         >
           Exact
         </button>

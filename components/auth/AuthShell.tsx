@@ -4,14 +4,14 @@ import { ZindoLogo } from "@/components/auth/ZindoLogo";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { ArrowLeft, Package, ShoppingCart, Store, BarChart3 } from "lucide-react";
 
-const HIGHLIGHT_TONES = ["text-zindo-green-400", "text-zindo-gold-400", "text-zindo-red-400", "text-zindo-green-400"];
-const HIGHLIGHT_TONES_LIGHT = ["text-zindo-green-600", "text-zindo-gold-600", "text-zindo-red-600", "text-zindo-green-600"];
+const HIGHLIGHT_TONES = ["text-zindo-blue-400", "text-zindo-copper-400", "text-zindo-blue-400", "text-zindo-blue-400"];
+const HIGHLIGHT_TONES_LIGHT = ["text-zindo-blue-600", "text-zindo-copper-600", "text-zindo-blue-600", "text-zindo-blue-600"];
 
 const TEXT = {
   fr: {
     headline: (
       <>
-        La gestion de votre commerce, <span className="text-zindo-green-400">simplifiée</span>.
+        La gestion de votre commerce, <span className="text-zindo-blue-400">simplifiée</span>.
       </>
     ),
     subhead:
@@ -22,7 +22,7 @@ const TEXT = {
     mobileTagline: (
       <>
         L&apos;application de gestion de{" "}
-        <span className="font-semibold text-zindo-green-600">stock, caisse et ventes</span> pour les commerces du
+        <span className="font-semibold text-zindo-blue-600">stock, caisse et ventes</span> pour les commerces du
         Burkina Faso
       </>
     ),
@@ -38,7 +38,7 @@ const TEXT = {
   en: {
     headline: (
       <>
-        Running your business, <span className="text-zindo-green-400">simplified</span>.
+        Running your business, <span className="text-zindo-blue-400">simplified</span>.
       </>
     ),
     subhead:
@@ -48,7 +48,7 @@ const TEXT = {
     founderTagline: "ZINDO Founder — with you every step of the way.",
     mobileTagline: (
       <>
-        The <span className="font-semibold text-zindo-green-600">stock, checkout, and sales</span> management app
+        The <span className="font-semibold text-zindo-blue-600">stock, checkout, and sales</span> management app
         for businesses in Burkina Faso
       </>
     ),
@@ -69,13 +69,13 @@ export function AuthShell({ children, locale = "fr", pro = false }: { children: 
 
   return (
     <div className="theme-locked flex min-h-screen flex-col bg-zindo-cream">
-      <div aria-hidden className="zindo-flag-stripe h-1 w-full shrink-0" />
+      <div aria-hidden className="zindo-brand-stripe h-1 w-full shrink-0" />
       <div className="flex flex-1">
       <div className="relative hidden w-[42%] shrink-0 overflow-hidden bg-zindo-ink-900 lg:flex lg:flex-col lg:justify-between lg:p-12 xl:p-16">
         <div aria-hidden className="pointer-events-none absolute inset-0">
-          <div className="absolute -right-32 -top-32 h-96 w-96 rounded-full bg-zindo-green-500/20 blur-3xl" />
-          <div className="absolute top-1/3 -right-10 h-64 w-64 rounded-full bg-zindo-gold-500/15 blur-3xl" />
-          <div className="absolute -bottom-24 -left-24 h-80 w-80 rounded-full bg-zindo-red-500/10 blur-3xl" />
+          <div className="absolute -right-32 -top-32 h-96 w-96 rounded-full bg-zindo-blue-500/20 blur-3xl" />
+          <div className="absolute top-1/3 -right-10 h-64 w-64 rounded-full bg-zindo-copper-500/15 blur-3xl" />
+          <div className="absolute -bottom-24 -left-24 h-80 w-80 rounded-full bg-zindo-copper-500/10 blur-3xl" />
           <div
             aria-hidden
             className="absolute inset-0 opacity-[0.07]"
@@ -89,7 +89,10 @@ export function AuthShell({ children, locale = "fr", pro = false }: { children: 
 
         <div className="relative z-10 flex items-center gap-3">
           <ZindoLogo size={44} />
-          <span className="text-xl font-extrabold tracking-tight text-white">ZINDO</span>
+          <span className="flex flex-col leading-none">
+            <span className="text-xl font-extrabold tracking-[0.12em] text-white">ZINDO</span>
+            <span className="mt-1 text-[8px] font-semibold uppercase tracking-[0.18em] text-white/60">Gestion commerciale</span>
+          </span>
         </div>
 
         <div className="relative z-10">
@@ -131,9 +134,9 @@ export function AuthShell({ children, locale = "fr", pro = false }: { children: 
 
       <div className="relative flex flex-1 flex-col overflow-x-hidden">
         <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden lg:hidden">
-          <div className="absolute -right-24 -top-24 h-72 w-72 rounded-full bg-zindo-green-100/70 blur-3xl" />
-          <div className="absolute top-1/3 -left-10 h-56 w-56 rounded-full bg-zindo-gold-100/50 blur-3xl" />
-          <div className="absolute -bottom-32 -left-24 h-72 w-72 rounded-full bg-zindo-red-100/40 blur-3xl" />
+          <div className="absolute -right-24 -top-24 h-72 w-72 rounded-full bg-zindo-blue-100/70 blur-3xl" />
+          <div className="absolute top-1/3 -left-10 h-56 w-56 rounded-full bg-zindo-copper-100/50 blur-3xl" />
+          <div className="absolute -bottom-32 -left-24 h-72 w-72 rounded-full bg-zindo-blue-100/40 blur-3xl" />
         </div>
 
         {/* z-30 (au-dessus de <main>, z-10) : voir app/page.tsx pour le pourquoi — sinon le menu du sélecteur de langue est intercepté par le contenu en dessous. */}
@@ -162,7 +165,7 @@ export function AuthShell({ children, locale = "fr", pro = false }: { children: 
               </ul>
               <Link
                 href={t.homeHref}
-                className="mt-3 text-xs font-semibold text-zindo-green-600 hover:text-zindo-green-700 hover:underline"
+                className="mt-3 text-xs font-semibold text-zindo-blue-600 hover:text-zindo-blue-700 hover:underline"
               >
                 {t.discoverMore}
               </Link>
@@ -204,7 +207,10 @@ function AuthShellPro({ children, locale }: { children: React.ReactNode; locale:
         <div aria-hidden className="absolute inset-0 -z-10 bg-gradient-to-t from-black/85 via-black/35 to-black/20" />
         <Link href={home} className="flex items-center gap-2.5">
           <ZindoLogo size={34} />
-          <span className="text-lg font-bold tracking-tight">ZINDO</span>
+          <span className="flex flex-col leading-none">
+            <span className="text-lg font-extrabold tracking-[0.12em]">ZINDO</span>
+            <span className="mt-1 text-[8px] font-semibold uppercase tracking-[0.18em] text-white/60">Gestion commerciale</span>
+          </span>
         </Link>
         <div>
           <h2 className="max-w-lg text-4xl font-medium leading-[1.1] tracking-[-0.03em] xl:text-[2.75rem]">

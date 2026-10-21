@@ -33,7 +33,7 @@ export function TableRow({
   return (
     <tr
       className={cn(
-        interactive && "transition-colors hover:bg-zindo-green-50/40 dark:hover:bg-slate-800/40",
+        interactive && "transition-colors hover:bg-zindo-blue-50/40 dark:hover:bg-slate-800/40",
         className
       )}
       {...props}

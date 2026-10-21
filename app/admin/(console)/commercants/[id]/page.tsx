@@ -129,11 +129,11 @@ export default async function AdminBusinessDetailPage({
           </CardBody>
         </Card>
         <Link href={`/admin/commercants/${business.id}/ventes`}>
-          <Card className="transition-colors hover:border-zindo-green-300">
+          <Card className="transition-colors hover:border-zindo-blue-300">
             <CardBody>
               <p className="text-xs text-zinc-500">Ventes</p>
               <p className="text-lg font-bold text-zinc-900">{salesCount ?? 0}</p>
-              <p className="mt-0.5 text-xs text-zindo-green-600">Voir / corriger →</p>
+              <p className="mt-0.5 text-xs text-zindo-blue-600">Voir / corriger →</p>
             </CardBody>
           </Card>
         </Link>
@@ -245,7 +245,7 @@ export default async function AdminBusinessDetailPage({
                       <div className="flex items-center justify-end gap-2">
                         <Link
                           href={`/admin/commercants/${business.id}/utilisateurs/${u.id}`}
-                          className="rounded-lg border border-zindo-green-200 px-2.5 py-1.5 text-xs font-medium text-zindo-green-600 hover:bg-zindo-green-50"
+                          className="rounded-lg border border-zindo-blue-200 px-2.5 py-1.5 text-xs font-medium text-zindo-blue-600 hover:bg-zindo-blue-50"
                         >
                           Modules
                         </Link>

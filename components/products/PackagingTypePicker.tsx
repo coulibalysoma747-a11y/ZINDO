@@ -28,7 +28,7 @@ export function PackagingTypePicker({
             onClick={() => setValue(preset)}
             className={`rounded-full border px-2.5 py-1 text-xs font-medium transition-colors ${
               value === preset
-                ? "border-zindo-green-500 bg-zindo-green-50 text-zindo-green-700"
+                ? "border-zindo-blue-500 bg-zindo-blue-50 text-zindo-blue-700"
                 : "border-zinc-200 text-zinc-600 hover:bg-zinc-50"
             }`}
           >
@@ -43,7 +43,7 @@ export function PackagingTypePicker({
           }}
           className={`rounded-full border px-2.5 py-1 text-xs font-medium transition-colors ${
             isCustom
-              ? "border-zindo-green-500 bg-zindo-green-50 text-zindo-green-700"
+              ? "border-zindo-blue-500 bg-zindo-blue-50 text-zindo-blue-700"
               : "border-zinc-200 text-zinc-600 hover:bg-zinc-50"
           }`}
         >

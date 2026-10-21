@@ -34,7 +34,7 @@ export function SaspayTopupForm() {
         <input value={amount} onChange={(e) => setAmount(e.target.value)} inputMode="numeric" required placeholder="5 000" className={`mt-1 max-w-xs ${input}`} />
       </label>
       {error && <p className="text-sm text-red-600">{error}</p>}
-      <button disabled={pending || !amount.trim()} className="h-10 rounded-xl bg-zindo-green-600 px-5 text-sm font-semibold text-white hover:bg-zindo-green-700 disabled:opacity-50">
+      <button disabled={pending || !amount.trim()} className="h-10 rounded-xl bg-zindo-blue-600 px-5 text-sm font-semibold text-white hover:bg-zindo-blue-700 disabled:opacity-50">
         {pending ? "Redirection…" : "Recharger mon portefeuille"}
       </button>
     </form>
@@ -83,7 +83,7 @@ export function BoostForm({
             onClick={() => setDays(p.days)}
             className={
               days === p.days
-                ? "rounded-xl border-2 border-zindo-green-600 bg-zindo-green-50 px-3 py-2 text-sm font-semibold text-zindo-green-800"
+                ? "rounded-xl border-2 border-zindo-blue-600 bg-zindo-blue-50 px-3 py-2 text-sm font-semibold text-zindo-blue-800"
                 : "rounded-xl border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-700"
             }
           >

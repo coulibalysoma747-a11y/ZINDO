@@ -64,11 +64,14 @@ export function AccueilProHeader({ variant = "transparent" }: { variant?: "trans
         light ? "border-b border-zinc-200/80 bg-white/90 shadow-sm backdrop-blur-md" : "border-b border-transparent bg-transparent"
       }`}
     >
-      <div aria-hidden className="zindo-flag-stripe h-0.5 w-full" />
+      <div aria-hidden className="zindo-brand-stripe h-0.5 w-full" />
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-6 px-4 sm:px-6">
         <Link href="/" className="flex items-center gap-2.5" aria-label="ZINDO, accueil">
           <ZindoLogo size={32} />
-          <span className={`text-lg font-bold tracking-tight transition-colors ${light ? "text-zindo-ink-900" : "text-white"}`}>ZINDO</span>
+          <span className="flex flex-col leading-none">
+            <span className={`text-lg font-extrabold tracking-[0.12em] transition-colors ${light ? "text-zindo-ink-900" : "text-white"}`}>ZINDO</span>
+            <span className={`mt-1 text-[8px] font-semibold uppercase tracking-[0.18em] transition-colors ${light ? "text-zindo-blue-600" : "text-white/60"}`}>Gestion commerciale</span>
+          </span>
         </Link>
 
         <nav ref={nav} aria-label="Navigation principale" className="hidden flex-1 items-center gap-1 lg:flex">
@@ -115,7 +118,7 @@ export function AccueilProHeader({ variant = "transparent" }: { variant?: "trans
           <Link
             href="/inscription"
             className={`whitespace-nowrap rounded-lg px-4 py-2 text-sm font-semibold transition-colors ${
-              light ? "bg-zindo-green-500 text-white hover:bg-zindo-green-600" : "bg-white text-zindo-green-800 hover:bg-zindo-green-50"
+              light ? "bg-zindo-blue-500 text-white hover:bg-zindo-blue-600" : "bg-white text-zindo-blue-800 hover:bg-zindo-blue-50"
             }`}
           >
             Essai gratuit

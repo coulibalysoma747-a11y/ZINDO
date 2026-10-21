@@ -19,7 +19,7 @@ export function QuickAddButton({ productId, disabled }: { productId: string; dis
         setAdded(true);
         setTimeout(() => setAdded(false), 1500);
       }}
-      className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-zindo-green-600 text-white shadow-sm transition hover:bg-zindo-green-700 disabled:bg-zinc-300"
+      className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-zindo-blue-600 text-white shadow-sm transition hover:bg-zindo-blue-700 disabled:bg-zinc-300"
     >
       {added ? <Check className="h-5 w-5" /> : <Plus className="h-5 w-5" />}
     </button>

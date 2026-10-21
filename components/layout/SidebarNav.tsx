@@ -58,7 +58,7 @@ export function SidebarNav({
               }}
               placeholder="Chercher un module…"
               aria-label="Chercher un module dans le menu"
-              className="h-9 w-full rounded-lg border border-zinc-300 bg-zinc-50 pl-8 pr-8 text-sm text-zinc-900 outline-none transition-colors placeholder:text-zinc-500 focus:border-zindo-green-500 focus:bg-white focus:ring-2 focus:ring-zindo-green-500/15 dark:border-slate-700 dark:bg-slate-800/60"
+              className="h-9 w-full rounded-lg border border-zinc-300 bg-zinc-50 pl-8 pr-8 text-sm text-zinc-900 outline-none transition-colors placeholder:text-zinc-500 focus:border-zindo-blue-500 focus:bg-white focus:ring-2 focus:ring-zindo-blue-500/15 dark:border-slate-700 dark:bg-slate-800/60"
             />
             {query && (
               <button

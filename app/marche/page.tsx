@@ -37,7 +37,7 @@ export default async function MarketHomePage({ searchParams }: { searchParams: P
   return (
     <div className="space-y-10">
       {/* Bannière */}
-      <section className="overflow-hidden rounded-3xl bg-gradient-to-br from-zindo-green-700 via-zindo-green-800 to-zindo-green-950 text-white">
+      <section className="overflow-hidden rounded-3xl bg-gradient-to-br from-zindo-blue-700 via-zindo-blue-800 to-zindo-blue-950 text-white">
         <div className="grid items-center gap-6 p-6 sm:p-10 lg:grid-cols-2">
           <div className="space-y-4">
             <p className="inline-flex items-center gap-2 rounded-full bg-white/15 px-3 py-1 text-xs font-semibold">
@@ -46,7 +46,7 @@ export default async function MarketHomePage({ searchParams }: { searchParams: P
             <h1 className="text-2xl font-extrabold leading-tight sm:text-4xl">Découvrez les produits et boutiques des commerçants près de chez vous</h1>
             <p className="text-sm text-white/80 sm:text-base">Stock réel, vendeurs identifiés, livraison ou retrait en boutique.</p>
             <div className="flex flex-wrap gap-3">
-              <Link href="/marche/recherche?promo=1" className="rounded-xl bg-white px-5 py-3 text-sm font-bold text-zindo-green-800 shadow hover:bg-zindo-green-50">
+              <Link href="/marche/recherche?promo=1" className="rounded-xl bg-white px-5 py-3 text-sm font-bold text-zindo-blue-800 shadow hover:bg-zindo-blue-50">
                 Voir les promotions
               </Link>
               <Link href="/marche/boutiques" className="rounded-xl border border-white/40 px-5 py-3 text-sm font-semibold text-white hover:bg-white/10">
@@ -76,7 +76,7 @@ export default async function MarketHomePage({ searchParams }: { searchParams: P
           { icon: Smartphone, title: "Paiement simple", text: "À la livraison ou Mobile Money" },
         ].map(({ icon: Icon, title, text }) => (
           <div key={title} className="flex items-center gap-3 rounded-2xl bg-white p-3 ring-1 ring-zinc-200">
-            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-zindo-green-50 text-zindo-green-700">
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-zindo-blue-50 text-zindo-blue-700">
               <Icon className="h-5 w-5" />
             </span>
             <div className="min-w-0">
@@ -159,7 +159,7 @@ export default async function MarketHomePage({ searchParams }: { searchParams: P
           <p className="text-lg font-bold">Vous êtes commerçant ?</p>
           <p className="text-sm text-white/70">Vendez sur le Marché gratuitement, sans abonnement ni commission. Vous ne payez que pour mettre vos produits en avant.</p>
         </div>
-        <Link href="/inscription?vendeur=marche" className="shrink-0 rounded-xl bg-zindo-green-500 px-5 py-3 text-sm font-bold text-white hover:bg-zindo-green-600">
+        <Link href="/inscription?vendeur=marche" className="shrink-0 rounded-xl bg-zindo-blue-500 px-5 py-3 text-sm font-bold text-white hover:bg-zindo-blue-600">
           Vendre sur le Marché
         </Link>
       </section>
@@ -172,7 +172,7 @@ function SectionTitle({ title, href }: { title: string; href?: string }) {
     <div className="mb-4 flex items-center justify-between">
       <h2 className="text-lg font-bold text-zinc-900 sm:text-xl">{title}</h2>
       {href && (
-        <Link href={href} className="inline-flex items-center text-sm font-semibold text-zindo-green-700 hover:underline">
+        <Link href={href} className="inline-flex items-center text-sm font-semibold text-zindo-blue-700 hover:underline">
           Voir tout <ChevronRight className="h-4 w-4" />
         </Link>
       )}

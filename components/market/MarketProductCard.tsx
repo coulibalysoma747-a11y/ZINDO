@@ -14,7 +14,7 @@ export function MarketProductCard({ product, favorite = false }: { product: Mark
   return (
     <div className="group relative flex flex-col overflow-hidden rounded-2xl bg-white ring-1 ring-zinc-200 transition hover:-translate-y-0.5 hover:shadow-lg hover:ring-zinc-300">
       {/* Lien étiré sur toute la carte ; les boutons (favori, ajout) passent au-dessus. */}
-      <Link href={`/marche/produit/${product.productId}`} aria-label={product.name} className="absolute inset-0 z-[1] rounded-2xl focus-visible:outline focus-visible:outline-2 focus-visible:outline-zindo-green-600" />
+      <Link href={`/marche/produit/${product.productId}`} aria-label={product.name} className="absolute inset-0 z-[1] rounded-2xl focus-visible:outline focus-visible:outline-2 focus-visible:outline-zindo-blue-600" />
       <div className="relative aspect-square overflow-hidden bg-zinc-50">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src={vignette(product.photoUrl, 300) ?? ""} alt={product.name} loading="lazy" decoding="async" className="h-full w-full object-cover transition duration-300 group-hover:scale-105" />

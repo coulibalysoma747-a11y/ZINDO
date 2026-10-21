@@ -18,17 +18,17 @@ export function PoweredByZindo({
 }) {
   return (
     <div
-      className="mt-8 flex items-center gap-4 rounded-xl border border-emerald-200 bg-emerald-50/70 px-5 py-3 print:break-inside-avoid"
+      className="mt-8 flex items-center gap-4 rounded-xl border border-zindo-blue-200 bg-zindo-blue-50/70 px-5 py-3 print:break-inside-avoid"
       style={{ WebkitPrintColorAdjust: "exact", printColorAdjust: "exact" }}
     >
-      <img src="/brand/zindo-emblem.png" alt="ZINDO" className="h-11 w-11 shrink-0 rounded-lg" />
+      <img src="/brand/zindo-emblem.svg" alt="ZINDO" className="h-11 w-11 shrink-0 rounded-lg" />
       <div className="min-w-0 flex-1 text-[11px] leading-snug text-zinc-700">
-        <p className="text-sm font-bold text-emerald-800">{label}</p>
+        <p className="text-sm font-bold text-zindo-blue-800">{label}</p>
         <p>Gérez votre stock, vos ventes et vos commandes depuis votre téléphone — même sans Internet.</p>
         <p className="mt-0.5 font-medium text-zinc-900">
           🌐 {site} · 📱 WhatsApp : {whatsapp}
         </p>
-        <p className="font-semibold text-emerald-700">Scannez le code et essayez gratuitement →</p>
+        <p className="font-semibold text-zindo-blue-700">Scannez le code et essayez gratuitement →</p>
       </div>
       {qrDataUrl && <img src={qrDataUrl} alt={`QR code ${site}`} className="h-20 w-20 shrink-0" />}
     </div>

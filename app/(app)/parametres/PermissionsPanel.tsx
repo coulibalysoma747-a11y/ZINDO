@@ -61,7 +61,7 @@ export function PermissionsPanel({
                         router.refresh();
                       })
                     }
-                    className="h-4 w-4 rounded accent-zindo-green-500 disabled:opacity-50"
+                    className="h-4 w-4 rounded accent-zindo-blue-500 disabled:opacity-50"
                   />
                 </TableCell>
               ))}

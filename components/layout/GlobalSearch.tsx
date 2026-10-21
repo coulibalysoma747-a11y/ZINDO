@@ -247,7 +247,7 @@ export function GlobalSearch({ currency, navItems }: { currency: string; navItem
                             onMouseMove={() => setActiveIndex(index)}
                             className={cn(
                               "flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left",
-                              active ? "bg-zindo-green-50 dark:bg-zindo-green-500/10" : "hover:bg-zinc-50 dark:hover:bg-slate-800"
+                              active ? "bg-zindo-blue-50 dark:bg-zindo-blue-500/10" : "hover:bg-zinc-50 dark:hover:bg-slate-800"
                             )}
                           >
                             <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-zinc-100 text-zinc-500 dark:bg-slate-800">

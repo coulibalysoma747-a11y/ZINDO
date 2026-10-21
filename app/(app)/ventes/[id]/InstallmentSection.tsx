@@ -116,7 +116,7 @@ function PlanBuilder({ saleId, remaining, currency }: { saleId: string; remainin
         <Button size="sm" variant="outline" onClick={() => setRows((prev) => [...prev, { dueDate: "", amount: "" }])}>
           <Plus className="h-3.5 w-3.5" /> Ajouter une échéance
         </Button>
-        <p className={`text-sm ${sum === remaining ? "text-zindo-green-600" : "text-red-600"}`}>
+        <p className={`text-sm ${sum === remaining ? "text-zindo-blue-600" : "text-red-600"}`}>
           Total : {formatMoney(sum, currency)} / {formatMoney(remaining, currency)}
         </p>
       </div>

@@ -17,7 +17,7 @@ export function TopupButtons({ topupId, amount }: { topupId: string; amount: num
           if (!confirm(`Avez-vous bien reçu ${amount.toLocaleString("fr-FR")} FCFA ? Le portefeuille sera crédité.`)) return;
           startTransition(async () => setMessage(await validateTopupAction(topupId)));
         }}
-        className="rounded-lg bg-zindo-green-600 px-3 py-1.5 text-xs font-semibold text-white disabled:opacity-50"
+        className="rounded-lg bg-zindo-blue-600 px-3 py-1.5 text-xs font-semibold text-white disabled:opacity-50"
       >
         Valider
       </button>

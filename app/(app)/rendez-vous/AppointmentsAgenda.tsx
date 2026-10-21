@@ -96,7 +96,7 @@ export function AppointmentsAgenda({
             <ChevronLeft className="h-4 w-4" />
           </Link>
           <p className="min-w-[180px] text-center text-sm font-medium text-zinc-700">
-            {formatLongDate(new Date(`${day}T00:00:00`))} {isToday && <span className="text-zindo-green-600">(aujourd&apos;hui)</span>}
+            {formatLongDate(new Date(`${day}T00:00:00`))} {isToday && <span className="text-zindo-blue-600">(aujourd&apos;hui)</span>}
           </p>
           <Link href={`/rendez-vous?date=${shiftDay(day, 1)}`} className="rounded-lg border border-zinc-200 p-2 text-zinc-500 hover:bg-zinc-100">
             <ChevronRight className="h-4 w-4" />
@@ -175,11 +175,11 @@ export function AppointmentsAgenda({
           </Field>
 
           <div className="flex gap-2">
-            <button type="button" onClick={() => setUseExistingCustomer(true)} className={`text-xs font-medium ${useExistingCustomer ? "text-zindo-green-700 underline" : "text-zinc-400"}`}>
+            <button type="button" onClick={() => setUseExistingCustomer(true)} className={`text-xs font-medium ${useExistingCustomer ? "text-zindo-blue-700 underline" : "text-zinc-400"}`}>
               Client existant
             </button>
             <span className="text-zinc-300">·</span>
-            <button type="button" onClick={() => setUseExistingCustomer(false)} className={`text-xs font-medium ${!useExistingCustomer ? "text-zindo-green-700 underline" : "text-zinc-400"}`}>
+            <button type="button" onClick={() => setUseExistingCustomer(false)} className={`text-xs font-medium ${!useExistingCustomer ? "text-zindo-blue-700 underline" : "text-zinc-400"}`}>
               Client de passage
             </button>
           </div>

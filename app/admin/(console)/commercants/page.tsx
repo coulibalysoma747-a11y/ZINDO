@@ -91,7 +91,7 @@ export default async function AdminBusinessesPage({ searchParams }: { searchPara
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
         {[
           ["Commerces", businesses.length, "text-zinc-900"],
-          ["Abonnés payants", compte.payant, "text-zindo-green-700"],
+          ["Abonnés payants", compte.payant, "text-zindo-blue-700"],
           ["En essai", compte.essai, "text-sky-700"],
           ["Essai fini sous 3 j", compte.fin, "text-amber-700"],
           ["Expirés", compte.expire, "text-red-700"],
@@ -111,7 +111,7 @@ export default async function AdminBusinessesPage({ searchParams }: { searchPara
             name="q"
             defaultValue={q}
             placeholder="Rechercher par nom, ville, activité ou téléphone…"
-            className="h-10 w-full rounded-lg border border-zinc-300 bg-white pl-9 pr-3 text-sm outline-none focus:border-zindo-green-500 focus:ring-4 focus:ring-zindo-green-500/15"
+            className="h-10 w-full rounded-lg border border-zinc-300 bg-white pl-9 pr-3 text-sm outline-none focus:border-zindo-blue-500 focus:ring-4 focus:ring-zindo-blue-500/15"
           />
         </form>
         <div className="flex flex-wrap gap-1.5">
@@ -152,7 +152,7 @@ export default async function AdminBusinessesPage({ searchParams }: { searchPara
                 return (
                   <tr key={b.id} className="hover:bg-zinc-50/60">
                     <td className="px-4 py-3">
-                      <Link href={`/admin/commercants/${b.id}`} className="font-medium text-zinc-900 hover:text-zindo-green-700">
+                      <Link href={`/admin/commercants/${b.id}`} className="font-medium text-zinc-900 hover:text-zindo-blue-700">
                         {b.name}
                       </Link>
                       <p className="text-xs text-zinc-500">

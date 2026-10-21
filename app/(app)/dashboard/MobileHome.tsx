@@ -115,7 +115,7 @@ export function MobileHome({
             {data.salesLast7Days.map((v, i) => (
               <div
                 key={i}
-                className={`w-2 rounded-sm sm:w-3 ${i === 6 ? "bg-zindo-green-600" : "bg-zinc-200 dark:bg-slate-700"}`}
+                className={`w-2 rounded-sm sm:w-3 ${i === 6 ? "bg-zindo-blue-600" : "bg-zinc-200 dark:bg-slate-700"}`}
                 style={{ height: `${Math.max(12, (v / maxDay) * 100)}%` }}
               />
             ))}
@@ -129,7 +129,7 @@ export function MobileHome({
             const Icon = t.icon;
             return (
               <Link key={t.key} href={t.href} className="flex flex-col items-center gap-2 rounded-xl border border-zinc-200 bg-white px-1 py-3 text-center transition-colors hover:border-zinc-300 hover:bg-zinc-50 active:bg-zinc-100 dark:border-slate-800 dark:bg-slate-900">
-                <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-zindo-green-50 text-zindo-green-700 dark:bg-zindo-green-500/10 dark:text-zindo-green-400">
+                <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-zindo-blue-50 text-zindo-blue-700 dark:bg-zindo-blue-500/10 dark:text-zindo-blue-400">
                   <Icon className="h-5 w-5" />
                 </span>
                 <span className="w-full truncate text-xs font-medium text-zinc-700">{t.label}</span>

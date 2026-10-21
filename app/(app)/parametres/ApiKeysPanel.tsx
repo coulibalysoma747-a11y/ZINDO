@@ -31,7 +31,7 @@ export function ApiKeysPanel() {
   return (
     <div className="rounded-xl border border-zinc-200 p-4">
       <div className="flex items-start gap-2.5">
-        <Code2 className="mt-0.5 h-5 w-5 shrink-0 text-zindo-green-600" />
+        <Code2 className="mt-0.5 h-5 w-5 shrink-0 text-zindo-blue-600" />
         <div>
           <p className="font-bold text-zinc-900">Intégrations API</p>
           <p className="mt-1 text-sm text-zinc-500">
@@ -57,9 +57,9 @@ export function ApiKeysPanel() {
                   setTimeout(() => setCopied(false), 2000);
                 });
               }}
-              className="shrink-0 text-zinc-400 hover:text-zindo-green-600"
+              className="shrink-0 text-zinc-400 hover:text-zindo-blue-600"
             >
-              {copied ? <Check className="h-4 w-4 text-zindo-green-600" /> : <Copy className="h-4 w-4" />}
+              {copied ? <Check className="h-4 w-4 text-zindo-blue-600" /> : <Copy className="h-4 w-4" />}
             </button>
           </div>
           <Button type="button" size="sm" className="mt-2" onClick={() => setNewKey(null)}>

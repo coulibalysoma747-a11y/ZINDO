@@ -15,7 +15,7 @@ export default function EnglishRegisterPage() {
         <RegisterForm locale="en" />
         <p className="text-center text-sm text-zinc-500">
           Already have an account?{" "}
-          <Link href="/en/login" className="font-semibold text-zindo-green-700 hover:underline">
+          <Link href="/en/login" className="font-semibold text-zindo-blue-700 hover:underline">
             Sign in
           </Link>
         </p>

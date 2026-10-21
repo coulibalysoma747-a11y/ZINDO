@@ -77,7 +77,7 @@ export function ActivityPicker({
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Rechercher votre activité..."
-          className="h-11 w-full rounded-xl border border-zinc-200 bg-white pl-10 pr-4 text-sm text-zinc-900 shadow-sm outline-none placeholder:text-zinc-400 focus:border-zindo-green-400 focus:ring-2 focus:ring-zindo-green-100"
+          className="h-11 w-full rounded-xl border border-zinc-200 bg-white pl-10 pr-4 text-sm text-zinc-900 shadow-sm outline-none placeholder:text-zinc-400 focus:border-zindo-blue-400 focus:ring-2 focus:ring-zindo-blue-100"
         />
       </div>
 
@@ -118,12 +118,12 @@ export function ActivityPicker({
                 onClick={() => setSelectedKey(a.key)}
                 className={`relative flex flex-col items-start gap-1 rounded-2xl border p-4 text-left transition-all ${
                   active
-                    ? "border-zindo-green-400 bg-white shadow-md ring-2 ring-zindo-green-200"
-                    : "border-zinc-200 bg-white/70 hover:border-zindo-green-200 hover:bg-white"
+                    ? "border-zindo-blue-400 bg-white shadow-md ring-2 ring-zindo-blue-200"
+                    : "border-zinc-200 bg-white/70 hover:border-zindo-blue-200 hover:bg-white"
                 }`}
               >
                 {active && (
-                  <span className="absolute right-3 top-3 flex h-5 w-5 items-center justify-center rounded-full bg-zindo-green-500 text-white">
+                  <span className="absolute right-3 top-3 flex h-5 w-5 items-center justify-center rounded-full bg-zindo-blue-500 text-white">
                     <Check className="h-3.5 w-3.5" />
                   </span>
                 )}

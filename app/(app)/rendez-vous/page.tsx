@@ -50,7 +50,7 @@ export default async function AppointmentsPage({ searchParams }: { searchParams:
             <p className="text-sm text-zinc-500">Agenda du salon — l&apos;encaissement de la prestation se fait normalement depuis l&apos;écran de vente.</p>
           </div>
         </div>
-        <Link href="/rendez-vous/services" className="flex items-center gap-1 text-sm text-zindo-green-700 hover:underline">
+        <Link href="/rendez-vous/services" className="flex items-center gap-1 text-sm text-zindo-blue-700 hover:underline">
           <Sparkles className="h-4 w-4" /> Gérer les prestations
         </Link>
       </div>

@@ -111,7 +111,7 @@ export default async function AdminSubscriptionsPage() {
   const currency = "XOF";
   const stats = [
     { label: "Revenu mensuel récurrent (MRR)", value: formatMoney(Math.round(mrr), currency), icon: TrendingUp, tone: "text-emerald-600 bg-emerald-50" },
-    { label: "Encaissé ce mois-ci", value: formatMoney(paidThisMonthAmount, currency), icon: Wallet, tone: "text-zindo-green-600 bg-zindo-green-50" },
+    { label: "Encaissé ce mois-ci", value: formatMoney(paidThisMonthAmount, currency), icon: Wallet, tone: "text-zindo-blue-600 bg-zindo-blue-50" },
     { label: "En essai gratuit", value: trialCount, icon: Clock, tone: "text-blue-600 bg-blue-50" },
     { label: "Bloqués (essai expiré / impayé)", value: blockedCount, icon: ShieldAlert, tone: "text-red-600 bg-red-50" },
     { label: "Factures en attente", value: pendingInvoices.length, icon: Receipt, tone: "text-amber-600 bg-amber-50" },
@@ -215,7 +215,7 @@ export default async function AdminSubscriptionsPage() {
                 {subscriptions.map((s) => (
                   <tr key={s.id}>
                     <td className="px-4 py-3">
-                      <Link href={`/admin/commercants/${s.businessId}`} className="font-medium text-zindo-green-600 hover:underline">
+                      <Link href={`/admin/commercants/${s.businessId}`} className="font-medium text-zindo-blue-600 hover:underline">
                         {s.business.name}
                       </Link>
                     </td>

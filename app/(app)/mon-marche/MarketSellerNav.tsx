@@ -32,7 +32,7 @@ export async function MarketSellerNav({
     <div className="space-y-3">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-2">
-          <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-zindo-green-600 text-white">
+          <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-zindo-blue-600 text-white">
             <Store className="h-5 w-5" />
           </span>
           <div>
@@ -66,7 +66,7 @@ export async function MarketSellerNav({
             href={t.href}
             className={
               active === t.href
-                ? "shrink-0 border-b-2 border-zindo-green-600 px-3 py-2.5 text-sm font-semibold text-zindo-green-800"
+                ? "shrink-0 border-b-2 border-zindo-blue-600 px-3 py-2.5 text-sm font-semibold text-zindo-blue-800"
                 : "shrink-0 border-b-2 border-transparent px-3 py-2.5 text-sm font-medium text-zinc-500 hover:text-zinc-800"
             }
           >

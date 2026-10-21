@@ -86,7 +86,7 @@ export function MobileTabBarFour({
                         onClick={() => setMoreOpen(false)}
                         className="flex items-center gap-2.5 rounded-xl border border-zinc-200 p-3 text-sm font-medium text-zinc-800 active:bg-zinc-50 dark:border-slate-800 dark:text-slate-200"
                       >
-                        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-zindo-green-50 text-zindo-green-700">
+                        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-zindo-blue-50 text-zindo-blue-700">
                           <a.icon className="h-4.5 w-4.5" />
                         </span>
                         {a.label}
@@ -110,7 +110,7 @@ export function MobileTabBarFour({
                           onClick={() => setMoreOpen(false)}
                           className="flex flex-col items-center gap-1.5 rounded-xl border border-zinc-100 px-1 py-3 text-center text-xs font-medium text-zinc-700 active:bg-zinc-50 dark:border-slate-800 dark:text-slate-300"
                         >
-                          <Icon className="h-5 w-5 text-zindo-green-700 dark:text-zindo-green-300" />
+                          <Icon className="h-5 w-5 text-zindo-blue-700 dark:text-zindo-blue-300" />
                           <span className="leading-tight">{item.label}</span>
                         </Link>
                       );
@@ -143,7 +143,7 @@ export function MobileTabBarFour({
             className="flex flex-col items-center gap-1 py-2"
           >
             <TabIcon icon={MoreHorizontal} active={moreActive} />
-            <span className={cn("text-[10.5px]", moreActive ? "font-semibold text-zindo-green-700" : "font-medium text-zinc-500")}>Plus</span>
+            <span className={cn("text-[10.5px]", moreActive ? "font-semibold text-zindo-blue-700" : "font-medium text-zinc-500")}>Plus</span>
           </button>
         </div>
       </nav>
@@ -158,10 +158,10 @@ function TabIcon({ icon: Icon, active, strong = false }: { icon: typeof Home; ac
         "flex h-7 w-12 items-center justify-center rounded-full transition-colors",
         strong
           ? active
-            ? "bg-zindo-green-600 text-white"
-            : "bg-zindo-green-100 text-zindo-green-700 dark:bg-zindo-green-500/15 dark:text-zindo-green-300"
+            ? "bg-zindo-blue-600 text-white"
+            : "bg-zindo-blue-100 text-zindo-blue-700 dark:bg-zindo-blue-500/15 dark:text-zindo-blue-300"
           : active
-            ? "bg-zindo-green-100 text-zindo-green-700 dark:bg-zindo-green-500/15 dark:text-zindo-green-300"
+            ? "bg-zindo-blue-100 text-zindo-blue-700 dark:bg-zindo-blue-500/15 dark:text-zindo-blue-300"
             : "text-zinc-400"
       )}
     >
@@ -189,7 +189,7 @@ function Tab({
       <span
         className={cn(
           "text-[10.5px]",
-          active || strong ? "font-semibold text-zindo-green-700 dark:text-zindo-green-300" : "font-medium text-zinc-500"
+          active || strong ? "font-semibold text-zindo-blue-700 dark:text-zindo-blue-300" : "font-medium text-zinc-500"
         )}
       >
         {label}

@@ -61,7 +61,7 @@ export default async function AdminMarketPage({ searchParams }: { searchParams: 
             href={`/admin/marche?onglet=${t.key}`}
             className={
               tab === t.key
-                ? "shrink-0 border-b-2 border-zindo-green-600 px-3 py-2.5 text-sm font-semibold text-zindo-green-800"
+                ? "shrink-0 border-b-2 border-zindo-blue-600 px-3 py-2.5 text-sm font-semibold text-zindo-blue-800"
                 : "shrink-0 border-b-2 border-transparent px-3 py-2.5 text-sm font-medium text-zinc-500 hover:text-zinc-800"
             }
           >

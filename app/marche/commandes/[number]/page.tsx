@@ -81,10 +81,10 @@ export default async function MarketOrderTrackingPage({ params }: { params: Prom
             return (
               <li key={step.key} className="flex gap-3">
                 <div className="flex flex-col items-center">
-                  <span className={done ? "flex h-7 w-7 items-center justify-center rounded-full bg-zindo-green-600 text-white" : "h-7 w-7 rounded-full border-2 border-zinc-200 bg-white"}>
+                  <span className={done ? "flex h-7 w-7 items-center justify-center rounded-full bg-zindo-blue-600 text-white" : "h-7 w-7 rounded-full border-2 border-zinc-200 bg-white"}>
                     {done && <Check className="h-4 w-4" />}
                   </span>
-                  {i < steps.length - 1 && <span className={done && i < currentIndex ? "h-8 w-0.5 bg-zindo-green-600" : "h-8 w-0.5 bg-zinc-200"} />}
+                  {i < steps.length - 1 && <span className={done && i < currentIndex ? "h-8 w-0.5 bg-zindo-blue-600" : "h-8 w-0.5 bg-zinc-200"} />}
                 </div>
                 <div className="pb-3">
                   <p className={done ? "text-sm font-semibold text-zinc-900" : "text-sm text-zinc-400"}>{step.label}</p>
@@ -125,7 +125,7 @@ export default async function MarketOrderTrackingPage({ params }: { params: Prom
           </div>
           <div className="flex justify-between font-bold">
             <span>Total</span>
-            <span className="text-zindo-green-700">{formatMoney(order.total, order.currency)}</span>
+            <span className="text-zindo-blue-700">{formatMoney(order.total, order.currency)}</span>
           </div>
         </div>
         <p className="text-sm text-zinc-600">

@@ -83,12 +83,12 @@ export default async function AdminBusinessSalesPage({
           name="q"
           defaultValue={q ?? ""}
           placeholder="N° de vente..."
-          className="h-9 rounded-lg border border-zinc-200 bg-white px-3 text-sm outline-none focus:border-zindo-green-500"
+          className="h-9 rounded-lg border border-zinc-200 bg-white px-3 text-sm outline-none focus:border-zindo-blue-500"
         />
         <select
           name="statut"
           defaultValue={statut ?? ""}
-          className="h-9 rounded-lg border border-zinc-200 bg-white px-2 text-sm outline-none focus:border-zindo-green-500"
+          className="h-9 rounded-lg border border-zinc-200 bg-white px-2 text-sm outline-none focus:border-zindo-blue-500"
         >
           <option value="">Tous les statuts</option>
           {Object.entries(STATUS_LABELS).map(([key, label]) => (
@@ -142,7 +142,7 @@ export default async function AdminBusinessSalesPage({
                   <td className="px-4 py-3 text-right">
                     <Link
                       href={`/admin/commercants/${id}/ventes/${s.id}`}
-                      className="rounded-lg border border-zindo-green-200 px-2.5 py-1.5 text-xs font-medium text-zindo-green-600 hover:bg-zindo-green-50"
+                      className="rounded-lg border border-zindo-blue-200 px-2.5 py-1.5 text-xs font-medium text-zindo-blue-600 hover:bg-zindo-blue-50"
                     >
                       Corriger
                     </Link>

@@ -82,7 +82,7 @@ export function NewArrivalForm({
                 <label
                   key={value}
                   className={`cursor-pointer rounded-xl border p-4 transition-colors ${
-                    stockMode === value ? "border-zindo-green-500 bg-zindo-green-50" : "border-zinc-200 bg-white hover:border-zinc-300"
+                    stockMode === value ? "border-zindo-blue-500 bg-zindo-blue-50" : "border-zinc-200 bg-white hover:border-zinc-300"
                   }`}
                 >
                   <input type="radio" name="stockModeChoice" className="sr-only" checked={stockMode === value} onChange={() => setStockMode(value)} />

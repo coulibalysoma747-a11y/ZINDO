@@ -29,11 +29,11 @@ export default function FonctionnalitesPage() {
           <Link
             key={p.slug}
             href={`/fonctionnalites/${p.slug}`}
-            className="group rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm transition hover:border-zindo-green-500 hover:shadow-md"
+            className="group rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm transition hover:border-zindo-blue-500 hover:shadow-md"
           >
             <h2 className="font-bold text-zindo-ink-900">{p.label}</h2>
             <p className="mt-1.5 text-sm leading-relaxed text-zinc-600">{p.metaDescription}</p>
-            <span className="mt-3 inline-flex items-center gap-1 text-sm font-semibold text-zindo-green-700">
+            <span className="mt-3 inline-flex items-center gap-1 text-sm font-semibold text-zindo-blue-700">
               En savoir plus <ArrowRight className="h-3.5 w-3.5 transition group-hover:translate-x-0.5" />
             </span>
           </Link>

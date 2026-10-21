@@ -50,8 +50,8 @@ export function LiveDashboard({ phone = true }: { phone?: boolean }) {
           <span className="h-2.5 w-2.5 rounded-full bg-[#febc2e]" />
           <span className="h-2.5 w-2.5 rounded-full bg-[#28c840]" />
           <span className="ml-2 min-w-0 truncate text-xs font-medium text-zinc-500">Quincaillerie Diallo · Tableau de bord (FCFA)</span>
-          <span className="ml-auto inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full bg-zindo-green-50 px-2 py-0.5 text-[10px] font-semibold text-zindo-green-700">
-            <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-zindo-green-500" /> En direct
+          <span className="ml-auto inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full bg-zindo-blue-50 px-2 py-0.5 text-[10px] font-semibold text-zindo-blue-700">
+            <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-zindo-blue-500" /> En direct
           </span>
         </div>
         <div className="grid grid-cols-3 gap-2 p-3 sm:gap-3 sm:p-5">
@@ -62,13 +62,13 @@ export function LiveDashboard({ phone = true }: { phone?: boolean }) {
         <div className="grid gap-3 px-3 pb-4 sm:grid-cols-[1fr_1.15fr] sm:gap-4 sm:px-5 sm:pb-5">
           <div className="rounded-xl border border-zinc-100 p-3">
             <p className="flex items-center gap-1.5 text-xs font-semibold">
-              <TrendingUp className="h-3.5 w-3.5 text-zindo-green-600" /> Ventes de la semaine
+              <TrendingUp className="h-3.5 w-3.5 text-zindo-blue-600" /> Ventes de la semaine
             </p>
             <div className="mt-3 flex h-20 items-end gap-1.5 sm:h-28">
               {bars.map((h, i) => (
                 <span
                   key={i}
-                  className={`flex-1 rounded-t-md transition-[height] duration-700 ${i === 6 ? "bg-zindo-green-500" : "bg-zindo-green-100"}`}
+                  className={`flex-1 rounded-t-md transition-[height] duration-700 ${i === 6 ? "bg-zindo-blue-500" : "bg-zindo-blue-100"}`}
                   style={{ height: `${h}%` }}
                 />
               ))}
@@ -111,14 +111,14 @@ export function LiveDashboard({ phone = true }: { phone?: boolean }) {
             <span>Total</span>
             <span className="tabular-nums">{fmt(recent.slice(0, 3).reduce((t, s) => t + s.amount, 0))}</span>
           </div>
-          <div className="mt-2.5 rounded-lg bg-zindo-green-500 py-2 text-center text-[10px] font-bold text-white">Encaisser</div>
+          <div className="mt-2.5 rounded-lg bg-zindo-blue-500 py-2 text-center text-[10px] font-bold text-white">Encaisser</div>
         </div>
       </div>
       )}
 
       {/* Indicateur hors connexion. */}
       <div className="zindo-float absolute -left-3 -top-5 hidden items-center gap-2 rounded-full bg-white px-3 py-1.5 text-xs font-semibold text-zindo-ink-900 shadow-xl ring-1 ring-black/5 sm:flex [animation-delay:1.5s]">
-        <CloudOff className="h-3.5 w-3.5 text-zindo-green-600" /> Fonctionne sans Internet
+        <CloudOff className="h-3.5 w-3.5 text-zindo-blue-600" /> Fonctionne sans Internet
       </div>
     </div>
   );
@@ -131,7 +131,7 @@ function Kpi({ label, value, delta }: { label: string; value: string; delta?: st
       <p className="mt-1 truncate text-sm font-extrabold tabular-nums tracking-tight sm:text-lg">
         {value}
       </p>
-      {delta && <p className="text-[10px] font-semibold text-zindo-green-600 sm:text-[11px]">{delta}</p>}
+      {delta && <p className="text-[10px] font-semibold text-zindo-blue-600 sm:text-[11px]">{delta}</p>}
     </div>
   );
 }
@@ -192,7 +192,7 @@ export function StoriesCarousel({ stories }: { stories: Story[] }) {
             className={`absolute inset-0 transition-[opacity,transform] duration-700 ${i === index ? "translate-y-0 opacity-100" : "pointer-events-none translate-y-3 opacity-0"}`}
           >
             <blockquote className="text-xl font-semibold leading-snug tracking-tight text-white sm:text-2xl">{s.text}</blockquote>
-            <figcaption className="mt-5 text-sm text-zindo-green-200">
+            <figcaption className="mt-5 text-sm text-zindo-blue-200">
               <span className="font-semibold text-white">{s.business}</span> · {s.city}
             </figcaption>
           </figure>

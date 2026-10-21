@@ -35,7 +35,7 @@ export default async function CreditRemindersPage() {
             return (
               <CardBody key={r.customerId} className="flex flex-wrap items-center justify-between gap-3">
                 <div>
-                  <Link href={`/clients/${r.customerId}`} className="font-medium text-zinc-900 hover:text-zindo-green-600">
+                  <Link href={`/clients/${r.customerId}`} className="font-medium text-zinc-900 hover:text-zindo-blue-600">
                     {r.name}
                   </Link>
                   <p className="text-xs text-zinc-500">

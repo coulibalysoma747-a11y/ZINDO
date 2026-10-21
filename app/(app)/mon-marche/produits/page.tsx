@@ -100,7 +100,7 @@ export default async function MyMarketProductsPage({ searchParams }: { searchPar
       )}
       {marketOnly && (
         <div className="flex justify-end">
-          <Link href="/produits/nouveau" className="inline-flex items-center gap-1.5 rounded-xl bg-zindo-green-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-zindo-green-700">
+          <Link href="/produits/nouveau" className="inline-flex items-center gap-1.5 rounded-xl bg-zindo-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-zindo-blue-700">
             <Plus className="h-4 w-4" /> Nouveau produit
           </Link>
         </div>

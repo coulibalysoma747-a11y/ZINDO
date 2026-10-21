@@ -42,7 +42,7 @@ export function MedicalActManager({ acts, currency }: { acts: MedicalAct[]; curr
               <CardBody className="flex items-start justify-between gap-2">
                 <div className="min-w-0">
                   <p className="truncate font-medium text-zinc-900">{a.name}</p>
-                  <p className="mt-1 text-sm font-semibold text-zindo-green-600">{formatMoney(a.defaultFee, currency)}</p>
+                  <p className="mt-1 text-sm font-semibold text-zindo-blue-600">{formatMoney(a.defaultFee, currency)}</p>
                 </div>
                 <div className="flex shrink-0 gap-1">
                   <button onClick={() => setEditing(a)} className="rounded-lg p-1.5 text-zinc-500 hover:bg-zinc-100">

@@ -57,7 +57,7 @@ export default async function MarketOrdersPage({ searchParams }: { searchParams:
           <Link
             key={f.key}
             href={f.key ? `/mon-marche/commandes?statut=${f.key}` : "/mon-marche/commandes"}
-            className={statut === f.key ? "shrink-0 rounded-full bg-zindo-green-600 px-3 py-1.5 font-semibold text-white" : "shrink-0 rounded-full bg-white px-3 py-1.5 text-zinc-700 ring-1 ring-zinc-200"}
+            className={statut === f.key ? "shrink-0 rounded-full bg-zindo-blue-600 px-3 py-1.5 font-semibold text-white" : "shrink-0 rounded-full bg-white px-3 py-1.5 text-zinc-700 ring-1 ring-zinc-200"}
           >
             {f.label}
           </Link>
@@ -82,7 +82,7 @@ export default async function MarketOrdersPage({ searchParams }: { searchParams:
               {orders.map((o) => (
                 <tr key={o.id} className="hover:bg-zinc-50">
                   <td className="px-4 py-3">
-                    <Link href={`/mon-marche/commandes/${o.id}`} className="font-semibold text-zindo-green-700 hover:underline">
+                    <Link href={`/mon-marche/commandes/${o.id}`} className="font-semibold text-zindo-blue-700 hover:underline">
                       {o.number}
                     </Link>
                     <p className="text-xs text-zinc-500">{formatDateTime(o.createdAt)}</p>

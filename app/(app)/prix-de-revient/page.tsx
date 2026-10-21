@@ -75,7 +75,7 @@ export default async function CostPricePage() {
                 return (
                   <TableRow key={a.id}>
                     <TableCell>
-                      <Link href={`/prix-de-revient/${a.id}`} className="font-medium text-zinc-900 hover:text-zindo-green-700 dark:text-slate-100">
+                      <Link href={`/prix-de-revient/${a.id}`} className="font-medium text-zinc-900 hover:text-zindo-blue-700 dark:text-slate-100">
                         {a.name}
                       </Link>
                       <p className="text-xs text-zinc-500">

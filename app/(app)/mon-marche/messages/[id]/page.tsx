@@ -21,7 +21,7 @@ export default async function SellerConversationPage({ params }: { params: Promi
           <ArrowLeft className="h-5 w-5" />
         </Link>
         <span className="font-semibold text-zinc-900">{conversation.buyer.name}</span>
-        <a href={`tel:${conversation.buyer.phone}`} className="inline-flex items-center gap-1 text-sm text-zindo-green-700">
+        <a href={`tel:${conversation.buyer.phone}`} className="inline-flex items-center gap-1 text-sm text-zindo-blue-700">
           <Phone className="h-4 w-4" /> {conversation.buyer.phone}
         </a>
       </div>

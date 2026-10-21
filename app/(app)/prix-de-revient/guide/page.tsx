@@ -8,7 +8,7 @@ import { ButtonLink } from "@/components/ui/Button";
 function Step({ n, title, children }: { n: number; title: string; children: React.ReactNode }) {
   return (
     <section className="flex gap-4">
-      <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-zindo-green-600 text-sm font-bold text-white">{n}</span>
+      <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-zindo-blue-600 text-sm font-bold text-white">{n}</span>
       <div className="min-w-0 flex-1 space-y-3">
         <h2 className="text-lg font-semibold text-zinc-900">{title}</h2>
         <div className="space-y-3 text-sm leading-relaxed text-zinc-700">{children}</div>

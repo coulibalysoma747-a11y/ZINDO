@@ -37,7 +37,7 @@ export default async function BuyerMessagesPage() {
                 </div>
                 <div className="shrink-0 text-right">
                   <p className="text-xs text-zinc-400">{formatDateTime(c.lastMessageAt)}</p>
-                  {c.unread > 0 && <span className="mt-1 inline-block rounded-full bg-zindo-green-600 px-2 py-0.5 text-xs font-bold text-white">{c.unread}</span>}
+                  {c.unread > 0 && <span className="mt-1 inline-block rounded-full bg-zindo-blue-600 px-2 py-0.5 text-xs font-bold text-white">{c.unread}</span>}
                 </div>
               </Link>
             </li>

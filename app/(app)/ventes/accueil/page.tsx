@@ -49,9 +49,9 @@ export default async function SalesHubPage({ searchParams }: { searchParams: Pro
           <Link
             key={t.href}
             href={t.href}
-            className="flex flex-col gap-3 rounded-2xl border-2 border-zindo-green-200 bg-white p-4 active:bg-zinc-50 dark:border-zindo-green-500/30 dark:bg-slate-900"
+            className="flex flex-col gap-3 rounded-2xl border-2 border-zindo-blue-200 bg-white p-4 active:bg-zinc-50 dark:border-zindo-blue-500/30 dark:bg-slate-900"
           >
-            <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-zindo-green-50 text-zindo-green-700 dark:bg-zindo-green-500/15 dark:text-zindo-green-300">
+            <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-zindo-blue-50 text-zindo-blue-700 dark:bg-zindo-blue-500/15 dark:text-zindo-blue-300">
               <t.icon className="h-6 w-6" />
             </span>
             <span>

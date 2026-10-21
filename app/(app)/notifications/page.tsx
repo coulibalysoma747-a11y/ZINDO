@@ -69,7 +69,7 @@ export default async function NotificationsPage() {
                     <p className="text-sm text-zinc-500">{n.message}</p>
                     <p className="mt-1 text-xs text-zinc-400">{formatDateTime(new Date(n.createdAt))}</p>
                   </div>
-                  {!n.read && <span className="mt-1 h-2 w-2 shrink-0 rounded-full bg-zindo-green-500" />}
+                  {!n.read && <span className="mt-1 h-2 w-2 shrink-0 rounded-full bg-zindo-blue-500" />}
                 </div>
               );
               return (

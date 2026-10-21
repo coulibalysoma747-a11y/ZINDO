@@ -298,7 +298,7 @@ export function NouvelleVenteEnginForm({
                       key={m.id}
                       type="button"
                       onClick={() => selectModel(m)}
-                      className="flex flex-col items-center gap-2 rounded-xl border border-zinc-200 p-3 text-center transition-colors hover:border-zindo-green-300"
+                      className="flex flex-col items-center gap-2 rounded-xl border border-zinc-200 p-3 text-center transition-colors hover:border-zindo-blue-300"
                     >
                       <ProductThumbnail photoUrl={m.photoUrl} name={m.name} size={56} />
                       <span className="text-sm font-medium text-zinc-900">{m.name}</span>
@@ -470,7 +470,7 @@ export function NouvelleVenteEnginForm({
                       <span className="font-semibold text-zinc-900">{formatMoney(remaining, currency)}</span>
                     </div>
                   </div>
-                  <div className="flex items-center justify-between rounded-xl bg-zindo-green-500 px-4 py-3 text-white">
+                  <div className="flex items-center justify-between rounded-xl bg-zindo-blue-500 px-4 py-3 text-white">
                     <span className="text-sm font-semibold uppercase tracking-wide">Total à payer</span>
                     <span className="text-lg font-bold">{formatMoney(total, currency)}</span>
                   </div>
@@ -483,7 +483,7 @@ export function NouvelleVenteEnginForm({
                 </CardHeader>
                 <CardBody className="space-y-3">
                   <label className="flex items-center gap-2 text-sm text-zinc-700">
-                    <input type="checkbox" checked={warranty} onChange={(e) => setWarranty(e.target.checked)} className="h-4 w-4 rounded accent-zindo-green-500" />
+                    <input type="checkbox" checked={warranty} onChange={(e) => setWarranty(e.target.checked)} className="h-4 w-4 rounded accent-zindo-blue-500" />
                     Garantie éventuelle
                   </label>
                   {warranty && (
@@ -505,23 +505,23 @@ export function NouvelleVenteEnginForm({
                   <p className="text-xs font-medium uppercase tracking-wide text-zinc-500">Accessoires remis avec la moto</p>
                   <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                     <label className="flex items-center gap-2 text-sm text-zinc-700">
-                      <input type="checkbox" checked={accessoryHelmet} onChange={(e) => setAccessoryHelmet(e.target.checked)} className="h-4 w-4 rounded accent-zindo-green-500" />
+                      <input type="checkbox" checked={accessoryHelmet} onChange={(e) => setAccessoryHelmet(e.target.checked)} className="h-4 w-4 rounded accent-zindo-blue-500" />
                       Casque de protection
                     </label>
                     <label className="flex items-center gap-2 text-sm text-zinc-700">
-                      <input type="checkbox" checked={accessoryToolKit} onChange={(e) => setAccessoryToolKit(e.target.checked)} className="h-4 w-4 rounded accent-zindo-green-500" />
+                      <input type="checkbox" checked={accessoryToolKit} onChange={(e) => setAccessoryToolKit(e.target.checked)} className="h-4 w-4 rounded accent-zindo-blue-500" />
                       Kit d&apos;outils
                     </label>
                     <label className="flex items-center gap-2 text-sm text-zinc-700">
-                      <input type="checkbox" checked={accessoryManual} onChange={(e) => setAccessoryManual(e.target.checked)} className="h-4 w-4 rounded accent-zindo-green-500" />
+                      <input type="checkbox" checked={accessoryManual} onChange={(e) => setAccessoryManual(e.target.checked)} className="h-4 w-4 rounded accent-zindo-blue-500" />
                       Manuel d&apos;utilisation
                     </label>
                     <label className="flex items-center gap-2 text-sm text-zinc-700">
-                      <input type="checkbox" checked={accessoryKeys} onChange={(e) => setAccessoryKeys(e.target.checked)} className="h-4 w-4 rounded accent-zindo-green-500" />
+                      <input type="checkbox" checked={accessoryKeys} onChange={(e) => setAccessoryKeys(e.target.checked)} className="h-4 w-4 rounded accent-zindo-blue-500" />
                       Clés de contact
                     </label>
                     <label className="flex items-center gap-2 text-sm text-zinc-700">
-                      <input type="checkbox" checked={accessorySafetyVest} onChange={(e) => setAccessorySafetyVest(e.target.checked)} className="h-4 w-4 rounded accent-zindo-green-500" />
+                      <input type="checkbox" checked={accessorySafetyVest} onChange={(e) => setAccessorySafetyVest(e.target.checked)} className="h-4 w-4 rounded accent-zindo-blue-500" />
                       Gilet de sécurité
                     </label>
                   </div>

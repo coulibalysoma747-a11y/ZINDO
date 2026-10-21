@@ -97,7 +97,7 @@ export function ChatThread({
           const mine = m.sender === me;
           return (
             <div key={m.id} className={`flex ${mine ? "justify-end" : "justify-start"}`}>
-              <div className={`max-w-[80%] space-y-2 rounded-2xl px-3 py-2 text-sm shadow-sm ${mine ? "rounded-br-md bg-zindo-green-600 text-white" : "rounded-bl-md bg-white text-zinc-800 ring-1 ring-zinc-200"}`}>
+              <div className={`max-w-[80%] space-y-2 rounded-2xl px-3 py-2 text-sm shadow-sm ${mine ? "rounded-br-md bg-zindo-blue-600 text-white" : "rounded-bl-md bg-white text-zinc-800 ring-1 ring-zinc-200"}`}>
                 {m.listing && (
                   <Link href={`/marche/produit/${m.listing.productId}`} target="_blank" className={`flex items-center gap-2 rounded-xl p-2 ${mine ? "bg-white/15" : "bg-zinc-50 ring-1 ring-zinc-200"}`}>
                     {m.listing.photoUrl && (
@@ -186,7 +186,7 @@ export function ChatThread({
             onClick={submit}
             disabled={pending || uploading || (!body.trim() && !photoUrl && !joined)}
             aria-label="Envoyer"
-            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-zindo-green-600 text-white disabled:opacity-40"
+            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-zindo-blue-600 text-white disabled:opacity-40"
           >
             <Send className="h-5 w-5" />
           </button>

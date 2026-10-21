@@ -106,7 +106,7 @@ export function CaisseAnimee() {
               <span
                 key={m}
                 className={`rounded-lg py-2 transition-colors duration-300 ${
-                  step >= 4 && i === 0 ? "border-2 border-zindo-green-500 bg-zindo-green-50 text-zindo-green-700" : "border border-zinc-200 text-zinc-600"
+                  step >= 4 && i === 0 ? "border-2 border-zindo-blue-500 bg-zindo-blue-50 text-zindo-blue-700" : "border border-zinc-200 text-zinc-600"
                 }`}
               >
                 {m}
@@ -115,7 +115,7 @@ export function CaisseAnimee() {
           </div>
           <div
             className={`mt-3 flex items-center justify-center gap-2 rounded-lg py-3 text-sm font-bold text-white transition-all duration-300 ${
-              paid ? "bg-zindo-green-700" : step >= 4 ? "bg-zindo-green-500 ring-4 ring-zindo-green-500/20" : "bg-zindo-green-500/50"
+              paid ? "bg-zindo-blue-700" : step >= 4 ? "bg-zindo-blue-500 ring-4 ring-zindo-blue-500/20" : "bg-zindo-blue-500/50"
             }`}
           >
             {paid ? (
@@ -167,7 +167,7 @@ export function StockAnime() {
     ["Filtre à huile", "FH-110", 18],
   ];
   const state = (q: number) => (q === 0 ? "out" : q <= MINIMUM ? "low" : "ok");
-  const badge = { ok: "bg-zindo-green-50 text-zindo-green-700", low: "bg-amber-50 text-amber-700", out: "bg-red-50 text-red-700" };
+  const badge = { ok: "bg-zindo-blue-50 text-zindo-blue-700", low: "bg-amber-50 text-amber-700", out: "bg-red-50 text-red-700" };
   const label = { ok: "En stock", low: "Stock faible", out: "Rupture" };
 
   return (
@@ -186,7 +186,7 @@ export function StockAnime() {
               const s = state(q);
               const live = code === "BA-012";
               return (
-                <tr key={code} className={live ? "bg-zindo-green-50/40" : ""}>
+                <tr key={code} className={live ? "bg-zindo-blue-50/40" : ""}>
                   <td className="px-5 py-3">
                     <p className="font-medium">{name}</p>
                     <p className="text-xs text-zinc-400">{code}</p>
@@ -207,8 +207,8 @@ export function StockAnime() {
       </Frame>
       <div className="pointer-events-none absolute -bottom-6 right-4 left-4 flex justify-end sm:left-auto">
         {restocked ? (
-          <p key="achat" className="zindo-appear flex items-center gap-2 rounded-xl bg-zindo-green-950 px-4 py-2.5 text-xs font-semibold text-white shadow-xl">
-            <PackagePlus className="h-4 w-4 text-zindo-green-300" /> Livraison fournisseur reçue : +20 batteries
+          <p key="achat" className="zindo-appear flex items-center gap-2 rounded-xl bg-zindo-blue-950 px-4 py-2.5 text-xs font-semibold text-white shadow-xl">
+            <PackagePlus className="h-4 w-4 text-zindo-blue-300" /> Livraison fournisseur reçue : +20 batteries
           </p>
         ) : qty <= MINIMUM ? (
           <p key="alerte" className="zindo-appear flex items-center gap-2 rounded-xl bg-white px-4 py-2.5 text-xs font-semibold text-amber-800 shadow-xl ring-1 ring-amber-200">
@@ -251,8 +251,8 @@ export function CreditsAnimes() {
     <div ref={ref} aria-hidden className="relative">
       <Frame title="Crédits clients">
         <div className="p-5">
-          <div className="rounded-xl bg-zindo-green-950 p-4 text-white">
-            <p className="text-xs text-zindo-green-200">Total dû par vos clients</p>
+          <div className="rounded-xl bg-zindo-blue-950 p-4 text-white">
+            <p className="text-xs text-zindo-blue-200">Total dû par vos clients</p>
             <p className="mt-1 text-2xl font-extrabold tabular-nums">{fmt(total)} FCFA</p>
           </div>
           <ul className="mt-4 divide-y divide-zinc-100 text-sm">
@@ -261,10 +261,10 @@ export function CreditsAnimes() {
               ["Awa Ouédraogo", "depuis 3 jours", 12500],
               ["Garage Kaboré", "échéance demain", 140000],
             ].map(([n, since, v], idx) => (
-              <li key={n as string} className={`flex items-center justify-between rounded-md px-1 py-3 transition-colors duration-500 ${idx === 0 && repaid ? "bg-zindo-green-50" : ""}`}>
+              <li key={n as string} className={`flex items-center justify-between rounded-md px-1 py-3 transition-colors duration-500 ${idx === 0 && repaid ? "bg-zindo-blue-50" : ""}`}>
                 <span>
                   <span className="block font-medium">{n}</span>
-                  <span className={`text-xs ${idx === 0 && repaid ? "font-semibold text-zindo-green-700" : "text-zinc-400"}`}>{since}</span>
+                  <span className={`text-xs ${idx === 0 && repaid ? "font-semibold text-zindo-blue-700" : "text-zinc-400"}`}>{since}</span>
                 </span>
                 <span key={String(v)} className={`font-semibold tabular-nums ${idx === 0 ? "zindo-pop inline-block" : ""}`}>
                   {fmt(v as number)} FCFA
@@ -275,8 +275,8 @@ export function CreditsAnimes() {
         </div>
       </Frame>
       {repaid && (
-        <p className="zindo-appear pointer-events-none absolute -bottom-6 right-4 flex items-center gap-2 rounded-xl bg-white px-4 py-2.5 text-xs font-semibold text-zindo-green-800 shadow-xl ring-1 ring-zindo-green-200">
-          <Wallet className="h-4 w-4 text-zindo-green-600" /> Moussa Traoré a payé 10 000 FCFA (Orange Money)
+        <p className="zindo-appear pointer-events-none absolute -bottom-6 right-4 flex items-center gap-2 rounded-xl bg-white px-4 py-2.5 text-xs font-semibold text-zindo-blue-800 shadow-xl ring-1 ring-zindo-blue-200">
+          <Wallet className="h-4 w-4 text-zindo-blue-600" /> Moussa Traoré a payé 10 000 FCFA (Orange Money)
         </p>
       )}
     </div>

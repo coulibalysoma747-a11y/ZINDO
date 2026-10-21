@@ -19,7 +19,7 @@ export function QuantityInputModePanel({ settings }: { settings: BusinessSetting
   return (
     <div className="rounded-xl border border-zinc-200 p-4">
       <div className="flex items-start gap-2.5">
-        <Hash className="mt-0.5 h-5 w-5 shrink-0 text-zindo-green-600" />
+        <Hash className="mt-0.5 h-5 w-5 shrink-0 text-zindo-blue-600" />
         <div>
           <p className="font-bold text-zinc-900">Caisse — saisie de la quantité</p>
           <p className="mt-1 text-sm text-zinc-500">
@@ -45,7 +45,7 @@ export function QuantityInputModePanel({ settings }: { settings: BusinessSetting
                   if (result.error) setError(result.error);
                 });
               }}
-              className="h-4 w-4 accent-zindo-green-500"
+              className="h-4 w-4 accent-zindo-blue-500"
             />
             {opt.label}
           </label>

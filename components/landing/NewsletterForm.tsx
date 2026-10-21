@@ -33,7 +33,7 @@ export function NewsletterForm() {
           onChange={(e) => setEmail(e.target.value)}
           placeholder="Votre adresse e-mail"
           aria-label="Votre adresse e-mail"
-          className="min-w-0 flex-1 rounded-xl border border-white/15 bg-white/10 px-4 py-2.5 text-sm text-white placeholder:text-zindo-ink-200 focus:border-zindo-green-400 focus:outline-none"
+          className="min-w-0 flex-1 rounded-xl border border-white/15 bg-white/10 px-4 py-2.5 text-sm text-white placeholder:text-zindo-ink-200 focus:border-zindo-blue-400 focus:outline-none"
         />
         <input
           type="text"
@@ -47,12 +47,12 @@ export function NewsletterForm() {
         <button
           type="submit"
           disabled={pending}
-          className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-zindo-green-500 px-5 py-2.5 text-sm font-bold text-white hover:bg-zindo-green-600 disabled:opacity-60"
+          className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-zindo-blue-500 px-5 py-2.5 text-sm font-bold text-white hover:bg-zindo-blue-600 disabled:opacity-60"
         >
           {pending ? "Envoi…" : "S'abonner"} <ArrowRight className="h-4 w-4" />
         </button>
       </div>
-      <p className={`mt-2 text-xs ${message ? (message.ok ? "text-zindo-green-400" : "text-zindo-red-400") : "text-zindo-ink-200"}`}>
+      <p className={`mt-2 text-xs ${message ? (message.ok ? "text-zindo-blue-400" : "text-zindo-red-400") : "text-zindo-ink-200"}`}>
         {message?.text ?? "Pas de spam. Désinscription sur simple demande."}
       </p>
     </form>

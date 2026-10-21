@@ -167,7 +167,7 @@ export function PackagingUnitsPanel({
               <li key={u.id}>
                 <form
                   action={(fd) => handleUpdate(u.id, fd)}
-                  className="grid grid-cols-1 gap-3 rounded-xl border border-zindo-green-300 bg-zindo-green-50/40 p-3 sm:grid-cols-4"
+                  className="grid grid-cols-1 gap-3 rounded-xl border border-zindo-blue-300 bg-zindo-blue-50/40 p-3 sm:grid-cols-4"
                 >
                   <Input name="name" defaultValue={u.name} required />
                   <Input name="multiplier" type="number" min={1} step="any" defaultValue={u.multiplier} required />

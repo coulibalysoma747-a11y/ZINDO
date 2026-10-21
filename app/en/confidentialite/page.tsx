@@ -25,7 +25,7 @@ export default function EnglishConfidentialitePage() {
             href="https://wa.me/22604059929"
             target="_blank"
             rel="noopener noreferrer"
-            className="font-medium text-zindo-green-600 hover:underline"
+            className="font-medium text-zindo-blue-600 hover:underline"
           >
             +226 04 05 99 29
           </a>

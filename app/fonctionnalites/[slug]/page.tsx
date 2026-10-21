@@ -70,9 +70,9 @@ export default async function SeoFeaturePage({ params }: { params: Promise<{ slu
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }} />
 
       <nav aria-label="Fil d'Ariane" className="text-sm text-zinc-500">
-        <Link href="/" className="hover:text-zindo-green-600">Accueil</Link>
+        <Link href="/" className="hover:text-zindo-blue-600">Accueil</Link>
         {" / "}
-        <Link href="/fonctionnalites" className="hover:text-zindo-green-600">Fonctionnalités</Link>
+        <Link href="/fonctionnalites" className="hover:text-zindo-blue-600">Fonctionnalités</Link>
         {" / "}
         <span className="text-zindo-ink-700">{page.label}</span>
       </nav>
@@ -82,7 +82,7 @@ export default async function SeoFeaturePage({ params }: { params: Promise<{ slu
         <p className="mt-4 text-base leading-relaxed text-zinc-600 sm:text-lg">{page.intro}</p>
         <Link
           href="/inscription"
-          className="mt-6 inline-flex items-center gap-2 rounded-2xl bg-zindo-green-500 px-6 py-3 text-base font-bold text-white shadow-lg shadow-zindo-green-500/30 transition hover:bg-zindo-green-600"
+          className="mt-6 inline-flex items-center gap-2 rounded-2xl bg-zindo-blue-500 px-6 py-3 text-base font-bold text-white shadow-lg shadow-zindo-blue-500/30 transition hover:bg-zindo-blue-600"
         >
           Essai gratuit de {trialDays} jours <ArrowRight className="h-4 w-4" />
         </Link>
@@ -97,7 +97,7 @@ export default async function SeoFeaturePage({ params }: { params: Promise<{ slu
               <ul className="mt-3 space-y-1.5">
                 {s.points.map((pt) => (
                   <li key={pt} className="flex gap-2 text-sm text-zinc-600">
-                    <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-zindo-green-600" />
+                    <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-zindo-blue-600" />
                     {pt}
                   </li>
                 ))}
@@ -126,7 +126,7 @@ export default async function SeoFeaturePage({ params }: { params: Promise<{ slu
             <Link
               key={p.slug}
               href={`/fonctionnalites/${p.slug}`}
-              className="rounded-xl border border-zinc-200 bg-white px-4 py-2 text-sm font-semibold text-zindo-ink-700 hover:border-zindo-green-500 hover:text-zindo-green-700"
+              className="rounded-xl border border-zinc-200 bg-white px-4 py-2 text-sm font-semibold text-zindo-ink-700 hover:border-zindo-blue-500 hover:text-zindo-blue-700"
             >
               {p.label}
             </Link>

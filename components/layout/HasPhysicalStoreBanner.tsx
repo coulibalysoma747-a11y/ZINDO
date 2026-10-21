@@ -27,7 +27,7 @@ export function HasPhysicalStoreBanner({ pro = false }: { pro?: boolean } = {}) 
   }
 
   return (
-    <div className={pro ? "flex flex-wrap items-center justify-between gap-3 border-b border-zindo-green-100 bg-zindo-green-50/70 px-4 py-2 text-[13px] text-zindo-green-800 print:hidden" : "flex flex-wrap items-center justify-between gap-3 border-b border-blue-200 bg-blue-50 px-4 py-2 text-sm text-blue-800 print:hidden"}>
+    <div className={pro ? "flex flex-wrap items-center justify-between gap-3 border-b border-zindo-blue-100 bg-zindo-blue-50/70 px-4 py-2 text-[13px] text-zindo-blue-800 print:hidden" : "flex flex-wrap items-center justify-between gap-3 border-b border-blue-200 bg-blue-50 px-4 py-2 text-sm text-blue-800 print:hidden"}>
       <span className="flex items-center gap-2">
         <Store className="h-4 w-4 shrink-0" />
         Avez-vous une boutique ou un local physique ?
@@ -37,7 +37,7 @@ export function HasPhysicalStoreBanner({ pro = false }: { pro?: boolean } = {}) 
           type="button"
           disabled={pending}
           onClick={() => answer(true)}
-          className={pro ? "rounded-md bg-zindo-green-600 px-3 py-1 text-xs font-medium text-white hover:bg-zindo-green-700 disabled:opacity-50" : "rounded-md bg-blue-600 px-3 py-1 text-xs font-medium text-white hover:bg-blue-700 disabled:opacity-50"}
+          className={pro ? "rounded-md bg-zindo-blue-600 px-3 py-1 text-xs font-medium text-white hover:bg-zindo-blue-700 disabled:opacity-50" : "rounded-md bg-blue-600 px-3 py-1 text-xs font-medium text-white hover:bg-blue-700 disabled:opacity-50"}
         >
           Oui, j&apos;ai un local
         </button>
@@ -45,7 +45,7 @@ export function HasPhysicalStoreBanner({ pro = false }: { pro?: boolean } = {}) 
           type="button"
           disabled={pending}
           onClick={() => answer(false)}
-          className={pro ? "rounded-md border border-zindo-green-200 px-3 py-1 text-xs font-medium text-zindo-green-800 hover:bg-zindo-green-100 disabled:opacity-50" : "rounded-md border border-blue-300 px-3 py-1 text-xs font-medium text-blue-700 hover:bg-blue-100 disabled:opacity-50"}
+          className={pro ? "rounded-md border border-zindo-blue-200 px-3 py-1 text-xs font-medium text-zindo-blue-800 hover:bg-zindo-blue-100 disabled:opacity-50" : "rounded-md border border-blue-300 px-3 py-1 text-xs font-medium text-blue-700 hover:bg-blue-100 disabled:opacity-50"}
         >
           Non, uniquement en ligne
         </button>
@@ -54,7 +54,7 @@ export function HasPhysicalStoreBanner({ pro = false }: { pro?: boolean } = {}) 
           onClick={close}
           aria-label="Fermer ce message"
           title="Fermer"
-          className={pro ? "rounded-md p-1 text-zindo-green-700 hover:bg-zindo-green-100" : "rounded-md p-1 text-blue-700 hover:bg-blue-100"}
+          className={pro ? "rounded-md p-1 text-zindo-blue-700 hover:bg-zindo-blue-100" : "rounded-md p-1 text-blue-700 hover:bg-blue-100"}
         >
           <X className="h-4 w-4" />
         </button>

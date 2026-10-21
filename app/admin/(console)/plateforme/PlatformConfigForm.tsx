@@ -40,7 +40,7 @@ export function PlatformConfigForm({ config }: { config: PlatformConfig }) {
             type="checkbox"
             name="announcementActive"
             defaultChecked={config.announcementActive}
-            className="h-4 w-4 rounded accent-zindo-green-500"
+            className="h-4 w-4 rounded accent-zindo-blue-500"
           />
           Bannière d&apos;annonce (visible par tous les commerçants connectés)
         </label>

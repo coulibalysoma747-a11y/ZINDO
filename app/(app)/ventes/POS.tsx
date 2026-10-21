@@ -1434,7 +1434,7 @@ export function POS({
         <h2 className="font-semibold tracking-tight text-zinc-900">Panier</h2>
         {cart.length > 0 && (
           <div className="flex items-center gap-2">
-            <span className="rounded-full bg-zindo-green-50 px-2.5 py-0.5 text-xs font-semibold text-zindo-green-700 dark:bg-emerald-500/10 dark:text-emerald-400">
+            <span className="rounded-full bg-zindo-blue-50 px-2.5 py-0.5 text-xs font-semibold text-zindo-blue-700 dark:bg-emerald-500/10 dark:text-emerald-400">
               {cart.length} article{cart.length > 1 ? "s" : ""}
             </span>
             {clearCartButton}
@@ -1476,7 +1476,7 @@ export function POS({
                         <p className="font-medium text-zinc-900">
                           {line.product.name}
                           {line.packagingLabel && (
-                            <span className="ml-1.5 rounded-md bg-zindo-green-50 px-1.5 py-0.5 text-[10px] font-semibold text-zindo-green-700 dark:bg-emerald-500/10 dark:text-emerald-400">
+                            <span className="ml-1.5 rounded-md bg-zindo-blue-50 px-1.5 py-0.5 text-[10px] font-semibold text-zindo-blue-700 dark:bg-emerald-500/10 dark:text-emerald-400">
                               {line.packagingLabel}
                             </span>
                           )}
@@ -1512,7 +1512,7 @@ export function POS({
                                 live={pieceFactor(line) === 1}
                                 onCommit={(n) => commitShownQty(line, n)}
                                 onFocusExtra={revealAboveKeyboard}
-                                className="h-8 w-14 rounded-lg border border-zinc-200 text-center text-sm tabular-nums focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zindo-green-500/40 dark:border-slate-700 dark:bg-slate-900"
+                                className="h-8 w-14 rounded-lg border border-zinc-200 text-center text-sm tabular-nums focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zindo-blue-500/40 dark:border-slate-700 dark:bg-slate-900"
                               />
                             )}
                             {quantityInputMode === "buttons" && (
@@ -1537,7 +1537,7 @@ export function POS({
                           value={shownPrice(line) || ""}
                           onChange={(e) => updateLine(lineKey(line), { unitPrice: (Number(e.target.value) || 0) * pieceFactor(line) })}
                           onFocus={revealAboveKeyboard}
-                          className="h-8 w-24 rounded-lg border border-zinc-200 text-right text-sm tabular-nums focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zindo-green-500/40 dark:border-slate-700 dark:bg-slate-900"
+                          className="h-8 w-24 rounded-lg border border-zinc-200 text-right text-sm tabular-nums focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zindo-blue-500/40 dark:border-slate-700 dark:bg-slate-900"
                         />
                       </TableCell>
                       <TableCell align="right">
@@ -1547,7 +1547,7 @@ export function POS({
                           value={line.discount || ""}
                           onChange={(e) => updateLine(lineKey(line), { discount: Number(e.target.value) || 0 })}
                           onFocus={revealAboveKeyboard}
-                          className="h-8 w-20 rounded-lg border border-zinc-200 text-right text-sm tabular-nums focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zindo-green-500/40 dark:border-slate-700 dark:bg-slate-900"
+                          className="h-8 w-20 rounded-lg border border-zinc-200 text-right text-sm tabular-nums focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zindo-blue-500/40 dark:border-slate-700 dark:bg-slate-900"
                         />
                       </TableCell>
                       <TableCell align="right" className="font-semibold text-zinc-900 tabular-nums">
@@ -1584,7 +1584,7 @@ export function POS({
                     <p className="min-w-0 flex-1 truncate text-sm font-medium text-zinc-900" title={line.product.name}>
                       {line.product.name}
                       {line.packagingLabel && (
-                        <span className="ml-1.5 rounded-md bg-zindo-green-50 px-1.5 py-0.5 text-[10px] font-semibold text-zindo-green-700 dark:bg-emerald-500/10 dark:text-emerald-400">
+                        <span className="ml-1.5 rounded-md bg-zindo-blue-50 px-1.5 py-0.5 text-[10px] font-semibold text-zindo-blue-700 dark:bg-emerald-500/10 dark:text-emerald-400">
                           {line.packagingLabel}
                         </span>
                       )}
@@ -1592,7 +1592,7 @@ export function POS({
                         <span className="ml-1.5 font-mono text-xs text-zinc-500">{line.chassisNumber}</span>
                       )}
                     </p>
-                    <span className="shrink-0 text-sm font-semibold tabular-nums text-zindo-green-700 dark:text-emerald-400">
+                    <span className="shrink-0 text-sm font-semibold tabular-nums text-zindo-blue-700 dark:text-emerald-400">
                       {formatMoney(line.unitPrice * line.quantity - line.discount, currency)}
                     </span>
                     <button
@@ -1678,7 +1678,7 @@ export function POS({
                       <p className="break-words font-medium text-zinc-900">
                         {line.product.name}
                         {line.packagingLabel && (
-                          <span className="ml-1.5 rounded-md bg-zindo-green-50 px-1.5 py-0.5 text-[10px] font-semibold text-zindo-green-700 dark:bg-emerald-500/10 dark:text-emerald-400">
+                          <span className="ml-1.5 rounded-md bg-zindo-blue-50 px-1.5 py-0.5 text-[10px] font-semibold text-zindo-blue-700 dark:bg-emerald-500/10 dark:text-emerald-400">
                             {line.packagingLabel}
                           </span>
                         )}
@@ -1891,7 +1891,7 @@ export function POS({
         }
       }}
       placeholder={narrowScreen ? "Ajouter un produit (nom, référence…)" : "Tapez un nom, une référence ou un code-barres, puis Entrée…"}
-      className="w-full rounded-xl border-2 border-zindo-green-400 bg-white px-4 py-3 text-base dark:border-zindo-green-500/50 dark:bg-slate-900"
+      className="w-full rounded-xl border-2 border-zindo-blue-400 bg-white px-4 py-3 text-base dark:border-zindo-blue-500/50 dark:bg-slate-900"
     />
   );
 
@@ -1909,7 +1909,7 @@ export function POS({
               onMouseDown={(e) => e.preventDefault()}
               onClick={() => addFromTable(p)}
               className={`flex w-full items-center justify-between gap-3 px-3 py-2.5 text-left text-sm ${
-                i === tableHighlight ? "bg-zindo-green-50 dark:bg-zindo-green-500/10" : ""
+                i === tableHighlight ? "bg-zindo-blue-50 dark:bg-zindo-blue-500/10" : ""
               }`}
             >
               <span className="min-w-0">
@@ -1993,7 +1993,7 @@ export function POS({
         })
       )}
       {cart.length > 0 && (
-        <div className="flex items-center justify-between rounded-xl bg-zindo-green-50 px-4 py-3 dark:bg-zindo-green-500/10">
+        <div className="flex items-center justify-between rounded-xl bg-zindo-blue-50 px-4 py-3 dark:bg-zindo-blue-500/10">
           <span className="text-sm font-semibold text-zinc-700 dark:text-slate-300">
             Total ({cart.length} ligne{cart.length > 1 ? "s" : ""})
           </span>
@@ -2144,7 +2144,7 @@ export function POS({
           )}
           <div className="flex items-baseline justify-between">
             <span className="flex items-center gap-2 font-semibold uppercase text-zinc-900">Total {calculatorButton}</span>
-            <span className="text-2xl font-bold tracking-tight tabular-nums text-zindo-green-700 dark:text-emerald-400">
+            <span className="text-2xl font-bold tracking-tight tabular-nums text-zindo-blue-700 dark:text-emerald-400">
               {formatMoney(total, currency)}
             </span>
           </div>
@@ -2180,7 +2180,7 @@ export function POS({
                 title={m.label}
                 className={`min-w-0 flex-1 truncate rounded-lg px-1.5 py-1.5 text-[11px] font-semibold uppercase transition-colors ${
                   paymentMethod === m.value
-                    ? `bg-zindo-green-600 text-white shadow-sm ${payColor}`
+                    ? `bg-zindo-blue-600 text-white shadow-sm ${payColor}`
                     : "border border-zinc-300 text-zinc-700 hover:bg-zinc-100 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
                 }`}
               >
@@ -2588,7 +2588,7 @@ export function POS({
                 onClick={() => setCategoryFilter(c.id)}
                 className={`shrink-0 rounded-full border px-3.5 py-1.5 text-sm font-medium ${
                   categoryFilter === c.id
-                    ? "border-zindo-green-600 bg-zindo-green-600 text-white"
+                    ? "border-zindo-blue-600 bg-zindo-blue-600 text-white"
                     : "border-zinc-200 bg-white text-zinc-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
                 }`}
               >
@@ -2642,7 +2642,7 @@ export function POS({
           <div className="fixed inset-x-3 bottom-[calc(0.75rem+env(safe-area-inset-bottom))] z-30 rounded-2xl border border-zinc-200 bg-white px-3 py-2 shadow-lg md:hidden print:hidden dark:border-slate-800 dark:bg-slate-900 [@media(display-mode:standalone)]:bottom-[calc(4.5rem+env(safe-area-inset-bottom))]">
             <div className="flex items-center justify-between gap-3">
               <div className="flex min-w-0 items-center gap-2">
-                <ShoppingCart className="h-5 w-5 shrink-0 text-zindo-green-700" />
+                <ShoppingCart className="h-5 w-5 shrink-0 text-zindo-blue-700" />
                 <div className="min-w-0">
                   <p className="text-sm font-semibold text-zinc-900">Panier</p>
                   <p className="text-xs text-zinc-500">
@@ -2860,7 +2860,7 @@ export function POS({
               </>
             )}
 
-            <div className="space-y-1 rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2 text-sm dark:border-zindo-green-500/20 dark:bg-zindo-green-500/5">
+            <div className="space-y-1 rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2 text-sm dark:border-zindo-blue-500/20 dark:bg-zindo-blue-500/5">
               {subtotal !== total && (
                 <div className="flex justify-between border-b border-zinc-200 pb-1.5 text-zinc-600 dark:border-slate-700">
                   <span>Sous-total</span>
@@ -2988,7 +2988,7 @@ export function POS({
                     }}
                     className={`flex w-full items-center justify-between gap-3 rounded-xl border px-4 py-3 text-left transition-colors active:scale-[0.99] ${
                       enough
-                        ? "border-zinc-200 hover:border-zindo-green-400 hover:bg-zindo-green-50 dark:border-slate-700 dark:hover:bg-zindo-green-500/10"
+                        ? "border-zinc-200 hover:border-zindo-blue-400 hover:bg-zindo-blue-50 dark:border-slate-700 dark:hover:bg-zindo-blue-500/10"
                         : "border-zinc-200 opacity-60 dark:border-slate-700"
                     }`}
                   >
@@ -3001,7 +3001,7 @@ export function POS({
                           : "Stock insuffisant"}
                       </span>
                     </span>
-                    <span className="text-lg font-bold tabular-nums text-zindo-green-700 dark:text-emerald-400">
+                    <span className="text-lg font-bold tabular-nums text-zindo-blue-700 dark:text-emerald-400">
                       {formatMoney(pu.salePrice, currency)}
                     </span>
                   </button>
@@ -3032,7 +3032,7 @@ export function POS({
                 <button
                   type="button"
                   onClick={() => unitPickerProduct && addTrackedUnit(unitPickerProduct, u)}
-                  className="flex w-full items-center justify-between rounded-lg border border-zinc-200 px-3 py-2.5 text-left hover:border-zindo-green-300 hover:bg-zindo-green-50"
+                  className="flex w-full items-center justify-between rounded-lg border border-zinc-200 px-3 py-2.5 text-left hover:border-zindo-blue-300 hover:bg-zindo-blue-50"
                 >
                   <span className="font-mono text-sm font-bold tracking-wide text-zinc-900">{u.chassisNumber}</span>
                   {u.color && <span className="text-xs text-zinc-500">{u.color}</span>}

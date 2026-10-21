@@ -26,7 +26,7 @@ export function PackPayButton({ label }: { label: string }) {
             window.location.href = result.url;
           })
         }
-        className="w-full rounded-xl bg-zindo-green-500 py-3.5 text-sm font-bold text-white hover:bg-zindo-green-600 disabled:opacity-60"
+        className="w-full rounded-xl bg-zindo-blue-500 py-3.5 text-sm font-bold text-white hover:bg-zindo-blue-600 disabled:opacity-60"
       >
         {pending ? "Redirection…" : label}
       </button>
@@ -68,7 +68,7 @@ function PhotoField({ name, label, hint, capture, icon: Icon }: {
   const [directPath, setDirectPath] = useState("");
   const [uploading, setUploading] = useState(false);
   return (
-    <label className="flex cursor-pointer items-center gap-3 rounded-2xl border-2 border-dashed border-zinc-200 bg-white p-3 hover:border-zindo-green-500">
+    <label className="flex cursor-pointer items-center gap-3 rounded-2xl border-2 border-dashed border-zinc-200 bg-white p-3 hover:border-zindo-blue-500">
       <div className="flex h-20 w-28 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-zinc-100">
         {preview ? (
           // eslint-disable-next-line @next/next/no-img-element
@@ -129,7 +129,7 @@ export function VerificationForm() {
   const [state, action, pending] = useActionState(submitVerificationAction, undefined);
   const keepAction = useKeepValuesOnError(state);
   if (state?.success) {
-    return <p className="rounded-2xl bg-zindo-green-100 p-4 text-sm font-semibold text-zindo-green-700">{state.success}</p>;
+    return <p className="rounded-2xl bg-zindo-blue-100 p-4 text-sm font-semibold text-zindo-blue-700">{state.success}</p>;
   }
   return (
     <form onSubmit={keepAction} action={action} className="space-y-3">
@@ -140,7 +140,7 @@ export function VerificationForm() {
       <button
         type="submit"
         disabled={pending}
-        className="w-full rounded-xl bg-zindo-green-500 py-3.5 text-sm font-bold text-white hover:bg-zindo-green-600 disabled:opacity-60"
+        className="w-full rounded-xl bg-zindo-blue-500 py-3.5 text-sm font-bold text-white hover:bg-zindo-blue-600 disabled:opacity-60"
       >
         {pending ? "Envoi des photos…" : "Envoyer ma demande"}
       </button>

@@ -65,7 +65,7 @@ export function LoginForm({ googleError, locale = "fr" }: { googleError?: string
               placeholder={t.identifierPlaceholder}
               required
               aria-invalid={state?.error ? true : undefined}
-              className="h-12 w-full rounded-2xl border border-zinc-200 bg-white pl-11 pr-4 text-[15px] text-zindo-ink-900 placeholder:text-zinc-400 outline-none transition focus:border-zindo-green-500 focus:ring-4 focus:ring-zindo-green-100"
+              className="h-12 w-full rounded-2xl border border-zinc-200 bg-white pl-11 pr-4 text-[15px] text-zindo-ink-900 placeholder:text-zinc-400 outline-none transition focus:border-zindo-blue-500 focus:ring-4 focus:ring-zindo-blue-100"
             />
           </div>
         </div>
@@ -77,7 +77,7 @@ export function LoginForm({ googleError, locale = "fr" }: { googleError?: string
             </label>
             <Link
               href={t.forgotPasswordHref}
-              className="text-sm font-medium text-zindo-green-600 hover:text-zindo-green-700 hover:underline"
+              className="text-sm font-medium text-zindo-blue-600 hover:text-zindo-blue-700 hover:underline"
             >
               {t.forgotPassword}
             </Link>
@@ -92,13 +92,13 @@ export function LoginForm({ googleError, locale = "fr" }: { googleError?: string
               placeholder={t.passwordPlaceholder}
               required
               aria-invalid={state?.error ? true : undefined}
-              className="h-12 w-full rounded-2xl border border-zinc-200 bg-white pl-11 pr-11 text-[15px] text-zindo-ink-900 placeholder:text-zinc-400 outline-none transition focus:border-zindo-green-500 focus:ring-4 focus:ring-zindo-green-100"
+              className="h-12 w-full rounded-2xl border border-zinc-200 bg-white pl-11 pr-11 text-[15px] text-zindo-ink-900 placeholder:text-zinc-400 outline-none transition focus:border-zindo-blue-500 focus:ring-4 focus:ring-zindo-blue-100"
             />
             <button
               type="button"
               onClick={() => setShowPassword((v) => !v)}
               aria-label={showPassword ? t.hidePassword : t.showPassword}
-              className="absolute right-3.5 top-1/2 -translate-y-1/2 rounded-md p-0.5 text-zinc-400 transition hover:text-zindo-ink-700 focus-visible:outline-2 focus-visible:outline-zindo-green-500"
+              className="absolute right-3.5 top-1/2 -translate-y-1/2 rounded-md p-0.5 text-zinc-400 transition hover:text-zindo-ink-700 focus-visible:outline-2 focus-visible:outline-zindo-blue-500"
             >
               {showPassword ? <EyeOff className="h-[18px] w-[18px]" /> : <Eye className="h-[18px] w-[18px]" />}
             </button>
@@ -114,7 +114,7 @@ export function LoginForm({ googleError, locale = "fr" }: { googleError?: string
         <button
           type="submit"
           disabled={pending}
-          className="group flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-zindo-green-500 text-[15px] font-semibold text-white shadow-lg shadow-zindo-green-500/30 transition hover:bg-zindo-green-600 hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-70 disabled:hover:translate-y-0 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zindo-green-600"
+          className="group flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-zindo-blue-500 text-[15px] font-semibold text-white shadow-lg shadow-zindo-blue-500/30 transition hover:bg-zindo-blue-600 hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-70 disabled:hover:translate-y-0 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-zindo-blue-600"
         >
           {pending ? (
             <>

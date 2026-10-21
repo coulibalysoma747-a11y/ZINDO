@@ -31,18 +31,16 @@ export const metadata: Metadata = {
   alternates: { canonical: "/en" },
 };
 
-// Même cycle tricolore que la page française (app/page.tsx) — voir ce
-// fichier pour le commentaire complet sur l'usage réservé à l'identité
-// visuelle publique.
+// Navy and copper tones for public feature icons.
 const ICON_TONES = [
-  { bg: "bg-zindo-green-50", text: "text-zindo-green-600" },
-  { bg: "bg-zindo-gold-100", text: "text-zindo-gold-600" },
-  { bg: "bg-zindo-red-50", text: "text-zindo-red-600" },
+  { bg: "bg-zindo-blue-50", text: "text-zindo-blue-600" },
+  { bg: "bg-zindo-copper-100", text: "text-zindo-copper-600" },
+  { bg: "bg-zindo-copper-50", text: "text-zindo-copper-600" },
 ];
 const ICON_TONES_DARK = [
-  { bg: "bg-white/10", text: "text-zindo-green-400" },
-  { bg: "bg-white/10", text: "text-zindo-gold-400" },
-  { bg: "bg-white/10", text: "text-zindo-red-400" },
+  { bg: "bg-white/10", text: "text-zindo-blue-400" },
+  { bg: "bg-white/10", text: "text-zindo-copper-400" },
+  { bg: "bg-white/10", text: "text-zindo-copper-400" },
 ];
 
 const CHANGES = [
@@ -194,17 +192,20 @@ export default async function EnglishRootPage() {
       {/* eslint-disable-next-line react/no-danger */}
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(STRUCTURED_DATA).replaceAll("{trialDays}", String(trialDays)) }} />
       <div aria-hidden className="pointer-events-none fixed inset-0 overflow-hidden">
-        <div className="absolute -right-24 -top-24 h-96 w-96 rounded-full bg-zindo-green-100/70 blur-3xl" />
-        <div className="absolute top-1/3 -left-16 h-72 w-72 rounded-full bg-zindo-gold-100/60 blur-3xl" />
-        <div className="absolute -bottom-32 -left-24 h-96 w-96 rounded-full bg-zindo-red-100/40 blur-3xl" />
+        <div className="absolute -right-24 -top-24 h-96 w-96 rounded-full bg-zindo-blue-100/70 blur-3xl" />
+        <div className="absolute top-1/3 -left-16 h-72 w-72 rounded-full bg-zindo-copper-100/60 blur-3xl" />
+        <div className="absolute -bottom-32 -left-24 h-96 w-96 rounded-full bg-zindo-blue-100/40 blur-3xl" />
       </div>
 
-      <div aria-hidden className="zindo-flag-stripe relative z-10 h-1 w-full" />
+      <div aria-hidden className="zindo-brand-stripe relative z-10 h-1 w-full" />
 
       <header className="relative z-10 mx-auto flex w-full max-w-6xl items-center justify-between px-5 py-6 sm:px-8">
         <div className="flex items-center gap-3">
           <ZindoLogo size={40} />
-          <span className="text-lg font-extrabold tracking-tight text-zindo-ink-900">ZINDO</span>
+          <span className="flex flex-col leading-none">
+            <span className="text-lg font-extrabold tracking-[0.12em] text-zindo-ink-900">ZINDO</span>
+            <span className="mt-1 text-[8px] font-semibold uppercase tracking-[0.18em] text-zindo-blue-600">Business management</span>
+          </span>
         </div>
         <div className="flex items-center gap-2 sm:gap-3">
           <LanguageSwitcher />
@@ -214,13 +215,13 @@ export default async function EnglishRootPage() {
           />
           <Link
             href="/en/login"
-            className="rounded-xl px-3 py-2 text-sm font-semibold text-zindo-ink-700 hover:text-zindo-green-600 sm:px-4"
+            className="rounded-xl px-3 py-2 text-sm font-semibold text-zindo-ink-700 hover:text-zindo-blue-600 sm:px-4"
           >
             Sign in
           </Link>
           <Link
             href="/en/inscription"
-            className="rounded-xl bg-zindo-green-500 px-3 py-2 text-sm font-bold text-white shadow-md shadow-zindo-green-500/25 transition hover:bg-zindo-green-600 sm:px-5"
+            className="rounded-xl bg-zindo-blue-500 px-3 py-2 text-sm font-bold text-white shadow-md shadow-zindo-blue-500/25 transition hover:bg-zindo-blue-600 sm:px-5"
           >
             Create an account
           </Link>
@@ -229,11 +230,11 @@ export default async function EnglishRootPage() {
 
       <main className="relative z-10 mx-auto w-full max-w-6xl px-5 pb-24 pt-8 sm:px-8">
         <section className="mx-auto max-w-3xl text-center">
-          <p className="inline-block rounded-full bg-zindo-green-100 px-3 py-1 text-xs font-bold uppercase tracking-wider text-zindo-green-700">
+          <p className="inline-block rounded-full bg-zindo-blue-100 px-3 py-1 text-xs font-bold uppercase tracking-wider text-zindo-blue-700">
             Stock and sales management
           </p>
           <h1 className="mt-4 text-3xl font-extrabold leading-tight tracking-tight text-zindo-ink-900 sm:text-5xl">
-            Replace your notebooks and spreadsheets with <span className="text-zindo-green-600">ZINDO</span>
+            Replace your notebooks and spreadsheets with <span className="text-zindo-blue-600">ZINDO</span>
           </h1>
           <p className="mx-auto mt-4 max-w-xl text-base text-zinc-600 sm:text-lg">
             Track your stock in real time, take payments, and finally know your profits — from a single app built
@@ -242,7 +243,7 @@ export default async function EnglishRootPage() {
           <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
             <Link
               href="/en/inscription"
-              className="flex w-full items-center justify-center gap-2 rounded-2xl bg-zindo-green-500 px-6 py-3.5 text-base font-bold text-white shadow-lg shadow-zindo-green-500/30 transition hover:-translate-y-0.5 hover:bg-zindo-green-600 sm:w-auto"
+              className="flex w-full items-center justify-center gap-2 rounded-2xl bg-zindo-blue-500 px-6 py-3.5 text-base font-bold text-white shadow-lg shadow-zindo-blue-500/30 transition hover:-translate-y-0.5 hover:bg-zindo-blue-600 sm:w-auto"
             >
               Start your {trialDays}-day free trial <ArrowRight className="h-4 w-4" />
             </Link>
@@ -337,13 +338,13 @@ export default async function EnglishRootPage() {
               { key: "monthly", title: "Monthly", price: plan.monthlyPrice, period: "FCFA / month", note: "No commitment. Cancel whenever you want." },
               { key: "annual", title: "Annual", price: plan.annualPrice, period: "FCFA / year", note: `Two months free (${(plan.monthlyPrice * 12 - plan.annualPrice).toLocaleString("en-US")} FCFA saved).` },
             ].map((offer) => (
-              <div key={offer.key} className={`rounded-2xl border bg-white p-6 ${offer.key === "annual" ? "border-zindo-gold-500 shadow-lg" : "border-zinc-200"}`}>
-                {offer.key === "annual" && <p className="text-xs font-bold uppercase tracking-wide text-zindo-gold-700">Best value</p>}
+              <div key={offer.key} className={`rounded-2xl border bg-white p-6 ${offer.key === "annual" ? "border-zindo-copper-500 shadow-lg" : "border-zinc-200"}`}>
+                {offer.key === "annual" && <p className="text-xs font-bold uppercase tracking-wide text-zindo-copper-700">Best value</p>}
                 <h3 className="mt-2 font-bold text-zindo-ink-900">{offer.title}</h3>
                 <p className="mt-3 text-3xl font-extrabold text-zindo-ink-900">{offer.price.toLocaleString("en-US")}</p>
                 <p className="text-sm text-zinc-500">{offer.period}</p>
                 <p className="mt-4 text-sm text-zinc-600">{offer.note}</p>
-                <Link href="/inscription" className="mt-6 inline-flex rounded-xl bg-zindo-green-600 px-4 py-2.5 text-sm font-bold text-white">Start your free trial</Link>
+                <Link href="/inscription" className="mt-6 inline-flex rounded-xl bg-zindo-blue-600 px-4 py-2.5 text-sm font-bold text-white">Start your free trial</Link>
               </div>
             )))}
           </div>
@@ -357,10 +358,10 @@ export default async function EnglishRootPage() {
           </div>
           <div className="mx-auto mt-10 max-w-2xl divide-y divide-zinc-200 overflow-hidden rounded-2xl border border-zinc-200 bg-white">
             {FAQS.map((faq) => (
-              <details key={faq.question} className="group px-5 py-4 open:bg-zindo-green-50/40">
+              <details key={faq.question} className="group px-5 py-4 open:bg-zindo-blue-50/40">
                 <summary className="flex cursor-pointer list-none items-center justify-between gap-3 font-semibold text-zindo-ink-900">
                   {faq.question}
-                  <span className="shrink-0 text-zindo-green-600 transition group-open:rotate-45">+</span>
+                  <span className="shrink-0 text-zindo-blue-600 transition group-open:rotate-45">+</span>
                 </summary>
                 <p className="mt-2 text-sm leading-relaxed text-zinc-500">{faq.answer.replaceAll("{trialDays}", String(trialDays))}</p>
               </details>
@@ -368,14 +369,14 @@ export default async function EnglishRootPage() {
           </div>
         </section>
 
-        <section className="mt-24 rounded-3xl border border-zindo-green-100 bg-white px-6 py-14 text-center shadow-sm sm:px-12">
+        <section className="mt-24 rounded-3xl border border-zindo-blue-100 bg-white px-6 py-14 text-center shadow-sm sm:px-12">
           <h2 className="text-2xl font-extrabold tracking-tight text-zindo-ink-900 sm:text-3xl">
             Ready to change the way you run your business?
           </h2>
           <p className="mx-auto mt-2 max-w-md text-zinc-500">Create your account in a few minutes, no commitment.</p>
           <Link
             href="/en/inscription"
-            className="mt-6 inline-flex items-center gap-2 rounded-2xl bg-zindo-green-500 px-7 py-3.5 text-base font-bold text-white shadow-lg shadow-zindo-green-500/30 transition hover:-translate-y-0.5 hover:bg-zindo-green-600"
+            className="mt-6 inline-flex items-center gap-2 rounded-2xl bg-zindo-blue-500 px-7 py-3.5 text-base font-bold text-white shadow-lg shadow-zindo-blue-500/30 transition hover:-translate-y-0.5 hover:bg-zindo-blue-600"
           >
             Create my ZINDO account <ArrowRight className="h-4 w-4" />
           </Link>
@@ -390,17 +391,17 @@ export default async function EnglishRootPage() {
             href="https://wa.me/22604059929"
             target="_blank"
             rel="noopener noreferrer"
-            className="font-medium text-zinc-500 hover:text-zindo-green-600"
+            className="font-medium text-zinc-500 hover:text-zindo-blue-600"
           >
             +226 04 05 99 29
           </a>
         </p>
         <p className="mt-2">
-          <Link href="/en/cgu" className="hover:text-zindo-green-600">
+          <Link href="/en/cgu" className="hover:text-zindo-blue-600">
             Terms of Service
           </Link>
           {" · "}
-          <Link href="/en/confidentialite" className="hover:text-zindo-green-600">
+          <Link href="/en/confidentialite" className="hover:text-zindo-blue-600">
             Privacy Policy
           </Link>
         </p>

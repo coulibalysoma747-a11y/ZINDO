@@ -45,7 +45,7 @@ export default async function MarketShopPage({ params, searchParams }: { params:
   return (
     <div className="space-y-6">
       <div className="overflow-hidden rounded-3xl bg-white ring-1 ring-zinc-200">
-        <div className="h-32 bg-gradient-to-br from-zindo-green-600 to-zindo-green-900 sm:h-52">
+        <div className="h-32 bg-gradient-to-br from-zindo-blue-600 to-zindo-blue-900 sm:h-52">
           {shop.coverUrl && (
             // eslint-disable-next-line @next/next/no-img-element
             <img src={vignette(shop.coverUrl, 512)} alt="" className="h-full w-full object-cover" />
@@ -79,7 +79,7 @@ export default async function MarketShopPage({ params, searchParams }: { params:
             <FavoriteButton shopId={shop.id} initial={favorites.shopIds.has(shop.id)} variant="follow" />
             <ContactSellerButton
               shopId={shop.id}
-              className="inline-flex h-10 items-center gap-2 rounded-xl bg-zindo-green-600 px-4 text-sm font-semibold text-white hover:bg-zindo-green-700 disabled:opacity-50"
+              className="inline-flex h-10 items-center gap-2 rounded-xl bg-zindo-blue-600 px-4 text-sm font-semibold text-white hover:bg-zindo-blue-700 disabled:opacity-50"
             />
             {buyer && (
               <>
@@ -110,7 +110,7 @@ export default async function MarketShopPage({ params, searchParams }: { params:
               href={`/marche/boutique/${shop.slug}?onglet=${t.key}`}
               className={
                 tab === t.key
-                  ? "border-b-2 border-zindo-green-600 px-4 py-3 text-sm font-semibold text-zindo-green-800"
+                  ? "border-b-2 border-zindo-blue-600 px-4 py-3 text-sm font-semibold text-zindo-blue-800"
                   : "border-b-2 border-transparent px-4 py-3 text-sm font-medium text-zinc-500 hover:text-zinc-800"
               }
             >
@@ -178,24 +178,24 @@ export default async function MarketShopPage({ params, searchParams }: { params:
           <ul className="space-y-3 text-sm text-zinc-700">
             {(shop.address || shop.city) && (
               <li className="flex items-start gap-2">
-                <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-zindo-green-700" /> {[shop.address, shop.city].filter(Boolean).join(", ")}
+                <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-zindo-blue-700" /> {[shop.address, shop.city].filter(Boolean).join(", ")}
               </li>
             )}
             {shop.hours && (
               <li className="flex items-start gap-2">
-                <Clock className="mt-0.5 h-4 w-4 shrink-0 text-zindo-green-700" /> {shop.hours}
+                <Clock className="mt-0.5 h-4 w-4 shrink-0 text-zindo-blue-700" /> {shop.hours}
               </li>
             )}
             {shop.deliveryEnabled && (
               <li className="flex items-start gap-2">
-                <Truck className="mt-0.5 h-4 w-4 shrink-0 text-zindo-green-700" />
+                <Truck className="mt-0.5 h-4 w-4 shrink-0 text-zindo-blue-700" />
                 Livraison {shop.deliveryFee > 0 ? formatMoney(shop.deliveryFee, shop.currency) : "gratuite"}
                 {shop.deliveryNote ? ` · ${shop.deliveryNote}` : ""}
               </li>
             )}
             {shop.pickupEnabled && (
               <li className="flex items-start gap-2">
-                <Store className="mt-0.5 h-4 w-4 shrink-0 text-zindo-green-700" /> Retrait en boutique
+                <Store className="mt-0.5 h-4 w-4 shrink-0 text-zindo-blue-700" /> Retrait en boutique
               </li>
             )}
             <li className="text-xs text-zinc-500">Sur le Marché ZINDO depuis le {formatDateTime(shop.createdAt).split(" ")[0]}</li>

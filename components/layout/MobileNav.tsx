@@ -63,7 +63,7 @@ export function MobileNav({
                   onChange={(e) => setQuery(e.target.value)}
                   placeholder="Chercher un module…"
                   aria-label="Chercher un module dans le menu"
-                  className="h-11 w-full rounded-lg border border-zinc-300 bg-zinc-50 pl-9 pr-3 text-[15px] text-zinc-900 outline-none placeholder:text-zinc-500 focus:border-zindo-green-500 focus:bg-white dark:border-slate-700 dark:bg-slate-800/60"
+                  className="h-11 w-full rounded-lg border border-zinc-300 bg-zinc-50 pl-9 pr-3 text-[15px] text-zinc-900 outline-none placeholder:text-zinc-500 focus:border-zindo-blue-500 focus:bg-white dark:border-slate-700 dark:bg-slate-800/60"
                 />
               </div>
             </div>
@@ -89,7 +89,7 @@ export function MobileNav({
                         className={cn(
                           "flex items-center justify-between gap-2 rounded-lg px-2.5 py-2.5 text-sm transition-colors",
                           active
-                            ? "bg-zindo-green-50 font-semibold text-zindo-green-800 dark:bg-zindo-green-500/10 dark:text-zindo-green-300"
+                            ? "bg-zindo-blue-50 font-semibold text-zindo-blue-800 dark:bg-zindo-blue-500/10 dark:text-zindo-blue-300"
                             : "font-medium text-zinc-700 active:bg-zinc-100 dark:text-slate-300 dark:active:bg-slate-800"
                         )}
                       >
@@ -97,7 +97,7 @@ export function MobileNav({
                           <Icon
                             className={cn(
                               "h-[18px] w-[18px] shrink-0",
-                              active ? "text-zindo-green-600 dark:text-zindo-green-400" : "text-zinc-400"
+                              active ? "text-zindo-blue-600 dark:text-zindo-blue-400" : "text-zinc-400"
                             )}
                           />
                           <span className="truncate">{item.label}</span>
@@ -130,7 +130,7 @@ export function MobileNav({
                 className={cn(
                   "flex items-center rounded-lg px-2.5 py-2.5 text-sm transition-colors",
                   pathname === item.href
-                    ? "bg-zindo-green-50 font-semibold text-zindo-green-800 dark:bg-zindo-green-500/10 dark:text-zindo-green-300"
+                    ? "bg-zindo-blue-50 font-semibold text-zindo-blue-800 dark:bg-zindo-blue-500/10 dark:text-zindo-blue-300"
                     : "font-medium text-zinc-700 active:bg-zinc-100 dark:text-slate-300 dark:active:bg-slate-800"
                 )}
               >

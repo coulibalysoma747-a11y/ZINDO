@@ -66,7 +66,7 @@ export function PublishToMarket({
     <div className={compact ? "space-y-2" : "space-y-3 rounded-xl border border-zinc-200 p-3"}>
       {!compact && (
         <p className="flex items-center gap-2 text-sm font-semibold text-zinc-800">
-          <Store className="h-4 w-4 text-zindo-green-600" />
+          <Store className="h-4 w-4 text-zindo-blue-600" />
           Marché ZINDO
           {published && <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-xs text-emerald-700">Publié</span>}
         </p>
@@ -103,7 +103,7 @@ export function PublishToMarket({
             </button>
           </>
         ) : (
-          <button type="button" disabled={pending} onClick={() => save(true)} className="h-9 rounded-lg bg-zindo-green-600 px-3 text-sm font-semibold text-white hover:bg-zindo-green-700 disabled:opacity-50">
+          <button type="button" disabled={pending} onClick={() => save(true)} className="h-9 rounded-lg bg-zindo-blue-600 px-3 text-sm font-semibold text-white hover:bg-zindo-blue-700 disabled:opacity-50">
             Publier dans mon Marché
           </button>
         )}

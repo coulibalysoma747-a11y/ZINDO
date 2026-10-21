@@ -286,14 +286,14 @@ export default async function DashboardPage({
         <div className="rounded-xl border border-zinc-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
           <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
             <span className="flex items-center gap-2 font-medium text-zinc-800 dark:text-slate-200">
-              <span className="h-2.5 w-2.5 rounded-full bg-zindo-green-600" /> Ventes de la période {formatMoney(overview.current.cashedIn - overview.current.creditRepayments, currency)}
+              <span className="h-2.5 w-2.5 rounded-full bg-zindo-blue-600" /> Ventes de la période {formatMoney(overview.current.cashedIn - overview.current.creditRepayments, currency)}
             </span>
             <span className="flex items-center gap-2 font-medium text-zinc-800 dark:text-slate-200">
               <span className="h-2.5 w-2.5 rounded-full bg-[#d99a12]" /> Crédits remboursés {formatMoney(overview.current.creditRepayments, currency)}
             </span>
           </div>
           <div className="mt-3 flex h-2.5 overflow-hidden rounded-full bg-zinc-100 dark:bg-slate-800">
-            <span className="bg-zindo-green-600" style={{ width: `${Math.max(0, ((overview.current.cashedIn - overview.current.creditRepayments) / overview.current.cashedIn) * 100)}%` }} />
+            <span className="bg-zindo-blue-600" style={{ width: `${Math.max(0, ((overview.current.cashedIn - overview.current.creditRepayments) / overview.current.cashedIn) * 100)}%` }} />
             <span className="bg-[#d99a12]" style={{ width: `${Math.min(100, (overview.current.creditRepayments / overview.current.cashedIn) * 100)}%` }} />
           </div>
           <p className="mt-2 text-xs text-zinc-500">
@@ -344,7 +344,7 @@ export default async function DashboardPage({
                       </div>
                       <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-zinc-100">
                         <div
-                          className="h-full bg-zindo-green-500"
+                          className="h-full bg-zindo-blue-500"
                           style={{ width: `${(v.total / leaderboardOverview.current.cashedIn) * 100}%` }}
                         />
                       </div>
@@ -436,7 +436,7 @@ export default async function DashboardPage({
         <Card>
           <CardHeader>
             <h2 className="font-semibold text-zinc-900">Stock par boutique</h2>
-            <Link href="/boutiques" className="text-sm font-medium text-zindo-green-600 hover:text-zindo-green-700 hover:underline">
+            <Link href="/boutiques" className="text-sm font-medium text-zindo-blue-600 hover:text-zindo-blue-700 hover:underline">
               Gérer les boutiques
             </Link>
           </CardHeader>
@@ -473,7 +473,7 @@ export default async function DashboardPage({
             <Card>
               <CardHeader>
                 <h2 className="font-semibold text-zinc-900">Top produits</h2>
-                <Link href="/rapports" className="text-sm font-medium text-zindo-green-600 hover:text-zindo-green-700 hover:underline">
+                <Link href="/rapports" className="text-sm font-medium text-zindo-blue-600 hover:text-zindo-blue-700 hover:underline">
                   Voir les rapports
                 </Link>
               </CardHeader>
@@ -490,7 +490,7 @@ export default async function DashboardPage({
                         <span className="flex min-w-0 items-center gap-2.5 text-zinc-700">
                           <span
                             className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-lg text-[11px] font-bold tabular-nums ${
-                              i === 0 ? "bg-zindo-green-50 text-zindo-green-700" : "bg-zinc-100 text-zinc-500"
+                              i === 0 ? "bg-zindo-blue-50 text-zindo-blue-700" : "bg-zinc-100 text-zinc-500"
                             }`}
                           >
                             {i + 1}
@@ -524,14 +524,14 @@ export default async function DashboardPage({
                         <span className="flex min-w-0 items-center gap-2.5 text-zinc-700">
                           <span
                             className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-lg text-[11px] font-bold tabular-nums ${
-                              i === 0 ? "bg-zindo-green-50 text-zindo-green-700" : "bg-zinc-100 text-zinc-500"
+                              i === 0 ? "bg-zindo-blue-50 text-zindo-blue-700" : "bg-zinc-100 text-zinc-500"
                             }`}
                           >
                             {i + 1}
                           </span>
                           <span className="truncate">{p.name}</span>
                         </span>
-                        <span className="shrink-0 font-medium text-zindo-green-600">{formatMoney(p.margin, currency)}</span>
+                        <span className="shrink-0 font-medium text-zindo-blue-600">{formatMoney(p.margin, currency)}</span>
                       </li>
                     ))}
                   </ol>

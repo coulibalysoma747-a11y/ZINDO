@@ -13,11 +13,10 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 :root {
-  --background: #ffffff;
+  --background: #f8f7f5;
   --foreground: #171717;
-  /* Fond de l'espace commerçant : gris très légèrement teinté de vert, pour
-     que les cartes blanches ressortent nettement. */
-  --app-canvas: #eceee9;
+  /* Neutral workspace background so white cards remain distinct. */
+  --app-canvas: #f0eeeb;
 }
 
 @theme inline {
@@ -26,47 +25,18 @@
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 
-  /* Identité visuelle ZINDO : vert (actions, couleur dominante du logo), encre
-     neutre quasi noire (titres/panneaux — plus de bleu marine, le logo n'en
-     contient pas), blanc cassé chaleureux (surfaces), vert succès. Palette
-     "zindo-green" recalibrée (v2) pour un vert plus vif/saturé (teinte
-     ~150°) que l'échantillon d'origine de public/brand/zindo-emblem.png,
-     tout en gardant un contraste AA (texte blanc sur -500 ≈ 4.75:1). Le
-     rouge et l'or (logo et drapeau du Burkina Faso) ont été réharmonisés en
-     cohérence (rouge plus vif type drapeau, or plus riche) — utilisés comme
-     accents de marque (liseré tricolore de la Sidebar/Topbar/MobileTabBar,
-     halos décoratifs des écrans d'authentification et de la page publique,
-     badges) EN PLUS du vert dominant. Les classes Tailwind standard
-     (red-*, amber-*) restent inchangées pour les états sémantiques
-     danger/attention (boutons de suppression, alertes) — jamais réutilisées
-     comme accent de marque, pour ne pas brouiller leur sens. */
-  --color-zindo-green-50: #ebf9f2;
-  --color-zindo-green-100: #d8f4e6;
-  --color-zindo-green-200: #a8e6c7;
-  --color-zindo-green-300: #64d89e;
-  --color-zindo-green-400: #22c373;
-  --color-zindo-green-500: #10844a;
-  --color-zindo-green-600: #0c6e3d;
-  --color-zindo-green-700: #095830;
-  --color-zindo-green-800: #064124;
-  --color-zindo-green-900: #053a20;
-  --color-zindo-green-950: #022414;
-
-  /* Échelle "emerald" de Tailwind alignée sur le vert ZINDO : plus de 250
-     classes emerald-* dispersées dans l'application affichaient un vert
-     menthe différent de celui du logo. Elles prennent désormais toutes la
-     teinte de marque, sans toucher chaque page une par une. */
-  --color-emerald-50: #ebf9f2;
-  --color-emerald-100: #d8f4e6;
-  --color-emerald-200: #a8e6c7;
-  --color-emerald-300: #64d89e;
-  --color-emerald-400: #22c373;
-  --color-emerald-500: #10844a;
-  --color-emerald-600: #0c6e3d;
-  --color-emerald-700: #095830;
-  --color-emerald-800: #064124;
-  --color-emerald-900: #053a20;
-  --color-emerald-950: #022414;
+  /* ZINDO identity: navy for trust, ivory and charcoal for calm surfaces, copper for a restrained accent. */
+  --color-zindo-blue-50: #eef3f6;
+  --color-zindo-blue-100: #dce7ed;
+  --color-zindo-blue-200: #c0d2de;
+  --color-zindo-blue-300: #9ab6c8;
+  --color-zindo-blue-400: #668da7;
+  --color-zindo-blue-500: #315f7d;
+  --color-zindo-blue-600: #244c66;
+  --color-zindo-blue-700: #1b3b52;
+  --color-zindo-blue-800: #142e42;
+  --color-zindo-blue-900: #102638;
+  --color-zindo-blue-950: #091924;
 
   /* Ombres douces à plusieurs couches (cartes, menus, fenêtres) : plus
      naturelles qu'une seule ombre grise. */
@@ -82,22 +52,22 @@
   --color-zindo-red-600: #ad1c1c;
   --color-zindo-red-700: #8c1717;
   --color-zindo-red-800: #6b1212;
-  --color-zindo-gold-50: #fbf4ea;
-  --color-zindo-gold-100: #f5e8d1;
-  --color-zindo-gold-200: #eccf9c;
-  --color-zindo-gold-300: #e7b45a;
-  --color-zindo-gold-400: #ec9c13;
-  --color-zindo-gold-500: #c27e0a;
-  --color-zindo-gold-600: #a06808;
-  --color-zindo-gold-700: #815508;
-  --color-zindo-gold-800: #654001;
-  --color-zindo-ink-50: #f4f4f5;
-  --color-zindo-ink-100: #e4e4e7;
-  --color-zindo-ink-200: #d4d4d8;
-  --color-zindo-ink-500: #52525b;
-  --color-zindo-ink-700: #27272a;
-  --color-zindo-ink-900: #18181b;
-  --color-zindo-ink-950: #09090b;
+  --color-zindo-copper-50: #faf3ed;
+  --color-zindo-copper-100: #f3e4d6;
+  --color-zindo-copper-200: #e8c9ad;
+  --color-zindo-copper-300: #d9a77e;
+  --color-zindo-copper-400: #c78354;
+  --color-zindo-copper-500: #ad653a;
+  --color-zindo-copper-600: #92502d;
+  --color-zindo-copper-700: #753e25;
+  --color-zindo-copper-800: #5c321f;
+  --color-zindo-ink-50: #f2f5f7;
+  --color-zindo-ink-100: #e0e8ed;
+  --color-zindo-ink-200: #cbd7df;
+  --color-zindo-ink-500: #536977;
+  --color-zindo-ink-700: #314858;
+  --color-zindo-ink-900: #152a39;
+  --color-zindo-ink-950: #0d1f2d;
   --color-zindo-cream: #f8f7f5;
   --color-zindo-success-600: #16a34a;
 
@@ -132,12 +102,10 @@
   }
 }
 
-/* Fond à pois discret (menu mobile) : crème de marque + petits points verts,
-   inspiré de références commerçantes locales, mais recoloré avec
-   la palette ZINDO (vert au lieu d'orange). */
+/* Discreet navy dot pattern on an ivory surface. */
 .zindo-dotted-bg {
   background-color: var(--color-zindo-cream);
-  background-image: radial-gradient(rgba(16, 132, 74, 0.14) 1px, transparent 1px);
+  background-image: radial-gradient(rgba(36, 76, 102, 0.11) 1px, transparent 1px);
   background-size: 14px 14px;
 }
 
@@ -150,7 +118,7 @@
 :root.dark {
   --background: #101013;
   --foreground: #f2f2f4;
-  --app-canvas: #0b0d10;
+  --app-canvas: #101820;
   --color-zinc-50: #1c1c1f;
   --color-zinc-100: #26262a;
   --color-zinc-200: #323236;
@@ -214,7 +182,7 @@ table,
 
 /* Anneau de focus clavier cohérent partout, y compris sur les liens. */
 a:focus-visible {
-  outline: 2px solid var(--color-zindo-green-500);
+  outline: 2px solid var(--color-zindo-blue-500);
   outline-offset: 2px;
   border-radius: 6px;
 }
@@ -223,20 +191,13 @@ a:focus-visible {
    et défilement dans la teinte de marque plutôt que le bleu par défaut du
    navigateur — cohérent avec le reste de la refonte visuelle. */
 ::selection {
-  background: var(--color-zindo-green-200);
-  color: var(--color-zindo-green-800);
+  background: var(--color-zindo-blue-200);
+  color: var(--color-zindo-blue-800);
 }
 
-/* Liseré tricolore de marque (rouge/or/vert, drapeau du Burkina Faso et
-   logo ZINDO) — utilisé comme fine bande d'accent en tête de la Sidebar, de
-   la Topbar et de la barre mobile basse (voir components/layout/*). */
-.zindo-flag-stripe {
-  background: linear-gradient(
-    90deg,
-    var(--color-zindo-red-500) 0%,
-    var(--color-zindo-gold-500) 50%,
-    var(--color-zindo-green-500) 100%
-  );
+/* Navy and copper accent used in navigation. */
+.zindo-brand-stripe {
+  background: linear-gradient(90deg, var(--color-zindo-blue-700), var(--color-zindo-blue-500) 72%, var(--color-zindo-copper-400));
 }
 
 /* Le ticket de caisse (components/sales/Receipt.tsx) embarque son propre CSS
@@ -266,7 +227,7 @@ input[type="number"] {
   50% { transform: translateY(-8px); }
 }
 @keyframes zindo-row-in {
-  from { opacity: 0; transform: translateY(-6px); background-color: rgb(16 132 74 / 0.12); }
+  from { opacity: 0; transform: translateY(-6px); background-color: rgb(36 76 102 / 0.12); }
   to { opacity: 1; transform: none; background-color: transparent; }
 }
 .zindo-marquee { animation: zindo-marquee 40s linear infinite; }
@@ -282,7 +243,7 @@ input[type="number"] {
 }
 @keyframes zindo-pop {
   0% { transform: scale(1); }
-  40% { transform: scale(1.12); color: var(--color-zindo-green-600); }
+  40% { transform: scale(1.12); color: var(--color-zindo-blue-600); }
   100% { transform: scale(1); }
 }
 .zindo-scan { animation: zindo-scan 0.7s ease-out; }

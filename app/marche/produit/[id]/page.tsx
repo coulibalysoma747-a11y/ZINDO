@@ -180,7 +180,7 @@ export default async function MarketProductPage({ params }: { params: Promise<{ 
 function InfoRow({ icon: Icon, title, text }: { icon: typeof Truck; title: string; text: string }) {
   return (
     <div className="flex items-start gap-3 p-3">
-      <Icon className="mt-0.5 h-5 w-5 shrink-0 text-zindo-green-700" />
+      <Icon className="mt-0.5 h-5 w-5 shrink-0 text-zindo-blue-700" />
       <div className="min-w-0">
         <p className="text-sm font-semibold text-zinc-900">{title}</p>
         <p className="text-xs text-zinc-500">{text}</p>

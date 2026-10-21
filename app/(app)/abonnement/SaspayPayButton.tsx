@@ -10,7 +10,7 @@ export function SaspayPayButton({ invoiceId, amountLabel }: { invoiceId: string;
   const [pending, startTransition] = useTransition();
 
   return (
-    <div className="space-y-2 rounded-lg border border-zindo-green-200 bg-zindo-green-50 p-3">
+    <div className="space-y-2 rounded-lg border border-zindo-blue-200 bg-zindo-blue-50 p-3">
       <p className="text-sm text-zinc-700">
         Payez <span className="font-semibold text-zinc-900">{amountLabel}</span> en ligne, de façon sécurisée. Votre abonnement s&apos;active tout seul dès que le paiement est confirmé.
       </p>

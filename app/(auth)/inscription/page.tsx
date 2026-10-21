@@ -16,7 +16,7 @@ export default async function RegisterPage({ searchParams }: { searchParams: Pro
         <RegisterForm referralCode={referral.code} showReferralField={referral.showField} trialDays={await getTrialDays()} marketSeller={vendeur === "marche"} />
         <p className="text-center text-sm text-zinc-500">
           Déjà un compte ?{" "}
-          <Link href="/login" className="font-semibold text-zindo-green-700 hover:underline">
+          <Link href="/login" className="font-semibold text-zindo-blue-700 hover:underline">
             Se connecter
           </Link>
         </p>

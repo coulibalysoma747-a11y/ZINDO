@@ -31,7 +31,7 @@ export function ReviewForm({ orderId, productId, initial }: { orderId: string; p
         type="button"
         disabled={pending}
         onClick={() => startTransition(async () => setMessage(await submitReviewAction({ orderId, productId, rating, comment: comment || undefined })))}
-        className="h-9 rounded-lg bg-zindo-green-600 px-4 text-sm font-semibold text-white disabled:opacity-50"
+        className="h-9 rounded-lg bg-zindo-blue-600 px-4 text-sm font-semibold text-white disabled:opacity-50"
       >
         {initial ? "Modifier mon avis" : "Publier mon avis"}
       </button>

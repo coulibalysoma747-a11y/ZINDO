@@ -115,7 +115,7 @@ export function InvoiceTemplatePanel({
   return (
     <div className="rounded-xl border border-zinc-200 p-4">
       <div className="flex items-start gap-2.5">
-        <FileText className="mt-0.5 h-5 w-5 shrink-0 text-zindo-green-600" />
+        <FileText className="mt-0.5 h-5 w-5 shrink-0 text-zindo-blue-600" />
         <div>
           <p className="font-bold text-zinc-900">Modèle de facture A4</p>
           <p className="mt-1 text-sm text-zinc-500">
@@ -133,7 +133,7 @@ export function InvoiceTemplatePanel({
             <div
               key={tpl.id}
               className={`flex flex-col gap-2 rounded-lg border p-3 transition-colors ${
-                isSelected ? "border-zindo-green-500 bg-zindo-green-50" : "border-zinc-200"
+                isSelected ? "border-zindo-blue-500 bg-zindo-blue-50" : "border-zinc-200"
               }`}
             >
               <button
@@ -144,7 +144,7 @@ export function InvoiceTemplatePanel({
               >
                 <span
                   className={`mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full border ${
-                    isSelected ? "border-zindo-green-600 bg-zindo-green-600" : "border-zinc-300"
+                    isSelected ? "border-zindo-blue-600 bg-zindo-blue-600" : "border-zinc-300"
                   }`}
                 >
                   {isSelected && <Check className="h-3 w-3 text-white" />}
@@ -300,7 +300,7 @@ function InvoicePreviewDialog({
             type="button"
             disabled={pending || isSelected}
             onClick={onChoose}
-            className="inline-flex items-center gap-1.5 rounded-lg bg-zindo-green-600 px-3 py-2 text-sm font-semibold text-white hover:bg-zindo-green-700 disabled:opacity-60"
+            className="inline-flex items-center gap-1.5 rounded-lg bg-zindo-blue-600 px-3 py-2 text-sm font-semibold text-white hover:bg-zindo-blue-700 disabled:opacity-60"
           >
             <Check className="h-4 w-4" /> {isSelected ? "Modèle actuel" : kind === "devis" ? "Choisir pour les devis" : "Choisir ce modèle"}
           </button>

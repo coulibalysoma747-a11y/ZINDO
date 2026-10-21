@@ -62,7 +62,7 @@ export function FasoStockSyncPanel({ receivedAt, sentAt }: { receivedAt: string 
             <p className="text-xs text-zinc-400">Dernière réception : {formatDate(receivedAt)}</p>
           </div>
           <form onSubmit={keep} action={receiveAction} className="space-y-3">
-            <label className="flex cursor-pointer flex-col items-center gap-2 rounded-xl border-2 border-dashed border-zinc-300 p-6 text-center hover:border-zindo-green-400">
+            <label className="flex cursor-pointer flex-col items-center gap-2 rounded-xl border-2 border-dashed border-zinc-300 p-6 text-center hover:border-zindo-blue-400">
               <UploadCloud className="h-7 w-7 text-zinc-400" />
               <span className="text-sm font-medium text-zinc-700">Choisir le fichier Excel de FasoStock</span>
               <input type="file" name="file" accept=".xlsx" required className="text-xs text-zinc-500" />

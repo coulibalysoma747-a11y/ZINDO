@@ -387,10 +387,10 @@ export default async function ProductsPage({
                   <Link
                     key={p.id as string}
                     href={`/produits/${p.id}`}
-                    className="group flex gap-3 rounded-xl border border-zinc-200 bg-white p-3 transition hover:border-zindo-green-400 hover:shadow-md dark:border-slate-800 dark:bg-slate-900"
+                    className="group flex gap-3 rounded-xl border border-zinc-200 bg-white p-3 transition hover:border-zindo-blue-400 hover:shadow-md dark:border-slate-800 dark:bg-slate-900"
                   >
                     <div className="min-w-0 flex-1">
-                      <p className="truncate font-semibold text-zinc-900 group-hover:text-zindo-green-700 dark:text-slate-100">{p.name as string}</p>
+                      <p className="truncate font-semibold text-zinc-900 group-hover:text-zindo-blue-700 dark:text-slate-100">{p.name as string}</p>
                       <p className="truncate text-xs text-zinc-400">{[p.reference as string, p.category?.name].filter(Boolean).join(" · ")}</p>
                       <p className="mt-2 font-semibold tabular-nums text-zinc-900 dark:text-slate-100">{formatMoney(p.salePrice as number, user.business.currency)}</p>
                       <p className={`mt-0.5 text-xs font-medium tabular-nums ${etat === "rupture" ? "text-red-600" : etat === "faible" ? "text-amber-600" : "text-zinc-500"}`}>

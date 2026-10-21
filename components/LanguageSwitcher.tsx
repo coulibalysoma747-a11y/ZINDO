@@ -50,7 +50,7 @@ export function LanguageSwitcher() {
         onClick={() => setOpen((v) => !v)}
         aria-haspopup="listbox"
         aria-expanded={open}
-        className="flex items-center gap-1.5 whitespace-nowrap rounded-full border border-zindo-ink-200 bg-white/90 px-2.5 py-1.5 text-sm font-medium text-zindo-ink-700 shadow-sm backdrop-blur transition hover:border-zindo-green-500 hover:text-zindo-green-600 active:scale-95 sm:px-3"
+        className="flex items-center gap-1.5 whitespace-nowrap rounded-full border border-zindo-ink-200 bg-white/90 px-2.5 py-1.5 text-sm font-medium text-zindo-ink-700 shadow-sm backdrop-blur transition hover:border-zindo-blue-500 hover:text-zindo-blue-600 active:scale-95 sm:px-3"
       >
         <Globe className="h-4 w-4 shrink-0" />
         {/* Libellé masqué sur les très petits écrans (voir app/page.tsx) — sans ça, l'en-tête (logo + langue + Se connecter + Créer un compte) ne tient pas sur un téléphone étroit. */}
@@ -76,12 +76,12 @@ export function LanguageSwitcher() {
                   if (o.href && o.code !== current) router.push(o.href);
                 }}
                 className={`flex w-full items-center gap-2 px-3 py-2 text-left text-sm ${
-                  disabled ? "cursor-not-allowed text-zinc-300" : "text-zindo-ink-700 hover:bg-zindo-green-50"
+                  disabled ? "cursor-not-allowed text-zinc-300" : "text-zindo-ink-700 hover:bg-zindo-blue-50"
                 }`}
               >
                 <span aria-hidden>{o.flag}</span>
                 {o.label}
-                {o.code === current && <Check className="ml-auto h-3.5 w-3.5 text-zindo-green-600" />}
+                {o.code === current && <Check className="ml-auto h-3.5 w-3.5 text-zindo-blue-600" />}
               </button>
             );
           })}

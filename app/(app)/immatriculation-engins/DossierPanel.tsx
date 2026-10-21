@@ -133,7 +133,7 @@ export function DossierPanel({
                   <span
                     key={s}
                     className={`rounded-full px-2.5 py-1 text-xs font-medium ${
-                      s === detail?.status ? "bg-zindo-green-500 text-white" : "bg-zinc-100 text-zinc-500"
+                      s === detail?.status ? "bg-zindo-blue-500 text-white" : "bg-zinc-100 text-zinc-500"
                     }`}
                   >
                     {REGISTRATION_STATUS_LABELS[s]}
@@ -154,11 +154,11 @@ export function DossierPanel({
               </div>
 
               <section className="space-y-3">
-                <h3 className="border-l-2 border-zindo-green-500 pl-2 text-sm font-semibold uppercase tracking-wide text-zinc-700">
+                <h3 className="border-l-2 border-zindo-blue-500 pl-2 text-sm font-semibold uppercase tracking-wide text-zinc-700">
                   CMC (mise en circulation)
                 </h3>
                 <label className="flex items-center gap-2 text-sm text-zinc-700">
-                  <input type="checkbox" checked={cmcAvailable} onChange={(e) => setCmcAvailable(e.target.checked)} className="h-4 w-4 rounded accent-zindo-green-500" />
+                  <input type="checkbox" checked={cmcAvailable} onChange={(e) => setCmcAvailable(e.target.checked)} className="h-4 w-4 rounded accent-zindo-blue-500" />
                   CMC disponible
                 </label>
                 <Field label="N° CMC" htmlFor="cmcNumber">
@@ -170,7 +170,7 @@ export function DossierPanel({
               </section>
 
               <section className="space-y-3">
-                <h3 className="border-l-2 border-zindo-green-500 pl-2 text-sm font-semibold uppercase tracking-wide text-zinc-700">
+                <h3 className="border-l-2 border-zindo-blue-500 pl-2 text-sm font-semibold uppercase tracking-wide text-zinc-700">
                   WW (carte provisoire)
                 </h3>
                 {!isSolde && (
@@ -191,7 +191,7 @@ export function DossierPanel({
                     checked={wwHandedToClient}
                     onChange={(e) => setWwHandedToClient(e.target.checked)}
                     disabled={!wwSet}
-                    className="h-4 w-4 rounded accent-zindo-green-500"
+                    className="h-4 w-4 rounded accent-zindo-blue-500"
                   />
                   WW remis au client
                 </label>
@@ -199,7 +199,7 @@ export function DossierPanel({
               </section>
 
               <section className="space-y-3">
-                <h3 className="border-l-2 border-zindo-green-500 pl-2 text-sm font-semibold uppercase tracking-wide text-zinc-700">Dépôt au ministère</h3>
+                <h3 className="border-l-2 border-zindo-blue-500 pl-2 text-sm font-semibold uppercase tracking-wide text-zinc-700">Dépôt au ministère</h3>
                 <Field label="Date de dépôt" htmlFor="ministryDepositDate">
                   <Input id="ministryDepositDate" type="date" value={ministryDepositDate} onChange={(e) => setMinistryDepositDate(e.target.value)} />
                 </Field>
@@ -209,7 +209,7 @@ export function DossierPanel({
               </section>
 
               <section className="space-y-3">
-                <h3 className="border-l-2 border-zindo-green-500 pl-2 text-sm font-semibold uppercase tracking-wide text-zinc-700">Récépissé</h3>
+                <h3 className="border-l-2 border-zindo-blue-500 pl-2 text-sm font-semibold uppercase tracking-wide text-zinc-700">Récépissé</h3>
                 <Field label="N° récépissé" htmlFor="receiptNumber">
                   <Input id="receiptNumber" value={receiptNumber} onChange={(e) => setReceiptNumber(e.target.value)} />
                 </Field>
@@ -222,7 +222,7 @@ export function DossierPanel({
                     checked={receiptHandedToClient}
                     onChange={(e) => setReceiptHandedToClient(e.target.checked)}
                     disabled={!receiptSet}
-                    className="h-4 w-4 rounded accent-zindo-green-500"
+                    className="h-4 w-4 rounded accent-zindo-blue-500"
                   />
                   Récépissé remis au client
                 </label>
@@ -230,7 +230,7 @@ export function DossierPanel({
               </section>
 
               <section className="space-y-3">
-                <h3 className="border-l-2 border-zindo-green-500 pl-2 text-sm font-semibold uppercase tracking-wide text-zinc-700">Carte grise</h3>
+                <h3 className="border-l-2 border-zindo-blue-500 pl-2 text-sm font-semibold uppercase tracking-wide text-zinc-700">Carte grise</h3>
                 <Field label="N° carte grise" htmlFor="grayCardNumber">
                   <Input id="grayCardNumber" value={grayCardNumber} onChange={(e) => setGrayCardNumber(e.target.value)} />
                 </Field>
@@ -243,7 +243,7 @@ export function DossierPanel({
                     checked={grayCardHandedToClient}
                     onChange={(e) => setGrayCardHandedToClient(e.target.checked)}
                     disabled={!grayCardSet}
-                    className="h-4 w-4 rounded accent-zindo-green-500"
+                    className="h-4 w-4 rounded accent-zindo-blue-500"
                   />
                   Carte grise remise au client
                 </label>
@@ -251,7 +251,7 @@ export function DossierPanel({
               </section>
 
               <section className="space-y-2">
-                <h3 className="border-l-2 border-zindo-green-500 pl-2 text-sm font-semibold uppercase tracking-wide text-zinc-700">Notes</h3>
+                <h3 className="border-l-2 border-zindo-blue-500 pl-2 text-sm font-semibold uppercase tracking-wide text-zinc-700">Notes</h3>
                 <Textarea rows={3} placeholder="Observations, suivi, contacts..." value={notes} onChange={(e) => setNotes(e.target.value)} />
               </section>
 

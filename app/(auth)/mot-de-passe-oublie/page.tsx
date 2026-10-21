@@ -8,8 +8,8 @@ export default function ForgotPasswordPage() {
     <div className="space-y-5 sm:space-y-6">
       <AuthCard>
         <div className="mb-6 flex flex-col items-center text-center">
-          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-zindo-green-50">
-            <KeyRound className="h-6 w-6 text-zindo-green-600" />
+          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-zindo-blue-50">
+            <KeyRound className="h-6 w-6 text-zindo-blue-600" />
           </div>
           <h2 className="mt-4 text-xl font-bold text-zindo-ink-900 sm:text-2xl">Mot de passe oublié</h2>
           <p className="mt-2 text-sm leading-relaxed text-zinc-500">
@@ -28,7 +28,7 @@ export default function ForgotPasswordPage() {
 
       <Link
         href="/login"
-        className="flex items-center justify-center gap-1.5 text-sm font-semibold text-zindo-green-600 hover:text-zindo-green-700 hover:underline"
+        className="flex items-center justify-center gap-1.5 text-sm font-semibold text-zindo-blue-600 hover:text-zindo-blue-700 hover:underline"
       >
         <ArrowLeft className="h-4 w-4" /> Retour à la connexion
       </Link>

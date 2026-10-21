@@ -99,7 +99,7 @@ export function FeatureFlagCard({
                   router.refresh();
                 })
               }
-              className="h-4 w-4 rounded accent-zindo-green-500"
+              className="h-4 w-4 rounded accent-zindo-blue-500"
             />
             Activer pour tous les commerçants
           </label>
@@ -146,7 +146,7 @@ export function FeatureFlagCard({
                   checked={isActivityEnabled(a.key)}
                   disabled={pending || flag.enabledGlobally}
                   onChange={(e) => handleActivityChange(a.key, e.target.checked)}
-                  className="h-4 w-4 rounded accent-zindo-green-500 disabled:opacity-40"
+                  className="h-4 w-4 rounded accent-zindo-blue-500 disabled:opacity-40"
                 />
                 {a.emoji} {a.label}
               </label>
@@ -174,7 +174,7 @@ export function FeatureFlagCard({
                           router.refresh();
                         })
                       }
-                      className="h-4 w-4 rounded accent-zindo-green-500 disabled:opacity-40"
+                      className="h-4 w-4 rounded accent-zindo-blue-500 disabled:opacity-40"
                     />
                     {b.name}
                   </label>
@@ -182,7 +182,7 @@ export function FeatureFlagCard({
                     <button
                       type="button"
                       onClick={() => setOpenBusinessId((v) => (v === b.id ? null : b.id))}
-                      className="flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-medium text-zindo-green-700 hover:bg-zindo-green-50"
+                      className="flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-medium text-zindo-blue-700 hover:bg-zindo-blue-50"
                     >
                       Par boutique ({businessLocations.length})
                       {openBusinessId === b.id ? (

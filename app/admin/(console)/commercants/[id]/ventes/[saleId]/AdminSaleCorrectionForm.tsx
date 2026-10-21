@@ -150,7 +150,7 @@ export function AdminSaleCorrectionForm({
                       min={1}
                       value={item.quantity}
                       onChange={(e) => updateItem(item.productId, { quantity: Math.max(1, Number(e.target.value) || 1) })}
-                      className="h-8 w-16 rounded border border-zinc-200 px-2 text-sm outline-none focus:border-zindo-green-500"
+                      className="h-8 w-16 rounded border border-zinc-200 px-2 text-sm outline-none focus:border-zindo-blue-500"
                     />
                   </td>
                   <td className="px-4 py-2">
@@ -159,7 +159,7 @@ export function AdminSaleCorrectionForm({
                       min={0}
                       value={item.unitPrice}
                       onChange={(e) => updateItem(item.productId, { unitPrice: Number(e.target.value) || 0 })}
-                      className="h-8 w-24 rounded border border-zinc-200 px-2 text-sm outline-none focus:border-zindo-green-500"
+                      className="h-8 w-24 rounded border border-zinc-200 px-2 text-sm outline-none focus:border-zindo-blue-500"
                     />
                   </td>
                   <td className="px-4 py-2">
@@ -168,7 +168,7 @@ export function AdminSaleCorrectionForm({
                       min={0}
                       value={item.discount}
                       onChange={(e) => updateItem(item.productId, { discount: Number(e.target.value) || 0 })}
-                      className="h-8 w-20 rounded border border-zinc-200 px-2 text-sm outline-none focus:border-zindo-green-500"
+                      className="h-8 w-20 rounded border border-zinc-200 px-2 text-sm outline-none focus:border-zindo-blue-500"
                     />
                   </td>
                   <td className="px-4 py-2 font-medium text-zinc-900">

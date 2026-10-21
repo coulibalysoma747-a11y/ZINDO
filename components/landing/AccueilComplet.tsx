@@ -21,16 +21,16 @@ import {
 // avec uniquement des affirmations vérifiables sur ZINDO.
 
 const TONES = [
-  { bg: "bg-zindo-green-50", text: "text-zindo-green-600" },
-  { bg: "bg-zindo-gold-100", text: "text-zindo-gold-600" },
-  { bg: "bg-zindo-red-50", text: "text-zindo-red-600" },
+  { bg: "bg-zindo-blue-50", text: "text-zindo-blue-600" },
+  { bg: "bg-zindo-copper-100", text: "text-zindo-copper-600" },
+  { bg: "bg-zindo-copper-50", text: "text-zindo-copper-600" },
 ];
 
 const SectionTitle = ({ kicker, title, accent, text }: { kicker: string; title: string; accent: string; text?: string }) => (
   <div className="mx-auto max-w-2xl text-center">
-    <p className="text-xs font-bold uppercase tracking-wider text-zindo-green-600">{kicker}</p>
+    <p className="text-xs font-bold uppercase tracking-wider text-zindo-blue-600">{kicker}</p>
     <h2 className="mt-2 text-2xl font-extrabold tracking-tight text-zindo-ink-900 sm:text-3xl">
-      {title} <span className="text-zindo-green-600">{accent}</span>
+      {title} <span className="text-zindo-blue-600">{accent}</span>
     </h2>
     {text && <p className="mt-2 text-zinc-500">{text}</p>}
   </div>
@@ -121,7 +121,7 @@ const SUPPORT_STEPS = [
 
 export function AccompagnementSection({ whatsappHref }: { whatsappHref: string }) {
   return (
-    <section className="mt-24 rounded-3xl bg-zindo-green-50 px-6 py-12 sm:px-12">
+    <section className="mt-24 rounded-3xl bg-zindo-blue-50 px-6 py-12 sm:px-12">
       <SectionTitle
         kicker="Accompagnement"
         title="Vous n'êtes pas seul"
@@ -131,7 +131,7 @@ export function AccompagnementSection({ whatsappHref }: { whatsappHref: string }
       <div className="mt-10 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {SUPPORT_STEPS.map((s) => (
           <div key={s.title} className="rounded-2xl bg-white p-5 shadow-sm">
-            <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-zindo-green-100 text-zindo-green-700">
+            <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-zindo-blue-100 text-zindo-blue-700">
               <s.icon className="h-5 w-5" />
             </span>
             <h3 className="mt-3 font-bold text-zindo-ink-900">{s.title}</h3>
@@ -144,7 +144,7 @@ export function AccompagnementSection({ whatsappHref }: { whatsappHref: string }
           href={whatsappHref}
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex items-center gap-2 rounded-2xl bg-zindo-green-600 px-6 py-3 text-sm font-bold text-white hover:bg-zindo-green-700"
+          className="inline-flex items-center gap-2 rounded-2xl bg-zindo-blue-600 px-6 py-3 text-sm font-bold text-white hover:bg-zindo-blue-700"
         >
           <MessageCircle className="h-4 w-4" /> Nous écrire sur WhatsApp
         </a>
@@ -170,8 +170,8 @@ export function TarifsSection({ trialDays, plans }: { trialDays: number; plans: 
           { key: "monthly", name: "Mensuel", price: plan.monthlyPrice, period: "FCFA / mois", note: "Sans engagement, arrêtez quand vous voulez." },
           { key: "annual", name: "Annuel", price: plan.annualPrice, period: "FCFA / an", note: `Soit 2 mois offerts (${annualSaving.toLocaleString("fr-FR")} FCFA d'économie).` },
         ].map((offer) => (
-          <div key={offer.key} className={`relative rounded-3xl border bg-white p-6 shadow-sm ${offer.key === "annual" ? "border-zindo-gold-500 shadow-lg" : "border-zinc-200"}`}>
-            {offer.key === "annual" && <span className="rounded-full bg-zindo-gold-100 px-2.5 py-1 text-[11px] font-bold text-zindo-ink-900">Le plus avantageux</span>}
+          <div key={offer.key} className={`relative rounded-3xl border bg-white p-6 shadow-sm ${offer.key === "annual" ? "border-zindo-copper-500 shadow-lg" : "border-zinc-200"}`}>
+            {offer.key === "annual" && <span className="rounded-full bg-zindo-copper-100 px-2.5 py-1 text-[11px] font-bold text-zindo-ink-900">Le plus avantageux</span>}
             <p className="mt-3 font-bold text-zindo-ink-900">{offer.name}</p>
             <p className="mt-2 text-3xl font-extrabold text-zindo-ink-900">{offer.price.toLocaleString("fr-FR")}</p>
             <p className="text-sm text-zinc-500">{offer.period}</p>
@@ -182,7 +182,7 @@ export function TarifsSection({ trialDays, plans }: { trialDays: number; plans: 
       <div className="mt-8 text-center">
         <Link
           href="/inscription"
-          className="inline-flex items-center gap-2 rounded-2xl bg-zindo-green-500 px-7 py-3.5 text-base font-bold text-white shadow-lg shadow-zindo-green-500/30 hover:bg-zindo-green-600"
+          className="inline-flex items-center gap-2 rounded-2xl bg-zindo-blue-500 px-7 py-3.5 text-base font-bold text-white shadow-lg shadow-zindo-blue-500/30 hover:bg-zindo-blue-600"
         >
           Essayer ZINDO gratuitement <ArrowRight className="h-4 w-4" />
         </Link>

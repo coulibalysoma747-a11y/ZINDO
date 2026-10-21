@@ -207,7 +207,7 @@ export default async function AdminFollowUpPage({ searchParams }: { searchParams
             key={f.value}
             href={f.value ? `/admin/suivi?filtre=${f.value}` : "/admin/suivi"}
             className={`rounded-lg px-3 py-1.5 text-sm font-medium ${
-              filtre === f.value ? "bg-zindo-green-600 text-white" : "bg-white text-zinc-600 ring-1 ring-zinc-200 hover:bg-zinc-50"
+              filtre === f.value ? "bg-zindo-blue-600 text-white" : "bg-white text-zinc-600 ring-1 ring-zinc-200 hover:bg-zinc-50"
             }`}
           >
             {f.label}
@@ -239,7 +239,7 @@ export default async function AdminFollowUpPage({ searchParams }: { searchParams
                 return (
                   <tr key={b.id} className="hover:bg-zinc-50">
                     <td className="px-4 py-3">
-                      <Link href={`/admin/commercants/${b.id}`} className="font-medium text-zindo-green-600 hover:underline">
+                      <Link href={`/admin/commercants/${b.id}`} className="font-medium text-zindo-blue-600 hover:underline">
                         {b.name}
                       </Link>
                       <p className="text-xs text-zinc-400">

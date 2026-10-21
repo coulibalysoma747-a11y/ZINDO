@@ -25,7 +25,7 @@ export function ShipmentStatusButtons({ shipmentId, status }: { shipmentId: stri
       disabled={pending}
       onClick={() => setStatus(status === "ENVOYE" ? "ARRIVE" : "RETIRE")}
       title={status === "ENVOYE" ? "Marquer comme arrivé" : "Marquer comme retiré"}
-      className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-zinc-200 text-zinc-500 hover:border-zindo-green-300 hover:bg-zindo-green-50 hover:text-zindo-green-700"
+      className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-zinc-200 text-zinc-500 hover:border-zindo-blue-300 hover:bg-zindo-blue-50 hover:text-zindo-blue-700"
     >
       {status === "ENVOYE" ? <Truck className="h-4 w-4" /> : <PackageCheck className="h-4 w-4" />}
     </button>

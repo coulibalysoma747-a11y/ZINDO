@@ -21,7 +21,7 @@ export function LegalPage({
 }) {
   return (
     <div className="theme-locked relative min-h-screen overflow-x-hidden bg-zindo-cream">
-      <div aria-hidden className="zindo-flag-stripe relative z-10 h-1 w-full" />
+      <div aria-hidden className="zindo-brand-stripe relative z-10 h-1 w-full" />
 
       {/* z-30 (au-dessus de <main>, z-10) : voir app/page.tsx pour le pourquoi — sinon le menu du sélecteur de langue est intercepté par le contenu en dessous. */}
       <header className="relative z-30 mx-auto flex w-full max-w-3xl items-center justify-between px-5 py-6 sm:px-8">
@@ -31,7 +31,7 @@ export function LegalPage({
         </Link>
         <div className="flex items-center gap-3">
           <LanguageSwitcher />
-          <Link href={homeHref} className="flex items-center gap-1.5 text-sm font-semibold text-zindo-ink-700 hover:text-zindo-green-600">
+          <Link href={homeHref} className="flex items-center gap-1.5 text-sm font-semibold text-zindo-ink-700 hover:text-zindo-blue-600">
             <ArrowLeft className="h-4 w-4" /> {homeLabel}
           </Link>
         </div>

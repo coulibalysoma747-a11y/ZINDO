@@ -35,7 +35,7 @@ export default async function AProposPage() {
             <Image src="/brand/founder-coulibaly-soma.jpg" alt="Coulibaly Soma, fondateur de ZINDO" fill className="object-cover" />
           </div>
           <div className="p-6">
-            <p className="text-xs font-bold uppercase tracking-wider text-zindo-green-600">Fondateur</p>
+            <p className="text-xs font-bold uppercase tracking-wider text-zindo-blue-600">Fondateur</p>
             <h2 className="mt-1 text-xl font-extrabold text-zindo-ink-900">Coulibaly Soma</h2>
             <p className="mt-2 text-sm leading-relaxed text-zinc-500">
               Créateur de ZINDO, il accompagne lui-même les commerçants, de l&apos;installation aux premières ventes.
@@ -44,7 +44,7 @@ export default async function AProposPage() {
         </div>
 
         <div className="mt-10 flex flex-wrap gap-3">
-          <Link href="/inscription" className="inline-flex items-center gap-2 rounded-2xl bg-zindo-green-500 px-6 py-3 font-bold text-white hover:bg-zindo-green-600">
+          <Link href="/inscription" className="inline-flex items-center gap-2 rounded-2xl bg-zindo-blue-500 px-6 py-3 font-bold text-white hover:bg-zindo-blue-600">
             Essayer ZINDO <ArrowRight className="h-4 w-4" />
           </Link>
           <Link href="/contact" className="rounded-2xl border border-zinc-200 bg-white px-6 py-3 font-semibold text-zindo-ink-700 hover:border-zinc-300">

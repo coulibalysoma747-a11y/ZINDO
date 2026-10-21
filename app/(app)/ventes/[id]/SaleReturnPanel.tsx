@@ -230,7 +230,7 @@ export function SaleReturnPanel({
                     onClick={() => setReason(r)}
                     className={`rounded-full border px-2.5 py-1 text-xs ${
                       reason === r
-                        ? "border-zindo-green-600 bg-zindo-green-50 text-zindo-green-800"
+                        ? "border-zindo-blue-600 bg-zindo-blue-50 text-zindo-blue-800"
                         : "border-zinc-300 text-zinc-600 hover:bg-zinc-100 dark:border-slate-700"
                     }`}
                   >

@@ -307,7 +307,7 @@ export default async function FounderCockpitPage() {
     <div className="mx-auto max-w-7xl space-y-6">
       {/* En-tête : les quatre chiffres qui comptent */}
       <section className="relative overflow-hidden rounded-3xl bg-slate-950 p-5 text-white shadow-xl sm:p-8">
-        <div className="pointer-events-none absolute -right-24 -top-24 h-72 w-72 rounded-full bg-zindo-green-500/25 blur-3xl" />
+        <div className="pointer-events-none absolute -right-24 -top-24 h-72 w-72 rounded-full bg-zindo-blue-500/25 blur-3xl" />
         <div className="pointer-events-none absolute -bottom-32 left-1/3 h-72 w-72 rounded-full bg-amber-400/10 blur-3xl" />
         <div className="relative flex flex-wrap items-start justify-between gap-4">
           <div>
@@ -430,7 +430,7 @@ export default async function FounderCockpitPage() {
                   </div>
                   <div className="h-2.5 overflow-hidden rounded-full bg-slate-100">
                     <div
-                      className="h-full rounded-full bg-zindo-green-500"
+                      className="h-full rounded-full bg-zindo-blue-500"
                       style={{ width: `${Math.max(pct, step.value > 0 ? 2 : 0)}%`, opacity: 1 - idx * 0.18 }}
                     />
                   </div>
@@ -533,7 +533,7 @@ export default async function FounderCockpitPage() {
           )}
           <Link
             href="/admin/suivi"
-            className="mt-3 inline-flex items-center gap-1 text-sm font-semibold text-zindo-green-600 hover:underline"
+            className="mt-3 inline-flex items-center gap-1 text-sm font-semibold text-zindo-blue-600 hover:underline"
           >
             Suivi des commerçants <ArrowRight className="h-3.5 w-3.5" />
           </Link>
@@ -559,7 +559,7 @@ function HeroStat({
   return (
     <div className="rounded-2xl bg-white/[0.06] p-4 ring-1 ring-white/10 backdrop-blur">
       <div className="flex items-start gap-2 text-slate-400">
-        <Icon className="h-4 w-4 shrink-0 text-zindo-green-400" />
+        <Icon className="h-4 w-4 shrink-0 text-zindo-blue-400" />
         <p className="line-clamp-2 text-xs font-medium leading-tight">{label}</p>
       </div>
       <p className="mt-2 truncate text-xl font-extrabold tracking-tight sm:text-2xl">{value}</p>
@@ -573,7 +573,7 @@ function DeltaBadge({ delta, light = false }: { delta: number | null; light?: bo
   if (delta === null) return <p className={`mt-1 text-xs ${muted}`}>Nouveau ce mois</p>;
   const up = delta >= 0;
   const Icon = up ? ArrowUpRight : ArrowDownRight;
-  const tone = up ? (light ? "text-zindo-green-600" : "text-zindo-green-400") : light ? "text-red-600" : "text-red-400";
+  const tone = up ? (light ? "text-zindo-blue-600" : "text-zindo-blue-400") : light ? "text-red-600" : "text-red-400";
   return (
     <p className={`mt-1 flex items-center gap-1 text-xs ${muted}`}>
       <span className={`inline-flex items-center font-bold ${tone}`}>
@@ -641,7 +641,7 @@ function BarChart({
             )}
             <div
               className={`mx-auto w-full max-w-10 rounded-t-[4px] transition ${
-                idx === lastIdx ? "bg-zindo-green-500" : "bg-zindo-green-200 group-hover:bg-zindo-green-400"
+                idx === lastIdx ? "bg-zindo-blue-500" : "bg-zindo-blue-200 group-hover:bg-zindo-blue-400"
               }`}
               style={{ height: `${(d.value / max) * 100}%`, minHeight: d.value > 0 ? 3 : 0 }}
             />

@@ -45,7 +45,7 @@ export function ReceiptActions({
       {otherFormatHref && (
         <Link
           href={otherFormatHref}
-          className="inline-flex items-center gap-2 rounded-lg border border-zinc-200 px-4 py-2 text-sm font-medium text-zinc-600 hover:border-zindo-green-300 hover:bg-zindo-green-50 hover:text-zindo-green-700"
+          className="inline-flex items-center gap-2 rounded-lg border border-zinc-200 px-4 py-2 text-sm font-medium text-zinc-600 hover:border-zindo-blue-300 hover:bg-zindo-blue-50 hover:text-zindo-blue-700"
         >
           <Files className="h-4 w-4" /> {otherFormatLabel}
         </Link>

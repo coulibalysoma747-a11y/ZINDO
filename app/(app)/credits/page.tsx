@@ -103,7 +103,7 @@ export default async function CreditsPage() {
                   </Link>
                   <p className="text-xs text-zinc-500">Crédit depuis le {formatDate(r.oldest)}</p>
                   {r.phone && (
-                    <a href={`tel:${r.phone}`} className="mt-1 inline-flex items-center gap-1 text-sm font-medium text-zindo-green-700">
+                    <a href={`tel:${r.phone}`} className="mt-1 inline-flex items-center gap-1 text-sm font-medium text-zindo-blue-700">
                       <Phone className="h-3.5 w-3.5" /> {r.phone}
                     </a>
                   )}

@@ -35,7 +35,7 @@ export function MobileMoneyPanel({ settings }: { settings: BusinessSettings }) {
   return (
     <div className="rounded-xl border border-zinc-200 p-4">
       <div className="flex items-start gap-2.5">
-        <Smartphone className="mt-0.5 h-5 w-5 shrink-0 text-zindo-green-600" />
+        <Smartphone className="mt-0.5 h-5 w-5 shrink-0 text-zindo-blue-600" />
         <div>
           <p className="font-bold text-zinc-900">Personnaliser l&apos;encaissement</p>
           <p className="mt-1 text-sm text-zinc-500">
@@ -50,7 +50,7 @@ export function MobileMoneyPanel({ settings }: { settings: BusinessSettings }) {
           <label
             key={op.key}
             className={`flex items-center gap-2 rounded-full border px-3 py-1.5 text-sm ${
-              operators.includes(op.key) ? "border-zindo-green-400 bg-zindo-green-50 text-zindo-green-700" : "border-zinc-200 text-zinc-500"
+              operators.includes(op.key) ? "border-zindo-blue-400 bg-zindo-blue-50 text-zindo-blue-700" : "border-zinc-200 text-zinc-500"
             }`}
           >
             <input
@@ -58,7 +58,7 @@ export function MobileMoneyPanel({ settings }: { settings: BusinessSettings }) {
               checked={operators.includes(op.key)}
               disabled={pending}
               onChange={() => toggleOperator(op.key)}
-              className="h-3.5 w-3.5 accent-zindo-green-500"
+              className="h-3.5 w-3.5 accent-zindo-blue-500"
             />
             {op.label}
           </label>
@@ -79,7 +79,7 @@ export function MobileMoneyPanel({ settings }: { settings: BusinessSettings }) {
             setAllowMixed(v);
             save({ allowMixedPayment: v });
           }}
-          className="h-5 w-5 shrink-0 rounded accent-zindo-green-500"
+          className="h-5 w-5 shrink-0 rounded accent-zindo-blue-500"
         />
       </div>
 

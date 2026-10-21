@@ -87,7 +87,7 @@ export function PosCalculator({
   const key = "h-12 rounded-lg text-lg font-semibold transition-colors active:scale-95";
   const num = `${key} bg-zinc-100 text-zinc-900 hover:bg-zinc-200 dark:bg-slate-800 dark:text-slate-100 dark:hover:bg-slate-700`;
   const opKey = (o: Op) =>
-    `${key} ${op === o && fresh ? "bg-zindo-green-600 text-white" : "bg-zindo-green-50 text-zindo-green-700 hover:bg-zindo-green-100 dark:bg-zindo-green-500/10 dark:text-emerald-400"}`;
+    `${key} ${op === o && fresh ? "bg-zindo-blue-600 text-white" : "bg-zindo-blue-50 text-zindo-blue-700 hover:bg-zindo-blue-100 dark:bg-zindo-blue-500/10 dark:text-emerald-400"}`;
 
   return (
     <Modal open onClose={onClose} title="Calculatrice">
@@ -124,7 +124,7 @@ export function PosCalculator({
           <button type="button" className={num} onClick={() => digit("0")}>0</button>
           <button type="button" className={num} onClick={() => digit("00")}>00</button>
           <button type="button" className={num} onClick={() => digit(",")}>,</button>
-          <button type="button" className={`${key} bg-zindo-green-600 text-white hover:bg-zindo-green-700`} onClick={equals}>
+          <button type="button" className={`${key} bg-zindo-blue-600 text-white hover:bg-zindo-blue-700`} onClick={equals}>
             =
           </button>
         </div>
@@ -136,7 +136,7 @@ export function PosCalculator({
               onUseAsAmountReceived(Math.round(value));
               onClose();
             }}
-            className="h-11 w-full rounded-lg border border-zindo-green-600 text-sm font-semibold text-zindo-green-700 hover:bg-zindo-green-50 disabled:opacity-50 dark:text-emerald-400 dark:hover:bg-zindo-green-500/10"
+            className="h-11 w-full rounded-lg border border-zindo-blue-600 text-sm font-semibold text-zindo-blue-700 hover:bg-zindo-blue-50 disabled:opacity-50 dark:text-emerald-400 dark:hover:bg-zindo-blue-500/10"
           >
             Mettre {Number.isFinite(value) ? show(Math.round(value)) : ""} dans « Montant reçu »
           </button>

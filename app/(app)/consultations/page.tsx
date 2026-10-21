@@ -105,12 +105,12 @@ export default async function ConsultationsPage() {
                   <TableCell>{c.patientAge != null ? `${c.patientAge} ans` : AGE_GROUP_LABELS[c.ageGroup]}</TableCell>
                   <TableCell className="text-zinc-600 dark:text-slate-400">{c.act?.name ?? "—"}</TableCell>
                   <TableCell className="text-zinc-600 dark:text-slate-400">{c.diagnosis}</TableCell>
-                  <TableCell className="font-semibold text-zindo-green-600">{formatMoney(c.fee, currency)}</TableCell>
+                  <TableCell className="font-semibold text-zindo-blue-600">{formatMoney(c.fee, currency)}</TableCell>
                   <TableCell>
                     {c.items.length > 0 ? (
                       <a
                         href={`/consultations/${c.id}/ordonnance`}
-                        className="inline-flex items-center gap-1 text-sm font-medium text-zindo-green-700 hover:underline"
+                        className="inline-flex items-center gap-1 text-sm font-medium text-zindo-blue-700 hover:underline"
                       >
                         <Pill className="h-3.5 w-3.5" /> Ordonnance
                       </a>

@@ -38,7 +38,7 @@ export function SalesSearchBox({ initialQuery }: { initialQuery: string }) {
         placeholder="Rechercher : n° de ticket, vendeur, client, montant…"
         aria-label="Rechercher une vente"
         autoComplete="off"
-        className="w-full rounded-xl border border-zinc-200 bg-white py-3 pl-11 pr-11 text-base text-zinc-900 placeholder:text-zinc-400 focus:border-zindo-green-500 focus:outline-none dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+        className="w-full rounded-xl border border-zinc-200 bg-white py-3 pl-11 pr-11 text-base text-zinc-900 placeholder:text-zinc-400 focus:border-zindo-blue-500 focus:outline-none dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
       />
       {pending ? (
         <Loader2 className="absolute right-3.5 top-1/2 h-5 w-5 -translate-y-1/2 animate-spin text-zinc-400" />

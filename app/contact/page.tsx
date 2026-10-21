@@ -28,7 +28,7 @@ export default async function ContactPage() {
             href={WHATSAPP_HREF}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center gap-4 rounded-2xl border border-zinc-200 bg-white p-5 hover:border-zindo-green-500"
+            className="flex items-center gap-4 rounded-2xl border border-zinc-200 bg-white p-5 hover:border-zindo-blue-500"
           >
             <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#25D366] text-white">
               <MessageCircle className="h-5 w-5" />
@@ -38,8 +38,8 @@ export default async function ContactPage() {
               <span className="text-sm text-zinc-500">+226 04 05 99 29 — réponse rapide</span>
             </span>
           </a>
-          <a href="tel:+22604059929" className="flex items-center gap-4 rounded-2xl border border-zinc-200 bg-white p-5 hover:border-zindo-green-500">
-            <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-zindo-green-50 text-zindo-green-600">
+          <a href="tel:+22604059929" className="flex items-center gap-4 rounded-2xl border border-zinc-200 bg-white p-5 hover:border-zindo-blue-500">
+            <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-zindo-blue-50 text-zindo-blue-600">
               <Phone className="h-5 w-5" />
             </span>
             <span>
@@ -48,7 +48,7 @@ export default async function ContactPage() {
             </span>
           </a>
           <div className="flex items-center gap-4 rounded-2xl border border-zinc-200 bg-white p-5">
-            <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-zindo-gold-100 text-zindo-gold-600">
+            <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-zindo-copper-100 text-zindo-copper-600">
               <MapPin className="h-5 w-5" />
             </span>
             <span>

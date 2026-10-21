@@ -25,7 +25,7 @@ export function BuyerProfileForm({ buyer }: { buyer: { name: string; kind: "PART
       <CountryCityPicker countryName="countryCode" defaultCountry={buyer.countryCode} defaultCity={buyer.city ?? ""} />
       {state?.error && <p className="text-sm text-red-600">{state.error}</p>}
       {state?.success && <p className="text-sm text-emerald-700">{state.success}</p>}
-      <button disabled={pending} className="h-11 w-full rounded-xl bg-zindo-green-600 text-sm font-semibold text-white disabled:opacity-50">
+      <button disabled={pending} className="h-11 w-full rounded-xl bg-zindo-blue-600 text-sm font-semibold text-white disabled:opacity-50">
         {pending ? "Enregistrement…" : "Enregistrer"}
       </button>
     </form>

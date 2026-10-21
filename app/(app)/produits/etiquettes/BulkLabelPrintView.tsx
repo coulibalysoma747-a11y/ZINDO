@@ -143,12 +143,12 @@ export function BulkLabelPrintView({
       </div>
 
       {missingCount > 0 && (
-        <div className="flex items-center justify-between gap-3 rounded-xl border border-zindo-green-200 bg-zindo-green-50 px-4 py-3 print:hidden">
+        <div className="flex items-center justify-between gap-3 rounded-xl border border-zindo-blue-200 bg-zindo-blue-50 px-4 py-3 print:hidden">
           <button
             type="button"
             onClick={handleSaveAllMissing}
             disabled={savingAll}
-            className="flex items-center gap-2 text-sm font-semibold text-zindo-green-800 hover:text-zindo-green-900 disabled:opacity-60"
+            className="flex items-center gap-2 text-sm font-semibold text-zindo-blue-800 hover:text-zindo-blue-900 disabled:opacity-60"
           >
             <QrCode className="h-4 w-4" />
             {savingAll ? "Enregistrement..." : `Enregistrer tous les codes manquants (${missingCount})`}
@@ -180,7 +180,7 @@ export function BulkLabelPrintView({
                 type="checkbox"
                 checked={fields[t.key]}
                 onChange={() => toggleField(t.key)}
-                className="h-4 w-4 rounded accent-zindo-green-500"
+                className="h-4 w-4 rounded accent-zindo-blue-500"
               />
               {t.label}
             </label>
@@ -260,7 +260,7 @@ export function BulkLabelPrintView({
             type="button"
             onClick={() => setOnlyMissing(true)}
             className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
-              onlyMissing ? "bg-zindo-green-600 text-white" : "bg-zinc-100 text-zinc-600 hover:bg-zinc-200"
+              onlyMissing ? "bg-zindo-blue-600 text-white" : "bg-zinc-100 text-zinc-600 hover:bg-zinc-200"
             }`}
           >
             Sans QR code uniquement
@@ -269,7 +269,7 @@ export function BulkLabelPrintView({
             type="button"
             onClick={() => setOnlyMissing(false)}
             className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
-              !onlyMissing ? "bg-zindo-green-600 text-white" : "bg-zinc-100 text-zinc-600 hover:bg-zinc-200"
+              !onlyMissing ? "bg-zindo-blue-600 text-white" : "bg-zinc-100 text-zinc-600 hover:bg-zinc-200"
             }`}
           >
             Tous les produits
@@ -298,7 +298,7 @@ export function BulkLabelPrintView({
                         type="checkbox"
                         checked={selected.has(p.id)}
                         onChange={() => toggle(p.id)}
-                        className="h-4 w-4 rounded accent-zindo-green-500"
+                        className="h-4 w-4 rounded accent-zindo-blue-500"
                       />
                     </TableCell>
                     <TableCell className="px-3 py-2">

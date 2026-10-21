@@ -21,7 +21,7 @@ export function ProductGallery({ photos, alt, badge }: { photos: string[]; alt: 
               type="button"
               onClick={() => setCurrent(i)}
               aria-label={`Photo ${i + 1}`}
-              className={`h-16 w-16 shrink-0 overflow-hidden rounded-xl ring-2 ${i === current ? "ring-zindo-green-600" : "ring-transparent opacity-70 hover:opacity-100"}`}
+              className={`h-16 w-16 shrink-0 overflow-hidden rounded-xl ring-2 ${i === current ? "ring-zindo-blue-600" : "ring-transparent opacity-70 hover:opacity-100"}`}
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={vignette(url, 64)} alt="" loading="lazy" decoding="async" className="h-full w-full object-cover" />

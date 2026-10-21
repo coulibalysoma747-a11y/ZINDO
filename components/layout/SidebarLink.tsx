@@ -32,7 +32,7 @@ export function SidebarLink({ item }: { item: NavItem }) {
       className={cn(
         "group flex items-center justify-between gap-2 rounded-lg px-2.5 py-[7px] text-[13.5px] transition-colors duration-100",
         active
-          ? "bg-zindo-green-50 font-semibold text-zindo-green-800 dark:bg-zindo-green-500/10 dark:text-zindo-green-300"
+          ? "bg-zindo-blue-50 font-semibold text-zindo-blue-800 dark:bg-zindo-blue-500/10 dark:text-zindo-blue-300"
           : "font-medium text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-white"
       )}
     >
@@ -41,7 +41,7 @@ export function SidebarLink({ item }: { item: NavItem }) {
           <Icon
             className={cn(
               "h-[17px] w-[17px] shrink-0",
-              active ? "text-zindo-green-600 dark:text-zindo-green-400" : "text-zinc-400 group-hover:text-zinc-600 dark:text-slate-500"
+              active ? "text-zindo-blue-600 dark:text-zindo-blue-400" : "text-zinc-400 group-hover:text-zinc-600 dark:text-slate-500"
             )}
           />
         </span>
