@@ -10,7 +10,7 @@ export function WhatsAppFloat({ href, compact = false }: { href: string; compact
         rel="noopener noreferrer"
         aria-label="Nous écrire sur WhatsApp"
         title="Une question ? Écrivez-nous sur WhatsApp"
-        className="fixed bottom-5 right-5 z-40 flex h-12 w-12 items-center justify-center rounded-full bg-[#25D366] text-white shadow-lg shadow-black/15 transition hover:scale-105"
+        className="fixed bottom-24 right-4 z-40 flex h-12 w-12 items-center justify-center rounded-full bg-[#25D366] text-white shadow-lg shadow-black/15 transition hover:scale-105 sm:bottom-6 sm:right-6"
       >
         <MessageCircle className="h-6 w-6" />
       </a>

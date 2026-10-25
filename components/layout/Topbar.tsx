@@ -45,7 +45,7 @@ export function Topbar({
 
   return (
     <>
-      <header className="relative flex h-16 items-center justify-between gap-3 border-b border-zinc-200 bg-white px-3 sm:px-4 dark:border-slate-800 dark:bg-slate-900 md:px-6">
+      <header className="relative flex h-16 items-center justify-between gap-3 border-b border-zinc-200 bg-white/95 px-3 backdrop-blur-md sm:px-4 dark:border-slate-800 dark:bg-slate-900/95 md:px-6">
                 {/* Téléphone : bouton menu + nom du commerce, pour toujours savoir où l’on est. */}
         <div className="flex min-w-0 items-center gap-2 md:hidden">
           <button

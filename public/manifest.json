@@ -1,12 +1,12 @@
-{
-  "name": "ZINDO — Gestion de stock et de ventes",
+﻿{
+  "name": "ZINDO â€” Gestion de stock et de ventes",
   "short_name": "ZINDO",
-  "description": "Gérez votre stock, vos ventes et vos bénéfices en temps réel, sans papier ni tableur.",
+  "description": "GÃ©rez votre stock, vos ventes et vos bÃ©nÃ©fices en temps rÃ©el, sans papier ni tableur.",
   "start_url": "/dashboard",
   "scope": "/",
   "display": "standalone",
   "background_color": "#f8f7f5",
-  "theme_color": "#102638",
+  "theme_color": "#342563",
   "lang": "fr",
   "icons": [
     { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },

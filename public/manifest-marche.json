@@ -1,13 +1,13 @@
-{
-  "name": "Marché ZINDO",
-  "short_name": "Marché ZINDO",
-  "description": "Achetez auprès des commerçants ZINDO.",
+﻿{
+  "name": "MarchÃ© ZINDO",
+  "short_name": "MarchÃ© ZINDO",
+  "description": "Achetez auprÃ¨s des commerÃ§ants ZINDO.",
   "id": "/marche",
   "start_url": "/marche",
   "scope": "/marche",
   "display": "standalone",
   "background_color": "#f8f7f5",
-  "theme_color": "#102638",
+  "theme_color": "#342563",
   "lang": "fr",
   "icons": [
     { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },

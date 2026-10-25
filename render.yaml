@@ -1,0 +1,14 @@
+# Hébergement gratuit sur Render : le service s'endort après 15 minutes sans visite
+# et se réveille à la visite suivante (environ une minute). Voir docs/HEBERGEMENT-RENDER.md.
+services:
+  - type: web
+    name: zindo
+    runtime: node
+    plan: free
+    region: frankfurt
+    buildCommand: npm ci && npm run build
+    # La limite de mémoire ne s'applique qu'au serveur (512 Mo sur l'offre gratuite), pas à la compilation.
+    startCommand: NODE_OPTIONS=--max-old-space-size=384 npm start
+    envVars:
+      - key: NODE_VERSION
+        value: 24

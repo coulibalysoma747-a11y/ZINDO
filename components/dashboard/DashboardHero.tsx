@@ -16,12 +16,12 @@ function Sparkline({ values }: { values: number[] }) {
     <svg viewBox={`0 0 ${WIDTH} ${HEIGHT}`} preserveAspectRatio="none" className="mt-3 h-24 w-full" aria-hidden>
       <defs>
         <linearGradient id="hero-fill" x1="0" x2="0" y1="0" y2="1">
-          <stop offset="0" stopColor="#0f7a4a" stopOpacity="0.22" />
-          <stop offset="1" stopColor="#0f7a4a" stopOpacity="0" />
+          <stop offset="0" stopColor="#6941c6" stopOpacity="0.22" />
+          <stop offset="1" stopColor="#6941c6" stopOpacity="0" />
         </linearGradient>
       </defs>
       <path d={`${line} L${WIDTH} ${HEIGHT} L0 ${HEIGHT}Z`} fill="url(#hero-fill)" />
-      <path d={line} fill="none" stroke="#0f7a4a" strokeWidth="2.5" strokeLinejoin="round" vectorEffect="non-scaling-stroke" />
+      <path d={line} fill="none" stroke="#6941c6" strokeWidth="2.5" strokeLinejoin="round" vectorEffect="non-scaling-stroke" />
     </svg>
   );
 }
@@ -47,7 +47,7 @@ export function DashboardHero({
   minis: Mini[];
 }) {
   return (
-    <section className="grid gap-6 rounded-2xl border border-zinc-200 bg-white p-5 shadow-[0_1px_3px_rgb(16_24_20/0.06)] sm:p-6 lg:grid-cols-[1.2fr_1fr] lg:gap-8 dark:border-slate-800 dark:bg-slate-900">
+    <section className="grid gap-6 rounded-2xl border border-zinc-200 bg-white p-5 shadow-zindo-card sm:p-6 lg:grid-cols-[1.2fr_1fr] lg:gap-8 dark:border-slate-800 dark:bg-slate-900">
       <div className="min-w-0">
         <p className="text-[13px] font-medium text-zinc-500">{label}</p>
         <p className="mt-1 text-3xl font-bold tracking-tight tabular-nums text-zinc-900 sm:text-4xl dark:text-white">{value}</p>

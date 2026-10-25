@@ -30,12 +30,13 @@ export function SidebarLink({ item }: { item: NavItem }) {
       href={href}
       aria-current={active ? "page" : undefined}
       className={cn(
-        "group flex items-center justify-between gap-2 rounded-lg px-2.5 py-[7px] text-[13.5px] transition-colors duration-100",
+        "group relative flex items-center justify-between gap-2 rounded-lg px-2.5 py-[7px] text-[13.5px] transition-colors duration-100",
         active
           ? "bg-zindo-blue-50 font-semibold text-zindo-blue-800 dark:bg-zindo-blue-500/10 dark:text-zindo-blue-300"
           : "font-medium text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-white"
       )}
     >
+      {active && <span aria-hidden className="absolute left-0 top-1.5 bottom-1.5 w-0.5 rounded-full bg-zindo-blue-600" />}
       <div className="flex min-w-0 items-center gap-2.5">
         <span className="flex shrink-0 items-center justify-center">
           <Icon

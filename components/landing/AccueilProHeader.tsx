@@ -118,7 +118,7 @@ export function AccueilProHeader({ variant = "transparent" }: { variant?: "trans
           <Link
             href="/inscription"
             className={`whitespace-nowrap rounded-lg px-4 py-2 text-sm font-semibold transition-colors ${
-              light ? "bg-zindo-blue-500 text-white hover:bg-zindo-blue-600" : "bg-white text-zindo-blue-800 hover:bg-zindo-blue-50"
+              light ? "bg-zindo-blue-700 text-white hover:bg-zindo-blue-800" : "bg-white text-zindo-blue-800 hover:bg-zindo-cream"
             }`}
           >
             Essai gratuit
