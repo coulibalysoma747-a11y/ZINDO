@@ -53,7 +53,7 @@ export function DashboardHero({
         <p className="mt-1 text-3xl font-bold tracking-tight tabular-nums text-zinc-900 sm:text-4xl dark:text-white">{value}</p>
         <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
           {delta !== undefined && delta !== null && (
-            <span className={cn("font-semibold tabular-nums", delta >= 0 ? "text-[#0f7a4a]" : "text-red-600")}>
+            <span className={cn("font-semibold tabular-nums", delta >= 0 ? "text-emerald-600" : "text-red-600")}>
               {delta >= 0 ? "▲" : "▼"} {Math.abs(delta).toFixed(1)} % par rapport à la période précédente
             </span>
           )}

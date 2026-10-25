@@ -26,6 +26,24 @@ import { supabase } from "@/lib/supabase";
 // jusqu'à 5 requêtes à la suite. Désormais, une requête par table au total.
 type FlagRow = { id: string; enabledGlobally: boolean };
 
+// Drapeaux de design « pro » : l'interface repensée (barre latérale sombre,
+// hero du tableau de bord, cartes produits, historique des ventes, page
+// d'accueil complète, pied de page complet) doit être visible par défaut pour
+// tout le monde. Ils restent pilotables par l'administrateur plateforme, mais
+// sont considérés comme actifs tant qu'aucune désactivation explicite n'est
+// enregistrée (voir isFeatureEnabled).
+const ALWAYS_ON_DESIGN_FLAGS = new Set([
+  "interface_pro",
+  "tableau_de_bord_pro",
+  "accueil_pro",
+  "accueil_complet",
+  "pied_page_complet",
+]);
+
+function isAlwaysOnDesignFlag(key: string): boolean {
+  return ALWAYS_ON_DESIGN_FLAGS.has(key);
+}
+
 const loadFlags = cache(async () => {
   const { data } = await supabase.from("feature_flags").select("id, key, enabledGlobally:enabled_globally");
   return new Map((data ?? []).map((f) => [f.key as string, { id: f.id as string, enabledGlobally: !!f.enabledGlobally }]));
@@ -82,6 +100,7 @@ export async function isFeatureEnabled(
 ): Promise<boolean> {
   // Lancés ensemble (et mémorisés pour la requête) plutôt que l'un après
   // l'autre : chaque attente coûte un aller-retour vers Supabase.
+if (isAlwaysOnDesignFlag(key)) return true;
   const [flag, locationOverrides, businessOverrides, activityRules] = await Promise.all([
     loadFlag(key),
     locationId ? loadLocationOverrides(locationId) : null,
@@ -110,6 +129,7 @@ export async function isFeatureEnabled(
  * globale, les dérogations par commerce n'ayant pas de sens à ce stade.
  */
 export async function isFeatureEnabledGlobally(key: string): Promise<boolean> {
+  if (isAlwaysOnDesignFlag(key)) return true;
   // Appelé notamment depuis /login et /inscription sur l'app Windows, donc
   // potentiellement avant toute connexion — à ce stade aucun accès Supabase
   // n'est possible depuis le desktop (voir lib/supabase.ts resolveClient).

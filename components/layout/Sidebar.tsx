@@ -32,7 +32,7 @@ export function Sidebar({
   const groups = groupNavItems(items.filter((item) => !footerHrefs.includes(item.href)), flat);
 
   return (
-    <aside data-colored={dark ? "" : undefined} className={`${dark ? "dark " : ""}group/side sticky top-0 hidden h-screen w-60 shrink-0 flex-col border-r border-zinc-200 bg-white md:flex dark:border-slate-800 dark:bg-slate-900 data-[colored]:!border-[#18382a] data-[colored]:!bg-[#0f1f17]`}>
+    <aside data-colored={dark ? "" : undefined} className={`${dark ? "dark " : ""}group/side sticky top-0 hidden h-screen w-60 shrink-0 flex-col border-r border-zinc-200 bg-white md:flex dark:border-slate-800 dark:bg-slate-900 data-[colored]:!border-[#1f1640] data-[colored]:!bg-[#140d2e]`}>
       <div aria-hidden className="zindo-brand-stripe h-0.5 w-full shrink-0" />
       <div className="flex h-16 shrink-0 items-center gap-2.5 border-b border-zinc-200 px-4 dark:border-slate-800">
         <ZindoLogo size={30} className="!rounded-lg !shadow-none" />

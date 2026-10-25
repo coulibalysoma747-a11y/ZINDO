@@ -13,10 +13,10 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 :root {
-  --background: #f8f7f5;
+  --background: #f8f7fc;
   --foreground: #171717;
   /* Neutral workspace background so white cards remain distinct. */
-  --app-canvas: #efece8;
+  --app-canvas: #eef0f6;
 }
 
 @theme inline {
@@ -40,9 +40,9 @@
 
   /* Ombres douces à plusieurs couches (cartes, menus, fenêtres) : plus
      naturelles qu'une seule ombre grise. */
-  --shadow-zindo-card: 0 1px 2px rgb(24 24 27 / 0.04), 0 1px 3px rgb(24 24 27 / 0.03);
-  --shadow-zindo-raised: 0 2px 4px rgb(24 24 27 / 0.04), 0 8px 20px -6px rgb(24 24 27 / 0.10);
-  --shadow-zindo-float: 0 4px 8px rgb(24 24 27 / 0.05), 0 20px 40px -12px rgb(24 24 27 / 0.22);
+  --shadow-zindo-card: 0 1px 2px rgb(24 24 27 / 0.05), 0 4px 12px -4px rgb(24 24 27 / 0.08);
+  --shadow-zindo-raised: 0 2px 6px rgb(24 24 27 / 0.06), 0 12px 28px -8px rgb(24 24 27 / 0.14);
+  --shadow-zindo-float: 0 6px 12px rgb(24 24 27 / 0.08), 0 24px 48px -12px rgb(24 24 27 / 0.26);
   --color-zindo-red-50: #fdecec;
   --color-zindo-red-100: #fbd0d0;
   --color-zindo-red-200: #f6a0a0;
