@@ -7,14 +7,14 @@ type Size = "sm" | "md" | "lg";
 
 const variantClasses: Record<Variant, string> = {
   primary:
-    "bg-zindo-blue-600 text-white shadow-sm shadow-zindo-blue-900/10 hover:bg-zindo-blue-700 active:bg-zindo-blue-800 disabled:bg-zindo-blue-600/40 disabled:shadow-none",
+    "bg-gradient-to-b from-zindo-blue-600 to-zindo-blue-700 text-white shadow-md shadow-zindo-blue-900/20 hover:from-zindo-blue-500 hover:to-zindo-blue-600 hover:shadow-lg hover:shadow-zindo-blue-900/25 active:from-zindo-blue-700 active:to-zindo-blue-800 disabled:from-zindo-blue-600/40 disabled:to-zindo-blue-600/40 disabled:shadow-none",
   secondary:
     "bg-zinc-100 text-zinc-800 hover:bg-zinc-200 active:bg-zinc-300 disabled:text-zinc-400 dark:bg-slate-800 dark:text-slate-100 dark:hover:bg-slate-700",
   danger:
-    "bg-red-600 text-white shadow-sm shadow-red-900/10 hover:bg-red-700 active:bg-red-800 disabled:bg-red-300 disabled:shadow-none",
+    "bg-gradient-to-b from-red-600 to-red-700 text-white shadow-md shadow-red-900/20 hover:from-red-500 hover:to-red-600 hover:shadow-lg hover:shadow-red-900/25 active:from-red-700 active:to-red-800 disabled:from-red-300 disabled:to-red-300 disabled:shadow-none",
   ghost: "bg-transparent text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 active:bg-zinc-200 dark:hover:bg-slate-800",
   outline:
-    "bg-white text-zinc-800 border border-zinc-300 shadow-zindo-card hover:border-zinc-400 hover:bg-zinc-50 hover:text-zinc-900 active:bg-zinc-100 dark:bg-slate-900 dark:border-slate-700 dark:hover:bg-slate-800",
+    "bg-white text-zinc-800 border border-zinc-300 shadow-zindo-card hover:border-zindo-blue-400 hover:bg-zindo-blue-50/40 hover:text-zindo-blue-900 active:bg-zindo-blue-100/60 dark:bg-slate-900 dark:border-slate-700 dark:hover:bg-slate-800",
 };
 
 const sizeClasses: Record<Size, string> = {

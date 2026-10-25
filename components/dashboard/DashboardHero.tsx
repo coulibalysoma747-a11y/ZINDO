@@ -47,7 +47,7 @@ export function DashboardHero({
   minis: Mini[];
 }) {
   return (
-    <section className="grid gap-6 rounded-2xl border border-zinc-200 bg-white p-5 shadow-zindo-card sm:p-6 lg:grid-cols-[1.2fr_1fr] lg:gap-8 dark:border-slate-800 dark:bg-slate-900">
+    <section className="grid gap-6 rounded-2xl border border-zinc-200 bg-gradient-to-br from-white to-zindo-blue-50/40 p-5 shadow-zindo-raised sm:p-6 lg:grid-cols-[1.2fr_1fr] lg:gap-8 dark:border-slate-800 dark:from-slate-900 dark:to-slate-900">
       <div className="min-w-0">
         <p className="text-[13px] font-medium text-zinc-500">{label}</p>
         <p className="mt-1 text-3xl font-bold tracking-tight tabular-nums text-zinc-900 sm:text-4xl dark:text-white">{value}</p>
@@ -63,7 +63,7 @@ export function DashboardHero({
       </div>
       <div className="grid content-start grid-cols-2 gap-3">
         {minis.map((m) => (
-          <div key={m.label} className="rounded-xl bg-zinc-50 p-4 dark:bg-slate-800/60">
+          <div key={m.label} className="rounded-xl border border-zinc-100 bg-white/80 p-4 shadow-zindo-card backdrop-blur dark:border-slate-800 dark:bg-slate-800/60">
             <p className="text-[12.5px] font-medium text-zinc-500">{m.label}</p>
             <p className={cn("mt-0.5 truncate text-xl font-bold tabular-nums", m.negative ? "text-red-600" : "text-zinc-900 dark:text-white")}>{m.value}</p>
             {m.hint && <p className="mt-0.5 text-xs text-zinc-500">{m.hint}</p>}
