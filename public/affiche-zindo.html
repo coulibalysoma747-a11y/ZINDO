@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Affiche ZINDO</title>
+  <style>
+    :root {
+      --orange: #E85D2C;
+      --dark: #111827;
+      --gray: #4b5563;
+      --light: #f9fafb;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+      background: #e5e7eb;
+      display: flex;
+      justify-content: center;
+      padding: 24px;
+    }
+    .poster {
+      width: 210mm;
+      min-height: 297mm;
+      background: #ffffff;
+      box-shadow: 0 10px 40px rgba(0,0,0,.15);
+      padding: 18mm 16mm;
+      display: flex;
+      flex-direction: column;
+      gap: 12mm;
+    }
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .logo {
+      font-size: 40px;
+      font-weight: 900;
+      color: var(--orange);
+      letter-spacing: -1px;
+    }
+    .badge {
+      background: var(--orange);
+      color: #fff;
+      padding: 8px 14px;
+      border-radius: 999px;
+      font-weight: 700;
+      font-size: 14px;
+    }
+    .hero {
+      text-align: center;
+    }
+    .hero h1 {
+      font-size: 46px;
+      line-height: 1.1;
+      margin: 0 0 8mm;
+      color: var(--dark);
+    }
+    .hero h1 span { color: var(--orange); }
+    .hero p {
+      font-size: 20px;
+      color: var(--gray);
+      margin: 0;
+    }
+    .mockup {
+      background: linear-gradient(135deg, #fff1e7, #ffe4d6);
+      border-radius: 16px;
+      padding: 12mm;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8mm;
+      align-items: center;
+    }
+    .mockup .card {
+      background: #fff;
+      border-radius: 12px;
+      padding: 8mm;
+      box-shadow: 0 8px 24px rgba(0,0,0,.08);
+    }
+    .mockup .card h3 {
+      margin: 0 0 4mm;
+      font-size: 18px;
+      color: var(--dark);
+    }
+    .mockup .card ul {
+      margin: 0;
+      padding-left: 5mm;
+      color: var(--gray);
+      font-size: 14px;
+      line-height: 1.6;
+    }
+    .features {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 6mm;
+    }
+    .feature {
+      background: var(--light);
+      border-radius: 12px;
+      padding: 6mm;
+      text-align: center;
+    }
+    .feature .icon {
+      font-size: 28px;
+      margin-bottom: 3mm;
+    }
+    .feature h4 {
+      margin: 0 0 2mm;
+      font-size: 16px;
+      color: var(--dark);
+    }
+    .feature p {
+      margin: 0;
+      font-size: 13px;
+      color: var(--gray);
+    }
+    .offer {
+      background: var(--orange);
+      color: #fff;
+      border-radius: 16px;
+      padding: 8mm;
+      text-align: center;
+    }
+    .offer h2 {
+      margin: 0 0 2mm;
+      font-size: 28px;
+    }
+    .offer p {
+      margin: 0 0 4mm;
+      font-size: 16px;
+      opacity: .95;
+    }
+    .cta {
+      display: inline-block;
+      background: #fff;
+      color: var(--orange);
+      font-weight: 800;
+      padding: 12px 24px;
+      border-radius: 999px;
+      text-decoration: none;
+      font-size: 18px;
+    }
+    .footer {
+      margin-top: auto;
+      text-align: center;
+      color: var(--gray);
+      font-size: 14px;
+    }
+    .footer strong { color: var(--dark); }
+    @media print {
+      body { background: #fff; padding: 0; }
+      .poster { box-shadow: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="poster">
+    <div class="header">
+      <div class="logo">ZINDO</div>
+      <div class="badge">Essai gratuit 14 jours</div>
+    </div>
+
+    <div class="hero">
+      <h1>Prenez le <span>contrôle total</span> de votre commerce</h1>
+      <p>Logiciel de gestion commerciale pour boutiques et PME au Burkina Faso</p>
+    </div>
+
+    <div class="mockup">
+      <div class="card">
+        <h3>📱 Mobile</h3>
+        <ul>
+          <li>Caisse rapide</li>
+          <li>Stock en temps réel</li>
+          <li>Crédits clients</li>
+          <li>Fonctionne hors ligne</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>💻 Desktop</h3>
+        <ul>
+          <li>Rapports & bénéfices</li>
+          <li>Multi-boutiques</li>
+          <li>Gestion employés</li>
+          <li>Factures & tickets</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="features">
+      <div class="feature">
+        <div class="icon">⚡</div>
+        <h4>Rapide</h4>
+        <p>Encaissez en quelques secondes</p>
+      </div>
+      <div class="feature">
+        <div class="icon">📦</div>
+        <h4>Stock</h4>
+        <p>Suivi et alertes automatiques</p>
+      </div>
+      <div class="feature">
+        <div class="icon">💳</div>
+        <h4>Crédits</h4>
+        <p>Dettes et paiements suivis</p>
+      </div>
+      <div class="feature">
+        <div class="icon">📊</div>
+        <h4>Rapports</h4>
+        <p>Vision claire de l’activité</p>
+      </div>
+      <div class="feature">
+        <div class="icon">🏪</div>
+        <h4>Multi-boutiques</h4>
+        <p>Plusieurs points de vente</p>
+      </div>
+      <div class="feature">
+        <div class="icon">🤝</div>
+        <h4>Accompagnement</h4>
+        <p>Un expert à vos côtés</p>
+      </div>
+    </div>
+
+    <div class="offer">
+      <h2>Essai gratuit 14 jours</h2>
+      <p>À partir de 7 500 FCFA / mois • Sans carte bancaire</p>
+      <a class="cta" href="https://www.zindo.site">Essayer gratuitement</a>
+    </div>
+
+    <div class="footer">
+      <p><strong>zindo.site</strong> • 🇧🇫 Fait avec ❤️ au Burkina Faso</p>
+      <p>Paiement : Orange Money • Moov Money • Wave</p>
+    </div>
+  </div>
+</body>
+</html>
