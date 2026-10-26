@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+
+<html class="scroll-smooth" lang="fr"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, viewport-fit=cover" name="viewport"/>
+<title>ZINDO - N°1 Logiciel de Caisse &amp; Gestion Commerciale au Burkina Faso</title>
+<!-- Tailwind CSS v3 with Plugins -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- FontAwesome Icons for crisp UI symbols -->
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet"/>
+<!-- Google Fonts: Plus Jakarta Sans for crisp prestige UI -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind Theme Configuration -->
+<script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'system-ui', 'sans-serif'],
+          },
+          colors: {
+            brand: {
+              mint: '#E9F9F0',
+              mintSoft: '#F4FCF7',
+              forest: '#04271D',
+              forestDeep: '#021812',
+              emerald: '#0A5C36',
+              accentGreen: '#10B981',
+              gold: '#D97706',
+              goldBright: '#F59E0B',
+              goldLight: '#FEF3C7',
+            }
+          },
+          boxShadow: {
+            'card-subtle': '0 8px 30px rgba(4, 39, 29, 0.06)',
+            'floating-ui': '0 14px 40px rgba(4, 39, 29, 0.12)',
+            'glow-gold': '0 8px 24px rgba(217, 119, 6, 0.28)',
+          }
+        }
+      }
+    }
+  </script>
+<!-- Style for Custom Micro-animations & Mobile Optimizations -->
+<style data-purpose="custom-mobile-styling">
+    body {
+      -webkit-tap-highlight-color: transparent;
+      font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+    }
+    
+    /* Touch scroll smoothing */
+    .snap-x-mandatory {
+      scroll-snap-type: x mandatory;
+      -webkit-overflow-scrolling: touch;
+    }
+    .snap-center-child {
+      scroll-snap-align: center;
+    }
+    
+    /* Subtle pulse animation for offline status */
+    @keyframes subtlePulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.75; transform: scale(1.04); }
+    }
+    .status-pulse {
+      animation: subtlePulse 2.4s infinite ease-in-out;
+    }
+    
+    /* Hide scrollbars on horizontal carousels */
+    .no-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .no-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+  </style>
+</head>
+<body class="bg-brand-mintSoft text-slate-800 antialiased selection:bg-brand-accentGreen selection:text-white pb-24">
+<!-- BEGIN: StickyHeader -->
+<header class="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-brand-emerald/10 shadow-sm" data-purpose="mobile-sticky-header">
+<div class="px-4 py-3 flex items-center justify-between max-w-md mx-auto">
+<!-- Brand Logo & Flag -->
+<a class="flex items-center gap-2 group" href="#">
+<div class="w-9 h-9 rounded-xl bg-brand-forest flex items-center justify-center text-brand-goldBright font-extrabold text-xl shadow-sm">
+          Z
+        </div>
+<div class="flex flex-col">
+<span class="text-xl font-extrabold tracking-tight text-brand-forest leading-none">ZINDO</span>
+<span class="text-[10px] font-semibold tracking-wider text-brand-emerald flex items-center gap-1 mt-0.5">
+<span class="inline-block w-1.5 h-1.5 rounded-full bg-emerald-500"></span> N°1 BURKINA 🇧🇫
+          </span>
+</div>
+</a>
+<!-- Quick Action Badges / CTA -->
+<div class="flex items-center gap-2">
+<a aria-label="Contacter sur WhatsApp" class="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center justify-center text-lg active:scale-95 transition-transform" href="https://wa.me/22600000000?text=Bonjour%20ZINDO,%20je%20veux%20une%20démonstration%20dans%20ma%20boutique">
+<i class="fa-brands fa-whatsapp"></i>
+</a>
+<a class="bg-brand-forest hover:bg-brand-emerald text-white px-3.5 py-2 rounded-xl text-xs font-bold shadow-sm transition active:scale-95" href="#tarifs">
+          Essai 14j
+        </a>
+</div>
+</div>
+</header>
+<!-- END: StickyHeader -->
+<!-- BEGIN: HeroSection -->
+<section class="px-4 pt-6 pb-8 overflow-hidden max-w-md mx-auto" data-purpose="mobile-hero">
+<!-- Top Pill: Offline Badge -->
+<div class="flex items-center justify-between mb-4">
+<div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-100/90 border border-emerald-300/80 text-brand-emerald text-[11px] font-bold shadow-xs">
+<span class="w-2 h-2 rounded-full bg-emerald-600 status-pulse"></span>
+        100% Hors-Ligne &amp; Sans Coupure
+      </div>
+<span class="text-[11px] font-medium text-slate-500">Ouaga • Bobo • KDG</span>
+</div>
+<!-- Main Headline -->
+<h1 class="text-3xl font-extrabold text-brand-forest tracking-tight leading-[1.18] mb-3">
+      Multipliez vos bénéfices. <br/>
+<span class="text-brand-emerald underline decoration-brand-gold decoration-4 underline-offset-4">Zéro fuite</span> de caisse. <br/>
+      Même sans Internet.
+    </h1>
+<!-- Subtitle tailored to West African Retailers -->
+<p class="text-slate-600 text-sm leading-relaxed mb-6 font-medium">
+      Le logiciel tactile de caisse et stock pensé pour les <strong class="text-brand-forest">quincailleries, boutiques de motos, dépôts et supérettes</strong> du Burkina Faso. Fini les trous de caisse et les cahiers raturés.
+    </p>
+<!-- Mobile CTAs Primary & Secondary -->
+<div class="flex flex-col gap-2.5 mb-7">
+<a class="w-full bg-gradient-to-r from-brand-gold to-brand-goldBright hover:brightness-105 active:scale-[0.98] transition-all text-white font-extrabold py-3.5 px-5 rounded-2xl flex items-center justify-center gap-2 text-center text-sm shadow-glow-gold" href="#demo">
+<i class="fa-solid fa-bolt text-xs"></i>
+<span>Démarrer l'essai 14 jours gratuit</span>
+</a>
+<a class="w-full bg-white/90 border border-brand-emerald/20 hover:bg-white active:scale-[0.98] transition-all text-brand-forest font-bold py-3 px-5 rounded-2xl flex items-center justify-center gap-2 text-xs shadow-xs" href="#video-demo">
+<i class="fa-solid fa-circle-play text-brand-emerald text-sm"></i>
+<span>Voir la démo en boutique (2 min)</span>
+</a>
+</div>
+<!-- Compact Social Proof Badge -->
+<div class="bg-white/80 border border-emerald-900/5 rounded-2xl p-3 flex items-center justify-between shadow-card-subtle backdrop-blur-sm">
+<div class="flex items-center gap-2.5">
+<div class="flex -space-x-2 overflow-hidden">
+<img alt="Client Moto Ouaga" class="inline-block h-8 w-8 rounded-full ring-2 ring-white object-cover" src="https://lh3.googleusercontent.com/aida/AEtjO1UBZsiK8Xjhd9-qdV1LkWU4deNkua8VOBMEZG-CaY9aqDZ8atV-uiPzio4hgZpn3DRaysOIl_uxAK9ylCbKAB9ej6ztYLMcdJ1-wL9BFl_Vgo9oox5Y_2YvKReayYSyUz8ySCbXmSBEPoptVzc99hJ_qUQBV9fWpdJWpMU54XpG-_FnQs8zHkxCAysV987eR4sM8_k359HCZkTvCDP4ZTk1_iZsLAlJJFwjUe_mulXmmseskUAt6Bw_cdw"/>
+<img alt="Gérante Supérette" class="inline-block h-8 w-8 rounded-full ring-2 ring-white object-cover" src="https://lh3.googleusercontent.com/aida/AEtjO1WjnLpHyAtYq9RZKHX4sao9cvGqL0RVJN20oRulTPlmTps4H5YlT2yO18fRlNZTdVUu57wcv28dKTwMHVhZ9NSZF1_ldwITaMGWpuCELwWjH4ylhWWJ44sR4Ae51rKz7clmNjWoFfnUJFtJgePi4wqceHXMTQjILBoGMxOEHnDHX-Mhqr50XdwEGmNpuu0nfSMOy5CBFwyHVAqjnjzdpSUl_vQmc_E9z7DAny6jUkiN08u6575lmZESt_si"/>
+<div class="h-8 w-8 rounded-full bg-brand-emerald text-white flex items-center justify-center text-[10px] font-bold ring-2 ring-white">
+            +1.2k
+          </div>
+</div>
+<div class="text-left">
+<p class="text-xs font-bold text-brand-forest leading-snug">+1 200 boutiques actives</p>
+<div class="flex items-center text-amber-500 text-[10px] gap-0.5">
+<i class="fa-solid fa-star"></i>
+<i class="fa-solid fa-star"></i>
+<i class="fa-solid fa-star"></i>
+<i class="fa-solid fa-star"></i>
+<i class="fa-solid fa-star"></i>
+<span class="text-slate-500 font-semibold ml-1">4.9/5</span>
+</div>
+</div>
+</div>
+<span class="text-xs font-bold text-brand-emerald bg-emerald-50 px-2 py-1 rounded-lg">100% Local</span>
+</div>
+</section>
+<!-- END: HeroSection -->
+<!-- BEGIN: InteractiveMockupPOS -->
+<section class="px-4 py-2 max-w-md mx-auto" data-purpose="interactive-pos-mockup">
+<!-- Outer Smart Device Container -->
+<div class="bg-brand-forest rounded-3xl p-4 shadow-floating-ui text-white border border-emerald-800/40 relative overflow-hidden">
+<!-- Top Screen Bar -->
+<div class="flex items-center justify-between pb-3 border-b border-white/10 text-xs">
+<div class="flex items-center gap-2">
+<span class="h-2.5 w-2.5 rounded-full bg-emerald-400 status-pulse"></span>
+<span class="font-bold text-emerald-300 text-[11px] tracking-wide uppercase">Caisse Ouagadougou 01</span>
+</div>
+<span class="bg-emerald-950/80 text-emerald-300 px-2 py-0.5 rounded text-[10px] font-mono border border-emerald-700/50">
+          Hors-Ligne OK
+        </span>
+</div>
+<!-- Realtime Sale Simulation Card -->
+<div class="mt-3.5 space-y-2.5">
+<!-- Cart Item 1 -->
+<div class="bg-white/10 backdrop-blur-sm rounded-xl p-2.5 flex items-center justify-between text-xs">
+<div class="flex items-center gap-2.5">
+<div class="w-8 h-8 rounded-lg bg-emerald-900/60 flex items-center justify-center text-emerald-300 font-bold">
+<i class="fa-solid fa-cubes-stacked text-xs"></i>
+</div>
+<div>
+<p class="font-bold text-white text-[13px]">Ciment Dangote 50kg</p>
+<p class="text-slate-300 text-[11px]">Quantité : 10 sacs</p>
+</div>
+</div>
+<div class="text-right">
+<span class="font-extrabold text-brand-goldBright text-xs">52 000 F</span>
+</div>
+</div>
+<!-- Cart Item 2 -->
+<div class="bg-white/10 backdrop-blur-sm rounded-xl p-2.5 flex items-center justify-between text-xs">
+<div class="flex items-center gap-2.5">
+<div class="w-8 h-8 rounded-lg bg-emerald-900/60 flex items-center justify-center text-emerald-300 font-bold">
+<i class="fa-solid fa-hammer text-xs"></i>
+</div>
+<div>
+<p class="font-bold text-white text-[13px]">Fer à béton FE500 (10mm)</p>
+<p class="text-slate-300 text-[11px]">Quantité : 2 barres</p>
+</div>
+</div>
+<div class="text-right">
+<span class="font-extrabold text-brand-goldBright text-xs">8 500 F</span>
+</div>
+</div>
+</div>
+<!-- Live Calculation Strip -->
+<div class="mt-4 bg-brand-forestDeep/90 rounded-2xl p-3 border border-emerald-500/20">
+<div class="flex justify-between items-center text-xs text-slate-300 mb-1">
+<span>Mode d'encaissement</span>
+<span class="text-emerald-400 font-semibold flex items-center gap-1">
+<i class="fa-solid fa-mobile-screen-button"></i> Orange Money / Cash
+          </span>
+</div>
+<div class="flex justify-between items-baseline pt-1 border-t border-white/10">
+<span class="text-xs uppercase tracking-wider text-slate-400 font-bold">Total à encaisser</span>
+<span class="text-2xl font-black text-brand-goldBright tracking-tight">60 500 <span class="text-xs font-semibold text-white">FCFA</span></span>
+</div>
+</div>
+<!-- Quick Action Buttons for the POS -->
+<div class="mt-3.5 grid grid-cols-2 gap-2 text-xs font-bold">
+<button class="bg-emerald-600 hover:bg-emerald-500 py-2.5 px-3 rounded-xl flex items-center justify-center gap-1.5 active:scale-95 transition">
+<i class="fa-solid fa-receipt text-xs"></i> Reçu WhatsApp
+        </button>
+<button class="bg-brand-gold py-2.5 px-3 rounded-xl flex items-center justify-center gap-1.5 active:scale-95 transition text-white">
+<i class="fa-solid fa-print text-xs"></i> Ticket Thermique
+        </button>
+</div>
+<p class="text-[10px] text-center text-emerald-300/80 mt-3 font-medium">
+        ⚡ Fonctionne sans connexion : synchronise dès que le réseau revient
+      </p>
+</div>
+</section>
+<!-- END: InteractiveMockupPOS -->
+<!-- BEGIN: RealLifeStoreVideoShowcase -->
+<section class="px-4 py-8 max-w-md mx-auto" data-purpose="store-video-section" id="video-demo">
+<div class="text-center mb-4">
+<span class="text-xs font-extrabold text-brand-gold tracking-wider uppercase">Démonstration terrain</span>
+<h2 class="text-xl font-extrabold text-brand-forest mt-0.5">En conditions réelles à Ouagadougou</h2>
+<p class="text-xs text-slate-600 mt-1">Découvrez la quincaillerie de M. Oumar équipée de ZINDO.</p>
+</div>
+<!-- Video Snapshot Container with Play Trigger -->
+<div class="relative rounded-3xl overflow-hidden shadow-floating-ui border-2 border-emerald-900/10 group">
+<img alt="Quincaillerie Wend-Kuni à Ouagadougou utilisant ZINDO" class="w-full h-64 object-cover object-center group-hover:scale-105 transition-transform duration-500" src="https://lh3.googleusercontent.com/aida/AEtjO1XP0sT3azUsqLZu_8YyTb0KFjZKlYWIqnpYgH248tCiOWwdbiG8sfRWV-lwJjg5kwbvwqAlJedZco4ePkfJ_Y9XpjerfbURodcyrxDSIjBfE14k3gOXzgrPAqwvzPFr4VWIogcOEBCZEDUXCX4jt6mNE1n7uYUT18kUZoEKQihCeqvdYe_yz-7WeToVXg6kaxiwQUWLYmR9FPrIcjnuHfqw1PV3UF5x6FZb7N0pmzI4-id1OvAebE_Mv0Tm"/>
+<!-- Video Gradient Overlay -->
+<div class="absolute inset-0 bg-gradient-to-t from-brand-forest/90 via-black/30 to-transparent flex flex-col justify-between p-4">
+<!-- Live Tag -->
+<div class="flex justify-between items-start">
+<span class="bg-red-600 text-white font-black text-[10px] uppercase px-2.5 py-1 rounded-md tracking-wider flex items-center gap-1 shadow-sm">
+<span class="w-1.5 h-1.5 rounded-full bg-white animate-ping"></span> REPORTAGE
+          </span>
+<span class="bg-black/60 backdrop-blur-md text-white text-[10px] font-medium px-2 py-0.5 rounded-md">
+            Ouaga Quartier Somgandé
+          </span>
+</div>
+<!-- Center Golden Play Button -->
+<a aria-label="Lire la démonstration" class="self-center w-14 h-14 rounded-full bg-gradient-to-tr from-brand-gold to-brand-goldBright text-white flex items-center justify-center text-xl shadow-glow-gold active:scale-90 transition transform" href="https://wa.me/22600000000?text=Je%20veux%20voir%20une%20démo%20vidéo%20complète%20de%20ZINDO">
+<i class="fa-solid fa-play ml-1"></i>
+</a>
+<!-- Bottom Label -->
+<div class="text-left text-white">
+<p class="font-bold text-sm leading-tight text-white drop-shadow-sm">Quincaillerie Wend-Kuni • M. Oumar</p>
+<p class="text-[11px] text-emerald-200 mt-0.5">« En 10 minutes mon apprenti savait déjà facturer »</p>
+</div>
+</div>
+</div>
+</section>
+<!-- END: RealLifeStoreVideoShowcase -->
+<!-- BEGIN: TheFourPainsSolved -->
+<section class="px-4 py-6 max-w-md mx-auto" data-purpose="four-major-problems">
+<div class="mb-4">
+<span class="text-xs font-black uppercase text-brand-emerald tracking-wider">Sécurité Commerciale</span>
+<h2 class="text-2xl font-black text-brand-forest tracking-tight mt-1">
+        Les 4 fléaux qui ruinent les commerçants éliminés :
+      </h2>
+</div>
+<!-- 4 Problem/Solution Cards List -->
+<div class="space-y-3">
+<!-- Card 1 -->
+<div class="bg-white rounded-2xl p-4 border border-emerald-950/5 shadow-card-subtle flex gap-3.5 items-start">
+<div class="w-10 h-10 rounded-xl bg-red-50 text-red-600 flex-shrink-0 flex items-center justify-center text-lg mt-0.5">
+<i class="fa-solid fa-boxes-packing"></i>
+</div>
+<div>
+<h3 class="font-extrabold text-sm text-brand-forest">Stocks qui disparaissent mystérieusement</h3>
+<p class="text-slate-600 text-xs mt-1 leading-relaxed">
+            Chaque entrée et sortie est scellée. Alerte instantanée sur votre smartphone dès qu'un seuil critique ou anormal est franchi.
+          </p>
+</div>
+</div>
+<!-- Card 2 -->
+<div class="bg-white rounded-2xl p-4 border border-emerald-950/5 shadow-card-subtle flex gap-3.5 items-start">
+<div class="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex-shrink-0 flex items-center justify-center text-lg mt-0.5">
+<i class="fa-solid fa-book-skull"></i>
+</div>
+<div>
+<h3 class="font-extrabold text-sm text-brand-forest">Dettes clients oubliées sur vieux cahiers</h3>
+<p class="text-slate-600 text-xs mt-1 leading-relaxed">
+            Fini les pages déchirées. Relancez vos clients en 1 clic par <strong>SMS &amp; WhatsApp</strong> avec le solde exact et lien de règlement.
+          </p>
+</div>
+</div>
+<!-- Card 3 -->
+<div class="bg-white rounded-2xl p-4 border border-emerald-950/5 shadow-card-subtle flex gap-3.5 items-start">
+<div class="w-10 h-10 rounded-xl bg-orange-50 text-orange-600 flex-shrink-0 flex items-center justify-center text-lg mt-0.5">
+<i class="fa-solid fa-hand-holding-dollar"></i>
+</div>
+<div>
+<h3 class="font-extrabold text-sm text-brand-forest">Remises sauvages &amp; Ventes non déclarées</h3>
+<p class="text-slate-600 text-xs mt-1 leading-relaxed">
+            Verrouillez les droits des caissiers. Aucune modification de prix ni annulation de ticket sans votre code PIN patron sécurisé.
+          </p>
+</div>
+</div>
+<!-- Card 4 -->
+<div class="bg-white rounded-2xl p-4 border border-emerald-950/5 shadow-card-subtle flex gap-3.5 items-start">
+<div class="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-700 flex-shrink-0 flex items-center justify-center text-lg mt-0.5">
+<i class="fa-solid fa-wifi-slash"></i>
+</div>
+<div>
+<h3 class="font-extrabold text-sm text-brand-forest">Coupures d'électricité et d'Internet</h3>
+<p class="text-slate-600 text-xs mt-1 leading-relaxed">
+            Le système continue à encaisser à 100% hors-ligne sur PC portable ou smartphone. Vos données se synchronisent automatiquement.
+          </p>
+</div>
+</div>
+</div>
+</section>
+<!-- END: TheFourPainsSolved -->
+<!-- BEGIN: AuthenticatedTestimonials -->
+<section class="px-4 py-8 max-w-md mx-auto" data-purpose="mobile-testimonials">
+<div class="flex items-center justify-between mb-4">
+<div>
+<span class="text-xs font-black uppercase text-brand-emerald tracking-wider">Témoignages Vrais</span>
+<h2 class="text-2xl font-black text-brand-forest tracking-tight">Ils ont changé de vie</h2>
+</div>
+<span class="text-xs font-bold text-slate-400">Balayez →</span>
+</div>
+<!-- Horizontal Swipeable Cards Container -->
+<div class="flex gap-4 overflow-x-auto snap-x-mandatory no-scrollbar pb-3 pt-1 -mx-4 px-4">
+<!-- Testimonial 1: Quincaillerie -->
+<article class="w-[85vw] max-w-[320px] flex-shrink-0 snap-center-child bg-white rounded-3xl p-4 border border-emerald-900/10 shadow-card-subtle flex flex-col justify-between">
+<div>
+<div class="flex items-center gap-3 mb-3">
+<img alt="Oumar Sawadogo" class="w-14 h-14 rounded-2xl object-cover ring-2 ring-emerald-500/20" src="https://lh3.googleusercontent.com/aida/AEtjO1XP0sT3azUsqLZu_8YyTb0KFjZKlYWIqnpYgH248tCiOWwdbiG8sfRWV-lwJjg5kwbvwqAlJedZco4ePkfJ_Y9XpjerfbURodcyrxDSIjBfE14k3gOXzgrPAqwvzPFr4VWIogcOEBCZEDUXCX4jt6mNE1n7uYUT18kUZoEKQihCeqvdYe_yz-7WeToVXg6kaxiwQUWLYmR9FPrIcjnuHfqw1PV3UF5x6FZb7N0pmzI4-id1OvAebE_Mv0Tm"/>
+<div>
+<h4 class="font-extrabold text-sm text-brand-forest">Oumar Sawadogo</h4>
+<p class="text-[11px] text-slate-500 font-medium">Quincaillerie Wend-Kuni, Ouaga</p>
+<div class="flex text-amber-500 text-[10px] mt-0.5">
+<i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i>
+</div>
+</div>
+</div>
+<p class="text-xs text-slate-700 leading-relaxed italic">
+            « Dès le premier mois, j’ai découvert 430 000 FCFA d'écarts de ciment que je ne voyais jamais. Aujourd’hui ma caisse tombe pile chaque soir. »
+          </p>
+</div>
+<div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs font-bold">
+<span class="text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-lg">+28% de marge nette</span>
+<span class="text-slate-400 text-[10px]">Client depuis 2 ans</span>
+</div>
+</article>
+<!-- Testimonial 2: Moto Shop -->
+<article class="w-[85vw] max-w-[320px] flex-shrink-0 snap-center-child bg-white rounded-3xl p-4 border border-emerald-900/10 shadow-card-subtle flex flex-col justify-between">
+<div>
+<div class="flex items-center gap-3 mb-3">
+<img alt="Hamidou Kaboré" class="w-14 h-14 rounded-2xl object-cover ring-2 ring-emerald-500/20" src="https://lh3.googleusercontent.com/aida/AEtjO1UBZsiK8Xjhd9-qdV1LkWU4deNkua8VOBMEZG-CaY9aqDZ8atV-uiPzio4hgZpn3DRaysOIl_uxAK9ylCbKAB9ej6ztYLMcdJ1-wL9BFl_Vgo9oox5Y_2YvKReayYSyUz8ySCbXmSBEPoptVzc99hJ_qUQBV9fWpdJWpMU54XpG-_FnQs8zHkxCAysV987eR4sM8_k359HCZkTvCDP4ZTk1_iZsLAlJJFwjUe_mulXmmseskUAt6Bw_cdw"/>
+<div>
+<h4 class="font-extrabold text-sm text-brand-forest">Hamidou Kaboré</h4>
+<p class="text-[11px] text-slate-500 font-medium">Hamidou Motos, Bobo-Dioulasso</p>
+<div class="flex text-amber-500 text-[10px] mt-0.5">
+<i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i>
+</div>
+</div>
+</div>
+<p class="text-xs text-slate-700 leading-relaxed italic">
+            « Les clients qui achetaient des pièces à crédit ne peuvent plus contester. Le reçu sort directement sur leur WhatsApp avec l'historique exact. »
+          </p>
+</div>
+<div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs font-bold">
+<span class="text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-lg">98% recouvrement dettes</span>
+<span class="text-slate-400 text-[10px]">Client depuis 1 an</span>
+</div>
+</article>
+<!-- Testimonial 3: Superette -->
+<article class="w-[85vw] max-w-[320px] flex-shrink-0 snap-center-child bg-white rounded-3xl p-4 border border-emerald-900/10 shadow-card-subtle flex flex-col justify-between">
+<div>
+<div class="flex items-center gap-3 mb-3">
+<img alt="Aïcha Traoré" class="w-14 h-14 rounded-2xl object-cover ring-2 ring-emerald-500/20" src="https://lh3.googleusercontent.com/aida/AEtjO1WjnLpHyAtYq9RZKHX4sao9cvGqL0RVJN20oRulTPlmTps4H5YlT2yO18fRlNZTdVUu57wcv28dKTwMHVhZ9NSZF1_ldwITaMGWpuCELwWjH4ylhWWJ44sR4Ae51rKz7clmNjWoFfnUJFtJgePi4wqceHXMTQjILBoGMxOEHnDHX-Mhqr50XdwEGmNpuu0nfSMOy5CBFwyHVAqjnjzdpSUl_vQmc_E9z7DAny6jUkiN08u6575lmZESt_si"/>
+<div>
+<h4 class="font-extrabold text-sm text-brand-forest">Aïcha Traoré</h4>
+<p class="text-[11px] text-slate-500 font-medium">Supérette Épicerie La Ruche, Ouaga</p>
+<div class="flex text-amber-500 text-[10px] mt-0.5">
+<i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i>
+</div>
+</div>
+</div>
+<p class="text-xs text-slate-700 leading-relaxed italic">
+            « Le lecteur code-barre et la rapidité sur smartphone ont éliminé les longues queues aux heures de pointe. Les caissières adorent ! »
+          </p>
+</div>
+<div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs font-bold">
+<span class="text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-lg">0 erreur de caisse</span>
+<span class="text-slate-400 text-[10px]">Cliente depuis 9 mois</span>
+</div>
+</article>
+</div>
+</section>
+<!-- END: AuthenticatedTestimonials -->
+<!-- BEGIN: SimplePricingPlans -->
+<section class="px-4 py-8 max-w-md mx-auto" data-purpose="pricing-section" id="tarifs">
+<div class="text-center mb-6">
+<span class="text-xs font-black uppercase text-brand-emerald tracking-wider">Tarification Simple &amp; Transparente</span>
+<h2 class="text-2xl font-black text-brand-forest mt-1">Investissez dans votre sérénité</h2>
+<p class="text-xs text-slate-600 mt-1">Rentabilisé dès la première semaine de prévention des fuites.</p>
+</div>
+<!-- Featured Prestige Plan Card -->
+<div class="bg-gradient-to-b from-brand-forest to-brand-forestDeep rounded-3xl p-5 text-white shadow-floating-ui relative border-2 border-brand-gold/60">
+<!-- Top Badge -->
+<div class="absolute -top-3.5 right-6 bg-gradient-to-r from-brand-gold to-brand-goldBright text-white text-[11px] font-black uppercase tracking-wider px-3.5 py-1 rounded-full shadow-md">
+        Offre Recommandée
+      </div>
+<div class="flex justify-between items-start mb-4 pt-1">
+<div>
+<h3 class="text-lg font-black text-white">Pack Annuel Tranquillité</h3>
+<p class="text-xs text-emerald-300">Tout inclus + Mises à jour &amp; Assistance Ouaga</p>
+</div>
+</div>
+<!-- Pricing Figures in FCFA -->
+<div class="my-4 bg-white/5 rounded-2xl p-3.5 border border-white/10 flex items-baseline justify-between">
+<div>
+<span class="text-3xl font-black text-brand-goldBright tracking-tight">75 000</span>
+<span class="text-sm font-bold text-slate-300">FCFA / an</span>
+</div>
+<span class="text-[11px] font-bold text-emerald-300 bg-emerald-950/80 px-2 py-1 rounded-md border border-emerald-600/30">
+          2 mois offerts
+        </span>
+</div>
+<!-- Features Checklist -->
+<ul class="space-y-2.5 text-xs text-slate-200 mb-6 font-medium">
+<li class="flex items-center gap-2">
+<i class="fa-solid fa-circle-check text-brand-accentGreen"></i>
+<span>Mode 100% hors-ligne sur PC, Tablette ou Smartphone</span>
+</li>
+<li class="flex items-center gap-2">
+<i class="fa-solid fa-circle-check text-brand-accentGreen"></i>
+<span>Gestion des stocks, alertes &amp; inventaires rapides</span>
+</li>
+<li class="flex items-center gap-2">
+<i class="fa-solid fa-circle-check text-brand-accentGreen"></i>
+<span>Suivi des dettes clients &amp; reçus via WhatsApp</span>
+</li>
+<li class="flex items-center gap-2">
+<i class="fa-solid fa-circle-check text-brand-accentGreen"></i>
+<span>Comptabilité journalière automatique pour le patron</span>
+</li>
+<li class="flex items-center gap-2">
+<i class="fa-solid fa-circle-check text-brand-accentGreen"></i>
+<span>Formation de votre équipe en boutique offerte</span>
+</li>
+</ul>
+<!-- CTA Button -->
+<a class="w-full bg-gradient-to-r from-brand-gold to-brand-goldBright hover:brightness-105 active:scale-[0.98] transition-all text-white font-black py-3.5 px-4 rounded-2xl flex items-center justify-center gap-2 text-center text-sm shadow-glow-gold" href="https://wa.me/22600000000?text=Je%20veux%20activer%20ZINDO%20Pack%20Annuel">
+<span>Activer Mon Abonnement</span>
+<i class="fa-solid fa-arrow-right text-xs"></i>
+</a>
+<!-- Alternative Monthly Option -->
+<div class="mt-4 pt-3 border-t border-white/10 text-center">
+<p class="text-xs text-slate-400">
+          Ou engagement mensuel souple à <strong class="text-white">7 500 FCFA / mois</strong>
+</p>
+</div>
+</div>
+<!-- Supported Local Payment Badges -->
+<div class="mt-5 text-center">
+<p class="text-[11px] font-semibold text-slate-500 uppercase tracking-wider mb-2">Paiement ultra-simple par Mobile Money :</p>
+<div class="flex items-center justify-center gap-2">
+<span class="bg-orange-50 text-orange-700 border border-orange-200 text-xs font-black px-3 py-1.5 rounded-xl flex items-center gap-1.5 shadow-xs">
+<span class="w-2 h-2 rounded-full bg-orange-600"></span> Orange Money
+        </span>
+<span class="bg-blue-50 text-blue-700 border border-blue-200 text-xs font-black px-3 py-1.5 rounded-xl flex items-center gap-1.5 shadow-xs">
+<span class="w-2 h-2 rounded-full bg-blue-600"></span> Moov Money
+        </span>
+<span class="bg-cyan-50 text-cyan-700 border border-cyan-200 text-xs font-black px-3 py-1.5 rounded-xl flex items-center gap-1.5 shadow-xs">
+<span class="w-2 h-2 rounded-full bg-cyan-600"></span> Wave
+        </span>
+</div>
+</div>
+</section>
+<!-- END: SimplePricingPlans -->
+<!-- BEGIN: MobileFAQAccordion -->
+<section class="px-4 py-6 max-w-md mx-auto" data-purpose="mobile-faq">
+<div class="mb-4">
+<span class="text-xs font-black uppercase text-brand-emerald tracking-wider">Foire aux questions</span>
+<h2 class="text-xl font-black text-brand-forest mt-1">Questions fréquentes</h2>
+</div>
+<div class="space-y-2.5">
+<!-- FAQ 1 -->
+<details class="group bg-white rounded-2xl border border-emerald-900/5 shadow-xs overflow-hidden">
+<summary class="flex justify-between items-center p-3.5 font-bold text-xs text-brand-forest cursor-pointer list-none select-none">
+<span>Que se passe-t-il si la SONABEL coupe le courant ?</span>
+<i class="fa-solid fa-chevron-down text-brand-emerald text-xs group-open:rotate-180 transition-transform duration-200"></i>
+</summary>
+<div class="px-3.5 pb-3.5 text-xs text-slate-600 leading-relaxed border-t border-slate-50 pt-2 font-medium">
+          ZINDO est conçu pour notre réalité. Vous pouvez continuer les ventes directement sur votre téléphone portable Android ou sur la batterie de votre PC. Aucune vente n'est interrompue.
+        </div>
+</details>
+<!-- FAQ 2 -->
+<details class="group bg-white rounded-2xl border border-emerald-900/5 shadow-xs overflow-hidden">
+<summary class="flex justify-between items-center p-3.5 font-bold text-xs text-brand-forest cursor-pointer list-none select-none">
+<span>Mes vendeurs peuvent-ils tricher ou effacer une vente ?</span>
+<i class="fa-solid fa-chevron-down text-brand-emerald text-xs group-open:rotate-180 transition-transform duration-200"></i>
+</summary>
+<div class="px-3.5 pb-3.5 text-xs text-slate-600 leading-relaxed border-t border-slate-50 pt-2 font-medium">
+          Non. Le profil caissier ne dispose d'aucun droit de modification de prix, d'annulation après encaissement ou de suppression d'historique. Tout geste suspect déclenche un journal d'audit sécurisé pour le propriétaire.
+        </div>
+</details>
+<!-- FAQ 3 -->
+<details class="group bg-white rounded-2xl border border-emerald-900/5 shadow-xs overflow-hidden">
+<summary class="flex justify-between items-center p-3.5 font-bold text-xs text-brand-forest cursor-pointer list-none select-none">
+<span>Pouvez-vous venir configurer le logiciel dans ma boutique ?</span>
+<i class="fa-solid fa-chevron-down text-brand-emerald text-xs group-open:rotate-180 transition-transform duration-200"></i>
+</summary>
+<div class="px-3.5 pb-3.5 text-xs text-slate-600 leading-relaxed border-t border-slate-50 pt-2 font-medium">
+          Oui, notre équipe d'assistance technique se déplace physiquement dans vos boutiques à Ouagadougou et Bobo-Dioulasso pour installer vos imprimantes tickets, importer vos articles et former votre personnel.
+        </div>
+</details>
+</div>
+</section>
+<!-- END: MobileFAQAccordion -->
+<!-- BEGIN: FinalCTAWhatsApp -->
+<section class="px-4 py-6 max-w-md mx-auto" data-purpose="final-call-to-action">
+<div class="bg-gradient-to-tr from-brand-forestDeep via-brand-forest to-emerald-900 rounded-3xl p-6 text-center text-white relative shadow-floating-ui overflow-hidden">
+<!-- Background Ambient Glow -->
+<div class="absolute -top-12 -right-12 w-32 h-32 bg-brand-accentGreen/20 rounded-full blur-2xl"></div>
+<span class="inline-block px-3 py-1 rounded-full bg-white/10 text-emerald-300 font-extrabold text-[11px] mb-3">
+        DÉMARRAGE IMMÉDIAT
+      </span>
+<h2 class="text-xl font-black text-white leading-tight mb-2">
+        Prenez le contrôle total de votre commerce dès aujourd'hui.
+      </h2>
+<p class="text-slate-300 text-xs mb-5 font-medium">
+        Un conseiller ZINDO basé à Ouagadougou est disponible pour vous installer la version d'essai sans aucun engagement.
+      </p>
+<a class="w-full bg-emerald-500 hover:bg-emerald-400 active:scale-95 text-white font-extrabold py-3.5 px-4 rounded-2xl flex items-center justify-center gap-2.5 text-sm transition shadow-lg" href="https://wa.me/22600000000?text=Bonjour%20ZINDO,%20je%20souhaite%20démarrer%20mon%20essai%20gratuit%20de%2014%20jours">
+<i class="fa-brands fa-whatsapp text-lg"></i>
+<span>Discuter avec nous sur WhatsApp</span>
+</a>
+<p class="text-[10px] text-slate-400 mt-3">
+        Réponse en moins de 5 minutes • Lun - Sam 07h30 à 20h00
+      </p>
+</div>
+</section>
+<!-- END: FinalCTAWhatsApp -->
+<!-- BEGIN: MobileFooter -->
+<footer class="px-4 pt-6 pb-20 max-w-md mx-auto text-center border-t border-emerald-950/10" data-purpose="mobile-footer">
+<div class="flex items-center justify-center gap-2 mb-2">
+<div class="w-6 h-6 rounded-lg bg-brand-forest flex items-center justify-center text-brand-goldBright font-extrabold text-xs">
+        Z
+      </div>
+<span class="font-extrabold text-sm text-brand-forest tracking-tight">ZINDO TECHNOLOGIES</span>
+</div>
+<p class="text-[11px] text-slate-500 font-medium">
+      Système de gestion et caisse intelligente certifiée OHADA &amp; DGI.
+    </p>
+<div class="flex items-center justify-center gap-4 text-xs font-semibold text-brand-emerald my-3">
+<a class="hover:underline" href="#">Conditions</a>
+<span>•</span>
+<a class="hover:underline" href="#">Confidentialité</a>
+<span>•</span>
+<a class="hover:underline" href="tel:+22600000000">+226 25 XX XX XX</a>
+</div>
+<!-- Proud National Badge -->
+<div class="inline-flex items-center gap-1.5 text-[11px] font-bold text-slate-600 bg-white px-3 py-1.5 rounded-full border border-slate-200 mt-1 shadow-xs">
+<span>Conçu &amp; Développé avec fierté au Burkina Faso</span> 🇧🇫
+    </div>
+<p class="text-[10px] text-slate-400 mt-4">
+      © <span id="current-year">2025</span> ZINDO Inc. Tous droits réservés.
+    </p>
+</footer>
+<!-- END: MobileFooter -->
+<!-- BEGIN: StickyBottomBar -->
+<!-- Fixed Mobile Quick Bar for rapid conversion -->
+<aside class="fixed bottom-0 inset-x-0 bg-white/95 backdrop-blur-lg border-t border-slate-200 p-2.5 z-50 shadow-2xl max-w-md mx-auto" data-purpose="mobile-floating-dock">
+<div class="flex items-center gap-2">
+<a aria-label="Appeler ZINDO" class="w-11 h-11 rounded-xl bg-slate-100 active:bg-slate-200 text-brand-forest flex items-center justify-center text-base flex-shrink-0" href="tel:+22600000000">
+<i class="fa-solid fa-phone"></i>
+</a>
+<a class="flex-1 bg-brand-forest active:bg-brand-emerald text-white font-extrabold h-11 rounded-xl flex items-center justify-center gap-2 text-xs shadow-sm transition" href="https://wa.me/22600000000?text=Bonjour%20ZINDO,%20je%20veux%20essayer%20le%20logiciel">
+<i class="fa-brands fa-whatsapp text-emerald-400 text-sm"></i>
+<span>Essai Gratuit 14 Jours</span>
+</a>
+</div>
+</aside>
+<!-- END: StickyBottomBar -->
+<!-- Small helper script for dynamic current year -->
+<script data-purpose="utility-scripts">
+    document.addEventListener("DOMContentLoaded", () => {
+      const yearEl = document.getElementById("current-year");
+      if (yearEl) {
+        yearEl.textContent = new Date().getFullYear();
+      }
+    });
+  </script>
+</body></html>
