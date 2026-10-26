@@ -18,7 +18,7 @@ Les variables sont les mêmes que chez Netlify. Pour recréer le fichier (il res
 bash deploy/oracle/make-env.sh deploy/oracle/.env.render
 ```
 
-Ajoutez dans ce fichier une ligne `NEXT_PUBLIC_APP_URL="https://zindo.onrender.com"` (ou l'adresse que Render vous donnera). Cette variable est lue pendant la compilation : elle doit être saisie avant le premier déploiement.
+Ajoutez dans ce fichier une ligne `NEXT_PUBLIC_APP_URL="https://www.zindo.site"`. Le domaine ne change pas, donc cette valeur reste la même avant et après la bascule : pas besoin de redéployer après le switch DNS. Cette variable est lue pendant la compilation.
 
 ## 2. Créer le service
 
