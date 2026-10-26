@@ -37,6 +37,7 @@ import { WhatsAppFloat } from "@/components/landing/WhatsAppFloat";
 import { PiedDePageComplet } from "@/components/landing/PiedDePageComplet";
 import { AccueilPro } from "@/components/landing/AccueilPro";
 import { FasoStockLanding } from "@/components/landing/FasoStockLanding";
+import { StitchLanding } from "@/components/landing/StitchLanding";
 import { AssistantFloat } from "@/components/landing/AssistantFloat";
 import { PublicNavLinks, PublicNavMenu } from "@/components/landing/PublicNav";
 import {
@@ -254,7 +255,7 @@ export default async function RootPage({ searchParams }: { searchParams: Promise
     return (
       <>
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(STRUCTURED_DATA).replaceAll("{trialDays}", String(trialDays)) }} />
-        <FasoStockLanding trialDays={trialDays} plans={planOffers} faqs={[...FAQS, ...EXTRA_FAQS]} />
+        <StitchLanding />
         <AssistantFloat />
         <WhatsAppFloat compact href="https://wa.me/22604059929" />
       </>
