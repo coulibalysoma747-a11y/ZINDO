@@ -15,7 +15,7 @@ export function DemoVideo() {
         <h2 className="text-2xl font-extrabold tracking-tight text-zindo-ink-900 sm:text-3xl">
           ZINDO en action
         </h2>
-        <p className="mt-3 text-zinc-600">Découvrez en quelques minutes comment gérer votre commerce avec ZINDO.</p>
+        <p className="mt-3 text-zinc-600">Découvrez comment créer votre compte et encaisser vos premières ventes avec ZINDO.</p>
       </div>
       <div className="mx-auto mt-8 max-w-4xl overflow-hidden rounded-3xl bg-zindo-ink-900 shadow-xl">
         <video
