@@ -22,11 +22,11 @@ export function DemoVideo() {
           controls
           preload="metadata"
           playsInline
-          poster="/demo/zindo-demo.jpg"
+          poster="/demo/zindo-demo.jpg?v=2"
           className="aspect-video w-full"
           onError={() => setFailed(true)}
         >
-          <source src="/demo/zindo-demo.mp4" type="video/mp4" onError={() => setFailed(true)} />
+          <source src="/demo/zindo-demo.mp4?v=2" type="video/mp4" onError={() => setFailed(true)} />
         </video>
       </div>
     </section>
