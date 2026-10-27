@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { Card, CardBody } from "@/components/ui/Card";
+import { AuthCard } from "@/components/auth/AuthCard";
 import { getPlatformConfig, getTrialDays } from "@/lib/platform-config";
 import { RegisterForm } from "./register-form";
 import { getReferralContext } from "@/lib/referral-signup";
@@ -11,8 +11,8 @@ export default async function RegisterPage({ searchParams }: { searchParams: Pro
   const referral = await getReferralContext(ref);
 
   return (
-    <Card>
-      <CardBody className="space-y-5">
+    <AuthCard>
+      <div className="space-y-5">
         <RegisterForm referralCode={referral.code} showReferralField={referral.showField} trialDays={await getTrialDays()} marketSeller={vendeur === "marche"} />
         <p className="text-center text-sm text-zinc-500">
           Déjà un compte ?{" "}
@@ -20,7 +20,7 @@ export default async function RegisterPage({ searchParams }: { searchParams: Pro
             Se connecter
           </Link>
         </p>
-      </CardBody>
-    </Card>
+      </div>
+    </AuthCard>
   );
 }

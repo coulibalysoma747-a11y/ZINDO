@@ -2,12 +2,14 @@ import { cn } from "@/lib/cn";
 import Link from "next/link";
 import type { ButtonHTMLAttributes } from "react";
 
-type Variant = "primary" | "secondary" | "danger" | "ghost" | "outline";
+type Variant = "primary" | "secondary" | "danger" | "ghost" | "outline" | "accent";
 type Size = "sm" | "md" | "lg";
 
 const variantClasses: Record<Variant, string> = {
   primary:
     "bg-gradient-to-b from-zindo-blue-600 to-zindo-blue-700 text-white shadow-md shadow-zindo-blue-900/20 hover:from-zindo-blue-500 hover:to-zindo-blue-600 hover:shadow-lg hover:shadow-zindo-blue-900/25 active:from-zindo-blue-700 active:to-zindo-blue-800 disabled:from-zindo-blue-600/40 disabled:to-zindo-blue-600/40 disabled:shadow-none",
+  accent:
+    "bg-gradient-to-b from-zindo-copper-400 to-zindo-copper-400 text-zindo-ink-900 shadow-md shadow-zindo-copper-700/25 hover:from-zindo-copper-300 hover:to-zindo-copper-300 hover:shadow-lg active:from-zindo-copper-500 active:to-zindo-copper-500 disabled:from-zindo-copper-400/50 disabled:to-zindo-copper-400/50 disabled:shadow-none",
   secondary:
     "bg-zinc-100 text-zinc-800 hover:bg-zinc-200 active:bg-zinc-300 disabled:text-zinc-400 dark:bg-slate-800 dark:text-slate-100 dark:hover:bg-slate-700",
   danger:

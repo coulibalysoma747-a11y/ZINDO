@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Card, CardBody } from "@/components/ui/Card";
+import { AuthCard } from "@/components/auth/AuthCard";
 import { RegisterForm } from "@/app/(auth)/inscription/register-form";
 
 export const metadata: Metadata = {
@@ -10,8 +10,8 @@ export const metadata: Metadata = {
 
 export default function EnglishRegisterPage() {
   return (
-    <Card>
-      <CardBody className="space-y-5">
+    <AuthCard>
+      <div className="space-y-5">
         <RegisterForm locale="en" />
         <p className="text-center text-sm text-zinc-500">
           Already have an account?{" "}
@@ -19,7 +19,7 @@ export default function EnglishRegisterPage() {
             Sign in
           </Link>
         </p>
-      </CardBody>
-    </Card>
+      </div>
+    </AuthCard>
   );
 }

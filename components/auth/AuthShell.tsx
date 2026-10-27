@@ -2,7 +2,13 @@ import Link from "next/link";
 import Image from "next/image";
 import { ZindoLogo } from "@/components/auth/ZindoLogo";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
-import { ArrowLeft, Package, ShoppingCart, Store, BarChart3 } from "lucide-react";
+import { Plus_Jakarta_Sans, Syne } from "next/font/google";
+import { Package, ShoppingCart, Store, BarChart3 } from "lucide-react";
+import { AuthHero, AuthNav, MobileSupport, SupportPill } from "@/components/auth/AuthShellParts";
+
+// Polices des maquettes : Syne pour les titres, Plus Jakarta Sans pour le texte.
+const syne = Syne({ variable: "--font-syne", subsets: ["latin"], weight: ["600", "700", "800"] });
+const jakarta = Plus_Jakarta_Sans({ variable: "--font-jakarta", subsets: ["latin"] });
 
 const HIGHLIGHT_TONES = ["text-zindo-blue-400", "text-zindo-copper-400", "text-zindo-blue-400", "text-zindo-blue-400"];
 const HIGHLIGHT_TONES_LIGHT = ["text-zindo-blue-600", "text-zindo-copper-600", "text-zindo-blue-600", "text-zindo-blue-600"];
@@ -179,67 +185,37 @@ export function AuthShell({ children, locale = "fr", pro = false }: { children: 
   );
 }
 
-const PRO_TEXT = {
-  fr: {
-    headline: "Votre stock et vos ventes,",
-    accent: "justes chaque jour.",
-    subhead: "Caisse, stock, crédits clients et bénéfices dans une seule application, même quand Internet coupe.",
-    back: "Retour à l'accueil",
-    founder: "Coulibaly Soma, fondateur de ZINDO",
-  },
-  en: {
-    headline: "Your stock and sales,",
-    accent: "right every day.",
-    subhead: "Checkout, stock, customer credit and profits in one app, even when the internet goes down.",
-    back: "Back to home",
-    founder: "Coulibaly Soma, founder of ZINDO",
-  },
-} as const;
-
-/** Connexion et inscription dans le style de la nouvelle page d'accueil (flag accueil_pro). */
+/**
+ * Connexion et inscription dans le style des maquettes (flag accueil_pro) : fond
+ * menthe, barre du haut, texte et points forts à gauche, formulaire à droite.
+ */
 function AuthShellPro({ children, locale }: { children: React.ReactNode; locale: "fr" | "en" }) {
-  const t = PRO_TEXT[locale];
   const home = locale === "en" ? "/en" : "/";
   return (
-    <div className="theme-locked flex min-h-screen bg-white">
-      <aside className="relative isolate hidden w-[46%] shrink-0 flex-col justify-between overflow-hidden p-12 text-white lg:flex xl:p-16">
-        <Image src="/photos/commercant-comptoir.webp" alt="" fill priority sizes="46vw" className="-z-10 object-cover object-[60%_center]" />
-        <div aria-hidden className="absolute inset-0 -z-10 bg-gradient-to-t from-black/85 via-black/35 to-black/20" />
-        <Link href={home} className="flex items-center gap-2.5">
-          <ZindoLogo size={34} />
-          <span className="flex flex-col leading-none">
-            <span className="text-lg font-extrabold tracking-[0.12em]">ZINDO</span>
-            <span className="mt-1 text-[8px] font-semibold uppercase tracking-[0.18em] text-white/60">Gestion commerciale</span>
-          </span>
-        </Link>
-        <div>
-          <h2 className="max-w-lg text-4xl font-medium leading-[1.1] tracking-[-0.03em] xl:text-[2.75rem]">
-            {t.headline} {t.accent}
-          </h2>
-          <p className="mt-4 max-w-md text-[15px] leading-relaxed text-white/80">{t.subhead}</p>
-          <div className="mt-10 flex items-center gap-3 text-xs text-white/70">
-            <Image src="/brand/founder-coulibaly-soma.jpg" alt="" width={32} height={32} className="h-8 w-8 rounded-full object-cover ring-2 ring-white/30" />
-            <span>{t.founder}</span>
-            <span className="ml-auto">© {new Date().getFullYear()} ZINDO</span>
+    <div
+      className={`theme-locked ${syne.variable} ${jakarta.variable} flex min-h-screen flex-col bg-zindo-blue-50 font-(family-name:--font-jakarta) [&_h2]:font-(family-name:--font-syne)`}
+    >
+      <header className="sticky top-0 z-30 border-b border-white/60 bg-zindo-blue-50/85 backdrop-blur">
+        <div className="mx-auto flex w-full max-w-[1400px] items-center justify-between gap-4 px-5 py-3 sm:px-8">
+          <Link href={home} className="flex items-center gap-2.5">
+            <ZindoLogo size={36} />
+            <span className="font-(family-name:--font-syne) text-xl font-extrabold tracking-[0.08em] text-zindo-blue-800">ZINDO</span>
+          </Link>
+          <AuthNav locale={locale} />
+          <div className="flex items-center gap-2">
+            <SupportPill locale={locale} />
+            <LanguageSwitcher />
           </div>
         </div>
-      </aside>
+      </header>
 
-      <div className="relative flex min-w-0 flex-1 flex-col bg-white">
-        <header className="relative z-30 flex items-center justify-between px-5 pt-5 sm:px-8 sm:pt-6">
-          <Link href={home} className="inline-flex items-center gap-1.5 text-sm font-medium text-zinc-500 hover:text-zindo-ink-900">
-            <ArrowLeft className="h-4 w-4" /> <span className="hidden sm:inline">{t.back}</span>
-            <span className="flex items-center gap-2 sm:hidden">
-              <ZindoLogo size={26} />
-              <span className="font-bold text-zindo-ink-900">ZINDO</span>
-            </span>
-          </Link>
-          <LanguageSwitcher />
-        </header>
-        <main className="relative z-10 flex flex-1 flex-col items-center justify-center px-5 py-10 sm:px-8">
-          <div className="animate-zindo-fade-in-up w-full max-w-md">{children}</div>
-        </main>
-      </div>
+      <main className="relative z-10 mx-auto grid w-full max-w-[1400px] flex-1 items-center gap-10 px-5 py-8 sm:px-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,520px)] lg:gap-16 lg:py-12">
+        <AuthHero locale={locale} />
+        <div className="animate-zindo-fade-in-up mx-auto w-full max-w-md lg:max-w-none">
+          {children}
+          <MobileSupport locale={locale} />
+        </div>
+      </main>
     </div>
   );
 }

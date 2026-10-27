@@ -227,7 +227,7 @@ export function RegisterForm({
           </span>
         </label>
         {state?.error && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{state.error}</p>}
-        <Button type="submit" className="h-11 w-full" disabled={pending}>
+        <Button type="submit" variant="accent" className="h-12 w-full text-base" disabled={pending}>
           {pending ? t.submitting : t.submit}
         </Button>
       </div>
