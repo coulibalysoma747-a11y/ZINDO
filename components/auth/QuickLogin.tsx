@@ -21,6 +21,7 @@ const TEXT = {
     pinFor: "Code PIN de",
     pinHint: "Tapez vos 4 chiffres",
     back: "Changer de personne",
+    confirm: "Valider",
     or: "ou avec votre mot de passe",
     failed: "Face ID n'a pas fonctionné. Utilisez votre mot de passe.",
   },
@@ -31,6 +32,7 @@ const TEXT = {
     pinFor: "PIN code for",
     pinHint: "Enter your 4 digits",
     back: "Switch person",
+    confirm: "Confirm",
     or: "or with your password",
     failed: "Face ID did not work. Use your password.",
   },
@@ -77,6 +79,9 @@ function PinPad({ user, locale, onBack }: { user: QuickUser; locale: "fr" | "en"
         className="h-14 w-full rounded-xl border border-zinc-300 bg-white text-center text-2xl tracking-[0.6em] text-zindo-ink-900 outline-none focus:border-zindo-blue-500 focus:ring-2 focus:ring-zindo-blue-500/30"
       />
       <p className="text-center text-xs text-zinc-500">{pending ? t.waiting : t.pinHint}</p>
+      <button type="submit" disabled={pending} className="h-11 w-full rounded-xl bg-zindo-blue-800 text-sm font-semibold text-white hover:bg-zindo-blue-700 disabled:opacity-60">
+        {pending ? t.waiting : t.confirm}
+      </button>
       {state?.error && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{state.error}</p>}
     </form>
   );

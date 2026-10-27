@@ -56,8 +56,12 @@ export function QuickLoginPanel({
   passkeys: PasskeyItem[];
 }) {
   const supported = useWebAuthnSupport();
-  const [pinState, pinAction, pinPending] = useActionState<QuickLoginState, FormData>(setPinAction, undefined);
   const [showPinForm, setShowPinForm] = useState(false);
+  const [pinState, pinAction, pinPending] = useActionState<QuickLoginState, FormData>(async (previous, formData) => {
+    const result = await setPinAction(previous, formData);
+    if (result?.success) setShowPinForm(false);
+    return result;
+  }, undefined);
   const [note, setNote] = useState<QuickLoginState>(undefined);
   const [busy, startTransition] = useTransition();
   const [registering, setRegistering] = useState(false);
@@ -151,12 +155,12 @@ export function QuickLoginPanel({
                     <Input id="pinConfirm" name="pinConfirm" type="password" inputMode="numeric" maxLength={4} pattern="[0-9]{4}" autoComplete="off" required />
                   </Field>
                 </div>
-                <Message state={pinState} />
                 <Button type="submit" disabled={pinPending}>
                   {pinPending ? "Enregistrement..." : pinSet ? "Changer mon PIN" : "Créer mon PIN"}
                 </Button>
               </form>
             )}
+            {(!showPinForm || pinState?.error) && <Message state={pinState} />}
           </>
         )}
       </div>
