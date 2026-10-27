@@ -42,8 +42,8 @@ export function UserManager({ labels }: { labels?: Record<string, string> } = {}
           <Field label="Téléphone" htmlFor="phone">
             <Input id="phone" name="phone" type="tel" inputMode="tel" autoComplete="off" required />
           </Field>
-          <Field label="E-mail (facultatif)" htmlFor="email">
-            <Input id="email" name="email" type="email" />
+          <Field label="E-mail" htmlFor="email">
+            <Input id="email" name="email" type="email" required />
           </Field>
           <Field label="Mot de passe" htmlFor="password">
             <Input id="password" name="password" type="password" minLength={6} required />

@@ -28,7 +28,7 @@ export default function ConfidentialitePage() {
       </LegalSection>
 
       <LegalSection title="2. Données que nous collectons">
-        <p>À la création de votre compte : nom, prénom, numéro de téléphone, e-mail (facultatif), mot de passe (stocké de façon chiffrée), nom et activité de votre commerce, ville.</p>
+        <p>À la création de votre compte : nom, prénom, numéro de téléphone, e-mail, mot de passe (stocké de façon chiffrée), nom et activité de votre commerce, ville.</p>
         <p>
           Dans le cadre de l&apos;utilisation du service : les données que vous saisissez vous-même (produits,
           ventes, clients, fournisseurs, achats) ainsi que des données techniques (historique des actions,

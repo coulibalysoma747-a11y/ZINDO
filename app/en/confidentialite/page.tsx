@@ -35,7 +35,7 @@ export default function EnglishConfidentialitePage() {
 
       <LegalSection title="2. Data we collect">
         <p>
-          When you create your account: first name, last name, phone number, email (optional), password (stored
+          When you create your account: first name, last name, phone number, email, password (stored
           encrypted), your business&apos;s name and type, and city.
         </p>
         <p>

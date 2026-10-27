@@ -300,7 +300,7 @@ const registerSchema = z.object({
   firstName: z.string().min(1, "Prénom requis"),
   lastName: z.string().min(1, "Nom requis"),
   phone: z.string().trim().min(6, "Numéro de téléphone invalide"),
-  email: z.string().email("E-mail invalide").optional().or(z.literal("")),
+  email: z.string().trim().min(1, "E-mail requis").email("E-mail invalide"),
   password: z.string().min(6, "6 caractères minimum"),
   businessName: z.string().min(1, "Nom du commerce requis"),
   city: z.string().optional(),
@@ -357,7 +357,7 @@ export async function registerAction(
     p_first_name: firstName,
     p_last_name: lastName,
     p_phone: phone,
-    p_email: email ?? "",
+    p_email: email,
     p_password_hash: passwordHash,
   });
 

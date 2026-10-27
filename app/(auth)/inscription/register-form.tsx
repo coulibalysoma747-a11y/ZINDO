@@ -23,7 +23,7 @@ const TEXT = {
     firstName: "Prénom",
     lastName: "Nom",
     phone: "Téléphone",
-    email: "E-mail (facultatif)",
+    email: "E-mail",
     password: "Mot de passe",
     passwordHint: "6 caractères minimum.",
     showPassword: "Afficher le mot de passe",
@@ -57,7 +57,7 @@ const TEXT = {
     firstName: "First name",
     lastName: "Last name",
     phone: "Phone",
-    email: "Email (optional)",
+    email: "Email",
     password: "Password",
     passwordHint: "At least 6 characters.",
     showPassword: "Show password",
@@ -184,7 +184,7 @@ export function RegisterForm({
           </div>
         </Field>
         <Field label={t.email} htmlFor="email">
-          <Input id="email" name="email" type="email" inputMode="email" autoComplete="email" autoCapitalize="none" />
+          <Input id="email" name="email" type="email" inputMode="email" autoComplete="email" autoCapitalize="none" required />
         </Field>
         <Field label={t.password} htmlFor="password" hint={t.passwordHint}>
           <div className="relative">

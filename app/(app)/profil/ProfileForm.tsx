@@ -31,7 +31,7 @@ export function ProfileForm({
         <Input id="phone" value={user.phone} disabled />
       </Field>
       <Field label="E-mail" htmlFor="email">
-        <Input id="email" name="email" type="email" defaultValue={user.email ?? ""} />
+        <Input id="email" name="email" type="email" defaultValue={user.email ?? ""} required />
       </Field>
       {state?.error && <p className="text-sm text-red-600">{state.error}</p>}
       {state?.success && <p className="text-sm text-emerald-600">{state.success}</p>}

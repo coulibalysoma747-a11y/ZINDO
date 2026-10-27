@@ -171,7 +171,7 @@ export async function resetRolePermissionsAction(role: Role) {
 const profileSchema = z.object({
   firstName: z.string().min(1),
   lastName: z.string().min(1),
-  email: z.string().email("E-mail invalide").optional().or(z.literal("")),
+  email: z.string().trim().min(1, "E-mail requis").email("E-mail invalide"),
 });
 
 export async function updateProfileAction(
@@ -191,7 +191,7 @@ export async function updateProfileAction(
     .update({
       first_name: parsed.data.firstName,
       last_name: parsed.data.lastName,
-      email: parsed.data.email || null,
+      email: parsed.data.email,
     })
     .eq("id", user.id);
   if (error) {
