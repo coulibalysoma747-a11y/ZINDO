@@ -41,7 +41,7 @@ export default async function LoginPage({
             <CheckCircle2 className="h-4 w-4 shrink-0" /> Mot de passe réinitialisé, connectez-vous.
           </p>
         )}
-        <QuickLogin users={quick.users} passkey={quick.passkey} />
+        <QuickLogin users={quick.users} passkey={quick.passkey} available={quick.available} />
         <LoginForm googleError={googleError} />
       </AuthCard>
 

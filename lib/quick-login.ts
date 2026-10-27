@@ -4,7 +4,7 @@ import bcrypt from "bcryptjs";
 import { cookies, headers } from "next/headers";
 import { SignJWT, jwtVerify } from "jose";
 import { supabase } from "@/lib/supabase";
-import { isFeatureEnabled, registerFeatureFlag } from "@/lib/feature-flags";
+import { isFeatureEnabled, isFeatureEnabledGlobally, registerFeatureFlag } from "@/lib/feature-flags";
 
 /**
  * Connexion rapide : code PIN (4 chiffres) et Face ID / empreinte (clés d'accès
@@ -270,13 +270,18 @@ export function base64UrlToBytes(value: string): Uint8Array<ArrayBuffer> {
 }
 
 /** Ce que la page de connexion doit afficher pour cet appareil (rien tant que rien n'est activé). */
-export async function getQuickLoginOptions(): Promise<{ users: QuickUser[]; passkey: boolean }> {
+export async function getQuickLoginOptions(): Promise<{ users: QuickUser[]; passkey: boolean; available: boolean }> {
   try {
-    const [users, passkey] = await Promise.all([listPinUsersOnThisDevice(), hasPasskeyHint()]);
-    return { users, passkey };
+    await ensureQuickLoginFlagRegistered();
+    const [users, passkey, available] = await Promise.all([
+      listPinUsersOnThisDevice(),
+      hasPasskeyHint(),
+      isFeatureEnabledGlobally(QUICK_LOGIN_FLAG),
+    ]);
+    return { users, passkey, available };
   } catch (e) {
     console.error("[getQuickLoginOptions] Ignoré :", e instanceof Error ? e.message : e);
-    return { users: [], passkey: false };
+    return { users: [], passkey: false, available: false };
   }
 }
 

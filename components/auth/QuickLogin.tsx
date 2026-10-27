@@ -24,6 +24,7 @@ const TEXT = {
     confirm: "Valider",
     or: "ou avec votre mot de passe",
     failed: "Face ID n'a pas fonctionné. Utilisez votre mot de passe.",
+    first: "Première fois ? Connectez-vous avec votre mot de passe, puis créez votre PIN ou ajoutez Face ID dans Mon profil, rubrique « Connexion rapide ».",
   },
   en: {
     title: "Quick sign-in",
@@ -35,6 +36,7 @@ const TEXT = {
     confirm: "Confirm",
     or: "or with your password",
     failed: "Face ID did not work. Use your password.",
+    first: "First time? Sign in with your password, then create your PIN or add Face ID in My profile, under “Quick sign-in”.",
   },
 } as const;
 
@@ -88,7 +90,18 @@ function PinPad({ user, locale, onBack }: { user: QuickUser; locale: "fr" | "en"
 }
 
 /** Connexion par PIN (appareil de confiance) et par Face ID / empreinte. N'affiche rien si rien n'est activé. */
-export function QuickLogin({ users, passkey, locale = "fr" }: { users: QuickUser[]; passkey: boolean; locale?: "fr" | "en" }) {
+export function QuickLogin({
+  users,
+  passkey,
+  available = false,
+  locale = "fr",
+}: {
+  users: QuickUser[];
+  passkey: boolean;
+  /** La connexion rapide est ouverte à tous les commerces : on l'explique même sur un appareil encore vierge. */
+  available?: boolean;
+  locale?: "fr" | "en";
+}) {
   const t = TEXT[locale];
   const router = useRouter();
   const supported = useWebAuthnSupport();
@@ -96,8 +109,9 @@ export function QuickLogin({ users, passkey, locale = "fr" }: { users: QuickUser
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const showPasskey = passkey && supported;
-  if (users.length === 0 && !showPasskey) return null;
+  // Une clé d'accès enregistrée peut servir depuis n'importe quel appareil de la personne (son téléphone la synchronise) : le bouton est donc proposé à tous.
+  const showPasskey = (passkey || available) && supported;
+  if (users.length === 0 && !showPasskey && !available) return null;
 
   async function loginWithPasskey() {
     setBusy(true);
@@ -160,6 +174,8 @@ export function QuickLogin({ users, passkey, locale = "fr" }: { users: QuickUser
             ))}
           </div>
         ))}
+
+      {users.length === 0 && <p className="text-xs leading-relaxed text-zinc-600">{t.first}</p>}
 
       <p className="pt-1 text-center text-xs text-zinc-500">{t.or}</p>
     </section>

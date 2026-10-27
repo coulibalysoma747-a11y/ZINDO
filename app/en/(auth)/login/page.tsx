@@ -42,7 +42,7 @@ export default async function EnglishLoginPage({
             <CheckCircle2 className="h-4 w-4 shrink-0" /> Password reset — please sign in.
           </p>
         )}
-        <QuickLogin users={quick.users} passkey={quick.passkey} locale="en" />
+        <QuickLogin users={quick.users} passkey={quick.passkey} available={quick.available} locale="en" />
         <LoginForm googleError={googleError} locale="en" />
       </AuthCard>
 
