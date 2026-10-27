@@ -11,6 +11,6 @@ services:
     startCommand: NODE_OPTIONS=--max-old-space-size=384 npm start
     envVars:
       - key: NODE_VERSION
-        value: 24
+        value: 24.22.1
       - key: NEXT_PUBLIC_APP_URL
         value: https://www.zindo.site
