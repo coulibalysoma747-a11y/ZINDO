@@ -3,6 +3,8 @@ import Link from "next/link";
 import { ShieldCheck, CheckCircle2 } from "lucide-react";
 import { AuthCard } from "@/components/auth/AuthCard";
 import { LoginForm } from "@/app/(auth)/login/login-form";
+import { QuickLogin } from "@/components/auth/QuickLogin";
+import { getQuickLoginOptions } from "@/lib/quick-login";
 
 export const metadata: Metadata = {
   title: "Sign in",
@@ -24,6 +26,7 @@ export default async function EnglishLoginPage({
 }) {
   const { error, reinitialisation } = await searchParams;
   const googleError = error ? GOOGLE_ERROR_MESSAGES[error] : undefined;
+  const quick = await getQuickLoginOptions();
 
   return (
     <div className="space-y-5 sm:space-y-6">
@@ -39,6 +42,7 @@ export default async function EnglishLoginPage({
             <CheckCircle2 className="h-4 w-4 shrink-0" /> Password reset — please sign in.
           </p>
         )}
+        <QuickLogin users={quick.users} passkey={quick.passkey} locale="en" />
         <LoginForm googleError={googleError} locale="en" />
       </AuthCard>
 

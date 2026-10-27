@@ -4,6 +4,8 @@ import { ShieldCheck, CheckCircle2 } from "lucide-react";
 import { AuthCard } from "@/components/auth/AuthCard";
 import { getPlatformConfig } from "@/lib/platform-config";
 import { LoginForm } from "./login-form";
+import { QuickLogin } from "@/components/auth/QuickLogin";
+import { getQuickLoginOptions } from "@/lib/quick-login";
 
 const GOOGLE_ERROR_MESSAGES: Record<string, string> = {
   "google-non-configure": "La connexion avec Google n'est pas encore configurée pour ZINDO.",
@@ -23,6 +25,7 @@ export default async function LoginPage({
   const googleError = error ? GOOGLE_ERROR_MESSAGES[error] : undefined;
 
   if ((await getPlatformConfig()).maintenanceMode) redirect("/maintenance");
+  const quick = await getQuickLoginOptions();
 
   return (
     <div className="space-y-5 sm:space-y-6">
@@ -38,6 +41,7 @@ export default async function LoginPage({
             <CheckCircle2 className="h-4 w-4 shrink-0" /> Mot de passe réinitialisé, connectez-vous.
           </p>
         )}
+        <QuickLogin users={quick.users} passkey={quick.passkey} />
         <LoginForm googleError={googleError} />
       </AuthCard>
 
