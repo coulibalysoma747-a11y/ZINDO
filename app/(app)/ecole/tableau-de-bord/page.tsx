@@ -142,7 +142,7 @@ export default async function SchoolDashboardPage() {
                 <div key={name} className="flex items-center gap-2 text-sm">
                   <span className="w-24 shrink-0 truncate text-zinc-700">{name}</span>
                   <div className="h-3 flex-1 rounded bg-zinc-100 dark:bg-slate-800">
-                    <div className="h-3 rounded bg-blue-600" style={{ width: `${(n / maxClass) * 100}%` }} />
+                    <div className="h-3 rounded bg-zindo-blue-600" style={{ width: `${(n / maxClass) * 100}%` }} />
                   </div>
                   <span className="w-8 text-right text-zinc-500">{n}</span>
                 </div>

@@ -13,10 +13,10 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 :root {
-  --background: #f6f5fb;
+  --background: #f0fbf5;
   --foreground: #171717;
   /* Neutral workspace background so white cards remain distinct. */
-  --app-canvas: #eef0f7;
+  --app-canvas: #e7f6ee;
 }
 
 @theme inline {
@@ -25,18 +25,20 @@
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 
-  /* ZINDO identity: violet primary, cool gray neutrals, violet accent. */
-  --color-zindo-blue-50: #f3f0ff;
-  --color-zindo-blue-100: #e9e3ff;
-  --color-zindo-blue-200: #d4c9ff;
-  --color-zindo-blue-300: #b8a5ff;
-  --color-zindo-blue-400: #9b7cff;
-  --color-zindo-blue-500: #7f56d9;
-  --color-zindo-blue-600: #6941c6;
-  --color-zindo-blue-700: #53389e;
-  --color-zindo-blue-800: #42307d;
-  --color-zindo-blue-900: #342563;
-  --color-zindo-blue-950: #1f1640;
+  /* Identité ZINDO (maquettes) : vert profond en couleur principale (échelle « blue »,
+     nom conservé pour ne pas toucher des milliers de classes), ambre en accent
+     (échelle « copper »), neutres gris. */
+  --color-zindo-blue-50: #e7fff3;
+  --color-zindo-blue-100: #d3f7e3;
+  --color-zindo-blue-200: #b0f1c7;
+  --color-zindo-blue-300: #95d4ac;
+  --color-zindo-blue-400: #4fa07a;
+  --color-zindo-blue-500: #2d6a48;
+  --color-zindo-blue-600: #0f5132;
+  --color-zindo-blue-700: #0b4228;
+  --color-zindo-blue-800: #003820;
+  --color-zindo-blue-900: #002a18;
+  --color-zindo-blue-950: #002111;
 
   /* Ombres douces à plusieurs couches (cartes, menus, fenêtres) : plus
      naturelles qu'une seule ombre grise. */
@@ -52,23 +54,23 @@
   --color-zindo-red-600: #ad1c1c;
   --color-zindo-red-700: #8c1717;
   --color-zindo-red-800: #6b1212;
-  --color-zindo-copper-50: #faf5ff;
-  --color-zindo-copper-100: #f3e8ff;
-  --color-zindo-copper-200: #e9d5ff;
-  --color-zindo-copper-300: #d8b4fe;
-  --color-zindo-copper-400: #c084fc;
-  --color-zindo-copper-500: #a855f7;
-  --color-zindo-copper-600: #9333ea;
-  --color-zindo-copper-700: #7e22ce;
-  --color-zindo-copper-800: #6b21a8;
-  --color-zindo-ink-50: #f9fafb;
-  --color-zindo-ink-100: #f3f4f6;
-  --color-zindo-ink-200: #e5e7eb;
-  --color-zindo-ink-500: #6b7280;
-  --color-zindo-ink-700: #374151;
-  --color-zindo-ink-900: #111827;
-  --color-zindo-ink-950: #030712;
-  --color-zindo-cream: #f5f5f7;
+  --color-zindo-copper-50: #fff7ea;
+  --color-zindo-copper-100: #ffeacc;
+  --color-zindo-copper-200: #ffddb8;
+  --color-zindo-copper-300: #ffb95f;
+  --color-zindo-copper-400: #fea619;
+  --color-zindo-copper-500: #e08e0b;
+  --color-zindo-copper-600: #a86400;
+  --color-zindo-copper-700: #855300;
+  --color-zindo-copper-800: #653e00;
+  --color-zindo-ink-50: #f4faf6;
+  --color-zindo-ink-100: #e9f3ed;
+  --color-zindo-ink-200: #dcebe3;
+  --color-zindo-ink-500: #5f6e66;
+  --color-zindo-ink-700: #2a3d35;
+  --color-zindo-ink-900: #0a1f18;
+  --color-zindo-ink-950: #04130d;
+  --color-zindo-cream: #eefaf3;
   --color-zindo-success-600: #16a34a;
 
   --animate-zindo-fade-in: zindo-fade-in 0.5s ease-out both;
@@ -102,10 +104,10 @@
   }
 }
 
-/* Discreet navy dot pattern on an ivory surface. */
+/* Discret motif de points verts sur fond menthe. */
 .zindo-dotted-bg {
   background-color: var(--color-zindo-cream);
-  background-image: radial-gradient(rgba(36, 76, 102, 0.11) 1px, transparent 1px);
+  background-image: radial-gradient(rgba(15, 81, 50, 0.11) 1px, transparent 1px);
   background-size: 14px 14px;
 }
 
@@ -195,7 +197,7 @@ a:focus-visible {
   color: var(--color-zindo-blue-800);
 }
 
-/* Purple and violet accent used in navigation. */
+/* Liseré vert et ambre utilisé dans la navigation. */
 .zindo-brand-stripe {
   background: linear-gradient(90deg, var(--color-zindo-blue-700), var(--color-zindo-blue-500) 72%, var(--color-zindo-copper-400));
 }

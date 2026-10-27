@@ -44,8 +44,8 @@ export function HelpChat({ configured }: { configured: boolean }) {
       <div className="flex-1 space-y-4 overflow-y-auto p-4">
         {messages.length === 0 && (
           <div className="flex h-full flex-col items-center justify-center gap-4 text-center">
-            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-blue-50">
-              <HelpCircle className="h-6 w-6 text-blue-600" />
+            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-zindo-blue-50">
+              <HelpCircle className="h-6 w-6 text-zindo-blue-600" />
             </div>
             <div>
               <p className="font-medium text-zinc-900">Une question sur l&apos;utilisation de ZINDO ?</p>
@@ -59,7 +59,7 @@ export function HelpChat({ configured }: { configured: boolean }) {
                   <button
                     key={s}
                     onClick={() => send(s)}
-                    className="rounded-full border border-zinc-200 px-3 py-1.5 text-xs text-zinc-600 hover:border-blue-300 hover:bg-blue-50 hover:text-blue-700"
+                    className="rounded-full border border-zinc-200 px-3 py-1.5 text-xs text-zinc-600 hover:border-zindo-blue-300 hover:bg-zindo-blue-50 hover:text-zindo-blue-700"
                   >
                     {s}
                   </button>
@@ -72,14 +72,14 @@ export function HelpChat({ configured }: { configured: boolean }) {
         {messages.map((m, i) => (
           <div key={i} className={`flex gap-2 ${m.role === "user" ? "justify-end" : "justify-start"}`}>
             {m.role === "assistant" && (
-              <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-blue-100">
-                <HelpCircle className="h-3.5 w-3.5 text-blue-700" />
+              <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-zindo-blue-100">
+                <HelpCircle className="h-3.5 w-3.5 text-zindo-blue-700" />
               </div>
             )}
             <div
               className={`max-w-[80%] whitespace-pre-wrap rounded-2xl px-3.5 py-2 text-sm ${
                 m.role === "user"
-                  ? "rounded-br-sm bg-blue-600 text-white"
+                  ? "rounded-br-sm bg-zindo-blue-600 text-white"
                   : "rounded-bl-sm bg-zinc-100 text-zinc-800"
               }`}
             >
@@ -95,8 +95,8 @@ export function HelpChat({ configured }: { configured: boolean }) {
 
         {pending && (
           <div className="flex items-center gap-2 text-sm text-zinc-400">
-            <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-blue-100">
-              <HelpCircle className="h-3.5 w-3.5 animate-pulse text-blue-700" />
+            <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-zindo-blue-100">
+              <HelpCircle className="h-3.5 w-3.5 animate-pulse text-zindo-blue-700" />
             </div>
             L&apos;assistant réfléchit...
           </div>

@@ -16,12 +16,12 @@ function Sparkline({ values }: { values: number[] }) {
     <svg viewBox={`0 0 ${WIDTH} ${HEIGHT}`} preserveAspectRatio="none" className="mt-3 h-24 w-full" aria-hidden>
       <defs>
         <linearGradient id="hero-fill" x1="0" x2="0" y1="0" y2="1">
-          <stop offset="0" stopColor="#6941c6" stopOpacity="0.22" />
-          <stop offset="1" stopColor="#6941c6" stopOpacity="0" />
+          <stop offset="0" stopColor="#0f5132" stopOpacity="0.22" />
+          <stop offset="1" stopColor="#0f5132" stopOpacity="0" />
         </linearGradient>
       </defs>
       <path d={`${line} L${WIDTH} ${HEIGHT} L0 ${HEIGHT}Z`} fill="url(#hero-fill)" />
-      <path d={line} fill="none" stroke="#6941c6" strokeWidth="2.5" strokeLinejoin="round" vectorEffect="non-scaling-stroke" />
+      <path d={line} fill="none" stroke="#0f5132" strokeWidth="2.5" strokeLinejoin="round" vectorEffect="non-scaling-stroke" />
     </svg>
   );
 }
