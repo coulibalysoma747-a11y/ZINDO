@@ -89,6 +89,8 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
     >
       <head><meta name="google-site-verification" content="hLIb2IvzFGtm2VC6hR9cK5choC2_bbHh2Ew2qfNdvTQ" />
         <meta name="google-site-verification" content="L7aDO0-c1dbXK57FghtP6dRtWVjmCp-M-Gy-suFmwsE" />
+        {/* Vérification de propriété du domaine pour la mise en vente de ZINDO sur iziSAAS. Peut rester après la vente. */}
+        <meta name="izisaas-verification" content="iz-f662eb8b7429a584" />
         <meta name="theme-color" content="#0f5132" />
         <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
         <ThemeInitScript theme={theme} />
